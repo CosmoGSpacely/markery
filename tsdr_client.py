@@ -125,6 +125,26 @@ def download_document(serial_number, doc_id, format_type="pdf"):
         print(f"Error {response.status_code}: {response.text}")
         return None
 
+def get_trademark_image(serial_number):
+    """
+    Fetch the trademark mark image (PNG) for a given serial number.
+
+    Args:
+        serial_number (str): Serial number (without 'sn' prefix, e.g. '71165547')
+
+    Returns:
+        tuple: (bytes, str) image data and MIME type, or (None, None) on failure
+    """
+    url = f"{BASE_URL}/ts/cd/rawImage/{serial_number}"
+    response = requests.get(url, headers=get_request_headers(accept="image/png"))
+
+    if response.status_code == 200:
+        content_type = response.headers.get("Content-Type", "image/png").split(";")[0].strip()
+        return response.content, content_type
+    else:
+        print(f"Error {response.status_code}: {response.text}")
+        return None, None
+
 def main():
     # Example usage
     serial_number = "78787878"  # Example serial number

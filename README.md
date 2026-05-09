@@ -75,13 +75,14 @@ The script removes any existing `trademarks.duckdb` and rebuilds from scratch. T
 
 ## Image Retrieval
 
-Mark images are not included in the CSV dataset. Planned retrieval via the USPTO TSDR API using the `rawImage` endpoint:
+Mark images are not included in the CSV dataset. They are fetched from the USPTO TSDR API and stored in the `mark_images` table in `trademarks.duckdb`.
 
-```
-GET https://tsdrapi.uspto.gov/ts/cd/rawImage/{serial_number}
+```python
+from tsdr_client import get_trademark_image
+image_data, mime_type = get_trademark_image("71165547")  # returns (bytes, 'image/png')
 ```
 
-Requires a USPTO API key. See `TSDR.md` for API client setup.
+See `TSDR.md` for full API reference and `CONTEXT.md` for the `mark_images` table schema.
 
 ## Notes
 
