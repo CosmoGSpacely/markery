@@ -25,4 +25,5 @@ wheels/
 .DS_Store
 csv/
 *.duckdb
+!trademarks.duckdb
 .claude/
