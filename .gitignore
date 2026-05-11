@@ -26,4 +26,9 @@ wheels/
 csv/
 *.duckdb
 !trademarks.duckdb
-.claude/
+# Ignore Claude Code runtime config but track project commands
+.claude/*.json
+.claude/*.local.*
+input/
+output/
+image_tools/weights/
