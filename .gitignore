@@ -26,6 +26,7 @@ wheels/
 csv/
 *.duckdb
 !trademarks.duckdb
+!patents.duckdb
 # Ignore Claude Code runtime config but track project commands
 .claude/*.json
 .claude/*.local.*
