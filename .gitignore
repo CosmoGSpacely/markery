@@ -32,3 +32,6 @@ csv/
 input/
 output/
 image_tools/weights/
+# Project generated outputs (images, PDFs, gallery HTML) — track research docs only
+projects/*/input/
+projects/*/output/

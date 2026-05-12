@@ -2,7 +2,7 @@ Enhance trademark mark images for a set of serial numbers, then write an HTML ga
 
 ## Steps
 
-1. Determine the output collection name from the request (e.g. `enhanced_may1930_designs`). Output goes to `output/<collection>/`.
+1. Determine which project and collection name from the request. Output goes to `projects/<project>/output/<collection>/`. Current projects: `information-systems`, `monthly-image-review`.
 
 2. If the user gave a date range, company, or search term rather than serial numbers directly, query `trademarks.duckdb` first to get the serial numbers:
 
@@ -26,7 +26,7 @@ EOF
 ```bash
 .venv/bin/python -m image_tools batch \
   "cf.serial_no IN ('71300354','71301023')" \
-  --out-dir output/<collection>
+  --out-dir projects/<project>/output/<collection>
 ```
 
 Or for a date/type query:
@@ -34,13 +34,13 @@ Or for a date/type query:
 ```bash
 .venv/bin/python -m image_tools batch \
   "cf.filing_dt BETWEEN DATE '1930-05-01' AND DATE '1930-05-31' AND cf.mark_draw_cd LIKE '3%'" \
-  --out-dir output/enhanced_may1930_designs
+  --out-dir projects/monthly-image-review/output/enhanced-may1930-designs
 ```
 
 4. Build the gallery:
 
 ```bash
-.venv/bin/python -m image_tools gallery output/<collection> \
+.venv/bin/python -m image_tools gallery projects/<project>/output/<collection> \
   --title "<descriptive title>" \
   --subtitle "<count> marks • <source description>"
 ```
