@@ -27,8 +27,8 @@ Built from the 2011 USPTO Trademark Case Files Dataset, filtered to applications
 | `design_search` | 18,790 | Design search codes (visual element classification) |
 | `prior_mark` | 11,329 | Prior mark references |
 | `statement` | 35,077 | Goods and services descriptions |
-| `mark_images` | varies | PNG mark images fetched from TSDR `rawImage` (design + stylized marks) |
-| `mark_case_status` | varies | Parsed case status (filing dates, goods, first-use) for typeset marks without images |
+| `mark_images` | 96 | PNG mark images fetched from TSDR `rawImage` (design + stylized marks) |
+| `mark_case_status` | 10 | Parsed case status (filing dates, goods, first-use) for typeset marks without images |
 
 Rebuilt by `build_trademarks_db.py` from CSV files in `csv/` (not committed — obtain from USPTO).
 
@@ -37,12 +37,12 @@ Built from the EPO Open Patent Services API, covering US patents in CPC classes 
 
 **Currently populated:** B42F (filing appliances, card-index systems), B42D (books, forms, index cards) — 11,284 patents, 1900–1939.
 
-| Table | Contents |
-|---|---|
-| `patents` | Patent number, title, application date, grant date, assignee name |
-| `patent_classes` | CPC class and full symbol per patent (multiple rows per patent) |
-| `patent_inventors` | Inventor names (epodoc format) |
-| `fetch_log` | Which CPC class + year windows have been fetched |
+| Table | Rows | Contents |
+|---|---|---|
+| `patents` | 11,284 | Patent number, title, application date, grant date, assignee name |
+| `patent_classes` | 25,205 | CPC class and full symbol per patent (multiple rows per patent) |
+| `patent_inventors` | 11,442 | Inventor names (epodoc format) |
+| `fetch_log` | 17 | Which CPC class + year windows have been fetched |
 
 Rebuilt by `build_patents_db.py`. Requires `EPO_CONSUMER_KEY` and `EPO_CONSUMER_SECRET` in `.env`. Registration is free at https://developers.epo.org. See `EPO.md` for full API reference.
 
@@ -145,6 +145,8 @@ projects/
     README.md
     output/
       may1930-designs/      39 design marks filed May 1930
+commerce-and-technology-historian/
+                            Historian agent: identity, rules, examples, reference docs
 ```
 
 Research documents (`.md` essays, `README.md`, `confirmed.jsonl`) are tracked in git. Generated output (images, PDFs, gallery HTML) is gitignored.
@@ -184,8 +186,10 @@ python -m match information-systems
 
 | File | Contents |
 |---|---|
-| `EPO.md` | EPO OPS API — auth, endpoints, CQL, response structure, rate limits, data quality |
-| `TSDR.md` | USPTO TSDR API — mark image retrieval, case status |
-| `CONTEXT.md` | Working notes — database quirks, known data issues |
+| `SETUP.md` | Complete setup guide — prerequisites, credentials, database verification |
+| `RESEARCH.md` | Research framework — central argument, method, literature context |
+| `CONTEXT.md` | Working notes — database quirks, known data issues, design decisions |
 | `ROADMAP.md` | Near-term plans, research agenda, candidate subjects |
+| `EPO.md` | EPO OPS API — auth, endpoints, CQL, response structure, rate limits, data quality |
+| `TSDR.md` | USPTO TSDR API — mark image retrieval, case status, date encoding |
 | `image_tools/ENHANCE.md` | Mark image enhancement workflow |
