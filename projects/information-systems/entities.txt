@@ -1,0 +1,8 @@
+# Entity IDs in scope for this project.
+# Each line is an entity_id from entities.duckdb / company_entity.
+# Run: python -m match information-systems
+
+1  # Remington Rand
+2  # Wilson Jones
+3  # Yawman & Erbe
+4  # Boorum & Pease

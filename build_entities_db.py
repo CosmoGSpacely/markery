@@ -50,22 +50,77 @@ ENTITIES = [
             "binders through the 1930s. Merged into Sperry Rand in 1955."
         ),
     ),
+    (
+        2,
+        "Wilson Jones",
+        "manufacturer",
+        "office-systems",
+        (
+            "Chicago manufacturer of loose-leaf binders, filing systems, and visible index "
+            "products. One of the largest B42F patent filers in the 1900–1939 period. "
+            "Known for the VI-DEX visible index line (1927) and REDIREF/HANDIREF quick-"
+            "reference products. Still operates as a brand under ACCO Brands."
+        ),
+    ),
+    (
+        3,
+        "Yawman & Erbe",
+        "manufacturer",
+        "office-systems",
+        (
+            "Rochester, NY manufacturer of filing cabinets, vertical files, and document "
+            "guides. Acquired the Shannon lever-arch file brand (trademarked 1930). "
+            "One of the early pioneers of vertical filing in American offices."
+        ),
+    ),
+    (
+        4,
+        "Boorum & Pease",
+        "manufacturer",
+        "blank-books",
+        (
+            "New York manufacturer of blank books, account books, and loose-leaf devices. "
+            "One of the dominant B42D filers in the 1900–1939 period. Trademarks include "
+            "BULLDOG (1924) for fasteners and the descriptive mark STANDARD B&P BLANK "
+            "BOOKS AND LOOSE LEAF DEVICES (1921). Later acquired by Esselte."
+        ),
+    ),
 ]
 
 # Each tuple: (entity_id, variant_name, source)
 VARIANTS = [
     # ── Remington Rand ─────────────────────────────────────────────────────
-    # Patent assignee spellings (as they appear in patents.duckdb)
     (1, "Remington Typewriter Company",          "patent_assignee"),
     (1, "REMINGTON TYPEWRITER CO [US]",          "patent_assignee"),
     (1, "REMINGTON TYPEWRITER CO",               "patent_assignee"),
     (1, "REMINGTON RAND INC",                    "patent_assignee"),
     (1, "FIRM REMINGTON RAND INC",               "patent_assignee"),
-    # Trademark owner spellings (as they appear in trademarks.duckdb)
     (1, "REMINGTON TYPEWRITER COMPANY, THE",     "trademark_owner"),
     (1, "REMINGTON RAND INC.",                   "trademark_owner"),
     (1, "REMINGTON RAND BUSINESS SERVICE, INC.", "trademark_owner"),
     (1, "Remington Rand Corporation",            "trademark_owner"),
+
+    # ── Wilson Jones ───────────────────────────────────────────────────────
+    (2, "WILSON JONES CO",                       "patent_assignee"),
+    (2, "WILSON JONES LOOSE LEAF CO",            "patent_assignee"),
+    (2, "WILSON JONES LOOSE LEAF CO [US]",       "patent_assignee"),
+    (2, "WILSON JONES LOOSE LEAF COMPAN",        "patent_assignee"),
+    (2, "WILSON JONES LOOSE LEAF COMPANY [US]",  "patent_assignee"),
+    (2, "WILSON JONES COMPANY",                  "trademark_owner"),
+
+    # ── Yawman & Erbe ──────────────────────────────────────────────────────
+    (3, "YAWMAN & ERBE MFG CO",                  "patent_assignee"),
+    (3, "YAWMAN & ERBE MFG CO [US]",             "patent_assignee"),
+    (3, "YAWMAN AND ERBE MFG COMPANY [US]",      "patent_assignee"),
+    (3, "YAWMAN AND ERBE MFG. CO.",              "trademark_owner"),
+
+    # ── Boorum & Pease ─────────────────────────────────────────────────────
+    (4, "BOORUM & PEASE COMPANY",                "patent_assignee"),
+    (4, "BOORUM & PEASE LOOSE LEAF BOOK COMPANY [US]", "patent_assignee"),
+    (4, "BOORUM AND PEASE COMPANY",              "patent_assignee"),
+    (4, "BOORUM AND PEASE COMPANY [US]",         "patent_assignee"),
+    (4, "BOORUM & PEASE CO.",                    "trademark_owner"),
+    (4, "BOORUM & PEASE COMPANY",                "trademark_owner"),
 ]
 
 
@@ -94,8 +149,8 @@ def build(db_path: str = DB_PATH) -> None:
     )
     for entity_id, variant_name, source in VARIANTS:
         existing = conn.execute(
-            "SELECT 1 FROM entity_name_variant WHERE entity_id=? AND variant_name=?",
-            [entity_id, variant_name],
+            "SELECT 1 FROM entity_name_variant WHERE entity_id=? AND variant_name=? AND source=?",
+            [entity_id, variant_name, source],
         ).fetchone()
         if not existing:
             conn.execute(
