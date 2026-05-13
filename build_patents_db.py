@@ -2,32 +2,29 @@
 """
 build_patents_db.py
 
-Build patents.duckdb from the PatentsView API (search.patentsview.org).
+Build patents.duckdb from the EPO Open Patent Services (OPS) API.
 
-Fetches patents granted 1900–1939 in the USPC classes relevant to
+Fetches US patents granted 1900–1939 in CPC classes relevant to
 pre-computer information systems, then loads them into a local DuckDB
 database for cross-referencing against trademarks.duckdb.
 
 Requirements:
-  - Internet access to search.patentsview.org
-  - pip install duckdb requests  (already in requirements.txt)
+  pip install duckdb requests python-dotenv  (all in requirements.txt)
+  EPO_CONSUMER_KEY and EPO_CONSUMER_SECRET in .env
+  (Register free at https://developers.epo.org)
 
 Usage:
-  python build_patents_db.py                     # full build, all classes
-  python build_patents_db.py --classes 235 40    # specific classes only
-  python build_patents_db.py --resume            # skip already-fetched classes
-  python build_patents_db.py --seed-only         # load seed patents, skip API
-
-Network note:
-  The PatentsView API lives at search.patentsview.org. Some sandboxed
-  environments cannot resolve this host. Run from a normal internet
-  connection. Use --seed-only to load the manually-curated seed patents
-  in any environment.
+  python build_patents_db.py                       # full build, all classes
+  python build_patents_db.py --classes B42F B42D   # specific classes only
+  python build_patents_db.py --resume              # skip already-fetched classes
+  python build_patents_db.py --seed-only           # load seed patents, skip API
 """
 
 from __future__ import annotations
 
 import argparse
+import base64
+import os
 import sys
 import time
 from datetime import date, datetime
@@ -35,51 +32,38 @@ from pathlib import Path
 
 import duckdb
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
-DB_PATH = "patents.duckdb"
+DB_PATH    = "patents.duckdb"
+START_YEAR = 1900
+END_YEAR   = 1939
 
-START_DATE = "1900-01-01"
-END_DATE   = "1939-12-31"
-
-# USPC classes relevant to pre-computer information systems
-USPC_CLASSES: dict[str, str] = {
-    "235": "Registers — tabulating, calculating, punched card machines",
-    "40":  "Card, picture, or sign exhibiting — visible record systems",
-    "281": "Books, strips, and leaves — loose-leaf binders, filing systems",
-    "101": "Printing — typewriters, duplicating, addressing machines",
-    "283": "Printed matter — forms, index cards, ledger sheets",
+# CPC classes for pre-computer information systems.
+# Replaces the old USPC classes — EPO OPS uses CPC as its primary system
+# and has retroactively classified historical patents.
+CPC_CLASSES: dict[str, str] = {
+    "B42F": "Filing appliances, card-index systems, loose-leaf binders",
+    "B42D": "Books, printed matter, forms, index cards, ledger sheets",
+    "B41J": "Typewriters, selective printing mechanisms",
+    "B41L": "Addressing and duplicating machines for office use",
+    "G06C": "Mechanical calculators, tabulating machines",
+    "G06K": "Punched cards, record carriers, recognition of data",
+    "G09F": "Displaying, advertising, visible record systems, signs",
 }
 
-API_BASE   = "https://search.patentsview.org/api/v1/patent/"
-PER_PAGE   = 1000   # PatentsView maximum
-RATE_SLEEP = 0.25   # seconds between requests
+AUTH_URL   = "https://ops.epo.org/3.2/auth/accesstoken"
+SEARCH_URL = "https://ops.epo.org/3.2/rest-services/published-data/search/biblio"
 
-# Fields to request from PatentsView
-FIELDS = [
-    "patent_id",
-    "patent_title",
-    "grant_date",
-    "app_date",
-    "patent_abstract",
-    "assignees.assignee_organization",
-    "assignees.assignee_city",
-    "assignees.assignee_state",
-    "inventors.inventor_name_first",
-    "inventors.inventor_name_last",
-    "inventors.inventor_city",
-    "inventors.inventor_state",
-    "uspc_primary_class.mainclass_id",
-    "uspc_primary_class.subclass_id",
-    "ipc_classes.ipc_action_date",
-    "ipc_classes.ipc_main_group",
-    "ipc_classes.ipc_section",
-    "ipc_classes.ipc_class",
-    "ipc_classes.ipc_subclass",
-]
+RESULTS_PER_PAGE = 100   # EPO OPS maximum per range request
+MAX_PER_QUERY    = 2000  # EPO OPS hard cap per CQL query
+RATE_SLEEP       = 0.5   # seconds between requests (fair use)
+RETRY_DELAYS     = [5, 15, 30]  # backoff on 503 throttle
 
 # ---------------------------------------------------------------------------
 # Schema
@@ -92,78 +76,218 @@ CREATE TABLE IF NOT EXISTS patents (
     app_dt         DATE,
     grant_dt       DATE,
     abstract       VARCHAR,
-    assignee_name  VARCHAR,   -- first / primary assignee
+    assignee_name  VARCHAR,
     assignee_city  VARCHAR,
     assignee_state VARCHAR
 );
 
 CREATE TABLE IF NOT EXISTS patent_classes (
     patent_no      VARCHAR NOT NULL,
-    uspc_mainclass VARCHAR,
-    uspc_subclass  VARCHAR,
-    ipc_section    VARCHAR,
-    ipc_class      VARCHAR,
-    ipc_subclass   VARCHAR,
-    ipc_main_group VARCHAR
+    cpc_class      VARCHAR,   -- e.g. B42F
+    cpc_full       VARCHAR    -- full CPC symbol e.g. B42F17/00
 );
 
 CREATE TABLE IF NOT EXISTS patent_inventors (
     patent_no      VARCHAR NOT NULL,
-    inventor_name  VARCHAR,
-    inventor_city  VARCHAR,
-    inventor_state VARCHAR
+    inventor_name  VARCHAR
 );
 
 CREATE TABLE IF NOT EXISTS fetch_log (
-    uspc_class    VARCHAR,
+    cpc_class     VARCHAR,
+    year_start    INTEGER,
+    year_end      INTEGER,
     fetch_dt      TIMESTAMP,
-    pages_fetched INTEGER,
     patents_added INTEGER
 );
 """
 
 # ---------------------------------------------------------------------------
 # Seed data
-#
-# Manually curated patents known to be relevant. Loaded by --seed-only and
-# also during a full build to ensure these are always present regardless of
-# API pagination edge cases.
 # ---------------------------------------------------------------------------
 
 SEED_PATENTS: list[dict] = [
     {
-        "patent_no":      "1261167",
-        "title":          "Index",
-        "app_dt":         "1916-08-01",
-        "grant_dt":       "1918-04-02",
-        "abstract":       "Phonetic indexing system that encodes surnames by consonant sound "
-                          "into a letter-number code, enabling retrieval of records without "
-                          "exact spelling. Known as the Soundex system.",
-        "assignee_name":  "Remington Typewriter Company",
-        "assignee_city":  "New York",
-        "assignee_state": "NY",
-        "inventors":      [("Robert C.", "Russell", None, None)],
-        "uspc_mainclass": "40",
-        "uspc_subclass":  None,
-        "ipc":            [],
+        "patent_no":     "US1261167A",
+        "title":         "Index",
+        "app_dt":        "1917-10-25",
+        "grant_dt":      "1918-04-02",
+        "abstract":      "Phonetic indexing system that encodes surnames by consonant sound "
+                         "into a letter-number code, enabling retrieval of records without "
+                         "exact spelling. Known as the Soundex system.",
+        "assignee_name": "Remington Typewriter Company",
+        "cpc":           ["B42F17/00"],
+        "inventors":     ["Russell Robert C"],
     },
     {
-        "patent_no":      "1435663",
-        "title":          "Index",
-        "app_dt":         "1921-12-19",
-        "grant_dt":       "1922-11-14",
-        "abstract":       "Improved phonetic indexing system extending the Russell Soundex "
-                          "method. Assigned to Remington Typewriter Company; commercialized "
-                          "by Rand Kardex Bureau as the SOUNDEX product line.",
-        "assignee_name":  "Remington Typewriter Company",
-        "assignee_city":  "New York",
-        "assignee_state": "NY",
-        "inventors":      [("Margaret K.", "Odell", None, None)],
-        "uspc_mainclass": "40",
-        "uspc_subclass":  None,
-        "ipc":            [],
+        "patent_no":     "US1435663A",
+        "title":         "Index",
+        "app_dt":        "1921-12-19",
+        "grant_dt":      "1922-11-14",
+        "abstract":      "Improved phonetic indexing system extending the Russell Soundex "
+                         "method. Assigned to Remington Typewriter Company; commercialized "
+                         "by Rand Kardex Bureau as the SOUNDEX product line.",
+        "assignee_name": "Remington Typewriter Company",
+        "cpc":           ["B42F17/00"],
+        "inventors":     ["Odell Margaret K"],
     },
 ]
+
+# ---------------------------------------------------------------------------
+# EPO OPS client (OAuth2 client-credentials with auto-refresh)
+# ---------------------------------------------------------------------------
+
+class EPOClient:
+    def __init__(self, key: str, secret: str) -> None:
+        self._key     = key
+        self._secret  = secret
+        self._token   = ""
+        self._expiry  = 0.0
+        self._session = requests.Session()
+        self._session.headers["Accept"] = "application/json"
+
+    def _refresh(self) -> None:
+        creds = base64.b64encode(f"{self._key}:{self._secret}".encode()).decode()
+        r = self._session.post(
+            AUTH_URL,
+            headers={"Authorization": f"Basic {creds}",
+                     "Content-Type": "application/x-www-form-urlencoded"},
+            data="grant_type=client_credentials",
+            timeout=20,
+        )
+        if r.status_code != 200:
+            print(f"\n  ERROR: EPO authentication failed: {r.status_code} {r.text[:200]}")
+            sys.exit(1)
+        payload      = r.json()
+        self._token  = payload["access_token"]
+        self._expiry = time.time() + int(payload.get("expires_in", 1200)) - 60
+        self._session.headers["Authorization"] = f"Bearer {self._token}"
+
+    def get(self, url: str, **kwargs) -> requests.Response:
+        if time.time() >= self._expiry:
+            self._refresh()
+        for attempt, delay in enumerate([0] + RETRY_DELAYS):
+            if delay:
+                time.sleep(delay)
+            r = self._session.get(url, **kwargs)
+            if r.status_code != 503:
+                return r
+            if attempt < len(RETRY_DELAYS):
+                print(f"  throttled, retrying in {RETRY_DELAYS[attempt]}s ...")
+        return r
+
+
+# ---------------------------------------------------------------------------
+# OPS response helpers
+# ---------------------------------------------------------------------------
+
+def _text(v) -> str:
+    """Extract text from an OPS JSON value (text lives in '$' key)."""
+    if isinstance(v, dict):
+        return v.get("$", "")
+    return str(v) if v else ""
+
+
+def _list(v) -> list:
+    if v is None:
+        return []
+    return v if isinstance(v, list) else [v]
+
+
+def _first_date(doc_ids) -> date | None:
+    for d in _list(doc_ids):
+        if isinstance(d, dict) and d.get("date"):
+            raw = _text(d["date"]).replace("-", "")
+            try:
+                return datetime.strptime(raw[:8], "%Y%m%d").date()
+            except ValueError:
+                pass
+    return None
+
+
+def _parse_exchange_doc(doc: dict) -> dict | None:
+    """Parse one exchange-document into a flat dict for insert_patent()."""
+    country    = doc.get("@country", "")
+    doc_number = doc.get("@doc-number", "")
+    kind       = doc.get("@kind", "")
+    if not doc_number or country != "US":
+        return None
+
+    patent_no = f"{country}{doc_number}{kind}"
+    bib       = doc.get("bibliographic-data", {})
+
+    # Title — prefer English when multiple language variants
+    title_raw = bib.get("invention-title")
+    if isinstance(title_raw, list):
+        en = next((t for t in title_raw
+                   if isinstance(t, dict) and t.get("@lang") == "en"), title_raw[0])
+        title_raw = en
+    title = _text(title_raw).strip().title() if title_raw else None
+
+    # Dates
+    pub_ref  = bib.get("publication-reference", {})
+    app_ref  = bib.get("application-reference", {})
+    grant_dt = _first_date(_list(pub_ref.get("document-id")))
+    app_dt   = _first_date(_list(app_ref.get("document-id")))
+
+    # Applicant / assignee (first epodoc-format entry)
+    assignee_name = None
+    parties       = bib.get("parties", {})
+    applicant_list = _list(parties.get("applicants", {}).get("applicant"))
+    for ap in applicant_list:
+        if isinstance(ap, dict) and ap.get("@data-format") == "epodoc":
+            assignee_name = _text(ap.get("applicant-name", {}).get("name")).strip() or None
+            break
+    if not assignee_name and applicant_list:
+        ap = applicant_list[0]
+        if isinstance(ap, dict):
+            assignee_name = _text(
+                ap.get("applicant-name", {}).get("name")
+            ).strip() or None
+
+    # Inventors
+    inventors = []
+    for inv in _list(parties.get("inventors", {}).get("inventor")):
+        if isinstance(inv, dict) and inv.get("@data-format") == "epodoc":
+            name = _text(inv.get("inventor-name", {}).get("name")).strip()
+            if name:
+                inventors.append(name)
+
+    # CPC classifications
+    cpc_symbols = []
+    for pc in _list(bib.get("patent-classifications", {}).get("patent-classification")):
+        if isinstance(pc, dict):
+            scheme = pc.get("classification-scheme", {})
+            if isinstance(scheme, dict) and scheme.get("@scheme", "").upper() in ("CPC", "CPCI"):
+                section   = _text(pc.get("section"))
+                cls       = _text(pc.get("class"))
+                subclass  = _text(pc.get("subclass"))
+                maingroup = _text(pc.get("main-group"))
+                subgroup  = _text(pc.get("subgroup"))
+                symbol    = f"{section}{cls}{subclass}{maingroup}/{subgroup}".strip("/")
+                if symbol:
+                    cpc_symbols.append(symbol)
+
+    # Abstract (present with full-cycle constituent; absent in biblio-only — stored NULL)
+    abstract = None
+    abs_raw  = doc.get("abstract")
+    if abs_raw:
+        p = abs_raw.get("p") if isinstance(abs_raw, dict) else None
+        if p:
+            abstract = _text(p).strip() or None
+
+    return {
+        "patent_no":      patent_no,
+        "title":          title,
+        "app_dt":         str(app_dt)   if app_dt   else None,
+        "grant_dt":       str(grant_dt) if grant_dt else None,
+        "abstract":       abstract,
+        "assignee_name":  assignee_name,
+        "assignee_city":  None,
+        "assignee_state": None,
+        "inventors":      inventors,
+        "cpc":            cpc_symbols,
+    }
+
 
 # ---------------------------------------------------------------------------
 # Database helpers
@@ -175,21 +299,11 @@ def init_db(db_path: str) -> duckdb.DuckDBPyConnection:
     return conn
 
 
-def _parse_date(s: str | None) -> date | None:
-    if not s:
-        return None
-    try:
-        return datetime.strptime(s[:10], "%Y-%m-%d").date()
-    except ValueError:
-        return None
-
-
 def insert_patent(conn: duckdb.DuckDBPyConnection, p: dict) -> bool:
-    """Insert one patent record. Returns True if inserted, False if already exists."""
-    existing = conn.execute(
+    """Insert one patent. Returns True if newly inserted."""
+    if conn.execute(
         "SELECT 1 FROM patents WHERE patent_no = ?", [p["patent_no"]]
-    ).fetchone()
-    if existing:
+    ).fetchone():
         return False
 
     conn.execute(
@@ -197,47 +311,28 @@ def insert_patent(conn: duckdb.DuckDBPyConnection, p: dict) -> bool:
            (patent_no, title, app_dt, grant_dt, abstract,
             assignee_name, assignee_city, assignee_state)
            VALUES (?,?,?,?,?,?,?,?)""",
-        [
-            p["patent_no"],
-            p.get("title"),
-            _parse_date(p.get("app_dt")),
-            _parse_date(p.get("grant_dt")),
-            p.get("abstract"),
-            p.get("assignee_name"),
-            p.get("assignee_city"),
-            p.get("assignee_state"),
-        ],
+        [p["patent_no"], p.get("title"),
+         p.get("app_dt"), p.get("grant_dt"), p.get("abstract"),
+         p.get("assignee_name"), p.get("assignee_city"), p.get("assignee_state")],
     )
 
-    for name, city, state in p.get("inventors", []):
+    for inv in p.get("inventors", []):
         conn.execute(
-            "INSERT INTO patent_inventors (patent_no, inventor_name, inventor_city, inventor_state) VALUES (?,?,?,?)",
-            [p["patent_no"], name, city, state],
+            "INSERT INTO patent_inventors (patent_no, inventor_name) VALUES (?,?)",
+            [p["patent_no"], inv],
         )
 
-    for ipc in p.get("ipc", []):
+    cpc_list = p.get("cpc", [])
+    if cpc_list:
+        for sym in cpc_list:
+            conn.execute(
+                "INSERT INTO patent_classes (patent_no, cpc_class, cpc_full) VALUES (?,?,?)",
+                [p["patent_no"], sym[:4] if len(sym) >= 4 else sym, sym],
+            )
+    else:
         conn.execute(
-            """INSERT INTO patent_classes
-               (patent_no, uspc_mainclass, uspc_subclass,
-                ipc_section, ipc_class, ipc_subclass, ipc_main_group)
-               VALUES (?,?,?,?,?,?,?)""",
-            [
-                p["patent_no"],
-                p.get("uspc_mainclass"),
-                p.get("uspc_subclass"),
-                ipc.get("ipc_section"),
-                ipc.get("ipc_class"),
-                ipc.get("ipc_subclass"),
-                ipc.get("ipc_main_group"),
-            ],
-        )
-    if not p.get("ipc"):
-        conn.execute(
-            """INSERT INTO patent_classes
-               (patent_no, uspc_mainclass, uspc_subclass,
-                ipc_section, ipc_class, ipc_subclass, ipc_main_group)
-               VALUES (?,?,?,NULL,NULL,NULL,NULL)""",
-            [p["patent_no"], p.get("uspc_mainclass"), p.get("uspc_subclass")],
+            "INSERT INTO patent_classes (patent_no, cpc_class, cpc_full) VALUES (?,?,?)",
+            [p["patent_no"], None, None],
         )
 
     return True
@@ -246,150 +341,140 @@ def insert_patent(conn: duckdb.DuckDBPyConnection, p: dict) -> bool:
 def load_seed(conn: duckdb.DuckDBPyConnection) -> int:
     added = 0
     for s in SEED_PATENTS:
-        p = dict(s)
-        p["inventors"] = [
-            (f"{fn} {ln}".strip(), city, state)
-            for fn, ln, city, state in s["inventors"]
-        ]
-        if insert_patent(conn, p):
+        if insert_patent(conn, s):
             added += 1
-            print(f"  seeded  US{p['patent_no']}  {p['title']!r}")
+            print(f"  seeded  {s['patent_no']}  {s['title']!r}")
     conn.commit()
     return added
 
 
 # ---------------------------------------------------------------------------
-# PatentsView API fetch
+# EPO OPS fetch
 # ---------------------------------------------------------------------------
 
-def _build_query(uspc_class: str) -> dict:
-    return {
-        "_and": [
-            {"_gte": {"grant_date": START_DATE}},
-            {"_lte": {"grant_date": END_DATE}},
-            {"uspc_primary_class.mainclass_id": uspc_class},
-        ]
-    }
+def _cql(cpc_class: str, year_start: int, year_end: int) -> str:
+    return f'cpc={cpc_class} AND pd within "{year_start}0101,{year_end}1231" AND pn=US'
 
 
-def _parse_hit(hit: dict, uspc_class: str) -> dict:
-    assignees = hit.get("assignees") or []
-    primary = assignees[0] if assignees else {}
+def _search_page(
+    client: EPOClient,
+    cql:    str,
+    start:  int,
+    end:    int,
+) -> tuple[int, list[dict]]:
+    """Fetch one page of biblio search results. Returns (total, patents)."""
+    r = client.get(
+        SEARCH_URL,
+        params={"q": cql},
+        headers={"X-OPS-Range": f"{start}-{end}"},
+        timeout=30,
+    )
+    time.sleep(RATE_SLEEP)
 
-    inventors_raw = hit.get("inventors") or []
-    inventors = [
-        (
-            f"{inv.get('inventor_name_first','')} {inv.get('inventor_name_last','')}".strip(),
-            inv.get("inventor_city"),
-            inv.get("inventor_state"),
-        )
-        for inv in inventors_raw
-    ]
+    if r.status_code == 404:
+        return 0, []
+    if r.status_code != 200:
+        print(f"  HTTP {r.status_code}: {r.text[:200]}")
+        return 0, []
 
-    uspc = hit.get("uspc_primary_class") or {}
-    ipc_list = hit.get("ipc_classes") or []
+    data   = r.json()
+    search = data.get("ops:world-patent-data", {}).get("ops:biblio-search", {})
+    total  = int(search.get("@total-result-count", 0))
 
-    return {
-        "patent_no":      hit.get("patent_id", "").lstrip("US"),
-        "title":          hit.get("patent_title"),
-        "app_dt":         hit.get("app_date"),
-        "grant_dt":       hit.get("grant_date"),
-        "abstract":       hit.get("patent_abstract"),
-        "assignee_name":  primary.get("assignee_organization"),
-        "assignee_city":  primary.get("assignee_city"),
-        "assignee_state": primary.get("assignee_state"),
-        "inventors":      inventors,
-        "uspc_mainclass": uspc.get("mainclass_id") or uspc_class,
-        "uspc_subclass":  uspc.get("subclass_id"),
-        "ipc":            [
-            {
-                "ipc_section":    i.get("ipc_section"),
-                "ipc_class":      i.get("ipc_class"),
-                "ipc_subclass":   i.get("ipc_subclass"),
-                "ipc_main_group": i.get("ipc_main_group"),
-            }
-            for i in ipc_list
-        ],
-    }
+    patents = []
+    docs_container = (
+        search
+        .get("ops:search-result", {})
+        .get("exchange-documents", {})
+    )
+    # exchange-documents is a list of {"exchange-document": doc_or_list} wrappers,
+    # or a single such dict when only one result is returned
+    for item in _list(docs_container):
+        if isinstance(item, dict):
+            inner = item.get("exchange-document", item)
+        else:
+            inner = item
+        # inner may itself be a list (patent-family members); take first US match
+        for doc in (_list(inner) if isinstance(inner, list) else [inner]):
+            parsed = _parse_exchange_doc(doc)
+            if parsed:
+                patents.append(parsed)
+                break
+
+    return total, patents
+
+
+def fetch_class_window(
+    conn:       duckdb.DuckDBPyConnection,
+    client:     EPOClient,
+    cpc_class:  str,
+    year_start: int,
+    year_end:   int,
+) -> int:
+    """Fetch all pages for one CPC class + year window. Returns patents added."""
+    cql = _cql(cpc_class, year_start, year_end)
+
+    total, first_page = _search_page(client, cql, 1, RESULTS_PER_PAGE)
+    if total == 0:
+        return 0
+
+    if total > MAX_PER_QUERY:
+        print(f"    {cpc_class} {year_start}–{year_end}: {total} results — subdividing by year")
+        added = 0
+        for yr in range(year_start, year_end + 1):
+            added += fetch_class_window(conn, client, cpc_class, yr, yr)
+        return added
+
+    added = sum(1 for p in first_page if insert_patent(conn, p))
+
+    page_start = RESULTS_PER_PAGE + 1
+    while page_start <= min(total, MAX_PER_QUERY):
+        page_end = min(page_start + RESULTS_PER_PAGE - 1, total, MAX_PER_QUERY)
+        _, page_patents = _search_page(client, cql, page_start, page_end)
+        added += sum(1 for p in page_patents if insert_patent(conn, p))
+        page_start = page_end + 1
+
+    conn.commit()
+    return added
 
 
 def fetch_class(
-    conn: duckdb.DuckDBPyConnection,
-    uspc_class: str,
-    resume: bool = False,
+    conn:       duckdb.DuckDBPyConnection,
+    client:     EPOClient,
+    cpc_class:  str,
+    resume:     bool = False,
+    year_start: int  = START_YEAR,
+    year_end:   int  = END_YEAR,
 ) -> int:
-    if resume:
-        done = conn.execute(
-            "SELECT 1 FROM fetch_log WHERE uspc_class = ?", [uspc_class]
-        ).fetchone()
-        if done:
-            print(f"  skipping class {uspc_class} (already fetched)")
-            return 0
+    """Fetch all patents for one CPC class across the given year range. Returns total added."""
+    grand_total = 0
+    # 5-year windows keep each query well under the 2000-result cap
+    windows = [
+        (y, min(y + 4, year_end))
+        for y in range(year_start, year_end + 1, 5)
+    ]
 
-    session = requests.Session()
-    session.headers.update({"Accept": "application/json"})
+    for year_start, year_end in windows:
+        if resume:
+            if conn.execute(
+                "SELECT 1 FROM fetch_log WHERE cpc_class=? AND year_start=? AND year_end=?",
+                [cpc_class, year_start, year_end],
+            ).fetchone():
+                print(f"    skipping {cpc_class} {year_start}–{year_end} (already fetched)")
+                continue
 
-    q = _build_query(uspc_class)
-    page = 1
-    total_added = 0
-    pages_fetched = 0
-    total_hits = None
+        added = fetch_class_window(conn, client, cpc_class, year_start, year_end)
+        grand_total += added
+        print(f"    {cpc_class} {year_start}–{year_end}  +{added}")
 
-    while True:
-        params = {
-            "q":        str(q).replace("'", '"'),
-            "f":        str(FIELDS).replace("'", '"'),
-            "s":        '[{"grant_date":"asc"}]',
-            "per_page": PER_PAGE,
-            "page":     page,
-        }
-
-        try:
-            resp = session.get(API_BASE, params=params, timeout=30)
-        except requests.exceptions.ConnectionError as e:
-            print(f"\n  ERROR: Cannot reach {API_BASE}")
-            print(f"  {e}")
-            print("  Run from a network with access to search.patentsview.org")
-            print("  Use --seed-only to load manually-curated seed patents instead.")
-            sys.exit(1)
-
-        if resp.status_code != 200:
-            print(f"  HTTP {resp.status_code} on page {page}: {resp.text[:200]}")
-            break
-
-        data = resp.json()
-        if total_hits is None:
-            total_hits = data.get("total_hits", 0)
-            print(f"  class {uspc_class}: {total_hits:,} patents total")
-
-        hits = data.get("hits", [])
-        if not hits:
-            break
-
-        batch_added = 0
-        for hit in hits:
-            p = _parse_hit(hit, uspc_class)
-            if p["patent_no"] and insert_patent(conn, p):
-                batch_added += 1
-
+        conn.execute(
+            "INSERT INTO fetch_log (cpc_class, year_start, year_end, fetch_dt, patents_added) "
+            "VALUES (?,?,?,?,?)",
+            [cpc_class, year_start, year_end, datetime.now(), added],
+        )
         conn.commit()
-        pages_fetched += 1
-        total_added += batch_added
-        print(f"    page {page:4d}  +{batch_added:4d}  total {total_added:,}", end="\r")
 
-        if len(hits) < PER_PAGE:
-            break
-        page += 1
-        time.sleep(RATE_SLEEP)
-
-    print(f"    class {uspc_class}: {total_added:,} patents added ({pages_fetched} pages)        ")
-
-    conn.execute(
-        "INSERT INTO fetch_log (uspc_class, fetch_dt, pages_fetched, patents_added) VALUES (?,?,?,?)",
-        [uspc_class, datetime.now(), pages_fetched, total_added],
-    )
-    conn.commit()
-    return total_added
+    return grand_total
 
 
 # ---------------------------------------------------------------------------
@@ -398,28 +483,22 @@ def fetch_class(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Build patents.duckdb from PatentsView API (1900–1939, information-system USPC classes)"
+        description="Build patents.duckdb from EPO OPS API "
+                    "(US patents 1900–1939, pre-computer information system CPC classes)"
     )
-    parser.add_argument(
-        "--db", default=DB_PATH, help=f"Output database path (default: {DB_PATH})"
-    )
-    parser.add_argument(
-        "--classes",
-        nargs="+",
-        default=list(USPC_CLASSES),
-        metavar="CLASS",
-        help=f"USPC classes to fetch (default: {' '.join(USPC_CLASSES)})",
-    )
-    parser.add_argument(
-        "--resume",
-        action="store_true",
-        help="Skip classes already recorded in fetch_log",
-    )
-    parser.add_argument(
-        "--seed-only",
-        action="store_true",
-        help="Load seed patents only, skip API calls (works without network access)",
-    )
+    parser.add_argument("--db", default=DB_PATH,
+                        help=f"Output database path (default: {DB_PATH})")
+    parser.add_argument("--classes", nargs="+", default=list(CPC_CLASSES),
+                        metavar="CLASS",
+                        help=f"CPC classes to fetch (default: {' '.join(CPC_CLASSES)})")
+    parser.add_argument("--resume", action="store_true",
+                        help="Skip class/year windows already recorded in fetch_log")
+    parser.add_argument("--seed-only", action="store_true",
+                        help="Load seed patents only, skip API calls")
+    parser.add_argument("--year-start", type=int, default=START_YEAR,
+                        metavar="YEAR", help=f"First grant year to fetch (default: {START_YEAR})")
+    parser.add_argument("--year-end", type=int, default=END_YEAR,
+                        metavar="YEAR", help=f"Last grant year to fetch (default: {END_YEAR})")
     args = parser.parse_args()
 
     conn = init_db(args.db)
@@ -434,18 +513,28 @@ def main() -> None:
         conn.close()
         return
 
-    print(f"\nFetching classes: {', '.join(args.classes)}")
-    print(f"Date range: {START_DATE} – {END_DATE}")
-    print(f"API: {API_BASE}\n")
+    key    = os.getenv("EPO_CONSUMER_KEY")
+    secret = os.getenv("EPO_CONSUMER_SECRET")
+    if not key or not secret:
+        print("\nERROR: EPO_CONSUMER_KEY and EPO_CONSUMER_SECRET must be set in .env")
+        print("Register free at https://developers.epo.org")
+        sys.exit(1)
+
+    client = EPOClient(key, secret)
+
+    print(f"\nFetching CPC classes: {', '.join(args.classes)}")
+    print(f"Date range: {args.year_start}–{args.year_end}\n")
 
     grand_total = 0
     for cls in args.classes:
-        desc = USPC_CLASSES.get(cls, "")
-        print(f"USPC {cls}  {desc}")
-        grand_total += fetch_class(conn, cls, resume=args.resume)
+        desc = CPC_CLASSES.get(cls, "")
+        print(f"CPC {cls}  {desc}")
+        grand_total += fetch_class(conn, client, cls,
+                                   resume=args.resume,
+                                   year_start=args.year_start,
+                                   year_end=args.year_end)
 
     conn.close()
-
     print(f"\nDone. {grand_total:,} patents added.")
     print(f"Database: {Path(args.db).resolve()}")
 

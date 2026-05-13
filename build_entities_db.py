@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+"""
+build_entities_db.py
+
+Creates and populates entities.duckdb — a canonical company registry used to
+cross-reference patent assignee names against trademark owner names.
+
+Schema
+------
+company_entity       one row per organisation
+entity_name_variant  all name spellings/variants per entity, tagged by source
+
+Usage
+-----
+    python build_entities_db.py
+"""
+
+import duckdb
+
+DB_PATH = "entities.duckdb"
+
+DDL = """
+CREATE TABLE IF NOT EXISTS company_entity (
+    entity_id      INTEGER PRIMARY KEY,
+    canonical_name VARCHAR NOT NULL,
+    entity_type    VARCHAR,   -- 'manufacturer', 'publisher', 'individual', ...
+    industry       VARCHAR,   -- 'office-systems', 'blank-books', ...
+    notes          VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS entity_name_variant (
+    variant_id   INTEGER PRIMARY KEY,
+    entity_id    INTEGER NOT NULL REFERENCES company_entity(entity_id),
+    variant_name VARCHAR NOT NULL,
+    source       VARCHAR NOT NULL  -- 'patent_assignee' | 'trademark_owner' | 'canonical'
+);
+"""
+
+# ── Seed data ─────────────────────────────────────────────────────────────────
+# Each tuple: (entity_id, canonical_name, entity_type, industry, notes)
+ENTITIES = [
+    (
+        1,
+        "Remington Rand",
+        "manufacturer",
+        "office-systems",
+        (
+            "Formed 1927 by merger of Remington Typewriter Company and Rand Kardex Bureau. "
+            "Major producer of visible card-index systems, filing cabinets, and loose-leaf "
+            "binders through the 1930s. Merged into Sperry Rand in 1955."
+        ),
+    ),
+]
+
+# Each tuple: (entity_id, variant_name, source)
+VARIANTS = [
+    # ── Remington Rand ─────────────────────────────────────────────────────
+    # Patent assignee spellings (as they appear in patents.duckdb)
+    (1, "Remington Typewriter Company",          "patent_assignee"),
+    (1, "REMINGTON TYPEWRITER CO [US]",          "patent_assignee"),
+    (1, "REMINGTON TYPEWRITER CO",               "patent_assignee"),
+    (1, "REMINGTON RAND INC",                    "patent_assignee"),
+    (1, "FIRM REMINGTON RAND INC",               "patent_assignee"),
+    # Trademark owner spellings (as they appear in trademarks.duckdb)
+    (1, "REMINGTON TYPEWRITER COMPANY, THE",     "trademark_owner"),
+    (1, "REMINGTON RAND INC.",                   "trademark_owner"),
+    (1, "REMINGTON RAND BUSINESS SERVICE, INC.", "trademark_owner"),
+    (1, "Remington Rand Corporation",            "trademark_owner"),
+]
+
+
+def build(db_path: str = DB_PATH) -> None:
+    conn = duckdb.connect(db_path)
+    conn.execute(DDL)
+
+    # Insert entities
+    added_entities = 0
+    for row in ENTITIES:
+        existing = conn.execute(
+            "SELECT 1 FROM company_entity WHERE entity_id = ?", [row[0]]
+        ).fetchone()
+        if not existing:
+            conn.execute(
+                "INSERT INTO company_entity VALUES (?, ?, ?, ?, ?)", list(row)
+            )
+            added_entities += 1
+
+    # Insert variants (skip duplicates by entity_id + variant_name)
+    added_variants = 0
+    variant_id = (
+        conn.execute("SELECT COALESCE(MAX(variant_id), 0) FROM entity_name_variant")
+        .fetchone()[0]
+        + 1
+    )
+    for entity_id, variant_name, source in VARIANTS:
+        existing = conn.execute(
+            "SELECT 1 FROM entity_name_variant WHERE entity_id=? AND variant_name=?",
+            [entity_id, variant_name],
+        ).fetchone()
+        if not existing:
+            conn.execute(
+                "INSERT INTO entity_name_variant VALUES (?, ?, ?, ?)",
+                [variant_id, entity_id, variant_name, source],
+            )
+            variant_id += 1
+            added_variants += 1
+
+    conn.close()
+    print(f"Database: {db_path}")
+    print(f"  {added_entities} entities added")
+    print(f"  {added_variants} name variants added")
+
+
+if __name__ == "__main__":
+    build()
