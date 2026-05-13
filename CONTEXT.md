@@ -24,9 +24,17 @@ Adding a new company to the analysis means adding it to `build_entities_db.py` (
 
 ## trademarks.duckdb — Working Notes
 
+### Two-tier TSDR fetch approach
+
+The project uses two TSDR tables depending on whether the mark has a visual image:
+
+**Primary: marks with images** — design marks (3xxx) and stylized marks (5xxx). These have scanned drawings in the TSDR `rawImage` store and are the primary visual research targets. Fetched into `mark_images`.
+
+**Supplementary: text-only marks** — typeset marks (1xxx) and standard character marks (4xxx). The `rawImage` endpoint returns 404 for these because there is no drawing to scan. Full case status (filing dates, goods/services description, first-use dates) is fetched from the TSDR case status endpoint and stored in `mark_case_status`. These are brought in for analysis when they belong to the same entity and trademark class as a primary image mark — they are the product name marks (KARDEX, LINEDEX, FAVORITE, SHANNON) whose histories the research essays document.
+
 ### mark_images table
 
-Stores trademark drawing images fetched from the TSDR API. Added after the initial database build.
+Stores trademark drawing images fetched from the TSDR `rawImage` endpoint. Populated for design and stylized marks.
 
 ```sql
 CREATE TABLE mark_images (
@@ -47,9 +55,42 @@ png_bytes = bytes(row[0])
 
 Note: DuckDB's `length()` does not accept BLOB. Use `image_size` or `octet_length(image_data)`.
 
+### mark_case_status table
+
+Stores parsed case status data for typeset marks that have no image. Fetched from the TSDR JSON case status endpoint (`/ts/cd/casestatus/sn{serial}/info`).
+
+```sql
+CREATE TABLE mark_case_status (
+    serial_no           VARCHAR PRIMARY KEY,
+    mark_text           VARCHAR,
+    filing_dt           DATE,
+    registration_no     VARCHAR,
+    registration_dt     DATE,
+    status_cd           VARCHAR,
+    goods_desc          VARCHAR,    -- first goods/services description
+    intl_class          VARCHAR,    -- Nice class code(s), comma-separated
+    first_use_dt        VARCHAR,   -- ISO 8601 reduced precision (see below)
+    first_use_comm_dt   VARCHAR,   -- ISO 8601 reduced precision (see below)
+    raw_json            VARCHAR,    -- full JSON response for future extraction
+    fetched_dt          DATE NOT NULL DEFAULT CURRENT_DATE
+);
+```
+
+Fields come from `trademarks[0].status` (mark_text, filing_dt, registration_no, status_cd) and `trademarks[0].gsList[0]` (goods_desc, intl_class, first_use dates).
+
+First-use dates are stored as **ISO 8601 reduced precision VARCHAR** to preserve the precision actually recorded:
+
+| Stored value | Meaning |
+|---|---|
+| `"1916-01-15"` | Full date — year, month, and day all specified |
+| `"1924-01"` | Month precision — applicant specified year and month only (day field was `00` in the API) |
+| `"1885"` | Year precision — applicant specified year only |
+
+The API returns these as integers (e.g. `19160115`, `19240100`, `18850000`). Day `00` and month `00` were permitted under USPTO rules and indicate the applicant did not specify that component. Coercing `00` to `01` would introduce false precision; the reduced-precision string representation is exact. For date range queries, `CAST(LEFT(first_use_comm_dt, 4) AS INTEGER)` extracts the year reliably regardless of precision.
+
 ### Images available for historical marks
 
-The TSDR `rawImage` endpoint returns PNG images even for marks whose paper files are destroyed. All 1900–1939 design marks tested successfully returned images. Typical size: 6–8 KB, ~750–900px wide.
+The TSDR `rawImage` endpoint returns PNG images for design and stylized marks even when the paper file is destroyed. Typeset marks (1xxx) return 404 — no image was ever filed with the application, so there is nothing to retrieve. Typical image size for a scanned historical mark: 6–8 KB, ~750–900px wide.
 
 ### Drawing code discrepancy
 

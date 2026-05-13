@@ -27,7 +27,8 @@ Built from the 2011 USPTO Trademark Case Files Dataset, filtered to applications
 | `design_search` | 18,790 | Design search codes (visual element classification) |
 | `prior_mark` | 11,329 | Prior mark references |
 | `statement` | 35,077 | Goods and services descriptions |
-| `mark_images` | varies | PNG mark images fetched from USPTO TSDR API (BLOB) |
+| `mark_images` | varies | PNG mark images fetched from TSDR `rawImage` (design + stylized marks) |
+| `mark_case_status` | varies | Parsed case status (filing dates, goods, first-use) for typeset marks without images |
 
 Rebuilt by `build_trademarks_db.py` from CSV files in `csv/` (not committed — obtain from USPTO).
 
