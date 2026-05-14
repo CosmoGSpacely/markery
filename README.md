@@ -164,6 +164,13 @@ Research documents (`.md` essays, `README.md`, `confirmed.jsonl`) are tracked in
 
 ---
 
+## Scripts
+
+```bash
+# Session handoff: databases, project counts, deferred items, next action
+python scripts/check-status
+```
+
 ## Setup
 
 ```bash
