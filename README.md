@@ -58,6 +58,13 @@ Canonical company registry mapping organization names to all spelling variants f
 
 Rebuilt by `build_entities_db.py`. Idempotent — safe to re-run; skips existing rows.
 
+**Adding a new entity:**
+1. Add a tuple to `ENTITIES` in `build_entities_db.py` with the next sequential `entity_id`.
+2. Query both `patents.duckdb` and `trademarks.duckdb` to enumerate exact name spellings — do not guess. Add one row to `VARIANTS` per spelling, per source (`patent_assignee` / `trademark_owner`). A name appearing in both databases needs two rows.
+3. Add the `entity_id` to the relevant project's `entities.txt`.
+4. Run `python build_entities_db.py`.
+5. Run `python -m match <project>` to regenerate candidates.
+
 #### Cross-database queries via ATTACH
 
 ```python
@@ -103,6 +110,10 @@ python -m match --entity "Remington Rand"
 Output is written to `projects/<project>/matches/candidates.jsonl` — one JSON object per candidate pair, scored by date proximity and CPC class relevance. Confirmed pairs are recorded by hand in `matches/confirmed.jsonl`.
 
 The scoring model (`match/score.py`) gives highest weight to patents granted shortly before the trademark filing date, with a boost for CPC classes in the information-systems domain. Top score is 0.80 (patent granted within weeks of trademark filing).
+
+Score components: `date_score` (max 0.5) — patent grant precedes trademark filing → positive, trademark filed before patent → slight negative (not disqualifying); `class_score` (0.3) — fires when any CPC class is in the product signal set (B42F, B42D, B41J, B41L, G06C, G06K, G09F).
+
+**Curation note:** `candidates.jsonl` is regenerated on every run — do not edit it. All curation goes into `confirmed.jsonl`. Company-name marks (REMINGTON, RAND, WILSON JONES COMPANY) score 0.80 against every patent in the window because every patent matches the company. Focus on product-name marks (KARDEX, VARIADEX, VI-DEX, SOUNDEX, FAVORITE) for confirmed pairs.
 
 ---
 

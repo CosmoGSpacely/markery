@@ -138,6 +138,89 @@ List of ownership records. Each group contains owner name, entity type, and addr
 - The official Swagger UI is at [developer.uspto.gov/swagger/tsdr-api-v1](https://developer.uspto.gov/swagger/tsdr-api-v1) but renders as HTML, not machine-readable JSON.
 - Historical marks (pre-1940) often have `"currentLoc": "FILE DESTROYED"` — the paper file is gone but the digital image still exists via `rawImage`.
 
+## Database Schema Notes
+
+### Two-tier TSDR fetch approach
+
+TSDR mark data splits across two tables based on whether the mark has a visual image:
+
+**Design and stylized marks (drawing code 3xxx, 5xxx)** — have scanned drawings in the TSDR `rawImage` store. Fetched into `mark_images`. These are the primary visual research targets.
+
+**Typeset and standard character marks (drawing code 1xxx, 4xxx)** — the `rawImage` endpoint returns 404 because no drawing was ever filed with the application. Full case status (filing dates, goods/services, first-use dates) is fetched from the case status endpoint and stored in `mark_case_status`. Brought in for analysis when they belong to the same entity and class as a primary image mark (e.g., KARDEX, SOUNDEX, FAVORITE).
+
+### mark_images table
+
+```sql
+CREATE TABLE mark_images (
+    serial_no    VARCHAR PRIMARY KEY,
+    image_data   BLOB NOT NULL,
+    image_format VARCHAR NOT NULL,   -- MIME type, e.g. 'image/png'
+    image_size   INTEGER NOT NULL,   -- byte length
+    fetched_dt   DATE NOT NULL DEFAULT CURRENT_DATE
+);
+```
+
+Images are stored as raw bytes. To read in Python:
+```python
+row = conn.execute(
+    "SELECT image_data FROM mark_images WHERE serial_no = ?", ["71165547"]
+).fetchone()
+png_bytes = bytes(row[0])
+```
+
+Note: DuckDB's `length()` does not accept BLOB. Use the `image_size` column or `octet_length(image_data)` instead.
+
+### mark_case_status table
+
+```sql
+CREATE TABLE mark_case_status (
+    serial_no           VARCHAR PRIMARY KEY,
+    mark_text           VARCHAR,
+    filing_dt           DATE,
+    registration_no     VARCHAR,
+    registration_dt     DATE,
+    status_cd           VARCHAR,
+    goods_desc          VARCHAR,       -- first goods/services description
+    intl_class          VARCHAR,       -- Nice class code(s), comma-separated
+    first_use_dt        VARCHAR,       -- ISO 8601 reduced precision (see First-use date encoding)
+    first_use_comm_dt   VARCHAR,       -- ISO 8601 reduced precision
+    raw_json            VARCHAR,       -- full JSON response
+    fetched_dt          DATE NOT NULL DEFAULT CURRENT_DATE
+);
+```
+
+Fields map from: `trademarks[0].status` → mark_text, filing_dt, registration_no, status_cd; `trademarks[0].gsList[0]` → goods_desc, intl_class, first_use dates.
+
+### Drawing code discrepancy
+
+The CSV dataset and TSDR API use different drawing code formats:
+
+| Source | Format | Example |
+|---|---|---|
+| CSV dataset (`case_file.mark_draw_cd`) | 4-character | `3000`, `5W23`, `1000` |
+| TSDR API (`markDrawingCd`) | Single digit | `3`, `5`, `1` |
+
+The first character of the CSV code matches the API digit. All filter queries use the CSV 4-character format.
+
+### Status code discrepancy
+
+The CSV dataset uses numeric status codes (e.g. `626`, `710`). The TSDR API also returns a `tm5Status` field (0–15, EUIPO-harmonized) with `tm5StatusDesc`. Ignore `tm5Status` for this project — the CSV numeric codes are the ones in `case_file.status_cd`.
+
+### Owner table joins
+
+The `owner` table has multiple rows per `serial_no` when ownership was transferred. Join carefully: use `own_entity_cd` or filter by `own_type_cd` to distinguish original applicant from subsequent owners.
+
+### Known quirks
+
+- Owner names are inconsistently cased (`Guild Products Corporation` vs `GUILD PRODUCTS CORPORATION` for the same entity). Use `UPPER()` for matching.
+- `serial_no` is stored as `VARCHAR` throughout, not `INTEGER`.
+- Physical prosecution files for many early marks carry `"currentLoc": "FILE DESTROYED"` in TSDR. Mark images (via `rawImage`) are often still available even when the paper file is destroyed.
+- Six marks in the 1900–1939 scope show status 626/624 (live) in the 2011 snapshot — these were genuinely long-lived marks.
+
+### Data gaps
+
+`event.csv` (~3 GB, prosecution history) and foreign application data were not loaded. See D004 and D005 in `DEFERRED.md` for reopen triggers.
+
 ## References
 
 - [TSDR API Catalog](https://developer.uspto.gov/api-catalog/tsdr-data-api)

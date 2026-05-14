@@ -1,226 +1,104 @@
 # Markery Roadmap
 
-Working plan for the markery project — where it stands, what's been built, and where it's going. Updated as of v0.1.1-alpha.
+Research design and phase plan for the Markery project. Current state and metrics live in `STATUS.md`; deferred items live in `DEFERRED.md`.
 
 ---
 
 ## What Markery Is
 
-Markery is a research tool for studying American commercial history through USPTO trademark records. The primary dataset is 25,473 trademark applications filed 1900–1939, held in `trademarks.duckdb`. The project is organized around a specific hypothesis: that the combined trademark and patent record reveals things about the history of American technology and commerce that neither source shows alone.
+Markery is a research tool for studying American commercial history through the combined USPTO trademark and patent record. The project cross-references trademark registrations with patent filings for the same companies and time periods, producing documented patent-trademark pairs that reveal the commercial lifecycle of early 20th-century technologies.
 
-The immediate research focus is **pre-computer information systems** — the filing cabinets, index cards, tabulating machines, visible record systems, and phonetic coding schemes that American businesses used to organize knowledge before the digital era. These systems were patented, trademarked, sold by major corporations, and used at massive scale. They are almost entirely absent from the standard history of information technology.
+The core hypothesis: the trademark record establishes what a company called its product and when it entered commerce; the patent record establishes what was technically novel. Neither source alone shows the full picture. No existing work systematically cross-references them for the 1900–1939 period.
 
----
-
-## Current State (v0.1.1-alpha)
-
-### Infrastructure
-
-**`trademarks.duckdb`** — the core database. 25,473 case records from the USPTO Trademark Case Files Dataset (2011 snapshot), filtered to 1900–1939. Tables: `case_file`, `owner`, `statement` (goods/services), `classification`, `design_search`, `intl_class`, `us_class`, `mark_images` (fetched via TSDR API). See `README.md` for full schema.
-
-**`tsdr_client.py`** — USPTO TSDR API client. Fetches case status JSON and raw mark images (PNG) by serial number. Handles authentication, rate limits, and the quirky endpoint prefix inconsistencies in the TSDR API. See `TSDR.md`.
-
-**`image_tools/`** — mark image enhancement pipeline. Takes raw TSDR PNG scans (~800px), upscales 4× using Real-ESRGAN (`x4plus-anime` model, optimized for pen-and-ink line art), optionally traces clean marks to SVG using vtracer. Produces print-ready PNG at ~3200px (~10" at 300 DPI). Routes on `mark_draw_cd` and design search codes to decide whether SVG vectorization is worth attempting. Exposes a CLI (`python -m image_tools {enhance,batch,gallery}`) and a Python API (`from image_tools import process_mark, build_gallery`).
-
-**`commerce-and-technology-historian/`** — Claude specialist persona. System prompt, rules, worked examples, and reference docs for a historian of American commercial and industrial history, 1870–1950. Reads the trademark database directly and writes analysis grounded in specific filing records. Reference docs cover drawing codes, status codes, historical context, and image enhancement.
-
-**`.claude/commands/enhance-marks.md`** — `/enhance-marks` skill. Guides the AI through fetching, enhancing, and gallery-building for a set of marks specified by date range, company, or SQL WHERE clause.
-
-### Project structure
-
-```
-projects/
-  information-systems/
-    README.md
-    soundex-marks/
-      background.md        ← research essay
-    input/                 ← gitignored
-    output/                ← gitignored (generated images, PDFs, HTML)
-      filing-systems/      40 design marks for filing and record organization
-      stationery-marks/    55 design marks for writing paper and stationery goods
-      soundex-marks/       SOUNDEX marks + Russell (1918) and Odell (1922) patent PDFs
-  monthly-image-review/
-    README.md
-    input/                 ← gitignored
-    output/                ← gitignored
-      may1930-designs/     39 design marks filed May 1930, raw TSDR images
-      enhanced-may1930-designs/   Real-ESRGAN enhanced (partial)
-```
-
-Research documents (`.md` essays, `README.md`) are tracked in git. Generated output (images, PDFs, gallery HTML) is gitignored — regenerable from the database and APIs.
+**Primary research focus:** pre-computer information systems — the filing cabinets, card indexes, visible record systems, tabulating machines, and phonetic coding schemes that American businesses used to organize knowledge before the digital era.
 
 ---
 
-## Near-Term: Patent Module
+## Phase 1 — Working Research Tool *(largely complete)*
 
-### Rationale
+**Goal:** End-to-end research session is repeatable — a new entity can be added, candidates generated, a pair confirmed, and an essay written without consulting raw API docs.
 
-The trademark record establishes what a company called its product and when it entered commerce. The patent record establishes what was technically novel. For pre-computer information systems, the two records are complementary: companies like Rand Kardex Bureau (SOUNDEX, 1927) held both the trademark on the product name and the patents on the underlying algorithm — but nothing in either record points at the other. Reconnecting them by cross-referencing assignee names and date ranges is the core research operation this module will automate.
-
-### Source
-
-**PatentsView API** (`api.patentsview.org`) — free, structured, USPTO-backed, covers the full historical patent record. Supports queries by filing date, grant date, USPC classification, and assignee name. No authentication required.
-
-### `patents.duckdb` schema
-
-```sql
-CREATE TABLE patents (
-    patent_no       VARCHAR PRIMARY KEY,
-    title           VARCHAR,
-    filing_dt       DATE,
-    grant_dt        DATE,
-    abstract        VARCHAR,
-    assignee_name   VARCHAR,
-    assignee_city   VARCHAR,
-    assignee_state  VARCHAR
-);
-
-CREATE TABLE patent_classes (
-    patent_no       VARCHAR,
-    uspc_class      VARCHAR,
-    uspc_subclass   VARCHAR,
-    ipc_class       VARCHAR
-);
-
-CREATE TABLE patent_inventors (
-    patent_no       VARCHAR,
-    inventor_name   VARCHAR,
-    inventor_city   VARCHAR,
-    inventor_state  VARCHAR
-);
-```
-
-### USPC classifications to export (1900–1939 scope)
-
-| Class | Description | Relevance |
+| Stage | What was built | Skill developed |
 |---|---|---|
-| 235 | Registers | Tabulating, calculating, punched card machines |
-| 40 | Card, picture, or sign exhibiting | Visible record systems, card indexes |
-| 281 | Books, strips, and leaves | Loose-leaf binders, filing systems |
-| 101 | Printing | Typewriters, duplicating, addressing machines |
-| 283 | Printed matter | Forms, index cards, ledger sheets |
+| TSDR client | `tsdr_client.py` — case status JSON + raw mark image fetch | External API integration, rate limiting |
+| Trademark database | `trademarks.duckdb` — 25,473 case files, 1900–1939 | DuckDB database design, bulk CSV import |
+| Historian specialist | `commerce-and-technology-historian/` — Claude specialist persona | Specialist agent design, system prompt engineering |
+| Image pipeline | `image_tools/` — Real-ESRGAN 4× upscale + SVG vectorization | ML inference pipeline, image processing |
+| Patent database | `patents.duckdb` — 11,284 EPO patents (B42F, B42D), 1900–1939 | EPO OPS API, CQL queries, OAuth2 |
+| Entity registry | `entities.duckdb` — canonical company registry with name variants | Entity resolution, cross-database ATTACH queries |
+| Match pipeline | `match/` — scored patent-trademark candidate pairs | Scoring model design, research workflow |
+| Projects tree | `projects/information-systems/` — first research project | Research methodology, primary source curation |
 
-### `patent_tools/` module
-
-```
-patent_tools/
-  __init__.py
-  fetch.py        # PatentsView API queries → patents.duckdb
-  pdf.py          # Google Patents PDF downloader (already proven for Soundex)
-  drawings.py     # Extract figure images from patent PDFs (pdf2image or pypdf)
-  link.py         # Cross-reference patent assignees against trademark owners
-  cli.py          # python -m patent_tools {fetch,link,pdf}
-```
-
-`link.py` is the high-value piece. The matching logic:
-
-1. Normalize company names (strip Inc./Corp./Co., uppercase, strip punctuation)
-2. Join `patents.assignee_name` against `trademarks.owner.own_name` on normalized name
-3. Filter to pairs where the patent grant date precedes or overlaps the trademark first-use date
-4. Output a ranked candidate list for review
-
-### Patent drawings in project output
-
-For confirmed mark/patent pairs, patent figure images go alongside the mark image in the project output folder. The research essay references both. The gallery page for that mark links to the patent PDF and shows key figures inline.
+**Phase gate:** Phase 1 closes when the operations workflow is documented as a single runnable checklist (in progress — see `STATUS.md`).
 
 ---
 
-## Medium-Term: Publication Pipeline
+## Phase 2 — Corpus and Match Quality *(planned)*
 
-### Rationale
+**Goal:** `information-systems` project has 5 confirmed entries with essays.
 
-The current output is self-contained HTML gallery files — useful for browsing locally, not shareable or discoverable. The research has genuine public value: there is no existing resource that systematically cross-references pre-computer information system patents with trademark records and contextualizes them historically. A static public website changes this from a private research tool to a citable reference.
+**Stages:**
 
-### Site architecture
+1. **Remaining CPC classes** — fetch B41J (typewriters), B41L (duplicating), G06C (calculating machines), G06K (data recognition), G09F (display devices) into `patents.duckdb`. Deferred as D001 until typewriter/calculator entries are needed. Command: `python build_patents_db.py --classes B41J B41L G06C G06K G09F --resume`.
 
-Two-level Jinja2 site generator, replacing the current flat `gallery.py`:
+2. **New entities** — add Smead Mfg. (SMEAD'S TELL VISION SYSTEM, 1938), Library Bureau, and others identified through the candidate list. Procedure: `README.md` → entities section.
 
-```
-site/
-  index.html              ← filterable gallery across all projects/entries
-  information-systems/
-    index.html            ← project landing page
-    soundex/
-      index.html          ← entry detail page
-      soundex-71246709.png
-      soundex-71255821.png
-      us1261167-fig1.png  ← extracted patent drawing
-      us1261167.pdf
-  monthly-image-review/
-    index.html
-    may-1930/
-      index.html
-      ...
-```
+3. **Scoring refinement** — address company-name mark false positives (D006). A heuristic that flags marks whose `mark_element` matches an entity canonical name would filter most without changing the scoring formula.
 
-Key differences from the current gallery approach:
-- **Referenced images, not base64-embedded** — pages are fast and crawlable by search engines
-- **Per-entry detail pages** — mark image(s), patent drawing(s), prose essay, primary source links (TSDR, Google Patents)
-- **Open Graph metadata** — entries share cleanly on social/web
-- **Index page** — filterable by project, date range, category, company
+4. **Confirmed entries** — develop Wilson Jones (VI-DEX, REDIREF, HANDIREF), Yawman & Erbe (SHANNON), and at least one typewriter or tabulating machine entry once Phase 2 CPC data is available.
 
-### Hosting
-
-The `site/` directory output would deploy to GitHub Pages from the existing `markery` repository (`gh-pages` branch or `docs/` folder). A single `make publish` or equivalent would regenerate and push.
-
-### Content generation
-
-The historian specialist writes the prose essay for each entry, given:
-- Structured mark metadata (serial number, filing date, goods description, owner, first-use date)
-- Patent metadata (number, title, assignee, grant date, abstract)
-- Both mark and patent images
-
-The essay follows the pattern established by `projects/information-systems/soundex-marks/background.md`: historical context first, then primary-source evidence, then interpretation.
+**Phase gate:** 5 confirmed entries in `information-systems/matches/confirmed.jsonl`, each with an essay in `content/`.
 
 ---
 
-## Research Agenda: Information Systems Project
+## Phase 3 — Publication *(planned)*
 
-### Candidate subjects (marks already in the database)
+**Goal:** One project publicly browsable at a stable URL.
 
-The filing-systems gallery (40 marks) and stationery gallery (55 marks) are browsing outputs. The following are confirmed or high-probability mark/patent pairs worth developing into full entries:
+**Stages:**
+
+1. **Static site generator** — Jinja2, two levels: project index + per-entry detail page. Each detail page: mark image(s), patent drawing(s), prose essay, primary source links (TSDR serial, Google Patents).
+
+2. **GitHub Pages** — `gh-pages` branch or `docs/` folder; single `make publish` (or equivalent) regenerates and pushes.
+
+3. **Open Graph metadata** — entries share cleanly on social/web; pages are crawlable.
+
+**Phase gate:** `information-systems` project is live at a stable URL with at least 3 entries.
+
+---
+
+## Research Agenda — Information Systems Project
+
+### Candidate subjects (marks in the database)
 
 | Mark | Serial | Filed | Company | Patent connection |
 |---|---|---|---|---|
-| SOUNDEX | 71246709 | 1927-03-31 | Rand Kardex Bureau | Russell 1918, Odell 1922 — phonetic indexing |
-| SOUNDEX QUICK AS A FLASH | 71255821 | 1927-10-08 | Rand Kardex Bureau | Same patents |
-| WHEELDEX | 71321669 | 1931-12-01 | Unknown | Rotary card file — patent TBD |
-| SMEAD'S TELL VISION SYSTEM | 71403472 | 1938-02-26 | Smead Mfg. | Visible record system — patent TBD |
-| FLEX-SITE | 71208081 | 1925-01-13 | Unknown | Filing system — patent TBD |
-| JOHN DEERE (filing system) | 71055630 | 1911-04-08 | Deere & Co. | Farm record-keeping — patent TBD |
-
-Beyond the database: Hollerith tabulating, Addressograph addressing systems, Kardex visible files, Powers tabulating (Sperry Rand predecessor), and Burroughs accounting machines are all high-priority subjects that likely have both trademark and patent records in this period.
+| SOUNDEX | 71246709 | 1927-03-31 | Rand Kardex Bureau | Russell 1918, Odell 1922 — phonetic indexing ✅ confirmed |
+| SOUNDEX QUICK AS A FLASH | 71255821 | 1927-10-08 | Rand Kardex Bureau | Odell 1922 ✅ confirmed |
+| KARDEX | 71467213 | 1939-12-14 | Remington Rand | Visible card-index patent cluster 1930–1939 — essay written |
+| VARIADEX | 71461278 | 1939-04-07 | Remington Rand | US2152606A Card Index (1939) — essay written |
+| VI-DEX | 71235764 | 1927-02-22 | Wilson Jones | Visible index products; candidate patents in B42F 1926–1927 |
+| REDIREF | 71237470 | 1927-09-19 | Wilson Jones | Quick-reference filing; filed same day as HANDIREF |
+| HANDIREF | 71237469 | 1927-09-19 | Wilson Jones | Quick-reference filing; filed same day as REDIREF |
+| SHANNON | ~1930 | 1930 | Yawman & Erbe | Shannon lever-arch file brand; still manufactured today |
+| SMEAD'S TELL VISION SYSTEM | 71403472 | 1938-02-26 | Smead Mfg. | Visible record system; entity not yet in registry |
+| WHEELDEX | 71321669 | 1931-12-01 | Unknown | Rotary card file |
 
 ### Discovery methodology
 
-Once `patent_tools/link.py` is operational, systematic discovery replaces case-by-case research:
-
-1. Export USPC 235 + 40 + 281 + 101 + 283 patents, 1900–1939, into `patents.duckdb`
-2. Run the name-matching cross-reference against `trademarks.duckdb`
-3. Review the candidate list ranked by signal strength
-4. For each confirmed pair, fetch patent PDF and extract figures
-5. Write background essay using the historian specialist
-6. Build the entry page
+1. Add target company to `entities.duckdb` (procedure in `README.md`)
+2. Run `python -m match information-systems` to generate candidates
+3. Review `candidates.jsonl` — filter to product-name marks (not company names), high score, date overlap
+4. Confirm pair: add entry to `confirmed.jsonl`, write essay in `content/`
+5. Fetch patent PDF from Google Patents for primary source; enhance mark image via `image_tools/`
 
 ### Key reference works
 
-- JoAnne Yates, *Control Through Communication: The Rise of System in American Management* (1989) — filing systems and business communication 1880–1920
-- JoAnne Yates, *Structuring the Information Age: Life Insurance and Technology in the Twentieth Century* (2005) — IBM and tabulating systems
-- James W. Cortada, *Before the Computer: IBM, NCR, Burroughs, and Remington Rand and the Industry They Created, 1865–1956* (1993)
-- Geoffrey Austrian, *Herman Hollerith: Forgotten Giant of Information Processing* (1982)
-- Alfred D. Chandler Jr., *The Visible Hand: The Managerial Revolution in American Business* (1977) — the management systems that created demand for information products
-
-No existing work systematically cross-references trademark records with patent records for this period and subject. That gap is the justification for this project.
-
----
-
-## Monthly Image Review
-
-A recurring research practice separate from the information systems project: browse all design marks filed in a given month, surface visually interesting or historically notable marks, and flag candidates for deeper research.
-
-The May 1930 review produced several leads: LAND O'LAKES (71300354), BIRDS EYE (71301023), SHELL (71302052), and the Goodyear "FASHION FOLLOWS THE WINGED FOOT" mark (71300406). Each of these could become a full entry.
-
-The enhancement pipeline makes the monthly review more useful: even a quick Real-ESRGAN pass on a promising mark resolves enough detail to make a research judgment about whether the image is worth pursuing.
+- JoAnne Yates, *Control Through Communication* (1989) — filing systems and business communication 1880–1920
+- JoAnne Yates, *Structuring the Information Age* (2005) — IBM and tabulating systems
+- James W. Cortada, *Before the Computer* (1993) — IBM, NCR, Burroughs, Remington Rand
+- Geoffrey Austrian, *Herman Hollerith* (1982) — punched card and tabulating history
+- Alfred D. Chandler Jr., *The Visible Hand* (1977) — the management systems that created demand for information products
 
 ---
 
@@ -228,12 +106,12 @@ The enhancement pipeline makes the monthly review more useful: even a quick Real
 
 | Format | When used | Notes |
 |---|---|---|
-| PNG (4×, ~3200px) | All enhanced marks | Print-ready at 300 DPI for ~10" wide; universal |
-| SVG | Clean word marks and geometric designs only | Scales perfectly; skipped when illustration content present |
-| PDF | Patent documents | Downloaded from Google Patents storage |
+| PNG (4×, ~3200px) | All enhanced marks | Print-ready at 300 DPI; universal |
+| SVG | Clean word marks and geometric designs only | Skipped when illustration content is present |
+| PDF | Patent documents | Downloaded from Google Patents |
 | HTML (gallery) | Browsing output | Self-contained, base64-embedded; not for web publication |
-| HTML (site) | Publication output | Referenced images, crawlable, Open Graph metadata |
-| Markdown | Research essays, README | Tracked in git; human-readable source for site generation |
+| HTML (site) | Publication output | Referenced images, crawlable, Open Graph (Phase 3) |
+| Markdown | Research essays, README | Tracked in git |
 
 ---
 
@@ -241,5 +119,6 @@ The enhancement pipeline makes the monthly review more useful: even a quick Real
 
 | Tag | Notes |
 |---|---|
-| v0.1.1-alpha | `image_tools` pipeline, `/enhance-marks` skill, historian specialist, projects/ tree |
-| v0.1.0 (implicit) | Initial TSDR client, `trademarks.duckdb` build, mark image retrieval |
+| v0.2.0-alpha | TSDR mark_case_status, patents.duckdb (EPO OPS, B42F+B42D), entities.duckdb, match pipeline, STATUS.md, DEFERRED.md |
+| v0.1.1-alpha | image_tools pipeline, /enhance-marks skill, historian specialist, projects/ tree |
+| v0.1.0-alpha | TSDR client, trademarks.duckdb build, mark image retrieval |

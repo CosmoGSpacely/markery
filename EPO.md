@@ -187,7 +187,7 @@ The full account of this investigation, with a Dickens-style illustration of the
 | B42F | Filing appliances, card-index systems, loose-leaf binders | ~7,100 |
 | B42D | Books, printed matter, forms, index cards, ledger sheets | ~4,200 |
 
-**Planned classes** (not yet fetched):
+**Planned classes** (not yet fetched — see D001 in `DEFERRED.md` for reopen trigger):
 
 | Class | Description |
 |---|---|
@@ -197,7 +197,7 @@ The full account of this investigation, with a Dickens-style illustration of the
 | G06K | Punched cards, record carriers, recognition of data |
 | G09F | Displaying, advertising, visible record systems, signs |
 
-To fetch additional classes:
+To fetch additional classes when the trigger condition is met:
 ```bash
 python build_patents_db.py --classes B41J B41L --resume
 ```
@@ -332,7 +332,7 @@ Identified through cross-reference of top B42F/B42D patent assignees against `tr
 | Library Bureau | 17 | ARMORCLAD (1924), AUTOMATIC (1924), LB (1925) |
 | Acme Card System Co | 33 | ACME (1935) |
 
-Not yet added to `entities.duckdb` — Remington Rand is the only entity currently populated.
+All four companies are currently active in the `information-systems` project. Additional candidates (Library Bureau, Acme Card System Co, Smead Mfg.) are not yet in the registry.
 
 ---
 
