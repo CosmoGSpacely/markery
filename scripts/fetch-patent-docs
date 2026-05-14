@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Download patent grant PDFs from Google Patents and extract page-1 figures.
+#
+# Usage:
+#   scripts/fetch-patent-docs                          # confirmed matches, information-systems
+#   scripts/fetch-patent-docs --min-score 0.70         # all candidates >= 0.70
+#   scripts/fetch-patent-docs --patent US1261167A      # single patent
+#   scripts/fetch-patent-docs my-project --confirmed   # different project
+exec python -m patent_docs fetch "$@"

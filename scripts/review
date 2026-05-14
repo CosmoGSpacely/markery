@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 import termios
 import tty
@@ -102,10 +103,15 @@ def fetch_patent(conn, patent_no: str) -> dict:
     cls = conn.execute(
         "SELECT DISTINCT cpc_full FROM patent_classes WHERE patent_no = ?", [patent_no]
     ).fetchall()
+    fig = conn.execute(
+        "SELECT figure_path FROM patent_figures WHERE patent_no = ? AND figure_no = 1",
+        [patent_no],
+    ).fetchone()
     return {
         "app_dt":    str(p[0]) if p and p[0] else "—",
         "inventors": "  ".join(r[0].title() for r in inv) if inv else "—",
         "cpc_full":  "  ".join(r[0] for r in cls) if cls else "—",
+        "figure":    str(ROOT / fig[0]) if fig else None,
     }
 
 
@@ -188,7 +194,36 @@ def display(cand: dict, tm: dict, pat: dict, idx: int, total: int,
         print(f"  {'':13}{extra}")
 
     print(f"\n  Date gap:  {gap_str}")
+
+    # Text signals (added by score-text-signals)
+    th  = cand.get("title_name_hit")
+    ah  = cand.get("abstract_name_hit")
+    gto = cand.get("goods_title_overlap")
+    gao = cand.get("goods_abstract_overlap")
+    if any(v is not None for v in (th, ah, gto, gao)):
+        hits = []
+        if th:  hits.append("title-hit")
+        if ah:  hits.append("abstract-hit")
+        hits_str = "  ".join(hits) if hits else "no name hits"
+        overlap_str = (
+            f"goods/title {gto:.2f}  goods/abstract {gao:.2f}"
+            if gto is not None else ""
+        )
+        print(f"  Text:      {hits_str}  {overlap_str}".rstrip())
+
     print(f"  Score:     {score:.4f}  (date {ds:+.2f}  class {cs:.2f})\n")
+
+    # Figure
+    figure = pat.get("figure")
+    if figure:
+        print(f"  Figure:    {figure}")
+        try:
+            subprocess.Popen(
+                ["xdg-open", figure],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+        except FileNotFoundError:
+            pass
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
