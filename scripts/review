@@ -24,9 +24,11 @@ from pathlib import Path
 
 import duckdb
 
+ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(ROOT))
+
 from match.score import date_score, class_score
 
-ROOT         = Path(__file__).parent.parent
 PROJECTS_DIR = ROOT / "projects"
 
 # ── Terminal helpers ──────────────────────────────────────────────────────────
