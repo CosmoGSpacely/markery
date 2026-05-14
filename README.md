@@ -166,9 +166,24 @@ Research documents (`.md` essays, `README.md`, `confirmed.jsonl`) are tracked in
 
 ## Scripts
 
+All scripts run from the project root with the virtualenv active.
+
 ```bash
 # Session handoff: databases, project counts, deferred items, next action
-python scripts/check-status
+scripts/check-status
+
+# Generate match candidates for a project or entity
+scripts/run-match information-systems
+scripts/run-match --entity "Wilson Jones"
+scripts/run-match --list-entities
+
+# Image enhancement pipeline
+scripts/enhance enhance <serial_no> --out-dir output/enhanced
+scripts/enhance batch "cf.serial_no IN ('71246709')" --out-dir output/batch
+scripts/enhance gallery output/batch --title "My Marks"
+
+# Run the test suite
+scripts/run-tests
 ```
 
 ## Setup

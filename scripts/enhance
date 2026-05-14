@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Wrapper for the image_tools pipeline. Run from the project root.
+#
+# Usage:
+#   scripts/enhance enhance <serial_no> --out-dir output/enhanced
+#   scripts/enhance batch "cf.filing_dt > '1930-01-01'" --out-dir output/batch
+#   scripts/enhance gallery output/batch --title "May 1930"
+exec python -m image_tools "$@"
