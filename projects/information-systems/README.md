@@ -69,10 +69,10 @@ The visible card-index system and its associated product family, traced through 
 High-priority entries identified from the candidate list and prior research:
 
 **Wilson Jones — VI-DEX (1927)**  
-Serial 71235764. Wilson Jones's visible index product line, filed seven months after FAVORITE. The "VI" almost certainly stands for visible index. Candidate patent: among Wilson Jones's 130 B42F patents, those granted in 1926–1927 are the primary search window.
+Serial 71252433. Wilson Jones's visible index product line, filed 1927-07-22, first use 1925-06-27. Draw code 5S11 (stylized mark — has image). The "VI" almost certainly stands for visible index. Candidate patent: among Wilson Jones's 130 B42F patents, those granted in 1925–1927 are the primary search window.
 
 **Wilson Jones — REDIREF / HANDIREF (1927)**  
-Serials 71237470 and 71237469, both filed September 19, 1927 — the same day. Quick-reference filing products. The simultaneous filing suggests a coordinated product launch.
+Serials 71254949 and 71254950, both filed September 19, 1927 — the same day. Loose-leaf binders and sheets. The simultaneous filing suggests a coordinated product launch.
 
 **Yawman & Erbe — SHANNON (1930)**  
 Serial in the Yawman and Erbe trademark records. The Shannon lever-arch file brand, acquired by Yawman & Erbe and trademarked 1930. Shannon arch binders are still manufactured today.
@@ -90,16 +90,11 @@ The candidate pipeline scores pairs but does not distinguish product-name tradem
 - **Company-name marks** (REMINGTON, RAND, WILSON JONES COMPANY) — every patent matches these; not useful as product-level pairs
 - **High score + product name + period overlap** — promote to `confirmed.jsonl`
 
-To review candidates for a specific entity and trademark:
+To review candidates interactively:
 ```bash
-.venv/bin/python -c "
-import json
-from pathlib import Path
-candidates = [json.loads(l) for l in Path('projects/information-systems/matches/candidates.jsonl').read_text().splitlines()]
-wj = [c for c in candidates if c['entity'] == 'Wilson Jones' and 'VI-DEX' in c['trademark']]
-for c in sorted(wj, key=lambda x: -x['score'])[:10]:
-    print(c['score'], c['patent_no'], c['patent_grant_dt'], c['patent_title'])
-"
+scripts/review                          # all candidates, score >= 0.5
+scripts/review --mark VI-DEX            # single trademark
+scripts/review --min-score 0.65         # tighter threshold
 ```
 
 ---
