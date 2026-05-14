@@ -5,7 +5,8 @@ Research tool for studying American commercial history through the combined USPT
 The primary research focus is **pre-computer information systems** — the filing cabinets, card index systems, visible record equipment, tabulating machines, and phonetic coding schemes that American businesses used to organize knowledge before the digital era. These were significant industrial products, patented and trademarked at scale by major manufacturers, and almost entirely absent from the standard history of information technology.
 
 **Period:** 1900–1939  
-**Status:** v0.2.0-alpha
+**Status:** v0.2.0-alpha  
+[![CI](https://github.com/CosmoGSpacely/markery/actions/workflows/ci.yml/badge.svg)](https://github.com/CosmoGSpacely/markery/actions/workflows/ci.yml)
 
 ---
 
