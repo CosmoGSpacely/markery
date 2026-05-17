@@ -14,8 +14,8 @@ import sys
 from pathlib import Path
 
 PROJECTS_DIR = Path("projects")
-PATENTS_DB   = Path("patents.duckdb")
-TM_DB        = Path("trademarks.duckdb")
+PATENTS_DB   = Path("data/patents.duckdb")
+TM_DB        = Path("data/trademarks.duckdb")
 
 
 def _project_dir(name: str) -> Path:

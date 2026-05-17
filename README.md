@@ -70,9 +70,9 @@ Rebuilt by `build_entities_db.py`. Idempotent — safe to re-run; skips existing
 
 ```python
 import duckdb
-conn = duckdb.connect("entities.duckdb", read_only=True)
-conn.execute("ATTACH 'patents.duckdb'    AS pat (READ_ONLY)")
-conn.execute("ATTACH 'trademarks.duckdb' AS tm  (READ_ONLY)")
+conn = duckdb.connect("data/entities.duckdb", read_only=True)
+conn.execute("ATTACH 'data/patents.duckdb'    AS pat (READ_ONLY)")
+conn.execute("ATTACH 'data/trademarks.duckdb' AS tm  (READ_ONLY)")
 
 # Patents and trademarks for all known entities
 conn.execute("""

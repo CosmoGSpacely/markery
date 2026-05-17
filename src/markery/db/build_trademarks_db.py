@@ -10,8 +10,8 @@ import duckdb
 import os
 import time
 
-CSV_DIR    = os.path.join(os.path.dirname(__file__), "csv")
-DB_PATH    = os.path.join(os.path.dirname(__file__), "trademarks.duckdb")
+CSV_DIR    = "csv"
+DB_PATH    = "data/trademarks.duckdb"
 START_DATE = "1900-01-01"
 END_DATE   = "1939-12-31"
 

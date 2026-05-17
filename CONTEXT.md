@@ -14,7 +14,7 @@ Markery is a patent-trademark cross-reference tool for early 20th-century Americ
 
 ## Next Action
 
-Phase 2 steps 1–3 complete: `src/markery/` package; `tools/` tree; unified `markery` CLI (`match`, `review`, `status`, `enhance`, `fetch-patents`, `score-signals`). Next: Phase 2 step 4 — move databases to `data/`.
+Phase 2 steps 1–4 complete: `src/markery/` package; `tools/` tree; unified `markery` CLI; databases moved to `data/`. Next: Phase 2 step 5 — consolidate docs to `docs/`.
 
 ## Reference Docs
 

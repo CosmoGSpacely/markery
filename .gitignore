@@ -25,9 +25,9 @@ wheels/
 .DS_Store
 csv/
 *.duckdb
-!trademarks.duckdb
-!patents.duckdb
-!entities.duckdb
+!data/trademarks.duckdb
+!data/patents.duckdb
+!data/entities.duckdb
 # Ignore Claude Code runtime config but track project commands
 .claude/*.json
 .claude/*.local.*

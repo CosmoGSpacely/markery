@@ -15,9 +15,9 @@ import duckdb
 
 from .score import total_score
 
-ENTITIES_DB   = "entities.duckdb"
-PATENTS_DB    = "patents.duckdb"
-TRADEMARKS_DB = "trademarks.duckdb"
+ENTITIES_DB   = "data/entities.duckdb"
+PATENTS_DB    = "data/patents.duckdb"
+TRADEMARKS_DB = "data/trademarks.duckdb"
 
 
 def _connect() -> duckdb.DuckDBPyConnection:

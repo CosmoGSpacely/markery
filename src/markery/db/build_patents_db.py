@@ -40,7 +40,7 @@ load_dotenv()
 # Configuration
 # ---------------------------------------------------------------------------
 
-DB_PATH    = "patents.duckdb"
+DB_PATH    = "data/patents.duckdb"
 START_YEAR = 1900
 END_YEAR   = 1939
 

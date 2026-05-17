@@ -79,13 +79,13 @@ The committed databases are ready to use. Confirm they're working:
 .venv/bin/python -c "
 import duckdb
 
-p = duckdb.connect('patents.duckdb', read_only=True)
+p = duckdb.connect('data/patents.duckdb', read_only=True)
 print('patents:', p.execute('SELECT COUNT(*) FROM patents').fetchone()[0])
 
-t = duckdb.connect('trademarks.duckdb', read_only=True)
+t = duckdb.connect('data/trademarks.duckdb', read_only=True)
 print('trademarks:', t.execute('SELECT COUNT(*) FROM case_file').fetchone()[0])
 
-e = duckdb.connect('entities.duckdb', read_only=True)
+e = duckdb.connect('data/entities.duckdb', read_only=True)
 print('entities:', e.execute('SELECT COUNT(*) FROM company_entity').fetchone()[0])
 "
 ```
@@ -113,8 +113,8 @@ Output is written to `projects/information-systems/matches/candidates.jsonl`.
 Safe to rebuild at any time — idempotent:
 
 ```bash
-rm entities.duckdb
-.venv/bin/python build_entities_db.py
+rm data/entities.duckdb
+.venv/bin/python src/markery/db/build_entities_db.py
 ```
 
 ### patents.duckdb
@@ -122,12 +122,12 @@ rm entities.duckdb
 Requires EPO OPS credentials. The full B42F + B42D fetch takes approximately 20–30 minutes and makes several hundred API calls.
 
 ```bash
-rm patents.duckdb
-.venv/bin/python build_patents_db.py --seed-only       # create schema, load 2 seed patents
-.venv/bin/python build_patents_db.py --classes B42F B42D   # full fetch
+rm data/patents.duckdb
+.venv/bin/python src/markery/db/build_patents_db.py --seed-only       # create schema, load 2 seed patents
+.venv/bin/python src/markery/db/build_patents_db.py --classes B42F B42D   # full fetch
 
 # Or fetch a single year to test:
-.venv/bin/python build_patents_db.py --classes B42F --year-start 1918 --year-end 1918
+.venv/bin/python src/markery/db/build_patents_db.py --classes B42F --year-start 1918 --year-end 1918
 ```
 
 Use `--resume` to continue a partial build without re-fetching already-completed windows.
@@ -141,8 +141,8 @@ Requires the USPTO Trademark Case Files Dataset CSV files in `csv/`. The CSVs ar
 Extract to `csv/`, then:
 
 ```bash
-rm trademarks.duckdb
-.venv/bin/python build_trademarks_db.py
+rm data/trademarks.duckdb
+.venv/bin/python src/markery/db/build_trademarks_db.py
 ```
 
 The rebuild takes 2–5 minutes depending on disk speed. The resulting database is ~150 MB.
@@ -161,9 +161,10 @@ Before running enhancement, review `tools/image_enhancement/ENHANCE.md`. Enhance
 
 ```
 markery/
-├── patents.duckdb              US patents 1900–1939 (B42F + B42D)
-├── trademarks.duckdb           USPTO trademark applications 1900–1939
-├── entities.duckdb             Canonical company registry
+├── data/
+│   ├── patents.duckdb          US patents 1900–1939 (B42F + B42D)
+│   ├── trademarks.duckdb       USPTO trademark applications 1900–1939
+│   └── entities.duckdb         Canonical company registry
 ├── src/markery/
 │   ├── matching/               Patent-trademark candidate pipeline
 │   └── db/                     DB builders and TSDR client

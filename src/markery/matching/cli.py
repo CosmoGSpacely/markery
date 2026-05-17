@@ -23,7 +23,7 @@ from .link import (
 )
 
 PROJECTS_DIR  = Path("projects")
-ENTITIES_DB   = "entities.duckdb"
+ENTITIES_DB   = "data/entities.duckdb"
 
 
 def list_entities() -> None:

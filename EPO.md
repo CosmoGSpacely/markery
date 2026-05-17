@@ -291,9 +291,9 @@ Trademark owner variants stored:
 
 ```python
 import duckdb
-conn = duckdb.connect("entities.duckdb", read_only=True)
-conn.execute("ATTACH 'patents.duckdb'    AS pat (READ_ONLY)")
-conn.execute("ATTACH 'trademarks.duckdb' AS tm  (READ_ONLY)")
+conn = duckdb.connect("data/entities.duckdb", read_only=True)
+conn.execute("ATTACH 'data/patents.duckdb'    AS pat (READ_ONLY)")
+conn.execute("ATTACH 'data/trademarks.duckdb' AS tm  (READ_ONLY)")
 
 # All trademarks filed by Remington Rand entities
 conn.execute("""
@@ -423,22 +423,22 @@ All loaded from `.env` via `python-dotenv`. The `.env` file is gitignored.
 python test_epo_ops.py
 
 # Rebuild patents.duckdb from scratch (B42F + B42D, 1900–1939)
-rm patents.duckdb
-python build_patents_db.py --seed-only
-python build_patents_db.py --classes B42F B42D
+rm data/patents.duckdb
+python src/markery/db/build_patents_db.py --seed-only
+python src/markery/db/build_patents_db.py --classes B42F B42D
 
 # Fetch a single year window for testing
-python build_patents_db.py --classes B42F --year-start 1918 --year-end 1918
+python src/markery/db/build_patents_db.py --classes B42F --year-start 1918 --year-end 1918
 
 # Resume a partial build
-python build_patents_db.py --classes B42F B42D --resume
+python src/markery/db/build_patents_db.py --classes B42F B42D --resume
 
 # Rebuild entities.duckdb
-python build_entities_db.py
+python src/markery/db/build_entities_db.py
 
 # Cross-database query (from Python)
 import duckdb
-conn = duckdb.connect("entities.duckdb", read_only=True)
-conn.execute("ATTACH 'patents.duckdb' AS pat (READ_ONLY)")
-conn.execute("ATTACH 'trademarks.duckdb' AS tm (READ_ONLY)")
+conn = duckdb.connect("data/entities.duckdb", read_only=True)
+conn.execute("ATTACH 'data/patents.duckdb' AS pat (READ_ONLY)")
+conn.execute("ATTACH 'data/trademarks.duckdb' AS tm (READ_ONLY)")
 ```

@@ -79,9 +79,9 @@ def main() -> None:
 
     section("Databases")
     dbs = [
-        ("trademarks.duckdb", ["case_file", "mark_images", "mark_case_status"]),
-        ("patents.duckdb",    ["patents", "patent_classes", "patent_inventors"]),
-        ("entities.duckdb",  ["company_entity", "entity_name_variant"]),
+        ("data/trademarks.duckdb", ["case_file", "mark_images", "mark_case_status"]),
+        ("data/patents.duckdb",    ["patents", "patent_classes", "patent_inventors"]),
+        ("data/entities.duckdb",  ["company_entity", "entity_name_variant"]),
     ]
     for db_name, key_tables in dbs:
         db_path = root / db_name

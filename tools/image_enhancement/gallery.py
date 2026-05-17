@@ -69,7 +69,7 @@ def build_gallery(
     *,
     title: str = "Trademark Marks",
     subtitle: str = "",
-    db_path: str = "trademarks.duckdb",
+    db_path: str = "data/trademarks.duckdb",
     embed_images: bool = True,
 ) -> Path:
     """

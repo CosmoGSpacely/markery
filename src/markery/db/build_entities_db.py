@@ -17,7 +17,7 @@ Usage
 
 import duckdb
 
-DB_PATH = "entities.duckdb"
+DB_PATH = "data/entities.duckdb"
 
 DDL = """
 CREATE TABLE IF NOT EXISTS company_entity (

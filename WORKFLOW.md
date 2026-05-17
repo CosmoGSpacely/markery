@@ -24,7 +24,7 @@ Required keys: `EPO_CONSUMER_KEY`, `EPO_CONSUMER_SECRET`, `USPTO_API_KEY`.
 Verify DuckDB files are present:
 
 ```bash
-ls -lh trademarks.duckdb patents.duckdb entities.duckdb
+ls -lh data/trademarks.duckdb data/patents.duckdb data/entities.duckdb
 ```
 
 Run the session-start verifier:
@@ -39,14 +39,14 @@ Expected output: row counts for all three databases, project metrics (candidates
 
 ## 1. Add a new entity (skip if not needed)
 
-Entity data lives in `build_entities_db.py`. To add a company:
+Entity data lives in `src/markery/db/build_entities_db.py`. To add a company:
 
 1. Add a row to the `ENTITIES` list — fields: `(entity_id, canonical_name, entity_type, industry, notes)`.
 2. Add name variants to the `VARIANTS` list — one row per known spelling from patent assignee fields and trademark owner fields.
 3. Run the builder:
 
 ```bash
-python build_entities_db.py
+python src/markery/db/build_entities_db.py
 ```
 
 Expected output: counts of entities and variants added. The builder is idempotent — running it again with no changes prints `0 entities added  0 variants added`.
@@ -56,7 +56,7 @@ Confirm the entity landed:
 ```bash
 python - <<'EOF'
 import duckdb
-conn = duckdb.connect("entities.duckdb", read_only=True)
+conn = duckdb.connect("data/entities.duckdb", read_only=True)
 print(conn.execute("SELECT entity_id, canonical_name FROM company_entity ORDER BY entity_id").fetchall())
 EOF
 ```

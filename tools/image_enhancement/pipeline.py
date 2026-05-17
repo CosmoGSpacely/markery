@@ -79,7 +79,7 @@ def process_mark(
     img: Image.Image | None = None,
     input_path: Path | None = None,
     out_dir: Path,
-    db_path: str = "trademarks.duckdb",
+    db_path: str = "data/trademarks.duckdb",
     design_codes: list[str] | None = None,
     draw_cd: str = "3000",
     force: bool = False,

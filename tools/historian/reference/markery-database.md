@@ -4,7 +4,7 @@ The `trademarks.duckdb` database contains 25,473 USPTO trademark applications fi
 
 ```python
 import duckdb
-conn = duckdb.connect("trademarks.duckdb", read_only=True)
+conn = duckdb.connect("data/trademarks.duckdb", read_only=True)
 ```
 
 ---

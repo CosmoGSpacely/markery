@@ -24,9 +24,9 @@ The specialist reads three DuckDB files via `ATTACH` cross-database queries:
 
 Cross-database queries use DuckDB's `ATTACH`:
 ```python
-conn = duckdb.connect("entities.duckdb", read_only=True)
-conn.execute("ATTACH 'patents.duckdb'    AS pat (READ_ONLY)")
-conn.execute("ATTACH 'trademarks.duckdb' AS tm  (READ_ONLY)")
+conn = duckdb.connect("data/entities.duckdb", read_only=True)
+conn.execute("ATTACH 'data/patents.duckdb'    AS pat (READ_ONLY)")
+conn.execute("ATTACH 'data/trademarks.duckdb' AS tm  (READ_ONLY)")
 ```
 
 ## Confirmed Pairs

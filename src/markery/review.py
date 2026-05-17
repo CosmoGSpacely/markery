@@ -238,9 +238,9 @@ def main() -> None:
         print(f"No candidates.jsonl at {candidates_path}")
         sys.exit(1)
 
-    conn_tm  = duckdb.connect("trademarks.duckdb", read_only=True)
-    conn_pat = duckdb.connect("patents.duckdb",    read_only=True)
-    conn_ent = duckdb.connect("entities.duckdb",   read_only=True)
+    conn_tm  = duckdb.connect("data/trademarks.duckdb", read_only=True)
+    conn_pat = duckdb.connect("data/patents.duckdb",    read_only=True)
+    conn_ent = duckdb.connect("data/entities.duckdb",   read_only=True)
 
     entity_names = {
         r[0] for r in conn_ent.execute("SELECT canonical_name FROM company_entity").fetchall()
