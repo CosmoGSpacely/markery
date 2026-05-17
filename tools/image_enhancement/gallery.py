@@ -96,7 +96,11 @@ def build_gallery(
                    cf.registration_no, cf.cfh_status_cd,
                    o.own_name, o.own_addr_city, o.own_addr_state_cd
             FROM case_file cf
-            LEFT JOIN owner o ON cf.serial_no = o.serial_no AND o.own_entity_cd = 10
+            LEFT JOIN (
+                SELECT serial_no, own_name, own_addr_city, own_addr_state_cd
+                FROM owner
+                WHERE own_id IN (SELECT MIN(own_id) FROM owner GROUP BY serial_no)
+            ) o ON cf.serial_no = o.serial_no
             WHERE cf.serial_no IN ({sn_sql})
         """).fetchall()
     }
