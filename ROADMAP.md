@@ -122,9 +122,21 @@ markery/
 
 ## Phase 3 — Corpus and Match Quality *(planned)*
 
-**Goal:** `information-systems` project has 5 confirmed entries with essays.
+**Goal:** `information-systems` project has 5 confirmed entries with essays; site builds without placeholder pages.
 
-**Stages:**
+### Prerequisites (unblock before corpus work)
+
+These gaps were identified during the Phase 2 → Phase 3 handoff. Address before the site builder is run for the first time.
+
+- **R1 — Fix `own_id = 1` in `tools/site_builder/queries.py`** — The owner join uses `own_id = 1` but `own_id` values are large database-assigned integers, not ranks. Owner names are silently null on all pages. Fix: use `MIN(own_id)` subquery (same fix already applied to `tools/image_enhancement/gallery.py`). Also fix in `tools/historian/interface.md` reference SQL.
+
+- **R2 — Add `markery site build <project>` to CLI** — `tools/site_builder/` is built but has no CLI entry point. The historian README documents `markery site build` as the render command; it doesn't exist in `src/markery/cli.py`. Add it as `markery site build <project> [--out <dir>]`.
+
+- **R3 — Resolve `kardex.md` orphan** — `projects/information-systems/content/kardex.md` exists but KARDEX has no entry in `confirmed.jsonl`. The site builder only renders essay pages for confirmed pairs; the essay will not appear in the built site until this is resolved. Options: (a) add KARDEX (serial 71426576, patent US2178449A) to `confirmed.jsonl` and restructure the essay around the single KARDEX pair, or (b) expand the essay into a VARIADEX-focused essay that references the broader portfolio. VARIADEX is already in `confirmed.jsonl` and the existing essay covers it.
+
+- **R4 — Fix entity slug for Yawman & Erbe** — The slug is computed as `yawman-&-erbe`, producing `entity-yawman-&-erbe.md` and `entities/yawman-&-erbe.html`. The ampersand in a URL path is technically legal but fragile. Should be `yawman-and-erbe` — requires updating the slug computation in `tools/site_builder/queries.py`.
+
+### Stages
 
 1. **Remaining CPC classes** — fetch B41J (typewriters), B41L (duplicating), G06C (calculating machines), G06K (data recognition), G09F (display devices) into `patents.duckdb`. Deferred as D001 until typewriter/calculator entries are needed. Command: `python build_patents_db.py --classes B41J B41L G06C G06K G09F --resume`.
 
@@ -134,9 +146,25 @@ markery/
 
 4. **Scoring refinement** — address company-name mark false positives (D006). A heuristic that flags marks whose `mark_element` matches an entity canonical name would filter most without changing the scoring formula.
 
-5. **Confirmed entries** — develop Wilson Jones (VI-DEX, REDIREF, HANDIREF), Yawman & Erbe (SHANNON), and at least one typewriter or tabulating machine entry once Phase 3 CPC data is available.
+5. **Confirmed entries and content** — reach 5 confirmed pairs with essays. Priority order:
 
-**Phase gate:** 5 confirmed entries in `information-systems/matches/confirmed.jsonl`, each with an essay in `content/`.
+   | Content file | Status | Notes |
+   |---|---|---|
+   | `content/soundex.md` | ✅ Written | Covers both SOUNDEX pairs (Russell + Odell patents) |
+   | `content/variadex.md` | ✗ Missing | Single confirmed pair; schema-compliant essay needed |
+   | `content/soundex-quick-as-a-flash.md` | ✗ Missing | Odell patent + slogan mark; brief essay |
+   | `content/kardex.md` | ⚠ Orphaned | Exists but not linked to a confirmed pair; resolve R3 first |
+   | `content/entity-remington-rand.md` | ✗ Missing | Entity summary schema |
+   | `content/entity-wilson-jones.md` | ✗ Missing | Entity summary schema |
+   | `content/entity-yawman-and-erbe.md` | ✗ Missing | Entity summary schema (after R4 slug fix) |
+   | `content/entity-boorum-and-pease.md` | ✗ Missing | Entity summary schema |
+   | `content/trademarks-narrative.md` | ✗ Missing | Gallery narrative schema |
+   | `content/patents-narrative.md` | ✗ Missing | Gallery narrative schema |
+   | `content/index-narrative.md` | ✗ Missing | Project landing schema |
+
+   Research candidates for the 5-entry target: Wilson Jones VI-DEX (serial 71252433, B42F patents 1925–1927), Wilson Jones REDIREF and HANDIREF (serials 71254949 and 71254950, filed same day — likely coordinated product launch), Yawman & Erbe SHANNON (~1930).
+
+**Phase gate:** 5 confirmed entries in `information-systems/matches/confirmed.jsonl`, each with an essay in `content/`; all entity summaries and gallery narratives written; `markery site build information-systems` produces a site with no placeholder pages.
 
 ---
 
@@ -144,15 +172,19 @@ markery/
 
 **Goal:** One project publicly browsable at a stable URL.
 
+**Note:** `tools/site_builder/` is already built (Phase 2). It generates all five page types (landing, trademark gallery, patent gallery, entity pages, match essays) as self-contained HTML. Phase 4 work is wiring and deployment, not building a site generator from scratch.
+
 **Stages:**
 
-1. **Static site generator** — Jinja2, two levels: project index + per-entry detail page. Each detail page: mark image(s), patent drawing(s), prose essay, primary source links (TSDR serial, Google Patents).
+1. **Wire `markery site build` CLI** (prerequisite R2, Phase 3) — already listed as a Phase 3 prerequisite; complete before Phase 4 begins.
 
-2. **GitHub Pages** — `gh-pages` branch or `docs/` folder; single `make publish` (or equivalent) regenerates and pushes.
+2. **GitHub Pages** — `gh-pages` branch or `docs/` folder; single `markery site publish <project>` (or a Makefile target) regenerates and pushes.
 
-3. **Open Graph metadata** — entries share cleanly on social/web; pages are crawlable.
+3. **Open Graph metadata** — add `<meta property="og:*">` tags to `render.py` page generator; entries share cleanly on social/web; pages are crawlable.
 
-**Phase gate:** `information-systems` project is live at a stable URL with at least 3 entries.
+4. **Referenced images** — the current site builder embeds images as base64. For publication, switch to referenced image files (`site/images/<serial>.png`) so pages are cacheable and load faster. Update `render.py` to write image files and reference them by path.
+
+**Phase gate:** `information-systems` project is live at a stable URL with at least 3 entries and no placeholder pages.
 
 ---
 

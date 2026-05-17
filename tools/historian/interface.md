@@ -100,7 +100,10 @@ SELECT cf.serial_no::VARCHAR,
        o.own_name,
        mi.serial_no IS NOT NULL AS image_available
 FROM tm.case_file cf
-LEFT JOIN tm.owner o         ON cf.serial_no = o.serial_no AND o.own_id = 1
+LEFT JOIN (
+    SELECT serial_no, own_name FROM tm.owner
+    WHERE own_id IN (SELECT MIN(own_id) FROM tm.owner GROUP BY serial_no)
+) o ON cf.serial_no = o.serial_no
 LEFT JOIN tm.statement s     ON cf.serial_no = s.serial_no AND s.statement_type_cd LIKE 'GS%'
 LEFT JOIN tm.classification c ON cf.serial_no = c.serial_no
 LEFT JOIN tm.mark_images mi  ON cf.serial_no = mi.serial_no
@@ -117,7 +120,7 @@ ORDER BY cf.filing_dt;
 SELECT p.patent_no,
        p.title,
        p.grant_dt,
-       p.application_dt,
+       p.app_dt,
        p.assignee_name,
        LIST(pc.cpc_class) AS cpc_classes,
        LIST(pi.inventor_name) AS inventors,
@@ -130,7 +133,7 @@ JOIN entity_name_variant v ON UPPER(p.assignee_name) = UPPER(v.variant_name)
                            AND v.source = 'patent_assignee'
 JOIN company_entity e      ON v.entity_id = e.entity_id
 WHERE e.canonical_name = ?
-GROUP BY p.patent_no, p.title, p.grant_dt, p.application_dt, p.assignee_name,
+GROUP BY p.patent_no, p.title, p.grant_dt, p.app_dt, p.assignee_name,
          pf.patent_no
 ORDER BY p.grant_dt;
 ```

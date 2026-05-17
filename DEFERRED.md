@@ -5,7 +5,7 @@ Items explicitly deferred — not forgotten, not blocked, just not the current p
 | ID | Deferred item | Reopen trigger |
 |---|---|---|
 | D001 | Fetch remaining CPC classes: B41J (typewriters), B41L (duplicating), G06C (calculating machines), G06K (data recognition), G09F (display devices) | When information-systems project needs typewriter, tabulating, or calculator entries |
-| D002 | Publication pipeline (static site, GitHub Pages) | After information-systems project has 5 confirmed entries with essays |
+| D002 | Publication deployment (GitHub Pages, Open Graph, referenced images) | After information-systems project has 5 confirmed entries with essays — site builder (`tools/site_builder/`) is already built; Phase 4 work is CLI wiring + deployment only |
 | D003 | Patent drawings extraction from PDF figures | When an essay needs inline patent figure images |
 | D004 | Events table from `event.csv` (~3 GB) | When prosecution history is needed for a specific research question |
 | D005 | Foreign application data (Madrid Protocol records) | When an international trademark comparison is needed |
