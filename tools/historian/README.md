@@ -71,4 +71,4 @@ Responses lead with historical context, ground claims in specific filing records
 
 ## Source
 
-All three databases are built and documented in the [markery repository](https://github.com/CosmoGSpacely/markery). See `README.md` for full schema, `TSDR.md` for the trademark API reference, `EPO.md` for the patent API reference, and `DESIGN.md` for the architecture rationale.
+All three databases are built and documented in the [markery repository](https://github.com/CosmoGSpacely/markery). See `README.md` for full schema, `docs/reference/TSDR.md` for the trademark API reference, `docs/reference/EPO.md` for the patent API reference, and `docs/reference/DESIGN.md` for the architecture rationale.

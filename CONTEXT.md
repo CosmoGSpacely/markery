@@ -14,7 +14,7 @@ Markery is a patent-trademark cross-reference tool for early 20th-century Americ
 
 ## Next Action
 
-Phase 2 steps 1–4 complete: `src/markery/` package; `tools/` tree; unified `markery` CLI; databases moved to `data/`. Next: Phase 2 step 5 — consolidate docs to `docs/`.
+Phase 2 complete: `src/markery/` package; `tools/` tree; unified `markery` CLI; databases in `data/`; docs in `docs/`; `scripts/` removed. Next: Phase 3 — corpus and match quality (5 confirmed entries).
 
 ## Reference Docs
 
@@ -24,7 +24,8 @@ Phase 2 steps 1–4 complete: `src/markery/` package; `tools/` tree; unified `ma
 | `STATUS.md` | Current phase, metrics, infrastructure ledger, phase gate |
 | `DEFERRED.md` | Deferred work register with reopen triggers |
 | `ROADMAP.md` | Phase goals, research agenda, candidate subjects |
-| `TSDR.md` | USPTO TSDR API reference + trademarks.duckdb schema notes and quirks |
-| `EPO.md` | EPO OPS API reference + patents.duckdb and entities.duckdb notes |
+| `docs/reference/TSDR.md` | USPTO TSDR API reference + trademarks.duckdb schema notes and quirks |
+| `docs/reference/EPO.md` | EPO OPS API reference + patents.duckdb and entities.duckdb notes |
+| `docs/reference/DESIGN.md` | Architecture decisions — why DuckDB, why three databases, why human curation *(planned)* |
+| `docs/workflows/research-session.md` | Runnable operations checklist |
 | `RESEARCH.md` | Scholarly framework and literature context |
-| `DESIGN.md` | Architecture decisions — why DuckDB, why three databases, why human curation *(planned)* |

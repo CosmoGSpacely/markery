@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-# Wrapper for the match pipeline. Run from the project root.
-#
-# Usage:
-#   scripts/run-match information-systems
-#   scripts/run-match --entity "Wilson Jones"
-#   scripts/run-match --list-entities
-#   scripts/run-match --all
-exec python -m markery.matching "$@"

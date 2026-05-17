@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-# Enrich candidates.jsonl with text-signal fields:
-#   title_name_hit, abstract_name_hit,
-#   goods_title_overlap, goods_abstract_overlap
-#
-# Usage:
-#   scripts/score-text-signals                  # information-systems project
-#   scripts/score-text-signals my-project
-exec python -m patent_docs score "$@"

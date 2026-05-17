@@ -3,7 +3,7 @@
 ## Current State
 
 **Phase:** 1 — Complete / entering Phase 2 reorganization  
-**Stage:** Phase 1 gate closed — operations workflow documented in `WORKFLOW.md`  
+**Stage:** Phase 1 gate closed — operations workflow documented in `docs/workflows/research-session.md`  
 **Version:** v0.2.0-alpha  
 **Last updated:** 2026-05-17
 
@@ -33,7 +33,7 @@
 | `entities.duckdb` — canonical company registry | ✅ Built | 4 entities; add new companies via `build_entities_db.py` |
 | `src/markery/db/tsdr_client.py` — USPTO TSDR API client | ✅ Built | Image fetch + case status JSON |
 | `tools/image_enhancement/` — Real-ESRGAN upscale + SVG pipeline | ✅ Built | See `tools/image_enhancement/ENHANCE.md` |
-| `src/markery/matching/` — patent-trademark candidate scoring pipeline | ✅ Built | Run: `scripts/run-match information-systems` |
+| `src/markery/matching/` — patent-trademark candidate scoring pipeline | ✅ Built | Run: `markery match information-systems` |
 | `tools/historian/` — Claude specialist | ✅ Built | Reads trademarks.duckdb directly |
 | `/enhance-marks` skill | ✅ Built | |
 | `projects/information-systems/` | 🚧 Active | 2 essays, 3 confirmed pairs |
@@ -50,7 +50,7 @@ End-to-end research session is repeatable without consulting raw API docs:
 - [x] Candidate list can be reviewed and a pair promoted to `confirmed.jsonl`
 - [x] Essay can be written using the historian specialist
 - [x] Mark images can be enhanced and a gallery built
-- [x] Operations are documented in a single runnable checklist (`WORKFLOW.md`)
+- [x] Operations are documented in a single runnable checklist (`docs/workflows/research-session.md`)
 
 Phase 1 is complete.
 

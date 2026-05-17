@@ -346,14 +346,15 @@ markery/
 ├── test_epo_ops.py                 EPO OPS credential smoke-test
 ├── tsdr_client.py                  USPTO TSDR API client (trademark status/documents)
 │
-├── patents.duckdb                  US patents 1900–1939, B42F+B42D, 11,284 records
-├── trademarks.duckdb               USPTO trademark data (case_file, owner, etc.)
-├── entities.duckdb                 Canonical company registry; cross-references both DBs
+├── data/
+│   ├── patents.duckdb              US patents 1900–1939, B42F+B42D, 11,284 records
+│   ├── trademarks.duckdb           USPTO trademark data (case_file, owner, etc.)
+│   └── entities.duckdb             Canonical company registry; cross-references both DBs
 │
 ├── CONTEXT.md                      Project overview
 ├── ROADMAP.md                      Near-term plans and research agenda
-├── EPO.md                          This file
-├── TSDR.md                         USPTO TSDR API reference
+├── docs/reference/EPO.md           This file
+├── docs/reference/TSDR.md          USPTO TSDR API reference
 ├── requirements.txt
 │
 ├── tools/

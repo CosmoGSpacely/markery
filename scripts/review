@@ -1,4 +1,0 @@
-#!/usr/bin/env python3
-"""Thin wrapper — delegates to markery review. Prefer: markery review [args]"""
-from markery.review import main
-main()

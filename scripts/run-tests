@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-# Run the test suite. Run from the project root.
-#
-# Usage:
-#   scripts/run-tests                    # all tests
-#   scripts/run-tests tests/test_score.py  # specific file
-#   scripts/run-tests -k test_maximum    # filter by name
-exec python -m pytest tests/ -v "$@"

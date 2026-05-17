@@ -45,7 +45,7 @@ Built from the EPO Open Patent Services API, covering US patents in CPC classes 
 | `patent_inventors` | 11,442 | Inventor names (epodoc format) |
 | `fetch_log` | 17 | Which CPC class + year windows have been fetched |
 
-Rebuilt by `build_patents_db.py`. Requires `EPO_CONSUMER_KEY` and `EPO_CONSUMER_SECRET` in `.env`. Registration is free at https://developers.epo.org. See `EPO.md` for full API reference.
+Rebuilt by `build_patents_db.py`. Requires `EPO_CONSUMER_KEY` and `EPO_CONSUMER_SECRET` in `.env`. Registration is free at https://developers.epo.org. See `docs/reference/EPO.md` for full API reference.
 
 ### `entities.duckdb`
 Canonical company registry mapping organization names to all spelling variants found in the patent and trademark databases. The hub for cross-database queries.
@@ -222,10 +222,11 @@ python -m match information-systems
 
 | File | Contents |
 |---|---|
-| `SETUP.md` | Complete setup guide — prerequisites, credentials, database verification |
+| `docs/workflows/research-session.md` | Runnable operations checklist for a research session |
+| `docs/reference/SETUP.md` | Complete setup guide — prerequisites, credentials, database verification |
+| `docs/reference/EPO.md` | EPO OPS API — auth, endpoints, CQL, response structure, rate limits, data quality |
+| `docs/reference/TSDR.md` | USPTO TSDR API — mark image retrieval, case status, date encoding |
 | `RESEARCH.md` | Research framework — central argument, method, literature context |
-| `CONTEXT.md` | Working notes — database quirks, known data issues, design decisions |
+| `CONTEXT.md` | Working notes — current focus, next action |
 | `ROADMAP.md` | Near-term plans, research agenda, candidate subjects |
-| `EPO.md` | EPO OPS API — auth, endpoints, CQL, response structure, rate limits, data quality |
-| `TSDR.md` | USPTO TSDR API — mark image retrieval, case status, date encoding |
 | `tools/image_enhancement/ENHANCE.md` | Mark image enhancement workflow |
