@@ -128,13 +128,10 @@ markery/
 
 These gaps were identified during the Phase 2 → Phase 3 handoff. Address before the site builder is run for the first time.
 
-- **R1 — Fix `own_id = 1` in `tools/site_builder/queries.py`** — The owner join uses `own_id = 1` but `own_id` values are large database-assigned integers, not ranks. Owner names are silently null on all pages. Fix: use `MIN(own_id)` subquery (same fix already applied to `tools/image_enhancement/gallery.py`). Also fix in `tools/historian/interface.md` reference SQL.
-
-- **R2 — Add `markery site build <project>` to CLI** — `tools/site_builder/` is built but has no CLI entry point. The historian README documents `markery site build` as the render command; it doesn't exist in `src/markery/cli.py`. Add it as `markery site build <project> [--out <dir>]`.
-
-- **R3 — Resolve `kardex.md` orphan** — `projects/information-systems/content/kardex.md` exists but KARDEX has no entry in `confirmed.jsonl`. The site builder only renders essay pages for confirmed pairs; the essay will not appear in the built site until this is resolved. Options: (a) add KARDEX (serial 71426576, patent US2178449A) to `confirmed.jsonl` and restructure the essay around the single KARDEX pair, or (b) expand the essay into a VARIADEX-focused essay that references the broader portfolio. VARIADEX is already in `confirmed.jsonl` and the existing essay covers it.
-
-- **R4 — Fix entity slug for Yawman & Erbe** — The slug is computed as `yawman-&-erbe`, producing `entity-yawman-&-erbe.md` and `entities/yawman-&-erbe.html`. The ampersand in a URL path is technically legal but fragile. Should be `yawman-and-erbe` — requires updating the slug computation in `tools/site_builder/queries.py`.
+- ~~**R1** — Fix `own_id = 1` in `tools/site_builder/queries.py`~~ ✅
+- ~~**R2** — Add `markery site build <project>` to CLI~~ ✅
+- ~~**R3** — Resolve `kardex.md` orphan; add Rand Kardex Bureau entity variants~~ ✅
+- ~~**R4** — Fix entity slug for Yawman & Erbe (`yawman-&-erbe` → `yawman-and-erbe`)~~ ✅
 
 ### Stages
 
@@ -156,7 +153,7 @@ These gaps were identified during the Phase 2 → Phase 3 handoff. Address befor
    | `content/kardex.md` | ⚠ Orphaned | Exists but not linked to a confirmed pair; resolve R3 first |
    | `content/entity-remington-rand.md` | ✗ Missing | Entity summary schema |
    | `content/entity-wilson-jones.md` | ✗ Missing | Entity summary schema |
-   | `content/entity-yawman-and-erbe.md` | ✗ Missing | Entity summary schema (after R4 slug fix) |
+   | `content/entity-yawman-and-erbe.md` | ✗ Missing | Entity summary schema |
    | `content/entity-boorum-and-pease.md` | ✗ Missing | Entity summary schema |
    | `content/trademarks-narrative.md` | ✗ Missing | Gallery narrative schema |
    | `content/patents-narrative.md` | ✗ Missing | Gallery narrative schema |

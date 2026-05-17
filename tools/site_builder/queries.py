@@ -52,7 +52,7 @@ def get_entities(db_paths: dict[str, str], entity_ids: list[int]) -> list[dict]:
             "entity_type": etype,
             "industry": industry,
             "notes": notes,
-            "slug": name.lower().replace(" ", "-").replace(",", "").replace(".", ""),
+            "slug": name.lower().replace(" & ", "-and-").replace(" ", "-").replace(",", "").replace(".", ""),
             "name_variants": [{"name": v[0], "source": v[1]} for v in variants],
         })
     conn.close()
