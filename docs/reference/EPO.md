@@ -64,7 +64,7 @@ Returns full bibliographic data (title, dates, parties, CPC classifications) dir
 GET https://ops.epo.org/3.2/rest-services/published-data/publication/epodoc/{id}/biblio
 ```
 
-Used in `test_epo_ops.py` to fetch a known patent by publication number for credential verification.
+Used in `src/markery/db/test_epo_credentials.py` to fetch a known patent by publication number for credential verification.
 
 ---
 
@@ -343,7 +343,7 @@ markery/
 ├── build_db.py                     Trademark database builder (trademarks.duckdb)
 ├── build_patents_db.py             Patent database builder (EPO OPS → patents.duckdb)
 ├── build_entities_db.py            Entity registry builder (entities.duckdb)
-├── test_epo_ops.py                 EPO OPS credential smoke-test
+├── src/markery/db/test_epo_credentials.py  EPO OPS credential smoke-test
 ├── tsdr_client.py                  USPTO TSDR API client (trademark status/documents)
 │
 ├── data/
@@ -355,7 +355,7 @@ markery/
 ├── ROADMAP.md                      Near-term plans and research agenda
 ├── docs/reference/EPO.md           This file
 ├── docs/reference/TSDR.md          USPTO TSDR API reference
-├── requirements.txt
+├── pyproject.toml                  Package definition and dependencies
 │
 ├── tools/
 │   ├── image_enhancement/          Image processing pipeline for trademark scans
@@ -409,8 +409,8 @@ markery/
 
 | Variable | Used by | Purpose |
 |---|---|---|
-| `EPO_CONSUMER_KEY` | `build_patents_db.py`, `test_epo_ops.py` | EPO OPS OAuth2 client key |
-| `EPO_CONSUMER_SECRET` | `build_patents_db.py`, `test_epo_ops.py` | EPO OPS OAuth2 client secret |
+| `EPO_CONSUMER_KEY` | `build_patents_db.py`, `src/markery/db/test_epo_credentials.py` | EPO OPS OAuth2 client key |
+| `EPO_CONSUMER_SECRET` | `build_patents_db.py`, `src/markery/db/test_epo_credentials.py` | EPO OPS OAuth2 client secret |
 | `USPTO_API_KEY` | `tsdr_client.py` | USPTO TSDR API static key |
 
 All loaded from `.env` via `python-dotenv`. The `.env` file is gitignored.
@@ -421,7 +421,7 @@ All loaded from `.env` via `python-dotenv`. The `.env` file is gitignored.
 
 ```bash
 # Test EPO credentials
-python test_epo_ops.py
+python src/markery/db/test_epo_credentials.py
 
 # Rebuild patents.duckdb from scratch (B42F + B42D, 1900–1939)
 rm data/patents.duckdb

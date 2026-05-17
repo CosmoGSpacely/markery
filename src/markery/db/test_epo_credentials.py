@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
-test_epo_ops.py
-
 Smoke-test for EPO OPS API credentials and basic patent search.
 Run this once after adding EPO_CONSUMER_KEY and EPO_CONSUMER_SECRET to .env.
 
 Usage:
-    python test_epo_ops.py
+    python src/markery/db/test_epo_credentials.py
 """
 
 import base64
