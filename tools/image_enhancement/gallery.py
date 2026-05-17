@@ -59,14 +59,15 @@ h1 { text-align: center; font-size: 1.6em; margin-bottom: 4px; }
 .codes { font-size: .7em; color: #888; font-family: monospace; margin-top: 4px; }
 .status { font-size: .72em; color: #999; }
 .svg-badge { font-size: .68em; color: #5a8a3a; font-family: monospace; margin-left: 6px; }
+.enhanced-badge { font-size: .68em; color: #3a6a8a; font-family: monospace; margin-left: 6px; }
 """
 
 
 def build_gallery(
     serial_nos: list[str],
-    img_dir: Path,
     out_path: Path,
     *,
+    img_dir: Path | None = None,
     title: str = "Trademark Marks",
     subtitle: str = "",
     db_path: str = "data/trademarks.duckdb",
@@ -75,12 +76,14 @@ def build_gallery(
     """
     Write an HTML gallery to out_path.
 
-    Reads PNG (and notes SVG presence) from img_dir/<serial_no>.{png,svg}.
-    Pulls filing metadata and goods/services text from db_path.
-    When embed_images=True the PNG bytes are base64-encoded inline so the
-    file is fully self-contained; set False to reference files by path instead.
+    Two image sources:
+    - img_dir=None (default): images read from mark_images table in db_path.
+      No enhancement required; use this for browsing raw TSDR images.
+    - img_dir=<Path>: images read from <img_dir>/<serial_no>.png files.
+      Use this after running enhance on marks of interest.
+
+    Metadata (filing date, owner, goods/services) always comes from db_path.
     """
-    img_dir = Path(img_dir)
     out_path = Path(out_path)
     conn = duckdb.connect(db_path, read_only=True)
 
@@ -114,12 +117,28 @@ def build_gallery(
     """).fetchall():
         gs_map.setdefault(str(sn), []).append(text)
 
+    # Load image bytes: filesystem (enhanced) or DB (raw TSDR)
+    img_bytes: dict[str, bytes] = {}
+    if img_dir is not None:
+        img_dir = Path(img_dir)
+        for sn in serial_nos:
+            p = img_dir / f"{sn}.png"
+            if p.exists():
+                img_bytes[sn] = p.read_bytes()
+    else:
+        placeholders = ",".join("?" * len(serial_nos))
+        for sn, data in conn.execute(
+            f"SELECT serial_no, image_data FROM mark_images WHERE serial_no IN ({placeholders})",
+            serial_nos,
+        ).fetchall():
+            img_bytes[str(sn)] = bytes(data)
+
     conn.close()
 
     cards: list[str] = []
     for sn in serial_nos:
-        png = img_dir / f"{sn}.png"
-        if not png.exists():
+        raw = img_bytes.get(sn)
+        if not raw:
             continue
 
         row = marks.get(sn)
@@ -128,13 +147,15 @@ def build_gallery(
 
         _, filing_dt, mark_name, draw_cd, reg_no, status_cd, own_name, own_city, own_state = row
 
-        if embed_images:
-            img_src = f"data:image/png;base64,{base64.b64encode(png.read_bytes()).decode()}"
-        else:
-            img_src = f"{sn}.png"
+        img_src = f"data:image/png;base64,{base64.b64encode(raw).decode()}"
 
-        has_svg = (img_dir / f"{sn}.svg").exists()
-        svg_badge = '<span class="svg-badge">[SVG]</span>' if has_svg else ""
+        enhanced_badge = ""
+        svg_badge = ""
+        if img_dir is not None:
+            enhanced_badge = '<span class="enhanced-badge">[enhanced]</span>'
+            svg_path = Path(img_dir) / f"{sn}.svg"
+            if svg_path.exists():
+                svg_badge = '<span class="svg-badge">[SVG]</span>'
 
         meta_parts = [f"Filed {filing_dt.strftime('%B %d, %Y')}"]
         if reg_no:
@@ -158,7 +179,7 @@ def build_gallery(
             f'  <div class="card">\n'
             f'    <img src="{img_src}" alt="{mark_name}" loading="lazy" />\n'
             f'    <div class="info">\n'
-            f'      <div class="name">{mark_name}{svg_badge}</div>\n'
+            f'      <div class="name">{mark_name}{enhanced_badge}{svg_badge}</div>\n'
             f'      <div class="meta">{meta}</div>\n'
             f'      {owner_html}\n'
             f'      {gs_html}\n'
@@ -182,5 +203,6 @@ def build_gallery(
         + "\n</div>\n</body>\n</html>\n"
     )
 
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html, encoding="utf-8")
     return out_path

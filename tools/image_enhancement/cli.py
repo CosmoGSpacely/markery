@@ -73,22 +73,53 @@ def cmd_batch(args) -> None:
 
 
 def cmd_gallery(args) -> None:
-    img_dir = Path(args.img_dir)
-    serial_nos = [p.stem for p in sorted(img_dir.glob("*.png"))]
-    if not serial_nos:
-        print(f"No PNG files found in {img_dir}", file=sys.stderr)
-        sys.exit(1)
+    import duckdb as _duckdb
 
-    out_path = img_dir / "gallery.html"
-    build_gallery(
-        serial_nos,
-        img_dir=img_dir,
-        out_path=out_path,
-        title=args.title,
-        subtitle=args.subtitle,
-        db_path=args.db,
-    )
-    print(f"Gallery → {out_path}  ({len(serial_nos)} cards)")
+    if args.img_dir:
+        # Directory mode: build from enhanced PNGs
+        img_dir = Path(args.img_dir)
+        serial_nos = [p.stem for p in sorted(img_dir.glob("*.png"))]
+        if not serial_nos:
+            print(f"No PNG files found in {img_dir}", file=sys.stderr)
+            sys.exit(1)
+        out_path = Path(args.out) if args.out else img_dir / "gallery.html"
+        build_gallery(
+            serial_nos,
+            out_path=out_path,
+            img_dir=img_dir,
+            title=args.title,
+            subtitle=args.subtitle,
+            db_path=args.db,
+        )
+    elif args.where:
+        # DB mode: build from mark_images table, no enhancement needed
+        if not args.out:
+            print("--out is required with --where", file=sys.stderr)
+            sys.exit(1)
+        conn = _duckdb.connect(args.db, read_only=True)
+        rows = conn.execute(f"""
+            SELECT cf.serial_no::VARCHAR
+            FROM case_file cf
+            WHERE {args.where}
+            ORDER BY cf.filing_dt, cf.serial_no
+        """).fetchall()
+        conn.close()
+        serial_nos = [r[0] for r in rows]
+        if not serial_nos:
+            print("No marks matched the WHERE clause", file=sys.stderr)
+            sys.exit(1)
+        build_gallery(
+            serial_nos,
+            out_path=Path(args.out),
+            img_dir=None,
+            title=args.title,
+            subtitle=args.subtitle,
+            db_path=args.db,
+        )
+        print(f"Gallery → {args.out}  ({len(serial_nos)} cards)")
+    else:
+        print("Provide img_dir (enhanced PNGs) or --where (DB images)", file=sys.stderr)
+        sys.exit(1)
 
 
 def main() -> None:
@@ -111,8 +142,22 @@ def main() -> None:
     p_batch.add_argument("--out-dir", required=True, help="Output directory for PNGs and SVGs")
     p_batch.add_argument("--force", action="store_true")
 
-    p_gallery = sub.add_parser("gallery", help="Build an HTML gallery from an output directory")
-    p_gallery.add_argument("img_dir", help="Directory containing PNG (and optional SVG) files")
+    p_gallery = sub.add_parser(
+        "gallery",
+        help="Build an HTML gallery — from enhanced PNGs (img_dir) or raw DB images (--where)",
+    )
+    p_gallery.add_argument(
+        "img_dir", nargs="?",
+        help="Directory of enhanced PNGs. Omit and use --where to build from DB images instead.",
+    )
+    p_gallery.add_argument(
+        "--where",
+        help="SQL WHERE clause on case_file to select marks; reads images from mark_images table",
+    )
+    p_gallery.add_argument(
+        "--out",
+        help="Output path for gallery.html. Defaults to <img_dir>/gallery.html in directory mode.",
+    )
     p_gallery.add_argument("--title", default="Trademark Marks")
     p_gallery.add_argument("--subtitle", default="")
 

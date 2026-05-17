@@ -187,40 +187,46 @@ PDFs land in `projects/information-systems/output/` alongside the existing figur
 
 ---
 
-## 8. Enhance mark image
+## 8. Build a gallery
 
-For a single serial:
+**From DB images (no enhancement needed):** reads raw TSDR images from `mark_images` table.
 
 ```bash
-markery enhance enhance <serial_no> --out-dir projects/information-systems/output/<collection>
+markery enhance gallery \
+  --where "cf.mark_draw_cd LIKE '3%' AND cf.filing_dt BETWEEN DATE '1930-06-01' AND DATE '1930-06-30'" \
+  --out projects/monthly-image-review/output/june1930/gallery.html \
+  --title "Design Marks, June 1930" --subtitle "7 marks"
 ```
 
-Example:
+**From enhanced PNGs:** after running enhance on selected marks.
+
+```bash
+markery enhance gallery projects/information-systems/output/<collection> \
+  --title "VI-DEX, Wilson Jones 1927"
+```
+
+Output is self-contained HTML with base64-embedded images. Not for web publication; see Phase 4.
+
+---
+
+## 9. Enhance specific marks (selective — after reviewing the gallery)
+
+Enhancement is manual and compute-intensive. Run only on marks chosen after human review; always confirm serial numbers before proceeding.
+
+Single mark:
 
 ```bash
 markery enhance enhance 71235764 --out-dir projects/information-systems/output/vi-dex
 ```
 
-For a curated batch (confirm serial list with user first):
+Confirmed batch:
 
 ```bash
 markery enhance batch "cf.serial_no IN ('71235764','71237470','71237469')" \
   --out-dir projects/information-systems/output/wilson-jones-marks
 ```
 
-Output: 4× upscaled PNG (~3200px). SVG is written alongside when the mark is clean enough to vectorize (word marks, simple geometry). `--force` re-processes existing output.
-
----
-
-## 9. Build gallery
-
-```bash
-markery enhance gallery projects/information-systems/output/<collection> \
-  --title "Wilson Jones Filing Products, 1927" \
-  --subtitle "3 marks · B42F"
-```
-
-Output: `gallery.html` in the collection directory. Self-contained (base64-embedded images) — open in a browser or share as a single file. Not for web publication; see Phase 4 for the publication pipeline.
+Output: 4× upscaled PNG. SVG written alongside for clean word marks and geometric designs. `--force` re-processes existing output. See `tools/image_enhancement/ENHANCE.md` for full workflow.
 
 ---
 
@@ -242,6 +248,7 @@ Run `markery status` one more time to confirm metrics match expectations before 
 | Score text signals | `markery score-signals information-systems` |
 | Review candidates | `markery review information-systems` |
 | Fetch patent docs | `markery fetch-patents information-systems --confirmed` |
-| Enhance mark image | `markery enhance enhance <serial> --out-dir <dir>` |
-| Build gallery | `markery enhance gallery <dir> --title "<title>"` |
+| Gallery from DB images | `markery enhance gallery --where "..." --out <path>` |
+| Gallery from enhanced PNGs | `markery enhance gallery <dir>` |
+| Enhance mark (manual, selective) | `markery enhance enhance <serial> --out-dir <dir>` |
 | Historian session | Claude project + `tools/historian/` + 3 DuckDB files |
