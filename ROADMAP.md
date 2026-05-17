@@ -166,23 +166,22 @@ These gaps were identified during the Phase 2 → Phase 3 handoff. Address befor
 
 ---
 
-## Phase 4 — Publication *(planned)*
+## Phase 4 — Publication
 
 **Goal:** One project publicly browsable at a stable URL.
 
 **Note:** `tools/site_builder/` is already built (Phase 2). It generates all five page types (landing, trademark gallery, patent gallery, entity pages, match essays) as self-contained HTML. Phase 4 work is wiring and deployment, not building a site generator from scratch.
 
-**Stages:**
+**Actions:**
 
-1. **Wire `markery site build` CLI** (prerequisite R2, Phase 3) — already listed as a Phase 3 prerequisite; complete before Phase 4 begins.
+- ~~**P1** — Initial `gh-pages` deployment: orphan `gh-pages` branch; `information-systems/` = built site; root `index.html` redirect; push to `origin/gh-pages`. Enable Pages in repository settings (Branch: `gh-pages`, folder: `/`).~~ ✅
+- ~~**P2** — GitHub Actions CI workflow (`.github/workflows/pages.yml`): on push to `main`, rebuild all projects from tracked DuckDB files and force-push to `gh-pages`. Site stays current automatically.~~ ✅
+- **P3** — Open Graph metadata: add `<meta property="og:title/description/url">` to `render.py`; make base URL configurable via `project.yaml` or `--base-url` CLI arg. Required for clean link sharing.
 
-2. **GitHub Pages** — `gh-pages` branch or `docs/` folder; single `markery site publish <project>` (or a Makefile target) regenerates and pushes.
+**Deferred:**
+- Referenced images: switch from base64-embedded to referenced image files (`site/images/<serial>.png`) for cacheability.
 
-3. **Open Graph metadata** — add `<meta property="og:*">` tags to `render.py` page generator; entries share cleanly on social/web; pages are crawlable.
-
-4. **Referenced images** — the current site builder embeds images as base64. For publication, switch to referenced image files (`site/images/<serial>.png`) so pages are cacheable and load faster. Update `render.py` to write image files and reference them by path.
-
-**Phase gate:** `information-systems` project is live at a stable URL with at least 3 entries and no placeholder pages.
+**Phase gate:** `information-systems` project live at `https://cosmogspacely.github.io/markery/information-systems/` (requires enabling Pages in repository settings after first push); CI rebuilds on every push to main.
 
 ---
 
