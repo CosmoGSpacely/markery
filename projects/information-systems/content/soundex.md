@@ -54,8 +54,3 @@ The most consequential deployment of the Soundex algorithm came not from Rand Ka
 
 The WPA Soundex index cards — phonetically coded, hand-written, filed in the same style of overlapping-tray systems that Rand Kardex commercialized — became one of the most heavily used genealogical resources in American history. A researcher today looking up a great-grandparent in the 1920 census navigates a system whose commercial form was trademarked by Rand Kardex Bureau on March 31, 1927.
 
----
-
-## Source Note
-
-Record data drawn from the USPTO Trademark Case Files Dataset (1900–1939) and live TSDR API case status for serial numbers 71246709 and 71255821. The TSDR search API does not support full-text mark-name queries; this document reflects all SOUNDEX marks within the 1900–1939 dataset scope. Additional marks, if any, filed after 1939 were not accessible from the TSDR system during this research session.

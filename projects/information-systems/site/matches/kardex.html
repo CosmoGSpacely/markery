@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KARDEX ↔ US2178457A</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: #f5f0e8;
+  color: #1a1a1a;
+  line-height: 1.65;
+  font-size: 16px;
+}
+
+a { color: #5a3e28; text-decoration: underline; }
+a:hover { color: #8b5e3c; }
+
+/* ── Site header ── */
+.site-header {
+  background: #2a1f14;
+  color: #f5f0e8;
+  padding: 18px 40px;
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+.site-header .site-title {
+  font-size: 1.1em;
+  font-weight: normal;
+  letter-spacing: .04em;
+  color: #e8dcc8;
+  text-decoration: none;
+}
+.site-header nav a {
+  color: #b8a88a;
+  text-decoration: none;
+  font-size: .85em;
+  margin-right: 16px;
+}
+.site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Page header ── */
+.page-header {
+  background: #3d2b1a;
+  color: #f5f0e8;
+  padding: 40px;
+}
+.page-header h1 {
+  font-size: 2em;
+  font-weight: normal;
+  margin-bottom: 6px;
+}
+.page-header .subtitle {
+  color: #b8a88a;
+  font-size: .95em;
+}
+.page-header .stat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.chip {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  color: #e8dcc8;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: .8em;
+  font-family: monospace;
+}
+
+/* ── Page body ── */
+.page-body { max-width: 960px; margin: 0 auto; padding: 48px 40px; }
+
+.narrative {
+  max-width: 700px;
+  margin-bottom: 40px;
+}
+.narrative h2 {
+  font-size: 1.2em;
+  font-weight: normal;
+  margin: 32px 0 10px;
+  color: #3d2b1a;
+}
+.narrative p { margin-bottom: 1em; }
+.narrative table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .88em;
+  margin: 16px 0;
+}
+.narrative th, .narrative td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid #ddd;
+}
+.narrative th { background: #ede8de; font-weight: normal; color: #555; }
+.narrative code {
+  font-family: monospace;
+  font-size: .88em;
+  background: #ede8de;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.narrative pre {
+  background: #ede8de;
+  padding: 14px;
+  overflow-x: auto;
+  margin: 12px 0;
+  font-size: .83em;
+}
+
+/* ── Timeline ── */
+.timeline-section { margin-bottom: 40px; }
+.timeline-section h2 {
+  font-size: 1em;
+  font-weight: normal;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+.timeline-svg { width: 100%; overflow: visible; }
+
+/* ── Card grid ── */
+.section-title {
+  font-size: 1em;
+  font-weight: normal;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 16px;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.card-image {
+  width: 100%;
+  height: 140px;
+  object-fit: contain;
+  background: #faf8f4;
+  border-bottom: 1px solid #eee;
+  display: block;
+}
+.card-image-placeholder {
+  width: 100%;
+  height: 140px;
+  background: #ede8de;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: .75em;
+  font-family: monospace;
+  border-bottom: 1px solid #eee;
+}
+.card-body { padding: 10px 12px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.card-name { font-weight: bold; font-size: .88em; line-height: 1.3; }
+.card-meta { font-size: .75em; color: #666; }
+.card-goods { font-size: .73em; color: #444; margin-top: 4px; line-height: 1.4;
+  border-top: 1px solid #eee; padding-top: 4px; }
+.card-footer { font-size: .7em; color: #999; font-family: monospace; margin-top: auto; padding-top: 4px; }
+.entity-badge {
+  display: inline-block;
+  background: #e8dcc8;
+  color: #5a3e28;
+  font-size: .68em;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-top: 2px;
+  font-family: monospace;
+}
+.match-link {
+  display: inline-block;
+  background: #5a3e28;
+  color: #f5f0e8;
+  font-size: .68em;
+  padding: 2px 8px;
+  border-radius: 3px;
+  text-decoration: none;
+  margin-top: 4px;
+}
+.match-link:hover { background: #8b5e3c; color: #f5f0e8; }
+
+/* ── Entity grid ── */
+.entity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.entity-card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  padding: 20px;
+}
+.entity-card h3 { font-size: 1.1em; font-weight: normal; margin-bottom: 8px; }
+.entity-card .entity-meta { font-size: .8em; color: #666; margin-bottom: 12px; }
+.entity-card .entity-stats {
+  display: flex;
+  gap: 16px;
+  font-size: .78em;
+  color: #444;
+  margin-bottom: 12px;
+}
+.entity-card .stat-val { font-weight: bold; color: #2a1f14; }
+.entity-card .links a { font-size: .82em; margin-right: 12px; }
+
+/* ── Match cards (landing page) ── */
+.match-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.match-card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+}
+.match-card-thumb {
+  width: 80px;
+  min-width: 80px;
+  height: 80px;
+  object-fit: contain;
+  background: #faf8f4;
+  border: 1px solid #eee;
+  border-radius: 3px;
+}
+.match-card-thumb-placeholder {
+  width: 80px;
+  min-width: 80px;
+  height: 80px;
+  background: #ede8de;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #bbb;
+  font-size: .7em;
+}
+.match-card-body { flex: 1; }
+.match-card-title { font-weight: bold; font-size: .95em; margin-bottom: 4px; }
+.match-card-meta { font-size: .78em; color: #666; margin-bottom: 8px; }
+.match-card-note { font-size: .8em; color: #444; line-height: 1.4; margin-bottom: 8px; }
+
+/* ── Essay page ── */
+.essay { max-width: 700px; }
+.essay h2 { font-size: 1.2em; font-weight: normal; margin: 36px 0 10px; color: #3d2b1a; }
+.essay p { margin-bottom: 1em; }
+.essay table { width: 100%; border-collapse: collapse; font-size: .88em; margin: 16px 0; }
+.essay th, .essay td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ddd; }
+.essay th { background: #ede8de; font-weight: normal; color: #555; }
+.essay pre { background: #ede8de; padding: 14px; overflow-x: auto; margin: 12px 0; font-size: .83em; }
+.essay code { font-family: monospace; font-size: .88em; background: #ede8de; padding: 1px 4px; border-radius: 2px; }
+.essay-media {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 24px 0;
+}
+.essay-media img {
+  width: 100%;
+  object-fit: contain;
+  border: 1px solid #ddd;
+  background: #faf8f4;
+}
+.essay-media .media-label { font-size: .75em; color: #888; margin-top: 4px; text-align: center; }
+.sources {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #ddd;
+  font-size: .82em;
+  color: #555;
+}
+.sources h2 { font-size: .95em; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+.sources dt { font-weight: bold; margin-top: 8px; }
+.sources dd { margin-left: 16px; }
+</style>
+</head>
+<body>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a></nav></header>
+<div class="page-header"><h1>KARDEX ↔ US2178457A</h1><div class="subtitle">Confirmed patent-trademark pair · Information Systems</div><div class="stat-chips"><span class="chip">Remington Rand</span><span class="chip">Patent 1939-10-31</span><span class="chip">Mark filed 1939-12-14</span></div></div><div class="page-body"><div class="essay"><h2>KARDEX: The Visible Index and the Filing System Empire</h2>
+<p>
+The KARDEX trademark (serial 71426576, filed December 14, 1939) is the registered name of a visible card-index system whose core mechanism was patented by Remington Rand Inc. in US2178457A, &quot;Visible Index,&quot; granted October 31, 1939. The patent describes the overlapping-tray arrangement that allowed an operator to scan hundreds of cards at a glance; the trademark registers the product-line name under which that arrangement had been sold commercially for more than a decade before Remington Rand formalized it as intellectual property. 
+</p>
+<p>
+--- 
+</p>
+<h2>The Mark</h2>
+<p>
+Remington Rand filed the KARDEX trademark on <strong>December 14, 1939</strong>, registration number <strong>0377986</strong>, covering *&quot;card index filing cabinets and trays, index cards, guides, and supplies therefor.&quot;* The applicant was Remington Rand Inc. of New York, NY. 
+</p>
+<p>
+The filing came late in the company's 1930s filing burst. Between 1929 and 1939, Remington Rand registered REMRANDCO, LINEDEX, SCOTTIE, ARISTOCRAT, VARIADEX, RAND, and two REMINGTON marks before arriving at KARDEX. That the company waited until 1939 to register the name most closely associated with its visible-filing product line suggests KARDEX had long functioned as a trade name — recognized in the market without formal trademark protection — and that the 1939 filing was a consolidation of brand assets rather than the introduction of a new product. 
+</p>
+<p>
+--- 
+</p>
+<h2>What Kardex Was</h2>
+<p>
+The Kardex system was a <strong>visible record filing system</strong>: index cards arranged in overlapping trays so that the bottom edge of each card remained exposed, allowing an operator to scan a large index at a glance without removing any card. The trays were mounted in cabinets — desktop units, floor-standing towers, or rotary carousels — that could hold hundreds or thousands of cards. 
+</p>
+<p>
+The visible record concept had several commercial applications. In its simplest form it was a name-and-address index. More elaborately, each card represented an inventory item, an account, a personnel file, or a production order; the visible edge carried summary data (stock level, balance due, status code) while the full card held the detail. A colored signal tab could be clipped to the card edge to flag exceptions — past-due accounts, low stock, deferred items — making the tray itself a dashboard for the state of a business operation. 
+</p>
+<p>
+This was, in the vocabulary of the period, not just a filing system but an <strong>information system</strong> — a designed arrangement for storing, retrieving, and acting on operational data at the speed of a clerk scanning a tray rather than pulling a drawer. 
+</p>
+<p>
+--- 
+</p>
+<h2>The Patent Record: 171 Patents, 1917–1939</h2>
+<p>
+The combined patent record for Remington Typewriter Company and Remington Rand Inc. contains <strong>171 patents</strong> in filing-system and blank-book classes (CPC B42F and B42D) between 1917 and 1939. The density of filing tells the corporate history as clearly as any narrative: 
+</p>
+<p>
+| Period | Assignee | Patents | Character | 
+|---|---|---|---| 
+| 1917–1926 | Remington Typewriter Company | ~10 | Foundational: accounting sheets, billing forms, index trays | 
+| 1927–1934 | Remington Rand Inc. | ~90 | Burst: card index trays, filing cabinets, visible index mechanisms | 
+| 1935–1939 | Remington Rand Inc. | ~70 | Refinement: prong binders, followers, signal tabs, protective strips | 
+</p>
+<p>
+The 1927 inflection is the merger. After Remington Typewriter joined with Rand Kardex to form Remington Rand, patent output in filing-system classes roughly tripled. The merged company was not just larger — it was filing systems as its core business, and it was patenting aggressively. 
+</p>
+<p>
+Selected patents from the cluster most directly corresponding to the KARDEX mark and visible-index product line: 
+</p>
+<p>
+| Patent | Title | Granted | 
+|---|---|---| 
+| US1640397A | Card-Index Tray | 1927-08-30 | 
+| US1647655A | Ledger Tray | 1927-10-18 | 
+| US1801804A | Visible Index | 1931-04-21 | 
+| US1802348A | Visible Index | 1931-04-28 | 
+| US1811633A | Visible File Case | 1931-06-23 | 
+| US1813257A | Credit System | 1931-07-07 | 
+| US1834204A | Overlapping Visible Index | 1931-12-01 | 
+| US1925343A | Index Card And Method Of Preparing Same | 1933-09-05 | 
+| US1963806A | Visible Index File Panel | 1934-06-19 | 
+| US2015460A | Index Device | 1935-09-24 | 
+| US2015480A | Card Index System For Keeping Records In A Visible Or Horizontal Way | 1935-09-24 | 
+| US2043675A | Record Member For Card Index Systems | 1936-06-09 | 
+| US2081841A | Visible Card File | 1937-05-25 | 
+| US2086047A | Card Index File | 1937-07-06 | 
+| US2178457A | Visible Index | 1939-10-31 | 
+</p>
+<p>
+The KARDEX trademark was filed two months after the last visible-index patent in the dataset (US2178457A, granted October 31, 1939; trademark filed December 14, 1939). The sequence — a decade of patents followed by a trademark consolidation — is characteristic of a mature product line rather than a launch. 
+</p>
+<p>
+--- 
+</p>
+<h2>LINEDEX and VARIADEX: The Product Family</h2>
+<p>
+The KARDEX mark did not stand alone. The cross-reference of Remington Rand's trademark registrations against the patent record reveals a product family with distinct lines: 
+</p>
+<p>
+<strong>LINEDEX</strong> (Reg. 0289923, filed 1931) — registered by the subsidiary Remington Rand Business Service, Inc. The &quot;line&quot; in LINEDEX likely refers to the horizontal line of visible card edges in a Kardex-style tray: the product was a line-visible index rather than a tab-visible system. 
+</p>
+<p>
+<strong>VARIADEX</strong> (Reg. 0371824, filed April 7, 1939) — filed just weeks before the year's most active Remington Rand patent cluster. &quot;Varia&quot; suggests a variable or rotary index. US1849049A (&quot;Rotary Index,&quot; 1932) and US2026503A (&quot;Card Index Device,&quot; 1935) are candidate patents; the closest date correspondence is US2152606A (&quot;Card Index,&quot; granted March 28, 1939; VARIADEX filed April 7, 1939 — ten days later). 
+</p>
+<p>
+<strong>SCOTTIE</strong> (Reg. 0323202, filed October 8, 1934) — the only Remington Rand trademark from this period without an obvious product category from the name alone. US1973497A (&quot;Loose Leaf Binder,&quot; granted September 11, 1934; SCOTTIE filed October 8, 1934 — 27 days later) is the strongest patent correspondence. The product was likely a branded binder model. 
+</p>
+<p>
+--- 
+</p>
+<h2>The Confirmed Pair</h2>
+<p>
+The confirmed correspondence is between US2178457A (&quot;Visible Index,&quot; granted October 31, 1939) and the KARDEX trademark (serial 71426576, filed December 14, 1939): 
+</p>
+<p>
+| Record | Identifier | Date | 
+|---|---|---| 
+| Patent | US2178457A — Visible Index | Granted October 31, 1939 | 
+| Trademark | Serial 71426576 — KARDEX | Filed December 14, 1939 | 
+</p>
+<p>
+The 44-day gap between grant and filing is consistent with a deliberate sequence: patent the mechanism, then register the product name. That Remington Rand had operated commercially under the KARDEX name for years before filing the trademark suggests the 1939 registration was not a product launch but an asset consolidation — securing the name at the same moment the core patents were finalized. This is a different patent-trademark dynamic than the SOUNDEX or VARIADEX pairs, where the trademark closely followed a specific new invention. The KARDEX pair documents what happens at the end of a product's technical development: the company closes out its patent activity and formally registers the commercial identity it had been using all along. 
+</p><div class="sources"><h2>Primary Sources</h2><dl><dt>Trademark</dt><dd>Serial No. 71426576 · KARDEX · Filed 1939-12-14</dd><dt>Patent</dt><dd>US2178457A · Visible Index · Granted 1939-10-31</dd></dl></div></div></div>
+</body>
+</html>

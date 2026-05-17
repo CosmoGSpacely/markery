@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>REDIREF ↔ US1614080A</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: #f5f0e8;
+  color: #1a1a1a;
+  line-height: 1.65;
+  font-size: 16px;
+}
+
+a { color: #5a3e28; text-decoration: underline; }
+a:hover { color: #8b5e3c; }
+
+/* ── Site header ── */
+.site-header {
+  background: #2a1f14;
+  color: #f5f0e8;
+  padding: 18px 40px;
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+.site-header .site-title {
+  font-size: 1.1em;
+  font-weight: normal;
+  letter-spacing: .04em;
+  color: #e8dcc8;
+  text-decoration: none;
+}
+.site-header nav a {
+  color: #b8a88a;
+  text-decoration: none;
+  font-size: .85em;
+  margin-right: 16px;
+}
+.site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Page header ── */
+.page-header {
+  background: #3d2b1a;
+  color: #f5f0e8;
+  padding: 40px;
+}
+.page-header h1 {
+  font-size: 2em;
+  font-weight: normal;
+  margin-bottom: 6px;
+}
+.page-header .subtitle {
+  color: #b8a88a;
+  font-size: .95em;
+}
+.page-header .stat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.chip {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  color: #e8dcc8;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: .8em;
+  font-family: monospace;
+}
+
+/* ── Page body ── */
+.page-body { max-width: 960px; margin: 0 auto; padding: 48px 40px; }
+
+.narrative {
+  max-width: 700px;
+  margin-bottom: 40px;
+}
+.narrative h2 {
+  font-size: 1.2em;
+  font-weight: normal;
+  margin: 32px 0 10px;
+  color: #3d2b1a;
+}
+.narrative p { margin-bottom: 1em; }
+.narrative table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .88em;
+  margin: 16px 0;
+}
+.narrative th, .narrative td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid #ddd;
+}
+.narrative th { background: #ede8de; font-weight: normal; color: #555; }
+.narrative code {
+  font-family: monospace;
+  font-size: .88em;
+  background: #ede8de;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.narrative pre {
+  background: #ede8de;
+  padding: 14px;
+  overflow-x: auto;
+  margin: 12px 0;
+  font-size: .83em;
+}
+
+/* ── Timeline ── */
+.timeline-section { margin-bottom: 40px; }
+.timeline-section h2 {
+  font-size: 1em;
+  font-weight: normal;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+.timeline-svg { width: 100%; overflow: visible; }
+
+/* ── Card grid ── */
+.section-title {
+  font-size: 1em;
+  font-weight: normal;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 16px;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.card-image {
+  width: 100%;
+  height: 140px;
+  object-fit: contain;
+  background: #faf8f4;
+  border-bottom: 1px solid #eee;
+  display: block;
+}
+.card-image-placeholder {
+  width: 100%;
+  height: 140px;
+  background: #ede8de;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: .75em;
+  font-family: monospace;
+  border-bottom: 1px solid #eee;
+}
+.card-body { padding: 10px 12px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.card-name { font-weight: bold; font-size: .88em; line-height: 1.3; }
+.card-meta { font-size: .75em; color: #666; }
+.card-goods { font-size: .73em; color: #444; margin-top: 4px; line-height: 1.4;
+  border-top: 1px solid #eee; padding-top: 4px; }
+.card-footer { font-size: .7em; color: #999; font-family: monospace; margin-top: auto; padding-top: 4px; }
+.entity-badge {
+  display: inline-block;
+  background: #e8dcc8;
+  color: #5a3e28;
+  font-size: .68em;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-top: 2px;
+  font-family: monospace;
+}
+.match-link {
+  display: inline-block;
+  background: #5a3e28;
+  color: #f5f0e8;
+  font-size: .68em;
+  padding: 2px 8px;
+  border-radius: 3px;
+  text-decoration: none;
+  margin-top: 4px;
+}
+.match-link:hover { background: #8b5e3c; color: #f5f0e8; }
+
+/* ── Entity grid ── */
+.entity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.entity-card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  padding: 20px;
+}
+.entity-card h3 { font-size: 1.1em; font-weight: normal; margin-bottom: 8px; }
+.entity-card .entity-meta { font-size: .8em; color: #666; margin-bottom: 12px; }
+.entity-card .entity-stats {
+  display: flex;
+  gap: 16px;
+  font-size: .78em;
+  color: #444;
+  margin-bottom: 12px;
+}
+.entity-card .stat-val { font-weight: bold; color: #2a1f14; }
+.entity-card .links a { font-size: .82em; margin-right: 12px; }
+
+/* ── Match cards (landing page) ── */
+.match-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.match-card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+}
+.match-card-thumb {
+  width: 80px;
+  min-width: 80px;
+  height: 80px;
+  object-fit: contain;
+  background: #faf8f4;
+  border: 1px solid #eee;
+  border-radius: 3px;
+}
+.match-card-thumb-placeholder {
+  width: 80px;
+  min-width: 80px;
+  height: 80px;
+  background: #ede8de;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #bbb;
+  font-size: .7em;
+}
+.match-card-body { flex: 1; }
+.match-card-title { font-weight: bold; font-size: .95em; margin-bottom: 4px; }
+.match-card-meta { font-size: .78em; color: #666; margin-bottom: 8px; }
+.match-card-note { font-size: .8em; color: #444; line-height: 1.4; margin-bottom: 8px; }
+
+/* ── Essay page ── */
+.essay { max-width: 700px; }
+.essay h2 { font-size: 1.2em; font-weight: normal; margin: 36px 0 10px; color: #3d2b1a; }
+.essay p { margin-bottom: 1em; }
+.essay table { width: 100%; border-collapse: collapse; font-size: .88em; margin: 16px 0; }
+.essay th, .essay td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ddd; }
+.essay th { background: #ede8de; font-weight: normal; color: #555; }
+.essay pre { background: #ede8de; padding: 14px; overflow-x: auto; margin: 12px 0; font-size: .83em; }
+.essay code { font-family: monospace; font-size: .88em; background: #ede8de; padding: 1px 4px; border-radius: 2px; }
+.essay-media {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 24px 0;
+}
+.essay-media img {
+  width: 100%;
+  object-fit: contain;
+  border: 1px solid #ddd;
+  background: #faf8f4;
+}
+.essay-media .media-label { font-size: .75em; color: #888; margin-top: 4px; text-align: center; }
+.sources {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #ddd;
+  font-size: .82em;
+  color: #555;
+}
+.sources h2 { font-size: .95em; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+.sources dt { font-weight: bold; margin-top: 8px; }
+.sources dd { margin-left: 16px; }
+</style>
+</head>
+<body>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a></nav></header>
+<div class="page-header"><h1>REDIREF ↔ US1614080A</h1><div class="subtitle">Confirmed patent-trademark pair · Information Systems</div><div class="stat-chips"><span class="chip">Wilson Jones</span><span class="chip">Patent 1927-01-11</span><span class="chip">Mark filed 1927-09-19</span></div></div><div class="page-body"><div class="essay"><div class="essay-media"><div><img src="data:image/png;base64,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" alt="REDIREF"><div class="media-label">REDIREF · Serial 71254949</div></div></div><h2>REDIREF and HANDIREF: A Coordinated Brand Launch</h2>
+<p>
+Wilson Jones Company filed two trademarks on September 19, 1927 — the same day, covering identical goods. REDIREF (serial 71254949) and HANDIREF (serial 71254950) both registered for *&quot;loose-leaf binders and loose-leaf sheets therefor.&quot;* The simultaneous filing documents a deliberate product-line strategy, with both marks anchored to US1614080A, &quot;Loose-Leaf Binder,&quot; granted to the Wilson Jones Co on January 11, 1927. 
+</p>
+<p>
+--- 
+</p>
+<h2>The Patent</h2>
+<p>
+US1614080A, titled &quot;Loose-Leaf Binder&quot; and granted January 11, 1927, was assigned to the Wilson Jones Co and invented by George Washington Newman — the same engineer whose earlier work produced US1527374A (1925), the foundation of the VI-DEX product line. Newman was Wilson Jones's primary binder engineer through the mid-1920s, responsible for the mechanical innovations that distinguished the company's products. 
+</p>
+<p>
+The patent covers an improved loose-leaf binder mechanism, addressing the engineering of the binding post and ring system that holds sheets in place while permitting their addition and removal. Loose-leaf binder technology was mature by 1927, but each refinement — a better locking mechanism, a smoother post action, a more durable ring — justified its own patent and, potentially, its own product name. US1614080A represents one such refinement in a long series. 
+</p>
+<p>
+--- 
+</p>
+<h2>The Trademarks</h2>
+<p>
+REDIREF's first-use date is January 5, 1927 — six days before the patent was granted. This near-simultaneity of first commercial use and patent grant is consistent with a company bringing a product to market as its patent application moved through final review. The REDIREF binder was being sold, or at least demonstrated, in the first week of January 1927, the same week the patent issued. 
+</p>
+<p>
+HANDIREF's first-use date is September 2, 1927 — 17 days before both marks were formally filed. The name follows the same formula: HANDI (handy, convenient) + REF (reference), parallel to REDI (ready) + REF. The registration numbers confirm the relationship: HANDIREF was assigned registration 0237469, REDIREF 0237470 — consecutive numbers from the same USPTO registration sequence, processed together. 
+</p>
+<p>
+The goods description is identical for both marks: *&quot;loose-leaf binders and loose-leaf sheets therefor.&quot;* The company was not distinguishing two different products by their goods — it was building a product family under two complementary names, both communicating the same value proposition: immediate access to reference material. 
+</p>
+<p>
+--- 
+</p>
+<h2>The Correspondence</h2>
+<p>
+The tightest evidence links REDIREF to US1614080A. The patent was granted January 11, 1927; REDIREF first use was January 5, 1927. Wilson Jones was selling the REDIREF binder as the patent finalized — a compressed timeline that suggests active coordination between engineering and commercial operations, not the extended lag between invention and market introduction that characterized some earlier periods. 
+</p>
+<p>
+HANDIREF is more accurately understood as a brand extension than as a separately patented product. Filed the same day, covering the same goods, with registration numbers that differ by one, HANDIREF appears to be a companion product in the same line — a variant format or size of the REDIREF binder, marketed under a name that emphasized portability or convenience rather than immediacy. The simultaneous filing of both marks formalized the product family at once. 
+</p>
+<p>
+--- 
+</p>
+<h2>Historical Significance</h2>
+<p>
+The REDIREF–HANDIREF pair illustrates a filing strategy that recurs across this project's entity registry: the coordinated product-family launch. Rather than filing one mark per product as each launched, Wilson Jones filed both marks together on the same day in September 1927 — at the same time the company was also formalizing VI-DEX. The September 1927 cluster of three Wilson Jones trademark filings represents a single strategic decision to register the company's loose-leaf binder product names in bulk. The REDIREF and HANDIREF registration numbers are consecutive; they were processed as a unit. This is not coincidence but portfolio management. 
+</p><div class="sources"><h2>Primary Sources</h2><dl><dt>Trademark</dt><dd>Serial No. 71254949 · REDIREF · Filed 1927-09-19</dd><dt>Patent</dt><dd>US1614080A · Loose-Leaf Binder · Granted 1927-01-11</dd></dl></div></div></div>
+</body>
+</html>

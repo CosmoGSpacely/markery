@@ -143,25 +143,26 @@ These gaps were identified during the Phase 2 → Phase 3 handoff. Address befor
 
 4. **Scoring refinement** — address company-name mark false positives (D006). A heuristic that flags marks whose `mark_element` matches an entity canonical name would filter most without changing the scoring formula.
 
-5. **Confirmed entries and content** — reach 5 confirmed pairs with essays. Priority order:
+5. **Confirmed entries and content** — reach 5 confirmed pairs with essays. ✅ Complete (8 confirmed pairs).
 
    | Content file | Status | Notes |
    |---|---|---|
    | `content/soundex.md` | ✅ Written | Covers both SOUNDEX pairs (Russell + Odell patents) |
-   | `content/variadex.md` | ✗ Missing | Single confirmed pair; schema-compliant essay needed |
-   | `content/soundex-quick-as-a-flash.md` | ✗ Missing | Odell patent + slogan mark; brief essay |
-   | `content/kardex.md` | ⚠ Orphaned | Exists but not linked to a confirmed pair; resolve R3 first |
-   | `content/entity-remington-rand.md` | ✗ Missing | Entity summary schema |
-   | `content/entity-wilson-jones.md` | ✗ Missing | Entity summary schema |
-   | `content/entity-yawman-and-erbe.md` | ✗ Missing | Entity summary schema |
-   | `content/entity-boorum-and-pease.md` | ✗ Missing | Entity summary schema |
-   | `content/trademarks-narrative.md` | ✗ Missing | Gallery narrative schema |
-   | `content/patents-narrative.md` | ✗ Missing | Gallery narrative schema |
-   | `content/index-narrative.md` | ✗ Missing | Project landing schema |
+   | `content/variadex.md` | ✅ Written | VARIADEX ↔ US2152606A |
+   | `content/soundex-quick-as-a-flash.md` | ✅ Written | Odell patent + slogan mark |
+   | `content/kardex.md` | ✅ Written | Resolved R3; KARDEX ↔ US2178457A |
+   | `content/vi-dex.md` | ✅ Written | VI-DEX ↔ US1527374A |
+   | `content/rediref.md` | ✅ Written | REDIREF ↔ US1614080A (covers HANDIREF companion) |
+   | `content/shannon.md` | ✅ Written | SHANNON ↔ US1738120A |
+   | `content/entity-remington-rand.md` | ✅ Written | Entity summary |
+   | `content/entity-wilson-jones.md` | ✅ Written | Entity summary |
+   | `content/entity-yawman-and-erbe.md` | ✅ Written | Entity summary |
+   | `content/entity-boorum-and-pease.md` | ✅ Written | Entity summary |
+   | `content/trademarks-narrative.md` | ✅ Written | Gallery narrative |
+   | `content/patents-narrative.md` | ✅ Written | Gallery narrative |
+   | `content/index-narrative.md` | ✅ Written | Project landing narrative |
 
-   Research candidates for the 5-entry target: Wilson Jones VI-DEX (serial 71252433, B42F patents 1925–1927), Wilson Jones REDIREF and HANDIREF (serials 71254949 and 71254950, filed same day — likely coordinated product launch), Yawman & Erbe SHANNON (~1930).
-
-**Phase gate:** 5 confirmed entries in `information-systems/matches/confirmed.jsonl`, each with an essay in `content/`; all entity summaries and gallery narratives written; `markery site build information-systems` produces a site with no placeholder pages.
+**Phase gate:** ✅ 8 confirmed entries in `confirmed.jsonl`, each with an essay; all entity summaries and gallery narratives written; `markery site build information-systems` produces 14 pages with no placeholder content.
 
 ---
 
