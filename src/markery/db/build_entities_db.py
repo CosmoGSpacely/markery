@@ -99,6 +99,10 @@ VARIANTS = [
     (1, "REMINGTON RAND INC.",                   "trademark_owner"),
     (1, "REMINGTON RAND BUSINESS SERVICE, INC.", "trademark_owner"),
     (1, "Remington Rand Corporation",            "trademark_owner"),
+    # Rand Kardex Bureau — pre-merger subsidiary that filed the SOUNDEX marks (1927)
+    (1, "RAND KARDEX BUREAU, INC.",              "trademark_owner"),
+    # Kardex Systems — post-merger successor that held SOUNDEX through expiration
+    (1, "KARDEX SYSTEMS, INC.",                  "trademark_owner"),
 
     # ── Wilson Jones ───────────────────────────────────────────────────────
     (2, "WILSON JONES CO",                       "patent_assignee"),
