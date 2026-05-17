@@ -92,7 +92,7 @@ def cmd_gallery(args) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="image_tools")
+    parser = argparse.ArgumentParser(prog="image_enhancement")
     parser.add_argument("--db", default="trademarks.duckdb", help="Path to trademarks.duckdb")
     sub = parser.add_subparsers(dest="cmd", required=True)
 

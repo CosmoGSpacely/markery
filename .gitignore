@@ -33,7 +33,7 @@ csv/
 .claude/*.local.*
 input/
 output/
-image_tools/weights/
+tools/image_enhancement/weights/
 # Project generated outputs (images, PDFs, gallery HTML) — track research docs only
 projects/*/input/
 projects/*/output/

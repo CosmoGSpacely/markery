@@ -151,9 +151,9 @@ The rebuild takes 2–5 minutes depending on disk speed. The resulting database 
 
 ## Image enhancement
 
-Mark image enhancement uses Real-ESRGAN. Model weights (~17 MB) are downloaded automatically on first use to `image_tools/weights/`.
+Mark image enhancement uses Real-ESRGAN. Model weights (~17 MB) are downloaded automatically on first use to `tools/image_enhancement/weights/`.
 
-Before running enhancement, review `image_tools/ENHANCE.md`. Enhancement is a selective, manually-confirmed step — not a batch operation on query results.
+Before running enhancement, review `tools/image_enhancement/ENHANCE.md`. Enhancement is a selective, manually-confirmed step — not a batch operation on query results.
 
 ---
 
@@ -164,11 +164,13 @@ markery/
 ├── patents.duckdb              US patents 1900–1939 (B42F + B42D)
 ├── trademarks.duckdb           USPTO trademark applications 1900–1939
 ├── entities.duckdb             Canonical company registry
-├── build_patents_db.py         Rebuild patents.duckdb from EPO OPS
-├── build_trademarks_db.py      Rebuild trademarks.duckdb from CSV
-├── build_entities_db.py        Rebuild entities.duckdb (idempotent)
-├── match/                      Patent-trademark candidate pipeline
-├── image_tools/                Mark image enhancement pipeline
+├── src/markery/
+│   ├── matching/               Patent-trademark candidate pipeline
+│   └── db/                     DB builders and TSDR client
+├── tools/
+│   ├── image_enhancement/      Mark image enhancement pipeline
+│   ├── patent_docs/            Patent PDF fetch and text-signal scoring
+│   └── historian/              Historian agent
 ├── projects/
 │   └── information-systems/    Active research project
 │       ├── entities.txt        Companies in scope

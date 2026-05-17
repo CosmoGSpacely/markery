@@ -38,7 +38,7 @@ Do not proceed to enhancement until the user has reviewed the list and confirmed
 Pass the confirmed serial numbers as a SQL WHERE clause:
 
 ```bash
-.venv/bin/python -m image_tools batch \
+.venv/bin/python -m image_enhancement batch \
   "cf.serial_no IN ('71300354','71301023')" \
   --out-dir projects/<project>/output/<collection>
 ```
@@ -46,7 +46,7 @@ Pass the confirmed serial numbers as a SQL WHERE clause:
 Or for a date/type query scoped to a pre-confirmed set:
 
 ```bash
-.venv/bin/python -m image_tools batch \
+.venv/bin/python -m image_enhancement batch \
   "cf.filing_dt BETWEEN DATE '1930-05-01' AND DATE '1930-05-31' AND cf.mark_draw_cd LIKE '3%'" \
   --out-dir projects/monthly-image-review/output/enhanced-may1930-designs
 ```
@@ -54,7 +54,7 @@ Or for a date/type query scoped to a pre-confirmed set:
 ### 4. Build the gallery
 
 ```bash
-.venv/bin/python -m image_tools gallery projects/<project>/output/<collection> \
+.venv/bin/python -m image_enhancement gallery projects/<project>/output/<collection> \
   --title "<descriptive title>" \
   --subtitle "<count> marks • <source description>"
 ```
@@ -67,7 +67,7 @@ How many marks were enhanced, how many have SVG output, where the gallery file l
 
 ## Notes
 
-- Model weights (~17 MB for `x4plus-anime`) are downloaded automatically on first use to `image_tools/weights/`.
+- Model weights (~17 MB for `x4plus-anime`) are downloaded automatically on first use to `tools/image_enhancement/weights/`.
 - SVG output is written alongside the PNG when the mark is clean enough to vectorize (word marks, geometric designs). Illustration marks — figures, animals, landscapes — get PNG only. The gallery labels SVG-capable marks with `[SVG]`.
 - Use `--force` to re-process marks that already have output files.
 - The gallery is self-contained HTML with base64-embedded images — open directly in a browser or share as a single file.

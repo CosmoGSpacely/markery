@@ -12,6 +12,8 @@ The core hypothesis: the trademark record establishes what a company called its 
 
 **Primary research focus:** pre-computer information systems — the filing cabinets, card indexes, visible record systems, tabulating machines, and phonetic coding schemes that American businesses used to organize knowledge before the digital era.
 
+**Scope boundary:** The core tool handles USPTO/EPO data ingestion, candidate generation, and project management. Image enhancement, patent document handling, and the historian AI specialist are extensions — useful but separate from the core research workflow.
+
 ---
 
 ## Phase 1 — Working Research Tool *(largely complete)*
@@ -22,18 +24,103 @@ The core hypothesis: the trademark record establishes what a company called its 
 |---|---|---|
 | TSDR client | `tsdr_client.py` — case status JSON + raw mark image fetch | External API integration, rate limiting |
 | Trademark database | `trademarks.duckdb` — 25,473 case files, 1900–1939 | DuckDB database design, bulk CSV import |
-| Historian specialist | `commerce-and-technology-historian/` — Claude specialist persona | Specialist agent design, system prompt engineering |
-| Image pipeline | `image_tools/` — Real-ESRGAN 4× upscale + SVG vectorization | ML inference pipeline, image processing |
+| Historian specialist | `tools/historian/` — Claude specialist persona | Specialist agent design, system prompt engineering |
+| Image pipeline | `tools/image_enhancement/` — Real-ESRGAN 4× upscale + SVG vectorization | ML inference pipeline, image processing |
 | Patent database | `patents.duckdb` — 11,284 EPO patents (B42F, B42D), 1900–1939 | EPO OPS API, CQL queries, OAuth2 |
 | Entity registry | `entities.duckdb` — canonical company registry with name variants | Entity resolution, cross-database ATTACH queries |
-| Match pipeline | `match/` — scored patent-trademark candidate pairs | Scoring model design, research workflow |
+| Match pipeline | `src/markery/matching/` — scored patent-trademark candidate pairs | Scoring model design, research workflow |
 | Projects tree | `projects/information-systems/` — first research project | Research methodology, primary source curation |
 
 **Phase gate:** Phase 1 closes when the operations workflow is documented as a single runnable checklist (in progress — see `STATUS.md`).
 
+### Phase 1 Close Plan
+
+All infrastructure is built and verified (see STATUS.md infrastructure ledger). The single open gate item is the operations checklist. Close in three steps:
+
+**Step 1 — Write the operations workflow document**
+
+Create `docs/workflows/research-session.md` (or `WORKFLOW.md` at root until Phase 2 reorganization moves it). The document must be a literal runnable checklist — commands, not descriptions — covering:
+
+1. *Environment* — activate `.venv`, confirm `.env` has `EPO_CONSUMER_KEY`, `EPO_CONSUMER_SECRET`, `USPTO_API_KEY`; verify DuckDB files present at expected paths.
+2. *Add an entity* — `python build_entities_db.py` with a new company; confirm it appears in `entities.duckdb` with expected name variants.
+3. *Generate candidates* — `python -m match information-systems`; confirm `candidates.jsonl` updates and row count is plausible.
+4. *Review candidates* — `scripts/review`; step through the interactive reviewer, fetch patent docs, inspect text signals and figures.
+5. *Confirm a pair* — promote a candidate to `confirmed.jsonl`; verify the entry structure matches existing confirmed entries.
+6. *Write an essay* — open `tools/historian/` in a Claude session; produce a draft essay and save to `projects/information-systems/content/`.
+7. *Enhance mark image* — `scripts/enhance <serial>`; confirm 4× PNG output; optionally run SVG vectorization.
+8. *Build gallery* — run gallery generator against project output folder; open `gallery.html` and verify images render.
+
+**Step 2 — Dry-run the checklist against current code**
+
+Execute each step from a clean shell (`.venv` activated, no previous process state) and note any command that fails or requires undocumented knowledge. Fix any gaps before marking complete.
+
+**Step 3 — Update STATUS.md**
+
+Check off the operations checklist gate item and set Phase to "1 — Complete / entering Phase 2 reorganization".
+
 ---
 
-## Phase 2 — Corpus and Match Quality *(planned)*
+## Phase 2 — Codebase Reorganization *(next)*
+
+**Goal:** Restore structural clarity so that the core research workflow, extensions, and AI tooling each have a home that matches their purpose. Eliminate the flat module layout at root, consolidate scattered entry points into a single CLI, and move non-code assets out of the source tree.
+
+### Motivation
+
+The project review (`MARKERY_REVIEW.md`) identified three structural problems that will compound as the corpus grows:
+- Flat root layout mixes core modules (`match/`), extensions (`image_tools/`, `patent_docs/`), and AI agents (`commerce-and-technology-historian/`) with no hierarchy.
+- No single entry point: operations are spread across `scripts/`, `python -m match`, and direct module invocation.
+- Documentation scattered at root with no organization by audience or purpose.
+
+### Target directory structure
+
+```
+markery/
+├── src/markery/              # Core installable package
+│   ├── db/                   # build_*_db.py, tsdr_client.py → here
+│   ├── matching/             # match/ contents → here
+│   └── cli.py                # Unified markery CLI entry point
+├── tools/                    # Extension modules (optional, not core)
+│   ├── image_enhancement/    # image_tools/ → here
+│   ├── patent_docs/          # patent_docs/ → here
+│   ├── trademark_docs/       # new — non-image mark retrieval (see Phase 3)
+│   └── historian/            # commerce-and-technology-historian/ → here
+├── projects/                 # Research projects only (unchanged)
+│   ├── information-systems/
+│   └── monthly-image-review/
+├── data/                     # DuckDB files and raw CSV (gitignored binaries)
+│   ├── trademarks.duckdb
+│   ├── patents.duckdb
+│   ├── entities.duckdb
+│   └── csv/
+├── docs/                     # All documentation
+│   ├── workflows/            # Step-by-step operational guides
+│   ├── reference/            # EPO.md, TSDR.md, DESIGN.md → here
+│   └── contributing/         # Extension development guide
+├── scripts/                  # Thin shell wrappers only (minimize)
+└── tests/                    # Test suite (unchanged structure)
+```
+
+### Migration steps
+
+1. **Create `src/markery/` package** — move `match/` → `src/markery/matching/`; extract database builders and `tsdr_client.py` into `src/markery/db/`; update all imports.
+2. **Create `tools/` tree** — move `image_tools/` → `tools/image_enhancement/`; move `patent_docs/` → `tools/patent_docs/`; move `commerce-and-technology-historian/` → `tools/historian/`.
+3. **Build unified CLI** — create `src/markery/cli.py` with subcommands replacing the current `scripts/` entry points:
+   - `markery match <project>` — replaces `scripts/run-match`
+   - `markery review <project>` — replaces `scripts/review`
+   - `markery enhance <serial>` — replaces `scripts/enhance`
+   - `markery fetch-patents <project>` — replaces `scripts/fetch-patent-docs`
+   - `markery fetch-trademarks <project>` — new; implemented in Phase 3 (`tools/trademark_docs/`)
+   - `markery status` — replaces `scripts/check-status`
+4. **Move databases to `data/`** — update all hardcoded paths; verify `.gitignore` covers binaries.
+5. **Consolidate documentation** — move `EPO.md`, `TSDR.md`, `DESIGN.md`, `SETUP.md` → `docs/reference/`; create `docs/workflows/research-session.md` as the single runnable checklist (closes Phase 1 gate).
+6. **Update `pyproject.toml`** — define `[project.scripts]` entry points for `markery` and `markery-tools`.
+7. **Remove deprecated entry points** — delete `scripts/` wrappers once CLI subcommands are verified; add deprecation notices if any external references exist.
+
+**Phase gate:** `src/markery/` is the canonical package; `markery match information-systems` runs end-to-end from the new layout; no Python files remain at root except `pyproject.toml` / `setup.cfg`.
+
+---
+
+## Phase 3 — Corpus and Match Quality *(planned)*
 
 **Goal:** `information-systems` project has 5 confirmed entries with essays.
 
@@ -43,15 +130,17 @@ The core hypothesis: the trademark record establishes what a company called its 
 
 2. **New entities** — add Smead Mfg. (SMEAD'S TELL VISION SYSTEM, 1938), Library Bureau, and others identified through the candidate list. Procedure: `README.md` → entities section.
 
-3. **Scoring refinement** — address company-name mark false positives (D006). A heuristic that flags marks whose `mark_element` matches an entity canonical name would filter most without changing the scoring formula.
+3. **Trademark document retrieval** — build `tools/trademark_docs/` to fetch non-image mark content from TSDR for confirmed and candidate pairs in a project. The TSDR client already fetches case status and mark images; this extends it to retrieve goods-and-services descriptions, specimen of use text, and prosecution correspondence for a given serial. This text enriches the historian's analysis for word marks and text-heavy filings where the goods/services description is the primary source for what the company was actually selling under that mark. Entry point: `markery fetch-trademarks <project>`, which writes retrieved content alongside the existing `candidates.jsonl` / `confirmed.jsonl` in the project matches directory.
 
-4. **Confirmed entries** — develop Wilson Jones (VI-DEX, REDIREF, HANDIREF), Yawman & Erbe (SHANNON), and at least one typewriter or tabulating machine entry once Phase 2 CPC data is available.
+4. **Scoring refinement** — address company-name mark false positives (D006). A heuristic that flags marks whose `mark_element` matches an entity canonical name would filter most without changing the scoring formula.
+
+5. **Confirmed entries** — develop Wilson Jones (VI-DEX, REDIREF, HANDIREF), Yawman & Erbe (SHANNON), and at least one typewriter or tabulating machine entry once Phase 3 CPC data is available.
 
 **Phase gate:** 5 confirmed entries in `information-systems/matches/confirmed.jsonl`, each with an essay in `content/`.
 
 ---
 
-## Phase 3 — Publication *(planned)*
+## Phase 4 — Publication *(planned)*
 
 **Goal:** One project publicly browsable at a stable URL.
 
@@ -87,10 +176,10 @@ The core hypothesis: the trademark record establishes what a company called its 
 ### Discovery methodology
 
 1. Add target company to `entities.duckdb` (procedure in `README.md`)
-2. Run `python -m match information-systems` to generate candidates
+2. Run `markery match information-systems` to generate candidates
 3. Review `candidates.jsonl` — filter to product-name marks (not company names), high score, date overlap
 4. Confirm pair: add entry to `confirmed.jsonl`, write essay in `content/`
-5. Fetch patent PDF from Google Patents for primary source; enhance mark image via `image_tools/`
+5. Fetch patent PDF from Google Patents for primary source; enhance mark image via `markery enhance`
 
 ### Key reference works
 
@@ -110,7 +199,7 @@ The core hypothesis: the trademark record establishes what a company called its 
 | SVG | Clean word marks and geometric designs only | Skipped when illustration content is present |
 | PDF | Patent documents | Downloaded from Google Patents |
 | HTML (gallery) | Browsing output | Self-contained, base64-embedded; not for web publication |
-| HTML (site) | Publication output | Referenced images, crawlable, Open Graph (Phase 3) |
+| HTML (site) | Publication output | Referenced images, crawlable, Open Graph (Phase 4) |
 | Markdown | Research essays, README | Tracked in git |
 
 ---

@@ -356,21 +356,22 @@ markery/
 ├── TSDR.md                         USPTO TSDR API reference
 ├── requirements.txt
 │
-├── image_tools/                    Image processing pipeline for trademark scans
-│   ├── pipeline.py                 Orchestrates upscale → binarize → SVG
-│   ├── upscale.py                  Real-ESRGAN 4× upscaling
-│   ├── binarize.py                 Threshold/adaptive binarization
-│   ├── gallery.py                  HTML gallery generator
-│   └── cli.py / __main__.py
-│
-├── commerce-and-technology-historian/   Specialist persona for research queries
-│   ├── identity.md
-│   ├── rules.md
-│   ├── examples.md
-│   └── reference/
-│       ├── historical-context.md
-│       ├── image-enhancement.md
-│       ├── mark-drawing-codes.md
+├── tools/
+│   ├── image_enhancement/          Image processing pipeline for trademark scans
+│   │   ├── pipeline.py             Orchestrates upscale → binarize → SVG
+│   │   ├── upscale.py              Real-ESRGAN 4× upscaling
+│   │   ├── binarize.py             Threshold/adaptive binarization
+│   │   ├── gallery.py              HTML gallery generator
+│   │   └── cli.py / __main__.py
+│   ├── patent_docs/                Patent PDF fetch and text-signal scoring
+│   └── historian/                  Specialist persona for research queries
+│       ├── identity.md
+│       ├── rules.md
+│       ├── examples.md
+│       └── reference/
+│           ├── historical-context.md
+│           ├── image-enhancement.md
+│           ├── mark-drawing-codes.md
 │       ├── markery-database.md
 │       └── status-codes.md
 │

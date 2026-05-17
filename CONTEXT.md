@@ -14,7 +14,7 @@ Markery is a patent-trademark cross-reference tool for early 20th-century Americ
 
 ## Next Action
 
-Develop next confirmed entry: Wilson Jones VI-DEX (serial 71235764) or REDIREF/HANDIREF (serials 71237470, 71237469). See candidate assessment section in `projects/information-systems/README.md`.
+Phase 2 steps 1–3 complete: `src/markery/` package; `tools/` tree; unified `markery` CLI (`match`, `review`, `status`, `enhance`, `fetch-patents`, `score-signals`). Next: Phase 2 step 4 — move databases to `data/`.
 
 ## Reference Docs
 

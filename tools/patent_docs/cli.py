@@ -13,10 +13,9 @@ import argparse
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).parent.parent
-PROJECTS_DIR = ROOT / "projects"
-PATENTS_DB   = ROOT / "patents.duckdb"
-TM_DB        = ROOT / "trademarks.duckdb"
+PROJECTS_DIR = Path("projects")
+PATENTS_DB   = Path("patents.duckdb")
+TM_DB        = Path("trademarks.duckdb")
 
 
 def _project_dir(name: str) -> Path:

@@ -1,5 +1,5 @@
 from datetime import date
-from match.score import date_score, class_score, total_score
+from markery.matching.score import date_score, class_score, total_score
 
 
 def test_patent_before_trademark_is_positive():

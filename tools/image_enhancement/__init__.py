@@ -1,4 +1,4 @@
-"""image_tools — trademark image enhancement pipeline."""
+"""image_enhancement — trademark image enhancement pipeline."""
 
 from .pipeline import process_mark
 from .gallery import build_gallery

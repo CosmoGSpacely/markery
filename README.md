@@ -120,17 +120,17 @@ Score components: `date_score` (max 0.5) — patent grant precedes trademark fil
 
 ## Image Enhancement
 
-Mark images are fetched from the USPTO TSDR API and can be enhanced with the `image_tools` pipeline — 4× Real-ESRGAN upscaling, optional SVG vectorization via vtracer, HTML gallery output.
+Mark images are fetched from the USPTO TSDR API and can be enhanced with the `image_enhancement` pipeline — 4× Real-ESRGAN upscaling, optional SVG vectorization via vtracer, HTML gallery output.
 
-**Enhancement is a manual, selective step.** See `image_tools/ENHANCE.md` for the workflow. Do not run batch enhancement on unreviewed query results.
+**Enhancement is a manual, selective step.** See `tools/image_enhancement/ENHANCE.md` for the workflow. Do not run batch enhancement on unreviewed query results.
 
 ```bash
 # Enhance specific serial numbers
-python -m image_tools batch "cf.serial_no IN ('71246709','71255821')" \
+python -m image_enhancement batch "cf.serial_no IN ('71246709','71255821')" \
   --out-dir projects/information-systems/output/soundex-marks
 
 # Build gallery
-python -m image_tools gallery projects/information-systems/output/soundex-marks \
+python -m image_enhancement gallery projects/information-systems/output/soundex-marks \
   --title "Soundex Marks" --subtitle "2 marks · Rand Kardex Bureau, 1927"
 ```
 
@@ -157,8 +157,10 @@ projects/
     README.md
     output/
       may1930-designs/      39 design marks filed May 1930
-commerce-and-technology-historian/
-                            Historian agent: identity, rules, examples, reference docs
+tools/
+  image_enhancement/        Mark image enhancement pipeline (Real-ESRGAN, SVG, gallery)
+  patent_docs/              Patent PDF fetch and text-signal scoring
+  historian/                Historian agent: identity, rules, examples, reference docs
 ```
 
 Research documents (`.md` essays, `README.md`, `confirmed.jsonl`) are tracked in git. Generated output (images, PDFs, gallery HTML) is gitignored.
@@ -226,4 +228,4 @@ python -m match information-systems
 | `ROADMAP.md` | Near-term plans, research agenda, candidate subjects |
 | `EPO.md` | EPO OPS API — auth, endpoints, CQL, response structure, rate limits, data quality |
 | `TSDR.md` | USPTO TSDR API — mark image retrieval, case status, date encoding |
-| `image_tools/ENHANCE.md` | Mark image enhancement workflow |
+| `tools/image_enhancement/ENHANCE.md` | Mark image enhancement workflow |

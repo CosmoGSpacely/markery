@@ -101,7 +101,7 @@ scripts/review --min-score 0.65         # tighter threshold
 
 ## Output Collections
 
-Generated images and galleries live in `output/` (gitignored — regenerate with `image_tools`):
+Generated images and galleries live in `output/` (gitignored — regenerate with `scripts/enhance`):
 
 | Folder | Contents |
 |---|---|

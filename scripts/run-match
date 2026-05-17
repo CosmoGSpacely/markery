@@ -6,4 +6,4 @@
 #   scripts/run-match --entity "Wilson Jones"
 #   scripts/run-match --list-entities
 #   scripts/run-match --all
-exec python -m match "$@"
+exec python -m markery.matching "$@"
