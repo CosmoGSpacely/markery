@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Information Systems — Markery</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: #f5f0e8;
+  color: #1a1a1a;
+  line-height: 1.65;
+  font-size: 16px;
+}
+
+a { color: #5a3e28; text-decoration: underline; }
+a:hover { color: #8b5e3c; }
+
+/* ── Site header ── */
+.site-header {
+  background: #2a1f14;
+  color: #f5f0e8;
+  padding: 18px 40px;
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+.site-header .site-title {
+  font-size: 1.1em;
+  font-weight: normal;
+  letter-spacing: .04em;
+  color: #e8dcc8;
+  text-decoration: none;
+}
+.site-header nav a {
+  color: #b8a88a;
+  text-decoration: none;
+  font-size: .85em;
+  margin-right: 16px;
+}
+.site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Page header ── */
+.page-header {
+  background: #3d2b1a;
+  color: #f5f0e8;
+  padding: 40px;
+}
+.page-header h1 {
+  font-size: 2em;
+  font-weight: normal;
+  margin-bottom: 6px;
+}
+.page-header .subtitle {
+  color: #b8a88a;
+  font-size: .95em;
+}
+.page-header .stat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.chip {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  color: #e8dcc8;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: .8em;
+  font-family: monospace;
+}
+
+/* ── Page body ── */
+.page-body { max-width: 960px; margin: 0 auto; padding: 48px 40px; }
+
+.narrative {
+  max-width: 700px;
+  margin-bottom: 40px;
+}
+.narrative h2 {
+  font-size: 1.2em;
+  font-weight: normal;
+  margin: 32px 0 10px;
+  color: #3d2b1a;
+}
+.narrative p { margin-bottom: 1em; }
+.narrative table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .88em;
+  margin: 16px 0;
+}
+.narrative th, .narrative td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid #ddd;
+}
+.narrative th { background: #ede8de; font-weight: normal; color: #555; }
+.narrative code {
+  font-family: monospace;
+  font-size: .88em;
+  background: #ede8de;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.narrative pre {
+  background: #ede8de;
+  padding: 14px;
+  overflow-x: auto;
+  margin: 12px 0;
+  font-size: .83em;
+}
+
+/* ── Timeline ── */
+.timeline-section { margin-bottom: 40px; }
+.timeline-section h2 {
+  font-size: 1em;
+  font-weight: normal;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+.timeline-svg { width: 100%; overflow: visible; }
+
+/* ── Card grid ── */
+.section-title {
+  font-size: 1em;
+  font-weight: normal;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 16px;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.card-image {
+  width: 100%;
+  height: 140px;
+  object-fit: contain;
+  background: #faf8f4;
+  border-bottom: 1px solid #eee;
+  display: block;
+}
+.card-image-placeholder {
+  width: 100%;
+  height: 140px;
+  background: #ede8de;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: .75em;
+  font-family: monospace;
+  border-bottom: 1px solid #eee;
+}
+.card-body { padding: 10px 12px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.card-name { font-weight: bold; font-size: .88em; line-height: 1.3; }
+.card-meta { font-size: .75em; color: #666; }
+.card-goods { font-size: .73em; color: #444; margin-top: 4px; line-height: 1.4;
+  border-top: 1px solid #eee; padding-top: 4px; }
+.card-footer { font-size: .7em; color: #999; font-family: monospace; margin-top: auto; padding-top: 4px; }
+.entity-badge {
+  display: inline-block;
+  background: #e8dcc8;
+  color: #5a3e28;
+  font-size: .68em;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-top: 2px;
+  font-family: monospace;
+}
+.match-link {
+  display: inline-block;
+  background: #5a3e28;
+  color: #f5f0e8;
+  font-size: .68em;
+  padding: 2px 8px;
+  border-radius: 3px;
+  text-decoration: none;
+  margin-top: 4px;
+}
+.match-link:hover { background: #8b5e3c; color: #f5f0e8; }
+
+/* ── Entity grid ── */
+.entity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.entity-card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  padding: 20px;
+}
+.entity-card h3 { font-size: 1.1em; font-weight: normal; margin-bottom: 8px; }
+.entity-card .entity-meta { font-size: .8em; color: #666; margin-bottom: 12px; }
+.entity-card .entity-stats {
+  display: flex;
+  gap: 16px;
+  font-size: .78em;
+  color: #444;
+  margin-bottom: 12px;
+}
+.entity-card .stat-val { font-weight: bold; color: #2a1f14; }
+.entity-card .links a { font-size: .82em; margin-right: 12px; }
+
+/* ── Match cards (landing page) ── */
+.match-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.match-card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+}
+.match-card-thumb {
+  width: 80px;
+  min-width: 80px;
+  height: 80px;
+  object-fit: contain;
+  background: #faf8f4;
+  border: 1px solid #eee;
+  border-radius: 3px;
+}
+.match-card-thumb-placeholder {
+  width: 80px;
+  min-width: 80px;
+  height: 80px;
+  background: #ede8de;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #bbb;
+  font-size: .7em;
+}
+.match-card-body { flex: 1; }
+.match-card-title { font-weight: bold; font-size: .95em; margin-bottom: 4px; }
+.match-card-meta { font-size: .78em; color: #666; margin-bottom: 8px; }
+.match-card-note { font-size: .8em; color: #444; line-height: 1.4; margin-bottom: 8px; }
+
+/* ── Essay page ── */
+.essay { max-width: 700px; }
+.essay h2 { font-size: 1.2em; font-weight: normal; margin: 36px 0 10px; color: #3d2b1a; }
+.essay p { margin-bottom: 1em; }
+.essay table { width: 100%; border-collapse: collapse; font-size: .88em; margin: 16px 0; }
+.essay th, .essay td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ddd; }
+.essay th { background: #ede8de; font-weight: normal; color: #555; }
+.essay pre { background: #ede8de; padding: 14px; overflow-x: auto; margin: 12px 0; font-size: .83em; }
+.essay code { font-family: monospace; font-size: .88em; background: #ede8de; padding: 1px 4px; border-radius: 2px; }
+.essay-media {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 24px 0;
+}
+.essay-media img {
+  width: 100%;
+  object-fit: contain;
+  border: 1px solid #ddd;
+  background: #faf8f4;
+}
+.essay-media .media-label { font-size: .75em; color: #888; margin-top: 4px; text-align: center; }
+.sources {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #ddd;
+  font-size: .82em;
+  color: #555;
+}
+.sources h2 { font-size: .95em; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+.sources dt { font-weight: bold; margin-top: 8px; }
+.sources dd { margin-left: 16px; }
+</style>
+</head>
+<body>
+<header class="site-header"><a class="site-title" href="index.html">Markery Research</a><nav><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a><a href="entities/remington-rand.html">Remington Rand</a><a href="entities/wilson-jones.html">Wilson Jones</a><a href="entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="entities/boorum-and-pease.html">Boorum &amp; Pease</a></nav></header>
+<div class="page-header"><h1>Information Systems</h1><div class="subtitle">USPTO Patent-Trademark Research Project · 1900–1939</div><div class="stat-chips"><span class="chip">4 entities</span><span class="chip">27 marks</span><span class="chip">398 patents</span><span class="chip">8 confirmed pairs</span></div></div><div class="page-body"><div class="narrative"><h2>About This Project</h2>
+<p>
+The information-systems project cross-references the USPTO patent record with the USPTO trademark filing record for four companies that dominated the American office-filing market between 1900 and 1939: Remington Rand, Wilson Jones, Yawman &amp; Erbe, and Boorum &amp; Pease. The central question is whether a company's patent grants and trademark filings for the same period document a coordinated intellectual property strategy — and if so, how close the temporal correspondence is between the two filing streams. 
+</p>
+<p>
+The research method is straightforward. A patent grant date and a trademark filing date, for the same entity, covering goods that correspond to the patent's claims, constitute a candidate pair. A confirmed pair requires three elements in alignment: the same assignee entity on both records, a temporal gap consistent with commercial coordination (days to months, not decades), and a goods-to-claims match sufficient to place both records in the same product line. Eight confirmed pairs meet these criteria across the four entities. 
+</p>
+<h2>What the Record Shows</h2>
+<p>
+Remington Rand is the project's central case: 171 patents and a trademark portfolio that documents the full arc of visible-card-index technology from 1918 through 1939. The company's confirmed pairs include the Russell and Odell Soundex patents (1918, 1922) linked to the SOUNDEX and SOUNDEX QUICK AS A FLASH trademarks (both 1927), and US2152606A and US2178457A linked to the VARIADEX and KARDEX marks filed in 1939. 
+</p>
+<p>
+Wilson Jones provides the project's clearest examples of coordinated product-family launches. The September 1927 cluster — VI-DEX filed in July, REDIREF and HANDIREF filed together in September — registered three product-name trademarks in a ten-week window, each anchored by a George W. Newman binder patent from the preceding two years. 
+</p>
+<p>
+Yawman &amp; Erbe offers a distinct pattern: the SHANNON mark registers an acquired brand name (Shannon Brothers Ltd., London, 1880s) rather than a product invented by the registrant. The correspondence between US1738120A and the SHANNON trademark is by product category rather than by direct claim coverage. 
+</p>
+<p>
+Boorum &amp; Pease holds patents and registered trademarks across the same period but shows no confirmed patent-trademark pair. The company's trademark filings are house marks and quality designations, not mechanism-specific product names — a different brand strategy that does not generate the patent-trademark correspondence documented in the other three entities. 
+</p></div><p class="section-title">Confirmed Pairs</p><div class="match-cards"><div class="match-card"><img class="match-card-thumb" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAuAAAAD4AQAAAACFv257AAAACXBIWXMAAAsSAAALEgHS3X78AAAKWklEQVR42u3cPW/exh0A8GNYlClqiBk1BKLRLBkDZPGU+wj9Ct2zZMxglJeogAN0UIGOBWx9g6KbixZ9KGjI2CEfwBQyWEAHsfUQRjrz3/u/HclH5CMpidsIuQewTfHlxz/v/Y6PbB6YpnTvmrx9N+vy1uQA7f4D0551poLB/MocvFWegTvInAX/uHTFZwBgSlc9Mb70VfgBXN7lPRmmDpcclGcnbQ0+kOYg4M1HedHuZ74gvDEPTDj9nZLwvaI0tjkwiJvK5Q3iRWMPM8X38z5vCsJtuGSvaDPFbTjcw+aoCwfq4XmFeAl96T/YAPwNYBPOt+1vM4dRWXh5QpF38PJ0qAAvhqelD090+jRXPKSA4CAfX8P082yyXemGC3++haXPaRn+OrpEvCr6ogMY9kswcMfPtzeeseForL07/ko3Lm4+9874yzuce2f8yzeJH71J/NmbxO/y+QnjV/c28oQnPOEJT3jCE57w/yH+53sbecITnvCEJzzhCU/4d/9s7m3kCU94whOe8IQnHHa/A/pxR57whCf87visxn99p+8n7Mav9gDOaGvY0D8nucuZ7+vviztTCe549+fGmBxehXv2xj7DPZvviveBgka2Sr6HMRl0JjeP8S7hQPGvnfxQ78KDFT4tU4Lj/kd4Ywj3McZewNDSvYdyG//CZN8s413E3fiv4DZs1nzKR2af7wQDPt85Xxy2TDWEA8Uy3iiO5xhJe3yE8LdtJ7gx/GR0Ht5ZNstBDizgYX8z4lbSp6T0Qjbg3pm3/xFFL3goB/4hBb0DD+cQHrA6/EA4/uwjHnaU+ISPPp3hBW8WIc1XkmWgr3hllPhBKEG2ECnphrTD0uZg3gtX7Akeov0g/HOEKfhiGUe3ySm8IORYqHtKHc8ibnYZPwg4PPvpiPecIE22XBQHcukMwTlQLgoD47Qb8VbSL//Db4iV402+jHeYAl1OZaQGn4HchsvzFHc/w9tyzodDf8enUBx24J5xfHbG6y28lMh7OuIoTyiJHO34bAVvK0kbytVBLsYj+P27wVD5IdwRToHSzsZIRgEc3oR7LE4DnTviwLjXSD3F3G3hPl/BncXygRnvsKwSfsy4jSkw0H0yqfqCdyNeruBNjd/vy7Vwu4quwCO91byDvpLIB6ot8o1Eo/fhLzAuRV7jN8CoyJKgqTvHreQJuHwB73bhwJFbxX+XTfAibuaK91t4a1dwKh6Y3c2Ic8vb4ZF3CO8wYUe8G3F6Xg5wCQfBucRyruaK+08Rv8K+lEoTp1gjzUPEYQ2nu54q3hSaAIpTOmzjeJzqRI95kq3j2NFfaC66EW9RfBzxS059FGd4wW3fEj4wTlkHkqZc3qBF6zE39SAxMi6jBNzEc/06Ljntpf/UujrD/QS313BqHJbxSvF8C8exTM8P1Eb8/BqebxfzEefGgq7dxrGp6xj/N2gNbiNeS3A5FdSVyIuFyOmGf0WL8RMYGxQrrUwZ8XYdzzXyUnHZ/MuIn4I2D/Q34tqe4OChXsFBhiry1FP8kNKDeuhDSpBK4qeAesWz7To0wysaP7csmtiEwe8pUyOudb7ikzQXQ1uZ7cA50TkwemJul+hLBych86xGPsNbxc2Qr+KOy7d0XRzUMeHvUWITXoA2KJwsxdgS3oBznHjthpOTE4Cu+ZpG71s4FdVG8MZs9UNbuIybScTnELyQyCv+mnUjY6+Ki6qLeL8Tl065VpxTF55QicHkGv4Jg5yAaU6lSdvw1nxSreKt4Z6Mr4URH44AeygqRRfxhIibiOvWAt7JyF3bi0xHfpSURbg4tKm/jid0hP9cBjg34b0M/XXWkGtzTXhJuIxgFMd4nJKdMbCKe55PcN/OuCQAikfh4ms4zaJU6Ey+jtN8otZO2Y+4t9Q69cuR3w4HnowMMxw3Ly2NtHBPT8WJTvhPuxV5r232Iu5odiM9fj/iJKL0S96Umhxqb3d7vKGyKO064zxssdSu9hq5zlVt+PO+TCohtnIreE9lcYpPRhYWXiNex4a/IbzuEd9wQu7CPc9uFC8ijrlt6SdaXxhxbAhiNvqdycI4j42p4A0jTr+1ckKbfo43I17swDHRszk+jizwF37OBKe9fxKcpmgDTDrhnXixFXnL6Y6daKsJBvBHwmX+BzfjHeKSdO0Y+bniv+ARDO/FXx7C0tQqeUOyYB3VTMc2UE7HNhyHi+E5TiCW5+OQJIJvIJavdRyrkRbXloo8MSccOVapCe4kM2Pk3Q04rh4I3lDkEW+Jk2EL7dU5eltSdmI4qzj9lpUfcad9AQ+EGsYPQSsLZi9lOC8a7capYg+LOIpn9DD1IWg19xGvYlnLVnEh7QynzUKSxvEIXsdEmQy4rAjZDlxyyXq6dmNoGYQuLCX6gH8J45go4NmTER9yt9oT0bIC1mkvIwtjJwsigtsnM9ybCe6LZrUP7QWvIl5r549HZBmmjDgWPCpNba3AOs6RtzO8m+Ot4vUiXq3jXKJCx9grrjHKyOIaXgiuwG1wivyqn+CVRB9+rOBKem1se2YdW2NbnbJdwxtpC6sh5pcMCvsRP3gG2rHSb0tO+x4H67iT/qcaZLAWx0RYHChpOnNgI94Sbm+JS59vNfJiilPk4c6beCaPiSZadiPeKd5OcHwSxvcIp4p4/DDWA6oEYRDfXeuhV/CG5gwRp5GWLIpyLc9dxGnG7wudqS3hcTAieCnrKNSUU8vjjc6U8bqxBtOqWV8ujIoibmY4TS84cuqUbcRhxPsJ3tlb4DXPFAS3gveCg+J+MtkjvLULAxfFdQWbV+mo9gt+NsFjsvQ88agpUwrGhx24neOguHahsnMFd0vd/wJudc2Fp7vYy7XX8VzzhNs8szRwEVyWanES1FodsnEOYSnmFQNJbW7EYj0gnNeA81Vc1/NwxNyP4fG8doLv80S3iFMzbPP8uJa3iBsYVyE6Co/SgWo+L0dQWl2+zVO+MuL4BoIanzXc03yIUo3xCqSv40XtOuKUVpyKXKuB6lu1I1m8+cRIHcPzpA3C+NxW5DTX9ZT/jNPiGFVhs7Ik0mcDvYWrOB10Fm0M93puTHNa1OBmhiP1cRHXreF5kDJaO8B1hPEFF215eRB+51Dp+yOdmllZEL82ttBkyUfpVCu6vJuLK1PHVCTQakwepxj04odOuDY/V7yghQU+2+sUTXYNeqDUFyNO3qo9KrkZcvwyYLtBn8/9iwkpuwLVP5T6W9JA2ApDs9DS0/sunGQ+N9vFZZJML0z2QnF+vnDRh+M9cCg+0CYVlnN9M2dqnMHmnl8BruD81korFO/5GIBDrDhyvs85jw0ijnmT01y9XMUHC5KP8xYoRl7yq9zGcOWfRV70ZutV6/J7/2vN2xeeW/uKkgw/F1McuizEfEucOp/5B9fN4XIDr5ij1y0fN5mJKwtXm9fObOfoXb+x8Lz+qtEAXwO8lbn3IxEq4ffD8dN+OPnh9eT/i+h3ZOgP/vnh8c29jTzhCb/zZ7i3kSc84QlP+E8TT/+V0P8Ff3VvI094whOe8IQnPOEJT3jCf1z4fwFqggW0atfUMwAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxNy0wNi0xNFQxMzo0MDozNS0wNDowMMR7T2wAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTctMDYtMTRUMTM6NDA6MzUtMDQ6MDC1JvfQAAAAD3RFWHR0aWZmOmVuZGlhbgBsc2JVtxdDAAAAGHRFWHR0aWZmOnBob3RvbWV0cmljAHVua25vd25TurfSAAAAAElFTkSuQmCC" alt="SOUNDEX"><div class="match-card-body"><div class="match-card-title">SOUNDEX ↔ US1261167A</div><div class="match-card-meta">Remington Rand · Patent 1918-04-02 · Mark filed 1927-03-31</div><div class="match-card-note">Russell Soundex patent (1918) assigned to Remington Typewriter Company; commercialized as SOUNDEX by successor Rand Kardex Bureau (filed 1927). Canonical example of the patent-trademark lineage this project documents.</div><a href="matches/soundex.html">Read essay →</a></div></div><div class="match-card"><img class="match-card-thumb" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAuAAAAD4AQAAAACFv257AAAACXBIWXMAAAsSAAALEgHS3X78AAAKWklEQVR42u3cPW/exh0A8GNYlClqiBk1BKLRLBkDZPGU+wj9Ct2zZMxglJeogAN0UIGOBWx9g6KbixZ9KGjI2CEfwBQyWEAHsfUQRjrz3/u/HclH5CMpidsIuQewTfHlxz/v/Y6PbB6YpnTvmrx9N+vy1uQA7f4D0551poLB/MocvFWegTvInAX/uHTFZwBgSlc9Mb70VfgBXN7lPRmmDpcclGcnbQ0+kOYg4M1HedHuZ74gvDEPTDj9nZLwvaI0tjkwiJvK5Q3iRWMPM8X38z5vCsJtuGSvaDPFbTjcw+aoCwfq4XmFeAl96T/YAPwNYBPOt+1vM4dRWXh5QpF38PJ0qAAvhqelD090+jRXPKSA4CAfX8P082yyXemGC3++haXPaRn+OrpEvCr6ogMY9kswcMfPtzeeseForL07/ko3Lm4+9874yzuce2f8yzeJH71J/NmbxO/y+QnjV/c28oQnPOEJT3jCE57w/yH+53sbecITnvCEJzzhCU/4d/9s7m3kCU94whOe8IQnHHa/A/pxR57whCf87visxn99p+8n7Mav9gDOaGvY0D8nucuZ7+vviztTCe549+fGmBxehXv2xj7DPZvviveBgka2Sr6HMRl0JjeP8S7hQPGvnfxQ78KDFT4tU4Lj/kd4Ywj3McZewNDSvYdyG//CZN8s413E3fiv4DZs1nzKR2af7wQDPt85Xxy2TDWEA8Uy3iiO5xhJe3yE8LdtJ7gx/GR0Ht5ZNstBDizgYX8z4lbSp6T0Qjbg3pm3/xFFL3goB/4hBb0DD+cQHrA6/EA4/uwjHnaU+ISPPp3hBW8WIc1XkmWgr3hllPhBKEG2ECnphrTD0uZg3gtX7Akeov0g/HOEKfhiGUe3ySm8IORYqHtKHc8ibnYZPwg4PPvpiPecIE22XBQHcukMwTlQLgoD47Qb8VbSL//Db4iV402+jHeYAl1OZaQGn4HchsvzFHc/w9tyzodDf8enUBx24J5xfHbG6y28lMh7OuIoTyiJHO34bAVvK0kbytVBLsYj+P27wVD5IdwRToHSzsZIRgEc3oR7LE4DnTviwLjXSD3F3G3hPl/BncXygRnvsKwSfsy4jSkw0H0yqfqCdyNeruBNjd/vy7Vwu4quwCO91byDvpLIB6ot8o1Eo/fhLzAuRV7jN8CoyJKgqTvHreQJuHwB73bhwJFbxX+XTfAibuaK91t4a1dwKh6Y3c2Ic8vb4ZF3CO8wYUe8G3F6Xg5wCQfBucRyruaK+08Rv8K+lEoTp1gjzUPEYQ2nu54q3hSaAIpTOmzjeJzqRI95kq3j2NFfaC66EW9RfBzxS059FGd4wW3fEj4wTlkHkqZc3qBF6zE39SAxMi6jBNzEc/06Ljntpf/UujrD/QS313BqHJbxSvF8C8exTM8P1Eb8/BqebxfzEefGgq7dxrGp6xj/N2gNbiNeS3A5FdSVyIuFyOmGf0WL8RMYGxQrrUwZ8XYdzzXyUnHZ/MuIn4I2D/Q34tqe4OChXsFBhiry1FP8kNKDeuhDSpBK4qeAesWz7To0wysaP7csmtiEwe8pUyOudb7ikzQXQ1uZ7cA50TkwemJul+hLBych86xGPsNbxc2Qr+KOy7d0XRzUMeHvUWITXoA2KJwsxdgS3oBznHjthpOTE4Cu+ZpG71s4FdVG8MZs9UNbuIybScTnELyQyCv+mnUjY6+Ki6qLeL8Tl065VpxTF55QicHkGv4Jg5yAaU6lSdvw1nxSreKt4Z6Mr4URH44AeygqRRfxhIibiOvWAt7JyF3bi0xHfpSURbg4tKm/jid0hP9cBjg34b0M/XXWkGtzTXhJuIxgFMd4nJKdMbCKe55PcN/OuCQAikfh4ms4zaJU6Ey+jtN8otZO2Y+4t9Q69cuR3w4HnowMMxw3Ly2NtHBPT8WJTvhPuxV5r232Iu5odiM9fj/iJKL0S96Umhxqb3d7vKGyKO064zxssdSu9hq5zlVt+PO+TCohtnIreE9lcYpPRhYWXiNex4a/IbzuEd9wQu7CPc9uFC8ijrlt6SdaXxhxbAhiNvqdycI4j42p4A0jTr+1ckKbfo43I17swDHRszk+jizwF37OBKe9fxKcpmgDTDrhnXixFXnL6Y6daKsJBvBHwmX+BzfjHeKSdO0Y+bniv+ARDO/FXx7C0tQqeUOyYB3VTMc2UE7HNhyHi+E5TiCW5+OQJIJvIJavdRyrkRbXloo8MSccOVapCe4kM2Pk3Q04rh4I3lDkEW+Jk2EL7dU5eltSdmI4qzj9lpUfcad9AQ+EGsYPQSsLZi9lOC8a7capYg+LOIpn9DD1IWg19xGvYlnLVnEh7QynzUKSxvEIXsdEmQy4rAjZDlxyyXq6dmNoGYQuLCX6gH8J45go4NmTER9yt9oT0bIC1mkvIwtjJwsigtsnM9ybCe6LZrUP7QWvIl5r549HZBmmjDgWPCpNba3AOs6RtzO8m+Ot4vUiXq3jXKJCx9grrjHKyOIaXgiuwG1wivyqn+CVRB9+rOBKem1se2YdW2NbnbJdwxtpC6sh5pcMCvsRP3gG2rHSb0tO+x4H67iT/qcaZLAWx0RYHChpOnNgI94Sbm+JS59vNfJiilPk4c6beCaPiSZadiPeKd5OcHwSxvcIp4p4/DDWA6oEYRDfXeuhV/CG5gwRp5GWLIpyLc9dxGnG7wudqS3hcTAieCnrKNSUU8vjjc6U8bqxBtOqWV8ujIoibmY4TS84cuqUbcRhxPsJ3tlb4DXPFAS3gveCg+J+MtkjvLULAxfFdQWbV+mo9gt+NsFjsvQ88agpUwrGhx24neOguHahsnMFd0vd/wJudc2Fp7vYy7XX8VzzhNs8szRwEVyWanES1FodsnEOYSnmFQNJbW7EYj0gnNeA81Vc1/NwxNyP4fG8doLv80S3iFMzbPP8uJa3iBsYVyE6Co/SgWo+L0dQWl2+zVO+MuL4BoIanzXc03yIUo3xCqSv40XtOuKUVpyKXKuB6lu1I1m8+cRIHcPzpA3C+NxW5DTX9ZT/jNPiGFVhs7Ik0mcDvYWrOB10Fm0M93puTHNa1OBmhiP1cRHXreF5kDJaO8B1hPEFF215eRB+51Dp+yOdmllZEL82ttBkyUfpVCu6vJuLK1PHVCTQakwepxj04odOuDY/V7yghQU+2+sUTXYNeqDUFyNO3qo9KrkZcvwyYLtBn8/9iwkpuwLVP5T6W9JA2ApDs9DS0/sunGQ+N9vFZZJML0z2QnF+vnDRh+M9cCg+0CYVlnN9M2dqnMHmnl8BruD81korFO/5GIBDrDhyvs85jw0ijnmT01y9XMUHC5KP8xYoRl7yq9zGcOWfRV70ZutV6/J7/2vN2xeeW/uKkgw/F1McuizEfEucOp/5B9fN4XIDr5ij1y0fN5mJKwtXm9fObOfoXb+x8Lz+qtEAXwO8lbn3IxEq4ffD8dN+OPnh9eT/i+h3ZOgP/vnh8c29jTzhCb/zZ7i3kSc84QlP+E8TT/+V0P8Ff3VvI094whOe8IQnPOEJT3jCf1z4fwFqggW0atfUMwAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxNy0wNi0xNFQxMzo0MDozNS0wNDowMMR7T2wAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTctMDYtMTRUMTM6NDA6MzUtMDQ6MDC1JvfQAAAAD3RFWHR0aWZmOmVuZGlhbgBsc2JVtxdDAAAAGHRFWHR0aWZmOnBob3RvbWV0cmljAHVua25vd25TurfSAAAAAElFTkSuQmCC" alt="SOUNDEX"><div class="match-card-body"><div class="match-card-title">SOUNDEX ↔ US1435663A</div><div class="match-card-meta">Remington Rand · Patent 1922-11-14 · Mark filed 1927-03-31</div><div class="match-card-note">Odell improvement patent (1922) also assigned to Remington Typewriter Company; both patents underlie the SOUNDEX trademark filed by Rand Kardex Bureau in 1927.</div><a href="matches/soundex.html">Read essay →</a></div></div><div class="match-card"><img class="match-card-thumb" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABMAAAAKAAQAAAABSuTltAAAACXBIWXMAAAsSAAALEgHS3X78AAAppUlEQVR42u2dzW8lyZbQI52tTg9VOIvZjJEap0e9eA8N0rNg4wfG2YIN/wWFWLCkJDZGWJXhugu3mJn2SGwe0tNUCzbs6CUL9JzVHuGRBk2x40ksXniM1C3xNBWeGj3Cr6IjOOdEZN689+Z12zcjbyYjp1Qf99M/R0acrzjnBLMjvdjQAI9gj2CPYI9gj2CPYI9gj2CPYMuvD2MF6/t6N//E+QBg5oHv//9mji38YucjAfue691YwdZ3PYL1C/aLsYKt8XoEewR7BBvb9Qj2CPYINrbrEWw4sDePYA+8+FjBopGC6dGCxSMFU2nzUfcAVjAwmXb+in7ARDZSsDIfKRgvRgoWWumG+j4VWIwFA5OBxVg4sGSkYGKsYDwdKRjLxwmmWTFOMBXcdwj0hXKsYGVoMRYKjIWWFoHAzFjBNEvHCaYewR54SZaNE0yMFYwHV5WBwFhwVRkGTLPwYbYg3yhZcI0UBkyEF/x/xcHK8PI1DBgfKZhh4eVrEDCQFvkowdRYwWQPgj8ImOhB8AcB4yx0qKcbWD4FC6+RuoCd+39BWqSjAquu0YKpPuRrCDDZhxgLASb6EGMhwPhyMdZh5yYAGOtDjIUB60GMzYO9e+jnDS7K8PZriBFTvYixAGCyFzHmwR6aOt68yj7Buly8F/naCvaw8WO9yNfuIwYGfy9pOJ2/VPUjX4OA9SFfu4PJfuRrdzDej3wNApaNEQzs6o/zMYJp9nysYLu9yNfOYLIn+doZrCT5ej4+MN6TfA0B1ot87QzGepKvXcHAtvgnowQDFd6P4O8KhtIiHyOY6Ml+7QzG+5KvHcFAhTv79e3IwNDgj1Hw/2KEYP3I145gaqxgsjfB3xFM9CbGOoKVYwVjvcnXbmAoxvoq0+n0vZr1FB/oCiZZX/brX1Uw0Z987QbGWRQ8YzgIGANvNxshGEgL0Zd87QSmWDROMMli3pfg7wQmeMp7q8/sBMay3gR/JzDODnuTr13AYFEe9yZfu4CBCu8hMTcAmGJxD4m5AcBAWvQnxlYFKyxlJpa9ibEuI1ayrD8x1gWMs7w/MdYFDPyQ3d7EWAcwEGNmb4xgYFuYF73J1w5gIC3UD9MRgoG0kDwbIRhIix7lawcwkBaiP/naAYwx25/92gFMg3Dl/cnX1cHAtrD9mYkdwEBamFGCCZbq/uzXDmCcZT3arx3AGMuVt1+7JHkFBwMVXvQpX7uA2T7l68pgYFuAUuqPa2UwLN7qU76uDAbSwvZoWK8OBtJC9ylfVwYDadGrfF0VDBdlr/J1VTC0LdR94gMrC997gs1/P9oWd8vXdx0JVxwxLFws+xT8q4Jh4WKP8YHVwUBa9CtfVwXDbcpexdiKYFjm3EPHhu5guCj1djo+MFThan+EYCgteoy/rg6G0qJX+3UFMKqBwqYI5W4xKjD3KZAW/crX1cCoKUJDvgbuhrk6GEqLhnwtR1ORKmFRTuMDspcEypXA0OCf2q/95BKsBFbuZlY9S/0j3kv2xUpgKC1kJcYowYedjwEMDX64gf6RJrB0/k3lAGAkLWo3XLWDddULq4CRtKjlKy5KJubBTFcXahUw2QD74DOPkrlqg879X1YBo04lnKX/8YP9MkIw0AGnc+8RXeMHq4ChwU9ZgJTXptgmDM7ZAlhHVbrKx1GFm4gT2G/7Gt55sHIAMAwmAo4DA0uW7QNYOvcm3jWrcgUwhYOBQiImMaFJ7s+Bmc55qCuBxU5IRKS9DWV2ZrPv0UOAUV8j4Sd/TstgAUwNAUbSogIrfC+CObDuptAKYNQFjaZ+TGAoGcwchRgAzFTDBNcnzI2ONfn0De8ILC3TNYNpkunvsMW22Mf/4irVUzCD3HC7O3bgfjiYmmrBW/ovhvwbYKW709lsz/I1gDWajbm4Co6YKurXudOk+drBGj29vqN5BDLL7NcvG9JQYHt0TN19OFhDQGl+tgDm6sZZ1NUgWwWsmEJkDsyq+mWBFgf4dnrd4sI0zAbJc+vnWP1c6cCSrs1+H/zxZs9EF/BBsJv6OY5gGqRFtwF7OBgqmy3B3rrRKawTFzWYq9ZQLBX5msEaStJ7SjNg2oNlXfv1PxiMT80KH/BBsGv8T+QHlBUA1rVf/4PBPBd9zukAVAXX1jeFdWDgpnc9D+WhYKZ2QuoWyNKDUVNYwc5hNAGs6+7EQ8FUY4p5GSocmCHaMkY9KdjLrmGWh4JJD/ZPbd2bGZXnhUOGaZchWMlM18DUQ8Fqk/q87jSMYJdVgR6I3JLA0oHAChq9vAHGyWiNyEjkkc7XDZZ9zKtFKaZgZ25VpCb2YGrdYBL/8o0TfYisJDBFnibeQQDl8drBHJ2TE2UFlgKYpApojWDRhMWyGAYspYGLGmAi5ywRCIYLN5EduTqBeeMfTdrXFitucnmwlbmKYzEQWEafTRpgTkfuwP8RLL0aBMwtR7OZerDMZoaC/WYH/kIDI+28i7NanN8biFOwnGisSSkuBQJtMggY93ZY5h/lNvdRlNOzaxqxYcCME2PVFgQQmVxGIrKlPf3FjQtBdd7DWQ2MlqPPBDRsG8BEjHZFcQpuCU63Ih0CzFsVXr4atpebQmwwWAD5BH1yAHs5CJif9bwCY7kuSkooyxzYBtPZkGBRBVaogpOlnxIY/F/nQ4D5gxWaYBRWBBV6YgEJdHxnHb7azgg54NUWLyzCQsPtm6CZ8aYCK4YAc5Or2uLFmIoCvwTztmDEDJiwH8d/OQgY82BZBWYV9XVnBJahd9LZuFhtZ8S7kwAmcgK7gb8yTSqSwLobF6uA+fxXMjE4qMbNyN4oSlZn6TXukYjt7jp85Z0RZ2Jg52h1GNn3Hiy+tudgM26mnVXlamDesC7QWI3Vy8heY0hdbrJ4gjuXMoAOX23LJnNgzmXTcDuvvwW9Lg5YQmCK5acP/9ruYD7NFHjIZfvXCsAwi0Yco+QHp1xtdDcuVtuyKeiTMSyDJ+hiTuw3JzyxXLF/6cDi7sbFKmA+1gkzTYG6hll/YS8nZWoncgPnFlqKnQMEq+0lRe6fhOY+Y39jAmAw7yYw6eEWXiFY1hfYHWE3L8Y0ZQPi9Run9u3PYN4l19KBmQDGxRKwuw7o8NICBT9nm+wpSy/t2dPd3J5diDyFRWtNpIt7/fC7Wqu3g4k7elF5awwtfsb22CE7PLN/urlXmBSWa4rRDRMr2/lqB7urUZAXYwBmyGUTR6n9gu0XJuPskMBs0heYqsLSbVdZBZ98r0KMF/yU7Vttv0JT3wDUQ3T4sjz/VjCKZ2ZLPuHFmAcDfbmb2p+g6fPy3/GX8CGwEc9E0cuImfbEqxrMDRxl9QAkLs9tTKXZjNkxgGlYBgFOC24Du/U5KK2XF2OaajOwXPYYRm0fN0fgEZr6YMKe9gSm6kh+K1hMXA4stiyDUdvdj52l4cAuA5Rpt4GV072PxcvJV8moNgP/SmF42KcTwkT5BVL/XYDCoLYfz6eB6bbhTKzvfQ/vy2/ZNwLkxskpPuXiiADVD1i1K5MvAUut733/JZqt8bUCMJkiWOrBOucBtoNpD5a1foBiPE60MrZrRXylChD1qDh3XRzxLEjVRgtYtV3U/lsLVpQF9ZCjNKgyOpGFeSIy+yf8RUZgpzZEuV4LmLgTrGSwLomdVubJhw1Z6Jhm3B5YZnBdWv15L2DlnWCc7bJIsq2j3WOMuk4Ue+HAcLmQqT+x6mkvYJwm/rLEbmLGXRq1j29JFNst1C5o9KdMuby7Ce359gAGP/gJ4rWCmXo4XTg4s5+T0szN7/HYWdRRkNMZF79BM58VRrfjXcur00y7DAMCuwhWmN8vE7KoTTSTmxEOzJ+0otpXVrVkrQfLZQWW8lTnNKY9gQnmo/itYGK6JY5CVlkpI5fatsNziopp5nPfQoOVaDI0Sy8aL22c05LN6TWKblp5hGAAus8K6caUwrLhwWDW063gi2AMm9rhcFF6FmfbgCIoqzkiB/jKg9lewBj2SsHd7YVVWa3IzINtMvsewCYu4xtdXnyXxArHHsCoJQn98AUwml8xBlPKzLp93isrov/jV/C5kxaS+TTxwGAKFc4TE7eAlQ4sokAiPozshRUn1wQG80tlDh+rXdLgYNRVLIe70lLUQBfexrLAEduMwZK45jGBCY8LQ9gXWI6L/WIRTE1lK7lneKQggJV/j/IIRBVXwMPYAxya2gJGW0VX3wMGEHyf9sK/TCiP4OKt8jvRcZBjZhfAeEQ73jeLYFX2TGHttcZl+zy1KUF9DZ94VZkjDqyzebEAxhLaWIYRy2aez2s7DR5cKAQjHe4qxkFUVGU3PHFgHQuTFsFSkqzXdiaXT+8ltChTl9B8KcgyBFVJUA4srn4z36YjLJgBPzFxYEXjaYybl6S1sXLFnjqcvAKD235af0HqmqYFzufXzLk4c2DoQiKYNZuIfUq+yHauc1djDwK3AXaBYDowmGJuD/56Zo6gCEM1iYHqGBzcPyWwzRwcXJxjEXje1TJ0u6nYLTMsmIwkmSyXM2BTj85EKC8ooZqMC8wWs3iL39a/WT5x7w8LJmKQ3OfoHDY3N2Qtwgzh4X6W20Cl5AYEO5uCRU5JhAUr05JW1yxYWYsw5+oqD3brLBzGc8w2cmAfvWS9gGXO3JlOGrx8NAMlAIspiuj6Xdw4m7AJJpnxYEVYsJwWpc50Bfbh1E2ZYwqZweRnJGsxm6cGY3mdNiC+xRz68GD8pXNF6gIGRRYqJtMRmHaGIolaBMPAu5kB+0zvF32AOcEovXHlfBMAe5q5A4rBt0XB9RQ3dCPansF8C1bovBrySB3kdnl8bWUw5dK7a42E1qwLtpZ+2nOQqofYFg3zcvUuQO2Cz1uB8Vgd5/c9seWOHYi5j5vIFQgk1idx00kiFGylWKa9xZQUs7WJwxjbb6x+ztx2fXXjeCIdWNjCTxOjyY42vX+BjDCS+e54QyXxvu2w3VxR+iuVP7DGiMGvYTJ/VFdAMJ2gZQxrU3hb4Y+moR8Hhl63Pox2C0NgugKrRoylVw4sbA2vTgHsgy3/emUbfzE1W9UmANx6sLJQG2k1Yl/Cn2M/5KjDMxfQDgmmMszYOReV3K5cSXxIR2jeEskh5exnmJe7CaP4tatmuaUPgA4/6wHMtxHmzSk2A0b37ngK9iyy8rdOKKMYk3LBuDh1YB2t/nmwwqdRF+6xZJ/Ngt0QmKbWe5l9bdU+gG1EBIZusMYMgssewF7Oyp/KzqeaniN2Yq/Vk8kULMMdJAr2EFhCxsUZ+H6S7aVhwY5nrQI0K2IX3rT6OHoDYPEJTrTIimc5gMlN2rqhMhtOMqVIMZEgqjRHKDA9G9/nmygpyBxDaByxv0upPAC2m9PyA7ASoyuWmvFJ9jJDhRAHLpiaB2ObVe01WIXHqB3VXlyBFSZ3YLBUrn2Nl2Dw5BUs7MBgUs+E0c2et3Vw+qt9EA3foGd2hZG6P99FJ0lsxBSFuqrAsPYB72vgSi5cdA1dAo8oPAJPcgSL7SUV+0jqO1mNWOnKbKiwvcT0RBke7L2aMQtgcomcOWMhV0cAcCkcWFyDgSe8S2AS100Zg3JCxUkBoXBg12rGwoP1JpTL/NgsFNoTZ0hyTTPLgW0lNGLfOKcYVqZ0YIErub6ZBUNdLH1Kir3FiowzbI1TgaFbuYVxlQkWJjl7Oxa0LR4a7HK2Vh/uTkbBLwS7kiBBz/43GhVTMIxF8Vco7IFvF7v9XtHusz0JC/ZWscbsN0cYOnfZRSARpEjcrTx1YJQlvI/JDRNfmARmJu5Z4g5J4EqutzO5IHqLscMIBLp88ZvMXuBNfU2lK3hTS+7SlxEsRjBvuMFNNYkNXcl1JpsbgipmTMUcRf3HJ/bi6su0yN5wAEPr9YLAXsGEd2DeEKH0xNjWfmYoMPr6ypTCPE0VoSZUm2/s6ZXayjMcojMMI749QSPsd7/K7Db7AaVMOjME3FD41o7l64tgmjXuJbofIsIRQ8F1Wn5VgdFfBHYGqmf/GZZy/RIj2vBLIBHPeP4wjnuCpTVYSm6FB8OqFYyHvUawfxuhyfq7HPNU4EUMTUUVmOi+yzUHdqrrOKsH416ETezp1xjbxOgODRsMJIzYNjw8+AjBPqFdk4hmvey+L9g+Yv5eXoHZ94rF3N6ifEgotklVSBRGnGAO2zN4bv/r2J6oA5ArnEUUKwjQXHcezLDGvbwGlzsp49Iqkl4EhtCZUz4+pmJ+zLE+FkbpR692fZkgbTb1AeZk7IVhL1PBPBgWt5mCOboKDLfpjzC8GJ2ULN8ADUZgwdPmz6pya/r6N79kGlTSLoKlhsBesmrYGILpPZbro/gUMCclA68uuVkB4l5gPkZHouykjBCMTcH0S9z+PqTYU4Jg26Axj+MzG0UxZwcbLO9cjdcOdlpHNXHIJjxROYGVDqzAUgdwxOGumSgBQx+tVq0+S+yr6FPOjhJeXPQDdlk7bBk8+pilksBuS57qzINZ/ZK7EXvvIgRqN6Hzudjt5WK/r2AjJplrR+VM/VSSc3aLjb+z0ru62vpbee3ApNsm4dHNpe1cH74EbFIZCZuMqkFyQa7GDYIdVj64u58EJt19xhFLy+T6oruOXA7G63uJrtwVGc5oMBLYDXXaxjCiGzGagOyZG7HkAkjzfsDeTKMCmBW/m72pwHJ9QGYGgN3qesRccgOFi3dYeio7W9TLwMQ0wEM4xcSBbRzn36G/e0VdNzQVuiEY99RAuMPysxBpUO1gKLFVJfwFgXG0YNnT/JbC1Ogp3YBlS0mUF/AiJdAUVuLBjJkO0ef9vA2MElmrSSbYiUlc7gL2sDiuwVTKKGH42rhecuzIqkTEJjMf5T2NGKlgmmXbLCuj2CTubsWskEcscq7ue7XjwC6qPF1ZqC0W62BULWDZ9F6m7K9hqtqXeCvjnyJY7EIX1/Kpa4IPSj4mMFGQzCv6A3PODccilT/4mFHGB+dwO/e+KH6Fd/Hy5meJC12oKLVvBJZIwV+iQG+ue8HbcjDry9o2vMgwrykn8C9/UBaCwN6fwx2UERiJMTro5A1Hk7KwN687+7h3gtGX17HqROP2bWolzHbhIgRbqf2fciP2YORgJpfO9eheV3YHmNtwrqR/WoFRhKAKXbwlR/zvUxYzaaMvXLAv7RPMqZTaxNC455fab2swcsQJrEh9iz3OdiirpXvd7l1gPqZbgamcQoyoed5MIwQURrRuxFAbZTL+4ML8/YH5mEPlVsvCg/2OvRA8tRmBlRsws/Yz33jmhP96DzUR/gllv7ak0LgZjNMfVmbxK5hvuwj2aQ2WuQhB6cNmAMbkc7RFcEGHsl/bsqHcP4LAwKXV0avUfgWTalI6jzJHRzwhKUJhM3CQxD/CBZLZcPZrW/5YTv/44Ir0AczoGoNiFCFAR/yTGbD456X3EoLZr205iin9gx45iPwrqzYQDNTSKa/A8ioDSkTUaC+ZlN6vUj2CVb80J3/8DSV4U6p6QmlZG7sUJkhJU0ly2Xk+ufFu1UIyXECwSrGULWDo6j738QuunMWNO3XfKOe7BzHHloL5ZCNJg3BhJYZNNuEnNh3x56AQNBnVP0aezHcL6ResEuAUV5+QjejASu+I64K/ALB9AsPOjqgtMvyI6fVWVg4YxxXnwbbREQcw5cEwNesTSuE5ym0jBa5XMOv9CUwMdmCF3kewTXTEY17Q/bRsl9nv+N9E6TIN7cwlXAYG87tAwvXRJjCqdUDXyCTcagqKMQGiuPwHiPLP6o/+ca9g0gkMsBYzt+1eoJDVOyX8R28w2p5Go4Pj3gyAmX9ef/TneZ9gyt1LKtEgCwIzLgCsESH4rPCVJZhpqadStXOs+k4w4yLOTbDtqSPOEUxWYOiPN3r49gvmv15vUJrAz1nkQhcOLDqxtzqSVS3Oe8z+n9J0bTf5PWCfu9J5B8YdWP7dAfm76Qk44gj2nLmmxzMbr6x4gKf04c5X28C0e3LLZwaj6tnKlQPz7UCsfkFaKBYzW9WsCDZm7cXFGf6zQWCfk6+dF+rIRQhcOxCr/xUOpU5lc3PfsK6JzHeDWf6EXoIZn9ufUv7CFCy27ykodgT38Ecy/3UzHcL87a75wt8D5gSGA/sJmdE/rCIEIHWvOWZAHbFtmv+NDeFrE2GWSI9gbpJRMyobkxnNCkmOuKCMmU3ssM33aXqJP6k/dmHYSTCl1ArmZgrHCjLrXFpyxCm5AccPwTKh5qtpASzpK9RZPetKyPJbilw7MIzUvcURK482cQf3Us5nLU9g1XTNA/keMKw9ctnnxtddOzDnuGHGiqGdzNlPJZrlZAJ130laBkapnbwGw3tHjrj3KJ8mtIk7l+1XphoLj233nIvlYJSl+xMPllNv3P8l3J4zzrgdLD06nKvyhfsIqxnBTPfqymVgNPsVL6TrLhZVYK99rcinBD87xUCEKZfXa0KErpeBZVSPeOvAcMQm4vPUZpgcxanTEky6mQHDJCQEg//pEMc6LetCk9FEu6nAYgCDwdrBY364U48TOzNguPslHViQbZtlYClV191QeS51tscIgfmEicwHBmrz8Dv3DyXhpfh9eRBZtgQMEzRLLDGVG8y13MfkBnDjnuVk6jTCdMr9hcG8bwHMHORBAmV3gPF/jGBx5I7RwdCFOwhGbFHBavXTpfuLpxNrUhOZ/TxAR5WlYOiQYPsu+xcx2ol7iU2c3ECwHd/1GC+dU3M2AU7fxP73zER6v3N38nuBlTsnALaLVUig0zcR7INxkSC6VEHNyrnGCl6emVjt5UHOWlsChrWSl5hHV+YnlJ9MnUG1s6N1I8uGk2ygfNxvAEzH4uggSCxqOZhJTnF77T/QnkxagVFDleesyt0xEeX/AxhR5jrmMsxJoMvBdHxqTy0XMeY5AdiGlxswoXSdySVjzGM2KgaJB1+G9RqBTgJdBhbRhuQpeBu407uHZ3Tjjlv0RYah6Vob8RgR+QsAw3gG1mvIMNb1MjA6LgHAEpBN/4MdZDS9QIjupCjzXRkapiglX2F3gN34yuzEBsFSGeYk++Vg+Jufmfhb1EH7FRg7wI7HlPIN10TRWTp4Z0vx7wEMqw9ECNtiubiIqEsWDEmJYLuZdiepsaOkLqVyBXoApp5i5tiTEwADvSWCSIs7wMj+Irs+Zvu5B4tkPA0JgG1tEEwWWPQen1isPsh5r2DYcjk+s5QWYBJmcu12v2HNvajnEOYXpKC4YeIDWHZiItpODRNSXw7GQY6doW+rU7aDYDjLs2ZIgMJBYG5cgaIUbOsrHaGzECjcOZ82Xw0G6KCUctmwSMsV3qX4bj41qKmCEcFADMNaTBS4o7BcA7T4agGrHpaggw5T1+tOFg4sO8Nk5alrRH1BzgQKFZ79iqVK0SFJgWJks2C1G8FT47o/UV8GTGZj1PKv2RZabAPYa6rELrNbCp7RoRlFD2Cqmj88pXsXc6rddzEKbKLdbHJ8Q/ob7hwY1LmKHVge6rTgWbBKBoE7+2sasY+odt+ZYriDNROXI5tM5obAXjuwItSW5QxY3XkGlp/cQ829uZnayJVcY532bAYDjRjVFfMc7NgbEH5hpP4CWN2rB3x9+QLB9j8Ba5k6FHLcGfl2RngqyhdxYDCUV0AeRrguBwPnVYASN/sHZERTF1+/Udh8ewJqkxfgrTE0sK9FTDf3w31/9v3B6hNXwUIoQR+bH2kGRqk/WqFKqVwEM5jOBWC1JxAarD5xFYboBJQ4aiL0+2XVPm4uKJCoGuwUTPEyC9CgthXMn7iCBpZFS9T8wz+EyZa4hnsz1SRuXPFEMDB1AMymOTh4eX9g7iGYqybRMGJP+A+xg5GpwGZ/rsQTwcDUAZlndsB4C5afuABW+Rgqjk2mcN7zfVIxmAVfLuQfyvTrHC0KBDsAsHATrAWMxkR8HOuMRgxg6LTKyOqPF6pyZcoRrIRbCW6u3Ql6qHgTzFTJ3xxMhcyQM5mS+sQ4ys7MjcSaKJGBDo1RcUfqRW4O0vv/2IeBaVY7tKnMCQxs6urQtNmdeLSvxSFD6Q8KP5IyxxYEfYHtunsJ45OX2D7S7H6WUf8izN5UM94PhprKTxCMQpxCPGR766Fgag8lAuHlnBQnJlu71vKxnXXLMNaKYWsdo/qKLlSQ+OYysKMqBZBZOuoRy8WdCW8aR67Xn8N1CkIW81JPv1JB1+QysAgTadAUi6eN28rmTybDjW8g2K+xRCgN0AptOZisuuCwWLswFMYuU//qTGs5OsoDY3UK3JAMc2bD+N9LwKbZnBjfLSOq78mrd6aNd7o9nXwCsuyK73wMsiTwFJsBu6nBMpH6fZt6A9I071XpwArs6/aGb26xw+59ve4Au5r2asCCJ4p8iUoK6O0pmMHYJ65MBIsZYB0F20BtBZueAYkKkpYhr3wL9WwKpiIK5dOI7cD0eslk2AH7MA/Gq1R+nMq/otMnKiu/uaksaQ5aNA//7JNDxkzc8fzk7x0xXmUyO82UNpqvVvE47LZR5pgpafCQhXIbppeJA2YbtYKVfoop31Sbsfr8YX+eFIb1MdyU0wb1N0B+DOyvg4T27wDzebmu5SWNXx0M8+dJuaYDBOaELKMzbQIryjkw4UsMUutajKOxU4dI/OlI6FkqRkmpNKw8odZs73sGc8sy82lHYGHXCrLyhRU1I5yCsSygk3sHGJ9OMRqOshLoHoxaaf9ZRLEmB5YHdNmWgcnC5cvXQcFrW4PVR1KktIOLVo+KrQ2XMnMXGE50Tpvzaf3ytGScnhMNMBkF2v6urvNlYO7wybgpS2sw2u/IKGiG5nQFZkPr7lYwymYGZSTrJ6d2PkYJTOo6rmi3w4xJ4T1NsDkw60Mi04C4qk0KlK8GQ8MZpXo7sLR7L4T7gfkH0yk23bDCnkw6K/H4AkxKdK5TarufiHcvMO6HKZ+C5birZp18VWgY5pQfHPsR0/n9fkxHMKeKK+VjUrJ81L+xXoxh/YryYO+n71sDGEZZzzV74scvpZ9NOQGGUmdMRh54mZn4as476ReMpNKXlVtBaVBeP2s0heicZAf2g9LaAGd23BcMN0OnPdMxIhxZFx6nfUg6MfAcwVTCg2bjfi+YYNUZu5bi0Qjp23tn5d+Jlf2SRF0mkxNrQztsd4EZ16RqCpZ4EQryNTapcicC8Kzcim3ACPX3g6GqrP1ajidlWuqYawV/mZpECvJrwb19mvQo9NvAmgmRHPdr/fHEJdeZjiXznVc3URsFjdN9H5itbXwUt6gg3RP8ROUqcWAaC3yL7g1wHgbWuCbUMMufhxrLJtjxoGAXKMb88Zk8EQ7MoED5bd3M0xoADNO8nyIYmD+8kAAWEdgTdJC6H4O6MhgqSL2FAwPLkxFYTmDkFIRIdl0N7BTl6y3PDZ5dvsNwIwRuLXaboGqM8K7kvcEUNaYt6MihQ3BRUszzKVCyoncQaCd3FTA0E8G5LTFf8gjBZN64gUGLrx8EdoZiDO4e1Q8/pxHLG0W6/Qr+O91odwqqJvPnI3DZsjJv7HiHq4p9MBhaY+pEUZrD08j17prinA0HRr03Y0zMZclBDGAs5E7p6mB6A6XVD97wDO3XmCyPrj1Lg4CpjUTF4tMJx61LFdMxmv2a0/cF20zhRsbgSoLckJgJu9+1hXwYsBKPgyhZzgEsF7h5qYLvf6wExtlLBCvQYAQwTLdj0TjAYG6VnJLGCgEaPBahd7JWA/spA4/pzQTegt1fE4F1NWsbsNazBb0xvxMJkZYxVtrFtqS9v96iYfcCoxpeZU0Wn8iMxyaiLdWtp2CT5YOC0caktOppMpHZK2ZitMv45gH2+B4SzLkfwortDDyQL54dJ4r2bg7WOV6tlfW09ErcJUpU/nR/P3Ed2Y7XOPNbwUoCOwEwk6iCH7CUjvrxRx0MB0bZrdeYZretAQxs6pz83iR0msBDwahy7EKBlNhXqUawoqRMwGDd6+auJQl6C2CSuklIWIo/VhmC/S0fvtP5sCOG+TN2ImK1maOTxvLfsM9c3XgxLBh/wQqTcEzlEak1mzkzwTMEVgEzoCALneIJMQimwbh4GaaepyOYwoNG5BamaBUC3criv4bMPOwAlqKLu7MHBmtRYhMXq1M6YXRoMJlRKjda0vaPyN9V6Rf5CMDKDG8mgBnKChFYO7A1BjBuNRiqNViJ9SmjAMMcuhLBNIFh/SvbGQGYjsCA/QsASxtg2QBcC+F07GHhs4EtlRfYcJ0iOoHFVm3lCAb2BcvVHrNrNneWgMkaTCOYfMGmdSSDgmFa6RaFNQnsRrAw5eidwcrYiswwEmeG5VcA9udDaMrFTS4E0zhiBDYpI3uZjgIssSLHUrFUIliCve2yMYBhO4ucItUyKdkhHjSYnI8ADM/zBLCINnFfsYMMZNgwc39+xA6oOoXATrdYhIkf0esxgFHZDAgzkBQ8Y5H29SL+xWwMYAKPM1e51f+pBut6NlMXMHCMOEhZWJBlpBkeMaT/SwX23VqV5jxYZk88WOJuotyrxmmNkeE2sPMTi8G6H2PtDIKICocNDJaeUJ1sBJ4I7a9V4U3J1hiyXgQTO1nswKoEGZ+o/8ezrdnWD7a9g2CKxVUprgP7JWNsvQ75vHXB0tj+N/At0yor3XW4cLnhA4JxtoURasGqerHvqG0EY0/niyvXDUZ90JI34jB1T2g8gHtjBGApp8b38hgpvnM3caPqCz4gGEs5VRdITPnDq+oJvjfsiIGwZ1kOK0BV+cUA9lldSTIkWMy2MsEOiuqZsq46W3P4bh4MZhJYsJjter5+sPO7wTCsklXP8CnYer2lWTDtNfX0gKiK6vma53472LT1jq/t2k3lem2LhbYSKBQ+1KU+vgSIsX8R4lyyAGC8BnNlN+ckNoYEAwUkAGwKISr5JYLXKT4QDAsYzQzYRkbvW/cuxEJPFYFdcOrRKb2QMGvWlAu6cgKeyJmejg6PzyuwfFAwKriQU1larQK97rnfCjbN+6g3a9QYwLJyKl+z+tl1BzxbwPKpGKu7Xoq1bw22bD0XfPG28TWr8FYw03Lb+LqlRQtY1Laju3Zp0QIWq8Xbtn4x1nYAilq8bX2n2v3f+4BlLbtaa1fhLWA6F21gaw8Rt6VpLc6n9S/KNrAW7bNug78VrEWMDbAoW8D04nxaZ/7rcrBWabH+PctFMMyvM3xmoskBsnvaMu4+IteomD4l1r8obZshwebB1m7wt4HVfVVmnsqGB6uOSE2nT2H/9Nl6/JGArd/gvwssmz61foO/DUwsTLEhVHhbjmLVIaf51AAZDgtgLeHDIaRFS/LkwhQbQoUvgulF8aoHUOEtOYqLc3/twcRWMFyUL2bn/gAGv20dsVTNRunKUWQO0+lRs8twEGmxKC7OcY9yRmkPocLb65LkzDIcRlq0gs2qoEFU+DKw5qQaEdisezuMtGg/W3AGbBhp0Xoa4+wyLO+nwsM0jb4TTMzqxuBdOFcGK2dn+zDSoj2o0pztajRgZlZTDmNbtMcuxiAtWmMXM/duIGnRGruYW5SjyLW20z7l1RuGkRatsYvmvdMDLcpWTzydBRuEqxUsm3k4zKJsDREUMw/HkQS+kGBRDrQo20IE0ezDdBxgejZsMUgwsRVsbu4PJi3aHN4midocSFosljHOL8qBpMViteDsohxMWixUC84lFw0mLVqa76UzLw8lLVrA8sbDgcIDLWBzCsntB74bAdicMTaUwb8INjf3h9gPbIKdV4/mQnYhDP7zFT+3kNWZNR8PkD3QDjafhusevhsebC46YAaJ8LeBzR0RPlDMbhHMzKWgD7If2AY2r5CGU+ELp5jhnJqG4NaeLrwMbM4Yq7L7hwdbVEhw/eefpUODmTkPqdqFHjw4rOYWZQU2eDhdzi1KPpYREwsKaYjymhaw1rm/7tKyNrAlc38YfTmbWzQzmwad+02weYUkowHnfhNMtM0mNdDcb4Lxttmkhw8Om9YKymGyQWbAVOtsGkFwWLWGAwYzYqc/VrbOphEEh0Wr8TXUjk0DrHVRDudZ1mDti3KwraQpmG5dlMPFoWowOa5FOQUrW8dmsK2kKVj73HfS4nxIsHbzZvjgsGk3b4aLQzXA2hCGDw63530MGIeqwNrrwAeMQ1U/mLciDBiHqk4sa5/7A8ahpmBpy6vDB4fbjbGhcscaYGXr8htwK6k+TrB17g/midRgko1NWkzB2uTCgFtJd4Px4cHSxuk5jReHkxYezLS+Nlw2iLX2ztk9oLTo6djhR7BHsEewR7CRgZ2PFWyI6xHsEewRbGzXI9gj2CPY2K5HsEewR7CxXf8Pi009NVhcvjEAAAAldEVYdGRhdGU6Y3JlYXRlADIwMTctMDYtMTRUMTQ6MDM6NDUtMDQ6MDDoI4isAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDE3LTA2LTE0VDE0OjAzOjQ1LTA0OjAwmX4wEAAAAA90RVh0dGlmZjplbmRpYW4AbHNiVbcXQwAAABh0RVh0dGlmZjpwaG90b21ldHJpYwB1bmtub3duU7q30gAAAABJRU5ErkJggg==" alt="SOUNDEX QUICK AS A FLASH"><div class="match-card-body"><div class="match-card-title">SOUNDEX QUICK AS A FLASH ↔ US1435663A</div><div class="match-card-meta">Remington Rand · Patent 1922-11-14 · Mark filed 1927-10-08</div><div class="match-card-note">Second SOUNDEX trademark (filed 1927-10-08) covering the advertising slogan used with the Odell-patent system.</div><a href="matches/soundex-quick-as-a-flash.html">Read essay →</a></div></div><div class="match-card"><img class="match-card-thumb" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqAAAADwAQAAAAD3Vuu2AAAACXBIWXMAAAsSAAALEgHS3X78AAACRklEQVR42u3WMY7UMBQG4GcZ5ArlBpiOK2yFuQl7CxqkeESxJUcYbkKkKabbOcIYbUHr0RTr0Vp+PCfDLtvsClsIIf1JqiT6Yj3b/wvxXzgIKFCgQIECBQoUKFCgQIECBQoUKFCgQIECBQoUaAu642yY06trS1a1o994zydmT2OiikZSHIhe96BBl4ETF6KholectHdJJ+vHz31olHdoyDI0LWi0UgLr3aYZjQPbivqsRZQrm3qyDW7XjKaKBkGL+oWWGY1u34zmgUcOI3t+jK6j+9COGkGnx6iWm/tox3ZUV9SdUamBoCqbrdSlBy2CWp4eUJ7R/IJ7UH5AM1WUKlqoHS1KUC/oPPuJxntUtaOs0oLO6zT5M3rVNVJeCXoxCGoEPU0Lqs2zMfQ0euJSUdlagoYFJUF9B+rvBDU8UUWPwS0j3XaixzPqfkNNRcd2dPrIRSZpChX9EWwxEi7mVlDXgb7lPKNW0E0YlsV/y+XStqPBcLoQNFZ0enNGZVekPrR2kCnVidrG4Rwouy401uAnqWNFdzWg5+jbHeQrPehhRuviX9+jXw61Bs2oFdSPSztZL2RN/u9Fd6COj5LSS0o5CS2T5sa34Q40Ob6Z0RXr4rLKOsoGSHbFHT8T2fFGUC+oKjYr6fvSpr9a9UxMPfm0OOHIkfOZPknvjxIm4T3Zl8wdqAQVT+9ojHzHf3D8678+oECBAgUKFChQoECBAgUKFChQoECBAgUKFChQoECBAgUKFChQoECBAgUKFChQoECB/i/oTz0ZT3DUgR6hAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDE3LTA1LTIyVDEyOjIzOjA4LTA0OjAwVmo1QwAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxNy0wNS0yMlQxMjoyMzowOC0wNDowMCc3jf8AAAAPdEVYdHRpZmY6ZW5kaWFuAGxzYlW3F0MAAAAYdEVYdHRpZmY6cGhvdG9tZXRyaWMAdW5rbm93blO6t9IAAAAASUVORK5CYII=" alt="VARIADEX"><div class="match-card-body"><div class="match-card-title">VARIADEX ↔ US2152606A</div><div class="match-card-meta">Remington Rand · Patent 1939-03-28 · Mark filed 1939-04-07</div><div class="match-card-note"></div><a href="matches/variadex.html">Read essay →</a></div></div><div class="match-card"><div class="match-card-thumb-placeholder">KAR</div><div class="match-card-body"><div class="match-card-title">KARDEX ↔ US2178457A</div><div class="match-card-meta">Remington Rand · Patent 1939-10-31 · Mark filed 1939-12-14</div><div class="match-card-note">Visible Index patent (1939) granted October 31, 1939 — 44 days before Remington Rand filed the KARDEX trademark (December 14, 1939). The patent describes the overlapping-tray visible card mechanism; the trademark registers the product-line name under which that mechanism was sold commercially.</div><a href="matches/kardex.html">Read essay →</a></div></div><div class="match-card"><img class="match-card-thumb" src="data:image/png;base64,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" alt="VI-DEX"><div class="match-card-body"><div class="match-card-title">VI-DEX ↔ US1527374A</div><div class="match-card-meta">Wilson Jones · Patent 1925-02-24 · Mark filed 1927-07-22</div><div class="match-card-note">Loose-Leaf Book And Method Of Assembly patent (granted February 24, 1925) assigned to Wilson Jones Loose Leaf Company; first commercial use of the VI-DEX mark recorded June 27, 1925 — four months after the patent issued. Trademark filed July 22, 1927.</div><a href="matches/vi-dex.html">Read essay →</a></div></div><div class="match-card"><img class="match-card-thumb" src="data:image/png;base64,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" alt="REDIREF"><div class="match-card-body"><div class="match-card-title">REDIREF ↔ US1614080A</div><div class="match-card-meta">Wilson Jones · Patent 1927-01-11 · Mark filed 1927-09-19</div><div class="match-card-note">Loose-Leaf Binder patent (granted January 11, 1927) assigned to Wilson Jones Co; REDIREF first commercial use recorded January 5, 1927 — essentially simultaneous with the patent grant. Companion mark HANDIREF (71254950) filed the same day, September 19, 1927.</div><a href="matches/rediref.html">Read essay →</a></div></div><div class="match-card"><div class="match-card-thumb-placeholder">SHA</div><div class="match-card-body"><div class="match-card-title">SHANNON ↔ US1738120A</div><div class="match-card-meta">Yawman &amp; Erbe · Patent 1929-12-03 · Mark filed 1930-01-23</div><div class="match-card-note">File Folder patent (granted December 3, 1929) assigned to Yawman &amp; Erbe Mfg Co; SHANNON trademark filed January 23, 1930 — 51 days later. SHANNON was an established British arch-binder brand name Yawman &amp; Erbe was registering for the American market.</div><a href="matches/shannon.html">Read essay →</a></div></div></div><p class="section-title">Entities</p><div class="entity-grid"><div class="entity-card"><h3><a href="entities/remington-rand.html">Remington Rand</a></h3><div class="entity-meta">office-systems · manufacturer</div><div class="entity-stats"><span><span class="stat-val">15</span> marks</span><span><span class="stat-val">171</span> patents</span><span><span class="stat-val">5</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div><div class="entity-card"><h3><a href="entities/wilson-jones.html">Wilson Jones</a></h3><div class="entity-meta">office-systems · manufacturer</div><div class="entity-stats"><span><span class="stat-val">6</span> marks</span><span><span class="stat-val">130</span> patents</span><span><span class="stat-val">2</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div><div class="entity-card"><h3><a href="entities/yawman-and-erbe.html">Yawman &amp; Erbe</a></h3><div class="entity-meta">office-systems · manufacturer</div><div class="entity-stats"><span><span class="stat-val">3</span> marks</span><span><span class="stat-val">59</span> patents</span><span><span class="stat-val">1</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div><div class="entity-card"><h3><a href="entities/boorum-and-pease.html">Boorum &amp; Pease</a></h3><div class="entity-meta">blank-books · manufacturer</div><div class="entity-stats"><span><span class="stat-val">3</span> marks</span><span><span class="stat-val">38</span> patents</span><span><span class="stat-val">0</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div></div></div>
+</body>
+</html>
