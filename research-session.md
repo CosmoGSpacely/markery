@@ -64,13 +64,13 @@ EOF
 ## 2. Generate candidates
 
 ```bash
-markery match information-systems
+markery match <project>
 ```
 
 Options:
 
 ```bash
-markery match information-systems --entity "Wilson Jones"   # restrict to one entity
+markery match <project> --entity "Wilson Jones"   # restrict to one entity
 markery match --list-entities                               # show registered entities
 markery match --all                                         # all entities
 ```
@@ -80,7 +80,7 @@ After the run, check the output count:
 ```bash
 python - <<'EOF'
 from pathlib import Path
-p = Path("projects/information-systems/matches/candidates.jsonl")
+p = Path("projects/<project>/matches/candidates.jsonl")
 print(sum(1 for l in p.read_text().splitlines() if l.strip()), "candidates")
 EOF
 ```
@@ -94,7 +94,7 @@ EOF
 Enriches `candidates.jsonl` with four text-signal fields: `title_name_hit`, `abstract_name_hit`, `goods_title_overlap`, `goods_abstract_overlap`. These are displayed in the reviewer and used to surface the strongest matches.
 
 ```bash
-markery score-signals information-systems
+markery score-signals <project>
 ```
 
 Run this after generating candidates and before reviewing. Safe to re-run — it overwrites only the signal fields.
@@ -104,14 +104,14 @@ Run this after generating candidates and before reviewing. Safe to re-run — it
 ## 4. Review candidates
 
 ```bash
-markery review information-systems
+markery review <project>
 ```
 
 Options:
 
 ```bash
-markery review information-systems --min-score 0.65    # tighter threshold (default 0.5)
-markery review information-systems --mark VI-DEX       # single trademark
+markery review <project> --min-score 0.65    # tighter threshold (default 0.5)
+markery review <project> --mark <mark>       # single trademark
 ```
 
 The reviewer presents each candidate pair sorted by score descending. For each pair:
@@ -128,7 +128,7 @@ On **Y**, the reviewer prompts for an optional note, then appends to `confirmed.
 
 ## 5. Confirm a pair manually (if not using the interactive reviewer)
 
-Append directly to `projects/information-systems/matches/confirmed.jsonl`:
+Append directly to `projects/<project>/matches/confirmed.jsonl`:
 
 ```json
 {
@@ -154,12 +154,12 @@ Prompt pattern:
 
 ```
 Walk me through the confirmed pair: [MARK] (serial [SN]) ↔ [PATENT].
-Draft a research essay for projects/information-systems/content/[slug].md.
+Draft a research essay for projects/<project>/content/[slug].md.
 ```
 
-Save the completed essay to `projects/information-systems/content/<slug>.md`. Filename matches the mark's common name in lowercase (e.g., `soundex.md`, `kardex.md`, `vi-dex.md`).
+Save the completed essay to `projects/<project>/content/<slug>.md`. Filename matches the mark's common name in lowercase (e.g., `mark-name.md`).
 
-Essay structure: lead with historical context, ground all claims in specific filing records (serial numbers, patent numbers, dates), distinguish what the record shows from what it implies. See `soundex.md` and `kardex.md` for existing examples.
+Essay structure: lead with historical context, ground all claims in specific filing records (serial numbers, patent numbers, dates), distinguish what the record shows from what it implies. See existing essays in the project's `content/` for examples.
 
 ---
 
@@ -168,7 +168,7 @@ Essay structure: lead with historical context, ground all claims in specific fil
 Download PDF and extract page-1 figure for confirmed pairs:
 
 ```bash
-markery fetch-patents information-systems --confirmed
+markery fetch-patents <project> --confirmed
 ```
 
 For a specific patent:
@@ -180,10 +180,10 @@ markery fetch-patents --patent US1261167A
 For high-scoring candidates before review:
 
 ```bash
-markery fetch-patents information-systems --min-score 0.70
+markery fetch-patents <project> --min-score 0.70
 ```
 
-PDFs land in `projects/information-systems/output/` alongside the existing figure PNGs. Figures extracted into `data/patents.duckdb` (`patent_figures` table) and displayed automatically in the reviewer.
+PDFs land in `projects/<project>/output/` alongside the existing figure PNGs. Figures extracted into `data/patents.duckdb` (`patent_figures` table) and displayed automatically in the reviewer.
 
 ---
 
@@ -201,11 +201,11 @@ markery enhance gallery \
 **From enhanced PNGs:** after running enhance on selected marks.
 
 ```bash
-markery enhance gallery projects/information-systems/output/<collection> \
-  --title "VI-DEX, Wilson Jones 1927"
+markery enhance gallery projects/<project>/output/<collection> \
+  --title "<collection title>"
 ```
 
-Output is self-contained HTML with base64-embedded images. Not for web publication; see Phase 4.
+Output is self-contained HTML with base64-embedded images. Not for web publication.
 
 ---
 
@@ -216,14 +216,14 @@ Enhancement is manual and compute-intensive. Run only on marks chosen after huma
 Single mark:
 
 ```bash
-markery enhance enhance 71235764 --out-dir projects/information-systems/output/vi-dex
+markery enhance enhance <serial_no> --out-dir projects/<project>/output/<collection>
 ```
 
 Confirmed batch:
 
 ```bash
-markery enhance batch "cf.serial_no IN ('71235764','71237470','71237469')" \
-  --out-dir projects/information-systems/output/wilson-jones-marks
+markery enhance batch "cf.serial_no IN ('<sn1>','<sn2>','<sn3>')" \
+  --out-dir projects/<project>/output/<collection>
 ```
 
 Output: 4× upscaled PNG. SVG written alongside for clean word marks and geometric designs. `--force` re-processes existing output.
@@ -244,10 +244,10 @@ Run `markery status` one more time to confirm metrics match expectations before 
 |---|---|
 | Session verifier | `markery status` |
 | Add entity | edit `src/markery/specialist/matchmaker/build.py` → `markery matchmaker build` |
-| Generate candidates | `markery match information-systems` |
-| Score text signals | `markery score-signals information-systems` |
-| Review candidates | `markery review information-systems` |
-| Fetch patent docs | `markery fetch-patents information-systems --confirmed` |
+| Generate candidates | `markery match <project>` |
+| Score text signals | `markery score-signals <project>` |
+| Review candidates | `markery review <project>` |
+| Fetch patent docs | `markery fetch-patents <project> --confirmed` |
 | Gallery from DB images | `markery enhance gallery --where "..." --out <path>` |
 | Gallery from enhanced PNGs | `markery enhance gallery <dir>` |
 | Enhance mark (manual, selective) | `markery enhance enhance <serial> --out-dir <dir>` |

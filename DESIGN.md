@@ -63,3 +63,44 @@ The model scores candidate identification, not confirmation. The 0.80 ceiling is
 **ATTACH over materialized joins.** Cross-database queries via `ATTACH` require all three database files to be present. For a project where all three are committed to the repository, this is fine. In a distributed or multi-user context it would require rethinking.
 
 **Additive scoring over interaction terms.** The linear additive model is interpretable and easy to explain. It misses interaction effects (a close temporal match plus a matching CPC class should probably score higher than the sum of independent components). Kept simple intentionally — the model's purpose is candidate ranking, not probabilistic confirmation.
+
+---
+
+## Specialist Ownership Pattern
+
+The codebase is organized into five specialists under `src/markery/specialist/`. Each specialist owns exactly one data source and all functionality that reads from or writes to it.
+
+| Specialist | Owns | CLI entry point |
+|---|---|---|
+| `patent/` | `data/patents.duckdb` | `markery patent` |
+| `trademark/` | `data/trademarks.duckdb` | `markery trademark` |
+| `matchmaker/` | `data/entities.duckdb` | `markery match / matchmaker` |
+| `historian/` | `confirmed.jsonl`, interactive review | `markery review / status` |
+| `publisher/` | Site output, image enhancement | `markery site / enhance / publisher` |
+
+A specialist exposes three layers: a **queries module** (pure DB reads, no side effects), a **build/pipeline module** (writes or transforms), and a **CLI module** (entry point). Cross-specialist reads use DuckDB `ATTACH` where a join cannot be expressed through individual specialist APIs without multiple round trips — this is the only permitted cross-specialist coupling.
+
+Each specialist also owns its reference documentation: `EPO.md` lives in `specialist/patent/`, `TSDR.md` lives in `specialist/trademark/`, and the historian Claude persona lives in `specialist/historian/persona/`.
+
+---
+
+## Projects as Independent Research Units
+
+Research projects live under `projects/<name>/` and are entirely independent of each other. A project contains only:
+- Configuration (`entities.txt`) — which entity IDs are in scope
+- Curated data (`matches/confirmed.jsonl`) — hand-reviewed pairs
+- Content (`content/`) — research essays and narrative pages
+
+Everything else — candidates, site output, enhanced images — is generated from these three inputs and is gitignored. Any project can be rebuilt from scratch by running `markery match`, reviewing, and `markery site build`.
+
+Projects do not share confirmed pairs, entities, or content. The same entity (e.g. Remington Rand) can appear in multiple projects with independent confirmation decisions in each.
+
+---
+
+## Agentic Design Intent
+
+The specialist pattern is designed to be forward-compatible with an AI agent layer. Each specialist's queries module is a clean programmatic API: pure functions, typed inputs and outputs, no CLI dependency. A model calling `get_entities()` or `get_confirmed_matches()` gets the same result as the site builder — without going through the CLI.
+
+The historian specialist makes this explicit: `specialist/historian/persona/` contains the Claude persona configuration that turns a model into a research collaborator. The Python code in `specialist/historian/` (the interactive reviewer) and the persona files serve the same function through different interfaces — human terminal and Claude project respectively.
+
+The long-term design intent is that each specialist can be called by a hosted or local model without modification: the queries API is the model's tool interface, the CLI is the human interface, and the two are kept deliberately separate.
