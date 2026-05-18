@@ -60,13 +60,13 @@ def cmd_matchmaker(rest: list[str]) -> None:
 
 
 def cmd_review(rest: list[str]) -> None:
-    from markery.review import main
+    from markery.specialist.historian.review import main
     sys.argv = ["markery review"] + rest
     main()
 
 
 def cmd_status() -> None:
-    from markery.status import main
+    from markery.specialist.historian.status import main
     main()
 
 
