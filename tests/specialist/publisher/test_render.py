@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from markery.specialist.publisher.render import _esc, _render_markdown
+from markery.specialist.publisher.render import _esc, _page, _render_markdown
 
 
 def test_esc_empty_string():
@@ -58,3 +58,19 @@ def test_render_markdown_fenced_block():
 def test_render_markdown_empty():
     result = _render_markdown("")
     assert result.strip() == ""
+
+
+def test_page_no_og_tags():
+    result = _page("Title", "<p>body</p>", {})
+    assert 'property="og:' not in result
+
+
+def test_page_with_og_tags():
+    og = {"title": "T", "description": "D", "url": "https://example.com/page.html"}
+    result = _page("Title", "<p>body</p>", {}, og=og)
+    assert 'property="og:title"' in result
+    assert 'content="T"' in result
+    assert 'property="og:url"' in result
+    assert 'content="https://example.com/page.html"' in result
+    assert 'property="og:type"' in result
+    assert 'content="article"' in result

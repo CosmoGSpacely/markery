@@ -1149,3 +1149,1193 @@ After deletion `src/markery/db/` and `src/markery/matching/` directories are gon
 12. Multi-commit: (1) `specialist/matchmaker/` code + `review.py` import fix,
     (2) CLI routing, (3) tests, (4) delete old files
 
+---
+
+## Phase D — HISTORIAN specialist
+
+**Goal:** Move `src/markery/review.py` and `src/markery/status.py` into
+`src/markery/specialist/historian/`. Fix the broken figure display (which queries
+the dropped `figure_path` column). Replace all hardcoded DB paths with `DB` from
+`common.config`. Use the `Project` dataclass for project file paths.
+
+HISTORIAN owns no database. It reads all three DBs in read-only mode and writes
+only to per-project `confirmed.jsonl` files.
+
+### Decision log
+
+**Q1 — Does `status.py` move to historian or stay in `markery/`?**
+Move to historian. After Phase D, `src/markery/` will contain only `__init__.py`,
+`cli.py`, `common/`, and `specialist/`. Keeping `status.py` at the top level would
+leave an orphan. Both `review.py` and `status.py` are "session management" tools
+that observe the full system state without owning any of it — a natural unit.
+
+**Q2 — How does the broken `figure_path` query get fixed?**
+`fetch_patent()` currently runs `SELECT figure_path FROM patent_figures WHERE ...`.
+`figure_path` was dropped in Phase A. Fix: query `SELECT figure_data FROM
+patent_figures WHERE patent_no = ? AND figure_no = 1`. If the BLOB is present,
+write it to a `tempfile.NamedTemporaryFile(suffix=".png", delete=False)` and
+return the temp path. The caller (`display()`) xdg-opens that path unchanged.
+Temp files are collected in a session list and unlinked in the `finally` block at
+the end of `main()`.
+
+**Q3 — Does historian add new CLI subcommands?**
+No new subcommands in Phase D. `markery review` preserves its existing interface
+exactly. A `markery historian` top-level subcommand could be added later (e.g.
+`markery historian export`, `markery historian stats`) but that scope is deferred.
+
+**Q4 — What gets unit tested?**
+Pure functions: `wordwrap`, `load_confirmed`, `write_confirmed`. The DB-dependent
+functions (`fetch_tm`, `fetch_patent`, `display`) require live schemas and terminal
+I/O — they are covered by smoke tests only. The `status.py` functions `count_jsonl`
+and `human_size` are also straightforward to test.
+
+**Q5 — What's the temp-file lifetime strategy for figures?**
+`fetch_patent()` returns the temp path but does not unlink it. `main()` collects
+all returned figure paths in a `_tmp_figures: list[Path]` list and calls
+`path.unlink(missing_ok=True)` for each in the `finally` block. This keeps the
+file alive for the duration of the review session (xdg-open may hand off to an
+async image viewer) but cleans up on normal exit or `KeyboardInterrupt`.
+
+**Q6 — Where does `PROJECTS_DIR = Path("projects")` go?**
+Deleted entirely. `review.py` constructs a `Project(args.project)` instance and
+uses `proj.candidates` / `proj.confirmed`. `status.py` reads `ROOT / "projects"`
+directly (it iterates all subdirectories, so the `Project` dataclass does not fit).
+
+### Module layout
+
+```
+src/markery/specialist/historian/
+    __init__.py
+    review.py          ← moved from src/markery/review.py; figure + path fixes
+    status.py          ← moved from src/markery/status.py; path fixes
+    cli.py             ← historian_main() (no-op stub for future use)
+```
+
+`src/markery/cli.py` routes:
+- `"review"` → `specialist/historian/review.py:main()`
+- `"status"` → `specialist/historian/status.py:main()`
+
+### Changes to `review.py`
+
+**Imports to add/change:**
+
+```python
+# add
+import tempfile
+from markery.common.config import DB, Project
+
+# remove
+PROJECTS_DIR = Path("projects")
+```
+
+**`fetch_patent()` — fix figure query:**
+
+```python
+def fetch_patent(conn, patent_no: str) -> dict:
+    ...
+    fig = conn.execute(
+        "SELECT figure_data FROM patent_figures WHERE patent_no = ? AND figure_no = 1",
+        [patent_no],
+    ).fetchone()
+    figure_path = None
+    if fig and fig[0]:
+        tf = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+        tf.write(bytes(fig[0]))
+        tf.close()
+        figure_path = tf.name
+    return {
+        "app_dt":    str(p[0]) if p and p[0] else "—",
+        "inventors": "  ".join(r[0].title() for r in inv) if inv else "—",
+        "cpc_full":  "  ".join(r[0] for r in cls) if cls else "—",
+        "figure":    figure_path,
+    }
+```
+
+**`main()` — replace hardcoded paths:**
+
+```python
+# before
+project_dir     = PROJECTS_DIR / args.project
+candidates_path = project_dir / "matches" / "candidates.jsonl"
+confirmed_path  = project_dir / "matches" / "confirmed.jsonl"
+conn_tm  = duckdb.connect("data/trademarks.duckdb", read_only=True)
+conn_pat = duckdb.connect("data/patents.duckdb",    read_only=True)
+conn_ent = duckdb.connect("data/entities.duckdb",   read_only=True)
+
+# after
+proj            = Project(args.project)
+candidates_path = proj.candidates
+confirmed_path  = proj.confirmed
+conn_tm  = duckdb.connect(str(DB["trademarks"]), read_only=True)
+conn_pat = duckdb.connect(str(DB["patents"]),    read_only=True)
+conn_ent = duckdb.connect(str(DB["entities"]),   read_only=True)
+```
+
+**`main()` — temp file cleanup:**
+
+```python
+_tmp_figures: list[str] = []
+
+try:
+    for idx, cand in enumerate(queue, 1):
+        pat = fetch_patent(conn_pat, cand["patent_no"])
+        if pat["figure"]:
+            _tmp_figures.append(pat["figure"])
+        ...
+except KeyboardInterrupt:
+    print("\n  (interrupted)")
+finally:
+    for p in _tmp_figures:
+        Path(p).unlink(missing_ok=True)
+    conn_tm.close()
+    conn_pat.close()
+    conn_ent.close()
+```
+
+Note: the existing code closes connections outside the `try` block, so they are
+not closed on `KeyboardInterrupt`. Fix this by moving closes into `finally`.
+
+### Changes to `status.py`
+
+Only path changes; no logic changes.
+
+```python
+# add import
+from markery.common.config import ROOT, DB
+
+# replace hardcoded DB paths
+dbs = [
+    (str(DB["trademarks"]), ["case_file", "mark_images", "mark_case_status"]),
+    (str(DB["patents"]),    ["patents", "patent_classes", "patent_inventors"]),
+    (str(DB["entities"]),  ["company_entity", "entity_name_variant"]),
+]
+
+# replace projects dir
+for project_dir in sorted((ROOT / "projects").iterdir()):
+    ...
+```
+
+The `db_stats()` function receives a `Path` already, so no change needed there.
+The `read_deferred` and `read_next_action` functions reference `root / "DEFERRED.md"`
+and `root / "CONTEXT.md"` — change `root = Path(".")` to `root = ROOT`.
+
+### `cli.py` (new, minimal)
+
+```python
+"""Historian specialist CLI — human review workflow."""
+
+from __future__ import annotations
+
+
+def historian_main() -> None:
+    """Entry point for future `markery historian` subcommands."""
+    print("markery historian: no subcommands defined yet.")
+    print("Use 'markery review' to review candidate pairs.")
+```
+
+Not wired into `cli.py` dispatch yet — no `markery historian` subcommand in Phase D.
+The stub is there so the module exists and can grow in Phase E or later.
+
+### `__init__.py`
+
+```python
+from markery.specialist.historian.review import main as review_main
+from markery.specialist.historian.status import main as status_main
+
+__all__ = ["review_main", "status_main"]
+```
+
+### Updates to `src/markery/cli.py`
+
+```python
+def cmd_review(rest: list[str]) -> None:
+    from markery.specialist.historian.review import main   # was: markery.review
+    sys.argv = ["markery review"] + rest
+    main()
+
+def cmd_status() -> None:
+    from markery.specialist.historian.status import main   # was: markery.status
+    main()
+```
+
+No change to routing table or subcommand descriptions.
+
+### Unit tests
+
+**`tests/specialist/historian/__init__.py`** — empty
+
+**`tests/specialist/historian/test_review.py`**:
+
+- `test_wordwrap_short_text` — text shorter than width → single-element list
+- `test_wordwrap_long_text` — text longer than width → wraps at word boundary
+- `test_wordwrap_empty_text` — empty string → `["—"]`
+- `test_load_confirmed_empty_when_missing` — path that doesn't exist → empty set
+- `test_load_confirmed_parses_jsonl` — write two JSONL lines; assert two tuples
+- `test_write_confirmed_appends` — call twice; file has two lines
+- `test_write_confirmed_creates_parent_dir` — deep nested path; file created
+
+**`tests/specialist/historian/test_status.py`**:
+
+- `test_human_size_bytes` — `human_size` on a file with known size
+- `test_count_jsonl_empty_when_missing` — path doesn't exist → 0
+- `test_count_jsonl_counts_nonempty_lines` — write 3 lines + 1 blank → 3
+
+The DB-dependent `db_stats()` and the full `main()` output are covered by
+the existing `markery status` smoke test.
+
+### Files to delete after Phase D
+
+```
+src/markery/review.py
+src/markery/status.py
+```
+
+After deletion `src/markery/` contains only: `__init__.py`, `cli.py`, `common/`,
+`specialist/`. The only remaining Phase E target in `src/markery/` is `cli.py`
+itself (which is the unified entry point, not specialist code).
+
+### Step-by-step migration sequence
+
+1. Create `src/markery/specialist/historian/` with empty `__init__.py`
+2. Copy `review.py` → `specialist/historian/review.py`; apply all changes:
+   - Add `import tempfile` and `from markery.common.config import DB, Project`
+   - Remove `PROJECTS_DIR`
+   - Fix `fetch_patent()`: `figure_data` BLOB + tempfile write
+   - Fix `main()`: use `Project`, use `DB`, move conn closes to `finally`,
+     collect and unlink temp figure files
+3. Copy `status.py` → `specialist/historian/status.py`; apply all changes:
+   - Add `from markery.common.config import ROOT, DB`
+   - Replace `root = Path(".")` with `root = ROOT`
+   - Replace hardcoded DB path strings with `DB` dict entries
+4. Write `specialist/historian/cli.py` (stub only)
+5. Write `specialist/historian/__init__.py`
+6. Update `src/markery/cli.py`:
+   - `cmd_review` imports from `specialist.historian.review`
+   - `cmd_status` imports from `specialist.historian.status`
+7. Write unit tests:
+   - `tests/specialist/historian/__init__.py`
+   - `tests/specialist/historian/test_review.py` (7 tests)
+   - `tests/specialist/historian/test_status.py` (3 tests)
+8. Run `pytest -q` — all tests pass
+9. Smoke tests:
+   - `markery status` — output unchanged from pre-Phase D
+   - `markery review information-systems --min-score 0.9` — first few candidates
+     display correctly; figure temp file is created and opened; session exits clean
+10. Delete `src/markery/review.py` and `src/markery/status.py`
+11. Run `pytest -q` again to confirm nothing imported from the old paths
+12. Multi-commit: (1) `specialist/historian/` code, (2) CLI routing updates,
+    (3) tests, (4) delete old files
+
+---
+
+## Phase E — PUBLISHER specialist
+
+**Goal:** Move `tools/site_builder/` and `tools/image_enhancement/` into
+`src/markery/specialist/publisher/`. Delete `tools/patent_docs/` (superseded by
+Phase A). Fix all hardcoded DB path strings and project path strings. Extract the
+`_site_build()` orchestration from `cli.py` into a proper `build_site()` function.
+Wire `markery publisher` as a CLI stub for future use.
+
+**Background:** The editable install's `MAPPING` currently lists `site_builder`,
+`image_enhancement`, and `patent_docs` as top-level importable packages pointing
+into `tools/`. This is stale state from before Phase A changed `pyproject.toml`
+to `where = ["src"]`. It works now only because `pip install -e .` has not been
+re-run since that change. Phase E fixes the underlying import paths and removes
+the reliance on this stale mapping. After Phase E, running `pip install -e .`
+will regenerate the MAPPING with only `markery` present.
+
+### Decision log
+
+**Q1 — Does `db_paths: dict[str, str]` stay as a function parameter?**
+No. The `db_paths` dict is constructed in `cli.py` with hardcoded strings and
+threaded through every query and render function purely as a vehicle for DB paths.
+Phase E removes it from all function signatures. Functions use `DB` from
+`common.config` directly. `get_entity_stats` already needs no DB at all (pure
+aggregation). Call sites in `build_site()` become simpler: no dict to construct
+or pass around.
+
+**Q2 — How are narrative content paths fixed in `render.py`?**
+Replace `Path(f"projects/{project}/content/...")` with
+`Project(project).content / "..."` in each render function. The `project: str`
+parameter stays so render functions remain callable with just a project name. No
+signature-breaking change for callers.
+
+**Q3 — Does `_site_build()` stay in `cli.py` or move to publisher?**
+Move into `specialist/publisher/build.py` as `build_site(project, out_dir=None)`.
+This separates orchestration from argument parsing, makes `build_site` directly
+importable by agents or tests, and leaves `cli.py` with a one-liner
+`cmd_site()`. The print statements (`→ entities/...`) move into `build_site` so
+the smoke-test output is preserved.
+
+**Q4 — Does `image_enhancement` move into publisher?**
+Yes, as a sub-package at `specialist/publisher/image_enhancement/`. The internal
+relative imports (`from .pipeline import`, `from .gallery import`) are
+package-relative and continue to work unchanged after the move. The only code
+change inside `image_enhancement` is the `--db` default in `cli.py`:
+`"data/trademarks.duckdb"` → `str(DB["trademarks"])`. No other logic changes to
+the image pipeline.
+
+**Q5 — Does `tools/patent_docs/` get deleted?**
+Yes. Phase A moved all its logic into `specialist/patent/`. `cli.py` no longer
+references it. It is unreferenced dead code in `tools/`.
+
+**Q6 — Does `tools/historian/` get deleted?**
+No. `tools/historian/` contains only Markdown documentation (content schemas,
+examples, reference materials for the Claude historian agent). It has no Python
+files and is not imported by anything. It stays in place as prose docs.
+
+**Q7 — What gets unit tested?**
+Pure functions: `_esc`, `_render_markdown` (from `render.py`) and
+`get_entity_stats` (from `queries.py`). These are straightforward to test
+without any DB or filesystem. The DB-dependent query functions and the full page
+render pipeline (which writes HTML files to disk) are covered by the
+`markery site build information-systems` smoke test.
+
+**Q8 — Does `markery publisher` get wired into the CLI?**
+Yes, as a stub (like `markery historian`). The `build` subcommand routes to
+`build_site` so `markery publisher build <project>` is equivalent to
+`markery site build <project>`. `markery site` remains the canonical form for
+humans; `markery publisher` gives agents a well-namespaced entry point.
+
+### Module layout
+
+```
+src/markery/specialist/publisher/
+    __init__.py
+    queries.py            ← from tools/site_builder/queries.py; db_paths removed
+    render.py             ← from tools/site_builder/render.py; db_paths removed
+    build.py              ← new; extracts _site_build() from cli.py
+    cli.py                ← publisher_main() stub + build subcommand
+    image_enhancement/
+        __init__.py       ← unchanged
+        binarize.py       ← unchanged
+        cli.py            ← --db default only
+        gallery.py        ← unchanged
+        pipeline.py       ← unchanged
+        upscale.py        ← unchanged
+        ENHANCE.md        ← unchanged
+```
+
+After Phase E, `tools/` contains only:
+```
+tools/historian/          ← documentation only; not deleted
+```
+
+### Changes to `queries.py`
+
+**`_connect()` — use `DB` directly:**
+
+```python
+# before
+def _connect(db_paths: dict[str, str]) -> duckdb.DuckDBPyConnection:
+    conn = duckdb.connect(db_paths["entities"], read_only=True)
+    conn.execute(f"ATTACH '{db_paths['patents']}'    AS pat (READ_ONLY)")
+    conn.execute(f"ATTACH '{db_paths['trademarks']}' AS tm  (READ_ONLY)")
+    return conn
+
+# after
+from markery.common.config import DB, Project
+
+def _connect() -> duckdb.DuckDBPyConnection:
+    conn = duckdb.connect(str(DB["entities"]), read_only=True)
+    conn.execute(f"ATTACH '{DB['patents']}'    AS pat (READ_ONLY)")
+    conn.execute(f"ATTACH '{DB['trademarks']}' AS tm  (READ_ONLY)")
+    return conn
+```
+
+**Function signature changes (all callers in `build.py` updated accordingly):**
+
+```python
+# before → after
+get_entities(db_paths, entity_ids)               → get_entities(entity_ids)
+get_trademarks_for_project(db_paths, entity_ids) → get_trademarks_for_project(entity_ids)
+get_patents_for_project(db_paths, entity_ids)    → get_patents_for_project(entity_ids)
+get_confirmed_matches(project, db_paths)         → get_confirmed_matches(project)
+get_mark_image_b64(db_paths, serial_no)          → get_mark_image_b64(serial_no)
+get_patent_figure_b64(db_paths, patent_no)       → get_patent_figure_b64(patent_no)
+get_entity_stats(db_paths, entity_ids, ...)      → get_entity_stats(entity_ids, ...)
+```
+
+**Project path fixes:**
+
+```python
+# get_project_entity_ids
+path = Path(f"projects/{project}/entities.txt")          # before
+path = Project(project).entities_file                    # after
+
+# get_confirmed_matches — confirmed path
+path = Path(f"projects/{project}/matches/confirmed.jsonl")   # before
+path = Project(project).confirmed                            # after
+
+# get_confirmed_matches — essay path per match
+essay = Path(f"projects/{project}/content/{slug}.md")    # before
+essay = Project(project).content / f"{slug}.md"          # after
+```
+
+**`get_mark_image_b64` and `get_patent_figure_b64`:**
+
+```python
+def get_mark_image_b64(serial_no: str) -> str | None:
+    conn = duckdb.connect(str(DB["trademarks"]), read_only=True)
+    ...
+
+def get_patent_figure_b64(patent_no: str) -> str | None:
+    conn = duckdb.connect(str(DB["patents"]), read_only=True)
+    ...
+```
+
+### Changes to `render.py`
+
+**Relative imports → absolute:**
+
+```python
+# before (in render_landing, render_trademark_gallery, etc.)
+from .queries import get_mark_image_b64
+from .queries import get_patent_figure_b64
+
+# after
+from markery.specialist.publisher.queries import get_mark_image_b64, get_patent_figure_b64
+```
+
+**`db_paths` removed from all render function signatures:**
+
+```python
+# before
+def render_landing(project, entities, trademarks, patents, matches,
+                   entity_stats, db_paths, out_dir): ...
+def render_trademark_gallery(project, entities, trademarks, matches,
+                              entity_colors, db_paths, out_dir): ...
+def render_patent_gallery(project, entities, patents, matches,
+                           entity_colors, db_paths, out_dir): ...
+def render_match_essay(project, match, entities, db_paths, out_dir): ...
+
+# after (db_paths removed; functions call queries directly via no-arg versions)
+def render_landing(project, entities, trademarks, patents, matches,
+                   entity_stats, out_dir): ...
+def render_trademark_gallery(project, entities, trademarks, matches,
+                              entity_colors, out_dir): ...
+def render_patent_gallery(project, entities, patents, matches,
+                           entity_colors, out_dir): ...
+def render_match_essay(project, match, entities, out_dir): ...
+```
+
+**Narrative path fixes in each render function:**
+
+```python
+# before
+_read_narrative(Path(f"projects/{project}/content/index-narrative.md"))
+
+# after
+_read_narrative(Project(project).content / "index-narrative.md")
+```
+
+Same pattern for `trademarks-narrative.md`, `patents-narrative.md`, and
+`entity-{slug}.md`.
+
+### New `build.py`
+
+Extracts all orchestration from `cli.py::_site_build()`. Print statements are
+preserved so smoke-test output is unchanged.
+
+```python
+from __future__ import annotations
+
+from pathlib import Path
+
+from markery.common.config import Project
+from markery.specialist.publisher import queries as q
+from markery.specialist.publisher import render as r
+
+
+def build_site(project: str, out_dir: Path | None = None) -> list[Path]:
+    """Render all pages for a project; return list of written paths."""
+    proj = Project(project)
+    out  = out_dir if out_dir is not None else proj.site
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "entities").mkdir(exist_ok=True)
+    (out / "matches").mkdir(exist_ok=True)
+
+    print(f"Building site for '{project}' → {out}/")
+
+    entity_ids = q.get_project_entity_ids(project)
+    entities   = q.get_entities(entity_ids)
+    trademarks = q.get_trademarks_for_project(entity_ids)
+    patents    = q.get_patents_for_project(entity_ids)
+    matches    = q.get_confirmed_matches(project)
+    stats      = q.get_entity_stats(entity_ids, trademarks, patents, matches)
+    colors     = r._entity_color_map(entity_ids)
+
+    pages: list[Path] = []
+
+    pages.append(r.render_landing(project, entities, trademarks, patents, matches, stats, out))
+    print(f"  landing          → {pages[-1].name}")
+
+    pages.append(r.render_trademark_gallery(project, entities, trademarks, matches, colors, out))
+    print(f"  trademark gallery → {pages[-1].name}")
+
+    pages.append(r.render_patent_gallery(project, entities, patents, matches, colors, out))
+    print(f"  patent gallery   → {pages[-1].name}")
+
+    for entity in entities:
+        ent_tms   = [t for t in trademarks if t["entity_id"] == entity["entity_id"]]
+        ent_pats  = [p for p in patents    if p["entity_id"] == entity["entity_id"]]
+        ent_mats  = [m for m in matches    if m["entity_id"] == entity["entity_id"]]
+        ent_stats = stats.get(entity["entity_id"], {})
+        p = r.render_entity_page(project, entity, entities, ent_tms, ent_pats, ent_mats, ent_stats, out)
+        pages.append(p)
+        print(f"  entity           → entities/{p.name}")
+
+    seen: set[str] = set()
+    for match in matches:
+        slug = match.get("slug", "")
+        if slug in seen:
+            continue
+        seen.add(slug)
+        p = r.render_match_essay(project, match, entities, out)
+        pages.append(p)
+        print(f"  match essay      → matches/{p.name}")
+
+    print(f"\n{len(pages)} pages written to {out}/")
+    return pages
+```
+
+### `cli.py` (publisher specialist)
+
+```python
+"""Publisher specialist CLI — static site generation."""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+
+def publisher_main() -> None:
+    ap = argparse.ArgumentParser(prog="markery publisher")
+    sub = ap.add_subparsers(dest="action", required=True)
+
+    bp = sub.add_parser("build", help="Build static site for a project")
+    bp.add_argument("project", help="Project name")
+    bp.add_argument("--out", metavar="DIR",
+                    help="Output directory (default: projects/<project>/site)")
+
+    args = ap.parse_args()
+    if args.action == "build":
+        from markery.specialist.publisher.build import build_site
+        build_site(args.project, Path(args.out) if args.out else None)
+```
+
+### `__init__.py`
+
+```python
+from markery.specialist.publisher.build import build_site
+from markery.specialist.publisher import queries, render
+
+__all__ = ["build_site", "queries", "render"]
+```
+
+### Changes to `image_enhancement/cli.py`
+
+Only the `--db` argument default changes:
+
+```python
+# before
+parser.add_argument("--db", default="data/trademarks.duckdb", ...)
+
+# after
+from markery.common.config import DB
+parser.add_argument("--db", default=str(DB["trademarks"]), ...)
+```
+
+No other changes to the image enhancement pipeline.
+
+### Updates to `src/markery/cli.py`
+
+**`cmd_site()` — delegate to `build_site`:**
+
+```python
+def cmd_site(rest: list[str]) -> None:
+    import argparse
+    from pathlib import Path
+
+    parser = argparse.ArgumentParser(prog="markery site")
+    sub = parser.add_subparsers(dest="action", required=True)
+    build = sub.add_parser("build", help="Render project to HTML")
+    build.add_argument("project")
+    build.add_argument("--out", metavar="DIR")
+
+    args = parser.parse_args(rest)
+    if args.action == "build":
+        from markery.specialist.publisher.build import build_site
+        build_site(args.project, Path(args.out) if args.out else None)
+```
+
+`_site_build()` is deleted from `cli.py`.
+
+**`cmd_enhance()` — new import path:**
+
+```python
+def cmd_enhance(rest: list[str]) -> None:
+    from markery.specialist.publisher.image_enhancement.cli import main
+    sys.argv = ["markery enhance"] + rest
+    main()
+```
+
+**`cmd_publisher()` — new:**
+
+```python
+def cmd_publisher(rest: list[str]) -> None:
+    from markery.specialist.publisher.cli import publisher_main
+    sys.argv = ["markery publisher"] + rest
+    publisher_main()
+```
+
+**`_SUBCOMMANDS` update:**
+
+```python
+_SUBCOMMANDS = {
+    ...
+    "publisher":  "Static site generation  (build <project>)",
+    ...
+}
+```
+
+**Dispatch table update:**
+
+```python
+"publisher": lambda: cmd_publisher(rest),
+```
+
+### Unit tests
+
+**`tests/specialist/publisher/__init__.py`** — empty
+
+**`tests/specialist/publisher/test_render.py`**:
+
+- `test_esc_empty_string` — `_esc("")` → `""`
+- `test_esc_none` — `_esc(None)` → `""`
+- `test_esc_html_chars` — `<`, `>`, `&`, `"` all escaped
+- `test_render_markdown_heading` — `## Heading` → contains `<h2>Heading</h2>`
+- `test_render_markdown_paragraph` — bare text → wrapped in `<p>` tags
+- `test_render_markdown_bold` — `**bold**` → `<strong>bold</strong>`
+- `test_render_markdown_code_inline` — `` `code` `` → `<code>code</code>`
+- `test_render_markdown_fenced_block` — triple-backtick block → `<pre><code>...</code></pre>`
+
+**`tests/specialist/publisher/test_queries.py`**:
+
+- `test_get_entity_stats_counts` — pass 2 entities, trademarks/patents/matches
+  split between them; verify per-entity counts are correct
+- `test_get_entity_stats_year_range` — trademarks with known `filing_dt` →
+  verify `active_from`, `active_to` correct
+- `test_get_entity_stats_empty_lists` — empty trademarks/patents/matches →
+  all counts 0, `active_from` / `active_to` both `None`
+
+Note: `_esc` and `_render_markdown` are private functions (`_` prefix). Import
+them directly in the test via:
+```python
+from markery.specialist.publisher.render import _esc, _render_markdown
+```
+
+### Files to delete after Phase E
+
+```
+tools/site_builder/__init__.py
+tools/site_builder/queries.py
+tools/site_builder/render.py
+tools/patent_docs/cli.py
+tools/patent_docs/fetch.py
+tools/patent_docs/__init__.py
+tools/patent_docs/__main__.py
+tools/patent_docs/migrate.py
+tools/patent_docs/signals.py
+tools/image_enhancement/__init__.py
+tools/image_enhancement/binarize.py
+tools/image_enhancement/cli.py
+tools/image_enhancement/gallery.py
+tools/image_enhancement/pipeline.py
+tools/image_enhancement/upscale.py
+tools/image_enhancement/ENHANCE.md
+```
+
+After deletion, `tools/` contains only `tools/historian/` (documentation).
+
+### Post-deletion reinstall
+
+After deleting `tools/site_builder/`, `tools/image_enhancement/`, and
+`tools/patent_docs/`, run:
+
+```
+pip install -e .
+```
+
+This regenerates the editable install `MAPPING` in `.venv/`, removing the stale
+entries for `site_builder`, `image_enhancement`, `patent_docs`, and `historian`.
+The MAPPING will then contain only `{'markery': '.../src/markery'}`.
+
+### Step-by-step migration sequence
+
+1. Create `src/markery/specialist/publisher/` with empty `__init__.py`
+2. Write `queries.py`:
+   - Add `from markery.common.config import DB, Project`
+   - Remove `db_paths` from `_connect()` and all function signatures
+   - Replace `duckdb.connect(db_paths[...])` with `duckdb.connect(str(DB[...]))`
+   - Replace `Path(f"projects/{project}/...")` with `Project(project).*`
+3. Write `render.py`:
+   - Change `from .queries import ...` → `from markery.specialist.publisher.queries import ...`
+   - Add `from markery.common.config import Project` at top
+   - Remove `db_paths` from all `render_*` function signatures
+   - Replace `Path(f"projects/{project}/content/...")` with `Project(project).content / "..."`
+4. Write `build.py` — `build_site(project, out_dir=None)` orchestration
+5. Write `publisher/cli.py` — `publisher_main()` with `build` subcommand
+6. Write `publisher/__init__.py`
+7. Copy `tools/image_enhancement/` → `src/markery/specialist/publisher/image_enhancement/`;
+   update `--db` default in `image_enhancement/cli.py`
+8. Update `src/markery/cli.py`:
+   - `cmd_site()` → call `build_site`; delete `_site_build()`
+   - `cmd_enhance()` → import from `markery.specialist.publisher.image_enhancement.cli`
+   - Add `cmd_publisher()` and wire into `_SUBCOMMANDS` + dispatch
+9. Write unit tests:
+   - `tests/specialist/publisher/__init__.py`
+   - `tests/specialist/publisher/test_render.py` (8 tests)
+   - `tests/specialist/publisher/test_queries.py` (3 tests)
+10. Run `pytest -q` — all tests pass
+11. Smoke tests:
+    - `markery site build information-systems` — same page count and structure
+    - `markery publisher build information-systems` — identical output
+    - `markery status` — unchanged
+12. Delete `tools/site_builder/`, `tools/image_enhancement/`, `tools/patent_docs/`
+13. Run `pip install -e .` to regenerate editable install MAPPING
+14. Run `pytest -q` again — all tests still pass
+15. Smoke test `markery site build information-systems` again to confirm clean import
+16. Multi-commit: (1) `specialist/publisher/` code + `image_enhancement` sub-package,
+    (2) `src/markery/cli.py` updates, (3) tests, (4) delete old files + reinstall note
+
+---
+
+## Phase F — Scoring refinement, Open Graph, and documentation update
+
+Three independent components, no ordering dependency between them.
+
+### Component 1 — D006: Company-name mark filter
+
+**Problem**
+
+`generate_candidates()` in `link.py` pairs every trademark owned by an entity against
+every patent assigned to that entity. For entities like REMINGTON, RAND, and WILSON
+JONES COMPANY, some trademarks carry the company name itself as the `mark_id_char`
+value (e.g. `"REMINGTON"`, `"RAND"`, `"WILSON JONES COMPANY"`). These score ~0.80
+against all patents in the date window because the date and class components apply
+unconditionally — there is no penalty for a mark that is simply the company's own name.
+
+The false positives clutter the candidate list and create noise during review.
+
+**Root cause in scoring**
+
+`total_score()` in `score.py` calls `date_score()` + `class_score()`. Neither
+function has any awareness of whether the mark name is substantively different from
+the entity name.
+
+**Fix strategy**
+
+Add a boolean predicate `is_company_name_mark(canonical_name, mark_name)` to
+`score.py`, applied as a hard exclusion in `generate_candidates()` before scoring.
+
+A mark is classified as a company-name mark if the normalised mark text appears
+entirely within the normalised canonical name, or the normalised canonical name
+appears entirely within the normalised mark text. Normalisation strips common legal
+suffixes (`COMPANY`, `CO`, `INC`, `CORP`, `LTD` and their punctuated variants)
+and collapses whitespace.
+
+```python
+_LEGAL_SUFFIXES = re.compile(
+    r'\b(COMPANY|CO\.?|INC\.?|CORP\.?|CORPORATION|LTD\.?|LLC)\b',
+    re.IGNORECASE,
+)
+
+def _normalise(s: str) -> str:
+    """Strip legal suffixes, upper-case, collapse whitespace."""
+    s = _LEGAL_SUFFIXES.sub("", s or "").upper()
+    return " ".join(s.split())
+
+def is_company_name_mark(canonical_name: str, mark_name: str | None) -> bool:
+    """True when the mark text is essentially the company's own name.
+
+    Filters marks like "REMINGTON" for entity "Remington Arms Company" —
+    pairing those against every patent produces systematic false positives
+    (D006).
+    """
+    cn = _normalise(canonical_name)
+    mn = _normalise(mark_name or "")
+    if not mn:
+        return False
+    return cn in mn or mn in cn
+```
+
+**Application in link.py**
+
+Inside the `for tm in trademarks:` loop in `generate_candidates()`, skip the mark
+before entering the inner patent loop:
+
+```python
+from markery.specialist.matchmaker.score import is_company_name_mark, total_score
+
+for tm in trademarks:
+    if is_company_name_mark(entity_names[eid], tm["mark"]):
+        continue
+    tm_filing = tm["filing_dt"]
+    for pat in patents:
+        ...
+```
+
+This avoids scoring the pair at all — no candidates are written for company-name
+marks, not even low-scoring ones. Because the filter is in `generate_candidates()`
+rather than in the scoring function, confirmed matches already in `confirmed.jsonl`
+are unaffected (they were already reviewed and accepted by the researcher).
+
+**Files changed**
+
+| File | Change |
+|---|---|
+| `src/markery/specialist/matchmaker/score.py` | Add `_LEGAL_SUFFIXES`, `_normalise()`, `is_company_name_mark()` |
+| `src/markery/specialist/matchmaker/link.py` | Import `is_company_name_mark`; add one `if is_company_name_mark(...): continue` before inner loop |
+
+**Tests**
+
+New file `tests/specialist/matchmaker/test_score.py`:
+
+```python
+from markery.specialist.matchmaker.score import is_company_name_mark
+
+def test_company_name_exact():
+    assert is_company_name_mark("Remington Arms Company", "REMINGTON") is True
+
+def test_company_name_with_suffix():
+    assert is_company_name_mark("Wilson Jones Company", "WILSON JONES") is True
+
+def test_company_name_substring_both_ways():
+    assert is_company_name_mark("Rand Corporation", "RAND") is True
+    assert is_company_name_mark("RAND", "Rand Corporation") is True
+
+def test_company_name_not_matching():
+    # "VISIBLE" does not appear in or contain "Remington Arms Company"
+    assert is_company_name_mark("Remington Arms Company", "VISIBLE INDEX") is False
+
+def test_company_name_none_mark():
+    assert is_company_name_mark("Rand Corporation", None) is False
+
+def test_company_name_empty_mark():
+    assert is_company_name_mark("Rand Corporation", "") is False
+
+def test_company_name_suffix_stripping():
+    # "REMINGTON" in "REMINGTON ARMS" after stripping "COMPANY", "CO", etc.
+    assert is_company_name_mark("Remington Arms Co.", "REMINGTON ARMS") is True
+```
+
+Existing `test_score.py` for `date_score` and `class_score` is not present yet —
+these can be added in the same commit:
+
+```python
+from datetime import date
+from markery.specialist.matchmaker.score import date_score, class_score, total_score
+
+def test_date_score_patent_before_tm():
+    # grant 1920, filing 1925 — positive delta, ~0.375
+    s = date_score(date(1920, 1, 1), date(1925, 6, 1))
+    assert 0.2 < s <= 0.5
+
+def test_date_score_tm_before_patent():
+    # filing before grant — slight negative
+    s = date_score(date(1925, 1, 1), date(1920, 6, 1))
+    assert -0.4 <= s < 0.0
+
+def test_date_score_none_inputs():
+    assert date_score(None, date(1925, 1, 1)) == 0.0
+    assert date_score(date(1920, 1, 1), None) == 0.0
+
+def test_class_score_hit():
+    assert class_score(["B42F", "A63F"]) == 0.3
+
+def test_class_score_miss():
+    assert class_score(["A63F", "H04N"]) == 0.0
+
+def test_total_score_bounds():
+    s = total_score(date(1920, 1, 1), date(1925, 1, 1), ["B42F"])
+    assert 0.0 <= s <= 0.81  # date(0.375) + class(0.3) < 0.8
+```
+
+**Smoke test**
+
+```
+markery match information-systems --list-entities  # unchanged
+markery match information-systems                  # should have fewer candidates
+```
+
+Compare candidate count to the baseline stored in `projects/information-systems/candidates.jsonl`.
+
+---
+
+### Component 2 — P3: Open Graph metadata
+
+**Problem**
+
+When a link to a Markery entity page or match essay is shared in Slack, Discord, or
+similar chat platforms, the platform's link-unfurler fetches the page and looks for
+`og:title`, `og:description`, and `og:url` `<meta>` tags. Without these tags the
+unfurler falls back to the raw `<title>` and produces a generic or empty card.
+
+Open Graph tags require an absolute URL for `og:url`. The site is hosted at
+`https://cosmogspacely.github.io/markery/` — but that base URL is not stored
+anywhere in the codebase, so it must be injected at build time.
+
+**Changes required**
+
+**`render.py` — `_page()` signature**
+
+Add an optional `og: dict | None = None` keyword argument. When present, inject four
+`<meta property>` tags after `<title>`:
+
+```python
+def _page(
+    title: str,
+    body: str,
+    nav_links: dict[str, str],
+    depth: int = 0,
+    og: dict | None = None,
+) -> str:
+    prefix = "../" * depth
+    nav = "".join(
+        f'<a href="{prefix}{href}">{_esc(label)}</a>'
+        for label, href in nav_links.items()
+    )
+    og_tags = ""
+    if og:
+        og_tags = (
+            f'<meta property="og:title"       content="{_esc(og.get("title", title))}">\n'
+            f'<meta property="og:description" content="{_esc(og.get("description", ""))}">\n'
+            f'<meta property="og:url"         content="{_esc(og.get("url", ""))}">\n'
+            f'<meta property="og:type"        content="article">\n'
+        )
+    return (
+        '<!DOCTYPE html>\n<html lang="en">\n<head>\n'
+        '<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+        f'<title>{_esc(title)}</title>\n'
+        + og_tags
+        + f'<style>{_CSS}</style>\n'
+        '</head>\n<body>\n'
+        ...
+    )
+```
+
+**`render.py` — callers**
+
+Each `render_*` function gains an optional `base_url: str | None = None` parameter
+and constructs the OG dict before calling `_page()`:
+
+| Function | `og:title` | `og:description` | `og:url` (path suffix) |
+|---|---|---|---|
+| `render_landing` | `"{Project Title} — Markery"` | `"{N} confirmed matches across {M} entities"` | `"{base_url}/{project}/index.html"` |
+| `render_trademark_gallery` | `"Trademark Gallery"` | `"All trademarks in the {project} project"` | `"{base_url}/{project}/trademarks.html"` |
+| `render_patent_gallery` | `"Patent Gallery"` | `"All patents in the {project} project"` | `"{base_url}/{project}/patents.html"` |
+| `render_entity_page` | `"{entity name}"` | `"{trademark_count} trademarks · {patent_count} patents"` | `"{base_url}/{project}/entities/{slug}.html"` |
+| `render_match_essay` | `"{trademark} ↔ {patent_no}"` | `"Match essay for {trademark} and {patent_no}"` | `"{base_url}/{project}/matches/{slug}.html"` |
+
+When `base_url` is `None`, `og` is not passed to `_page()` — no OG tags are written.
+This keeps local builds clean (no broken absolute URLs).
+
+**`build.py` — `build_site()` signature**
+
+```python
+def build_site(
+    project: str,
+    out_dir: Path | None = None,
+    base_url: str | None = None,
+) -> list[Path]:
+```
+
+Pass `base_url` through to every `render_*` call:
+
+```python
+pages.append(r.render_landing(..., base_url=base_url))
+pages.append(r.render_trademark_gallery(..., base_url=base_url))
+pages.append(r.render_patent_gallery(..., base_url=base_url))
+# entity pages:
+p = r.render_entity_page(..., base_url=base_url)
+# match essays:
+p = r.render_match_essay(..., base_url=base_url)
+```
+
+**`cli.py` — `publisher_main()`**
+
+```python
+bp.add_argument(
+    "--base-url",
+    metavar="URL",
+    default=None,
+    help="Absolute base URL for Open Graph og:url tags (e.g. https://example.github.io/markery)",
+)
+# in build action:
+build_site(args.project, Path(args.out) if args.out else None, base_url=args.base_url)
+```
+
+**`src/markery/cli.py` — `cmd_site()`**
+
+```python
+build.add_argument(
+    "--base-url",
+    metavar="URL",
+    default=None,
+    help="Absolute base URL for Open Graph og:url tags",
+)
+# in build action:
+build_site(args.project, Path(args.out) if args.out else None, base_url=args.base_url)
+```
+
+**`.github/workflows/pages.yml` — pass base URL**
+
+```yaml
+      - name: Build sites
+        run: markery site build information-systems --base-url https://cosmogspacely.github.io/markery
+```
+
+**Tests**
+
+Extend `tests/specialist/publisher/test_render.py`:
+
+```python
+def test_page_no_og_tags():
+    result = _page("Title", "<p>body</p>", {})
+    assert 'property="og:' not in result
+
+def test_page_with_og_tags():
+    og = {"title": "T", "description": "D", "url": "https://example.com/page.html"}
+    result = _page("Title", "<p>body</p>", {}, og=og)
+    assert 'property="og:title"' in result
+    assert 'content="T"' in result
+    assert 'property="og:url"' in result
+    assert 'content="https://example.com/page.html"' in result
+    assert 'property="og:type"' in result
+    assert 'content="article"' in result
+```
+
+**Files changed**
+
+| File | Change |
+|---|---|
+| `src/markery/specialist/publisher/render.py` | `_page()` gains `og` kwarg; each `render_*` gains `base_url` kwarg |
+| `src/markery/specialist/publisher/build.py` | `build_site()` gains `base_url` kwarg; passes through to all `render_*` |
+| `src/markery/specialist/publisher/cli.py` | `--base-url` argument added to `build` subparser |
+| `src/markery/cli.py` | `--base-url` added to `cmd_site()` build parser |
+| `.github/workflows/pages.yml` | `markery site build … --base-url https://cosmogspacely.github.io/markery` |
+| `tests/specialist/publisher/test_render.py` | Two new test functions |
+
+---
+
+### Component 3 — Documentation update
+
+Four files are stale after the Phase A–E refactor. Update them in a single commit.
+
+**`STATUS.md`**
+
+Current state: references `src/markery/db/tsdr_client.py`, `src/markery/matching/`,
+`tools/image_enhancement/` — all deleted or moved.
+
+Changes:
+- Update "Phase" line to reflect Phase 2 (reorg) is complete, Phase 3 (corpus) and
+  Phase 4 publication in progress
+- Replace infrastructure ledger entries:
+
+| Old path | New path |
+|---|---|
+| `src/markery/db/build_trademarks_db.py` | `specialist/trademark/build.py` |
+| `src/markery/db/tsdr_client.py` | `specialist/trademark/tsdr_client.py` |
+| `src/markery/db/build_patents_db.py` | `specialist/patent/epo_client.py` + `specialist/patent/build.py` |
+| `src/markery/db/build_entities_db.py` | `specialist/matchmaker/build.py` |
+| `tools/image_enhancement/` | `specialist/publisher/image_enhancement/` |
+| `tools/site_builder/` | `specialist/publisher/` |
+| `tools/patent_docs/` | `specialist/patent/figures.py` + `specialist/patent/signals.py` |
+| `src/markery/review.py` | `specialist/historian/review.py` |
+| `src/markery/status.py` | `specialist/historian/status.py` |
+
+**`CONTEXT.md`**
+
+Current "Next action" line: update to reflect that the specialist refactor (Phase 2)
+is complete and the next prioritised task is corpus expansion (Phase 3: D001 —
+remaining CPC class fetch) or publishing improvements (Phase 4: D006 filter complete
+if Component 1 is done, P3 Open Graph if Component 2 is done).
+
+**`ROADMAP.md`**
+
+- Mark Phase 2 items as complete (`[x]`):
+  - R1 (patent specialist), R2 (site build subcommand), R3 (entity slug fix), R4 (delete `tools/`)
+- If D006 implemented: mark D006 as complete
+- If P3 implemented: mark P3 as complete
+
+**`docs/workflows/research-session.md`**
+
+Step 1 currently reads:
+```
+python src/markery/db/build_entities_db.py
+```
+
+Update to:
+```
+markery matchmaker build
+```
+
+Scan the rest of the file for any other references to the old `src/markery/db/`
+paths or `tools/` paths and update them to their current CLI equivalents.
+
+**Files changed**
+
+| File | Change |
+|---|---|
+| `STATUS.md` | Phase and infrastructure ledger update |
+| `CONTEXT.md` | "Next action" paragraph |
+| `ROADMAP.md` | Tick completed items |
+| `docs/workflows/research-session.md` | CLI command updates |
+
+---
+
+### Step-by-step migration sequence
+
+**Component 1 (D006 filter) — can be done independently:**
+
+1. Add `import re` and `_LEGAL_SUFFIXES`, `_normalise()`, `is_company_name_mark()` to
+   `src/markery/specialist/matchmaker/score.py`
+2. Add `from markery.specialist.matchmaker.score import is_company_name_mark` to
+   `link.py`; add one `if is_company_name_mark(…): continue` line before the inner loop
+3. Write `tests/specialist/matchmaker/test_score.py` with 7 `is_company_name_mark`
+   tests and 6 `date_score`/`class_score`/`total_score` tests
+4. Run `pytest tests/specialist/matchmaker/` — all pass
+5. Smoke: `markery match information-systems` — candidate count decreases; no crash
+6. Commit: `"Add company-name mark exclusion filter (D006)"`
+
+**Component 2 (P3 Open Graph) — can be done independently:**
+
+1. Edit `_page()` in `render.py`: add `og: dict | None = None` kwarg; inject OG tags
+   between `<title>` and `<style>` when `og` is not None
+2. Edit each `render_*` function: add `base_url: str | None = None` kwarg; build `og`
+   dict when `base_url` is not None; pass `og=og` to `_page()`
+3. Edit `build_site()` in `build.py`: add `base_url` kwarg; pass through to all
+   `render_*` calls
+4. Edit `publisher_main()` in `publisher/cli.py`: add `--base-url` arg
+5. Edit `cmd_site()` in `src/markery/cli.py`: add `--base-url` arg
+6. Edit `.github/workflows/pages.yml`: append `--base-url https://cosmogspacely.github.io/markery`
+7. Add two tests to `tests/specialist/publisher/test_render.py`
+8. Run `pytest tests/specialist/publisher/` — all pass
+9. Smoke: `markery site build information-systems --base-url https://cosmogspacely.github.io/markery`
+   — open `projects/information-systems/site/index.html` in browser; inspect source
+   for `og:` tags
+10. Commit: `"Add Open Graph metadata to rendered pages (P3)"`
+
+**Component 3 (docs) — can be done at any time:**
+
+1. Update `STATUS.md` infrastructure ledger
+2. Update `CONTEXT.md` "Next action"
+3. Update `ROADMAP.md` — tick R1–R4 and any newly completed deferred items
+4. Update `docs/workflows/research-session.md` CLI commands
+5. Commit: `"Update STATUS, CONTEXT, ROADMAP, and research-session workflow docs"`
+
+

@@ -15,8 +15,10 @@ def publisher_main() -> None:
     bp.add_argument("project", help="Project name (directory under projects/)")
     bp.add_argument("--out", metavar="DIR",
                     help="Output directory (default: projects/<project>/site)")
+    bp.add_argument("--base-url", metavar="URL", default=None,
+                    help="Absolute base URL for Open Graph og:url tags")
 
     args = ap.parse_args()
     if args.action == "build":
         from markery.specialist.publisher.build import build_site
-        build_site(args.project, Path(args.out) if args.out else None)
+        build_site(args.project, Path(args.out) if args.out else None, base_url=args.base_url)

@@ -330,18 +330,33 @@ def _esc(s: str | None) -> str:
             .replace('"', "&quot;"))
 
 
-def _page(title: str, body: str, nav_links: dict[str, str], depth: int = 0) -> str:
+def _page(
+    title: str,
+    body: str,
+    nav_links: dict[str, str],
+    depth: int = 0,
+    og: dict | None = None,
+) -> str:
     prefix = "../" * depth
     nav = "".join(
         f'<a href="{prefix}{href}">{_esc(label)}</a>'
         for label, href in nav_links.items()
     )
+    og_tags = ""
+    if og:
+        og_tags = (
+            f'<meta property="og:title"       content="{_esc(og.get("title", title))}">\n'
+            f'<meta property="og:description" content="{_esc(og.get("description", ""))}">\n'
+            f'<meta property="og:url"         content="{_esc(og.get("url", ""))}">\n'
+            f'<meta property="og:type"        content="article">\n'
+        )
     return (
         '<!DOCTYPE html>\n<html lang="en">\n<head>\n'
         '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         f'<title>{_esc(title)}</title>\n'
-        f'<style>{_CSS}</style>\n'
+        + og_tags
+        + f'<style>{_CSS}</style>\n'
         '</head>\n<body>\n'
         f'<header class="site-header">'
         f'<a class="site-title" href="{prefix}index.html">Markery Research</a>'
@@ -484,6 +499,7 @@ def render_landing(
     matches: list[dict],
     entity_stats: dict[int, dict],
     out_dir: Path,
+    base_url: str | None = None,
 ) -> Path:
     narrative = _read_narrative(Project(project).content / "index-narrative.md")
     nav = _nav_links(project, entities)
@@ -556,8 +572,14 @@ def render_landing(
         f'</div>'
     )
 
+    title = f"{project.replace('-', ' ').title()} — Markery"
+    og = {
+        "title": title,
+        "description": f"{len(matches)} confirmed pairs across {len(entities)} entities",
+        "url": f"{base_url}/{project}/index.html",
+    } if base_url else None
     out_path = out_dir / "index.html"
-    out_path.write_text(_page(f"{project.replace('-', ' ').title()} — Markery", body, nav), encoding="utf-8")
+    out_path.write_text(_page(title, body, nav, og=og), encoding="utf-8")
     return out_path
 
 
@@ -568,6 +590,7 @@ def render_trademark_gallery(
     matches: list[dict],
     entity_colors: dict[int, str],
     out_dir: Path,
+    base_url: str | None = None,
 ) -> Path:
     narrative = _read_narrative(Project(project).content / "trademarks-narrative.md")
     nav = _nav_links(project, entities)
@@ -625,8 +648,13 @@ def render_trademark_gallery(
         f'</div>'
     )
 
+    og = {
+        "title": "Trademark Gallery",
+        "description": f"All trademarks in the {project.replace('-', ' ').title()} project",
+        "url": f"{base_url}/{project}/trademarks.html",
+    } if base_url else None
     out_path = out_dir / "trademarks.html"
-    out_path.write_text(_page("Trademark Gallery", body, nav), encoding="utf-8")
+    out_path.write_text(_page("Trademark Gallery", body, nav, og=og), encoding="utf-8")
     return out_path
 
 
@@ -637,6 +665,7 @@ def render_patent_gallery(
     matches: list[dict],
     entity_colors: dict[int, str],
     out_dir: Path,
+    base_url: str | None = None,
 ) -> Path:
     narrative = _read_narrative(Project(project).content / "patents-narrative.md")
     nav = _nav_links(project, entities)
@@ -695,8 +724,13 @@ def render_patent_gallery(
         f'</div>'
     )
 
+    og = {
+        "title": "Patent Gallery",
+        "description": f"All patents in the {project.replace('-', ' ').title()} project",
+        "url": f"{base_url}/{project}/patents.html",
+    } if base_url else None
     out_path = out_dir / "patents.html"
-    out_path.write_text(_page("Patent Gallery", body, nav), encoding="utf-8")
+    out_path.write_text(_page("Patent Gallery", body, nav, og=og), encoding="utf-8")
     return out_path
 
 
@@ -709,6 +743,7 @@ def render_entity_page(
     matches: list[dict],
     stats: dict,
     out_dir: Path,
+    base_url: str | None = None,
 ) -> Path:
     slug = entity["slug"]
     narrative = _read_narrative(Project(project).content / f"entity-{slug}.md")
@@ -757,9 +792,16 @@ def render_entity_page(
         f'</div>'
     )
 
+    tm_count  = stats.get("trademark_count", 0)
+    pat_count = stats.get("patent_count", 0)
+    og = {
+        "title": entity["canonical_name"],
+        "description": f"{tm_count} trademarks · {pat_count} patents",
+        "url": f"{base_url}/{project}/entities/{slug}.html",
+    } if base_url else None
     (out_dir / "entities").mkdir(exist_ok=True)
     out_path = out_dir / "entities" / f"{slug}.html"
-    out_path.write_text(_page(_esc(entity["canonical_name"]), body, nav, depth=1), encoding="utf-8")
+    out_path.write_text(_page(_esc(entity["canonical_name"]), body, nav, depth=1, og=og), encoding="utf-8")
     return out_path
 
 
@@ -768,6 +810,7 @@ def render_match_essay(
     match: dict,
     entities: list[dict],
     out_dir: Path,
+    base_url: str | None = None,
 ) -> Path:
     slug = match["slug"]
     nav = _nav_links(project, entities)
@@ -832,7 +875,13 @@ def render_match_essay(
         f'</div>'
     )
 
+    essay_title = f"{match['trademark']} ↔ {match['patent_no']}"
+    og = {
+        "title": essay_title,
+        "description": f"Match essay for {match['trademark']} and {match['patent_no']}",
+        "url": f"{base_url}/{project}/matches/{slug}.html",
+    } if base_url else None
     (out_dir / "matches").mkdir(exist_ok=True)
     out_path = out_dir / "matches" / f"{slug}.html"
-    out_path.write_text(_page(f"{match['trademark']} ↔ {match['patent_no']}", body, nav, depth=1), encoding="utf-8")
+    out_path.write_text(_page(essay_title, body, nav, depth=1, og=og), encoding="utf-8")
     return out_path

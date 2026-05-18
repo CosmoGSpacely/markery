@@ -2,10 +2,10 @@
 
 ## Current State
 
-**Phase:** 1 — Complete / entering Phase 2 reorganization  
-**Stage:** Phase 1 gate closed — operations workflow documented in `docs/workflows/research-session.md`  
+**Phase:** 3 — Complete / Phase 4 publication active  
+**Stage:** Specialist refactor (Phases A–F) complete; site live on GitHub Pages; D006 and P3 done  
 **Version:** v0.2.0-alpha  
-**Last updated:** 2026-05-17
+**Last updated:** 2026-05-18
 
 ---
 
@@ -20,7 +20,7 @@
 | Confirmed pairs | 4 |
 | Essays written | 2 (soundex.md, kardex.md) |
 
-**Next action:** Begin Phase 2 codebase reorganization — see `ROADMAP.md` Phase 2 migration steps.
+**Next action:** D001 — fetch remaining CPC classes (B41J, B41L, G06C, G06K, G09F) to expand patent corpus for typewriter and calculator entities.
 
 ---
 
@@ -30,14 +30,16 @@
 |---|---|---|
 | `trademarks.duckdb` — 25,473 case files, 1900–1939 | ✅ Built | Includes `mark_images` (96 rows) and `mark_case_status` (10 rows) |
 | `patents.duckdb` — 11,284 EPO patents (B42F, B42D) | ✅ Built | 5 additional CPC classes deferred (see D001 in DEFERRED.md) |
-| `entities.duckdb` — canonical company registry | ✅ Built | 4 entities; add new companies via `build_entities_db.py` |
-| `src/markery/db/tsdr_client.py` — USPTO TSDR API client | ✅ Built | Image fetch + case status JSON |
-| `tools/image_enhancement/` — Real-ESRGAN upscale + SVG pipeline | ✅ Built | See `tools/image_enhancement/ENHANCE.md` |
-| `src/markery/matching/` — patent-trademark candidate scoring pipeline | ✅ Built | Run: `markery match information-systems` |
-| `tools/historian/` — Claude specialist | ✅ Built | Reads trademarks.duckdb directly |
-| `/enhance-marks` skill | ✅ Built | |
-| `projects/information-systems/` | 🚧 Active | 2 essays, 3 confirmed pairs |
-| Publication pipeline (static site, GitHub Pages) | 🔲 Deferred | D002 — after 5 confirmed entries |
+| `entities.duckdb` — canonical company registry | ✅ Built | 4 entities; add new companies via `markery matchmaker build` |
+| `specialist/trademark/tsdr_client.py` — USPTO TSDR API client | ✅ Built | Image fetch + case status JSON |
+| `specialist/publisher/image_enhancement/` — Real-ESRGAN upscale + SVG pipeline | ✅ Built | Run: `markery enhance enhance <serial> --out-dir <dir>` |
+| `specialist/matchmaker/` — patent-trademark candidate scoring pipeline | ✅ Built | Run: `markery match information-systems` |
+| `specialist/historian/` — interactive review and status | ✅ Built | Run: `markery review information-systems` / `markery status` |
+| `specialist/publisher/` — static site generator | ✅ Built | Run: `markery site build information-systems` |
+| GitHub Pages deployment (CI workflow) | ✅ Built | `.github/workflows/pages.yml` — rebuilds on push to `main` |
+| Open Graph metadata (P3) | ✅ Built | `--base-url` flag; injected in CI workflow |
+| Company-name mark filter (D006) | ✅ Built | `is_company_name_mark()` in `specialist/matchmaker/score.py` |
+| `projects/information-systems/` | 🚧 Active | 8 confirmed pairs, 7 match essays, all entity pages written |
 | Five additional CPC classes (B41J, B41L, G06C, G06K, G09F) | 🔲 Deferred | D001 — when typewriter/calculator entries needed |
 
 ---
@@ -56,30 +58,23 @@ Phase 1 is complete.
 
 ---
 
-## Phase 2 — Codebase Reorganization (next)
+## Phase 2 — Codebase Reorganization ✅ Complete
 
-Goal: `src/markery/` is the canonical package; unified `markery` CLI; all docs under `docs/`.
+Specialist-pattern architecture: `src/markery/specialist/` (patent, trademark, matchmaker, historian, publisher); unified `markery` CLI; databases in `data/`; docs in `docs/`. See `MARKERY_REVIEW.md` for the full design record.
 
-- Migrate `match/` → `src/markery/matching/`, db builders → `src/markery/db/`
-- ✅ Move extensions to `tools/` tree (image_enhancement, patent_docs, historian)
-- Build unified CLI replacing `scripts/` wrappers
-- Move databases to `data/`, consolidate docs to `docs/reference/` and `docs/workflows/`
+## Phase 3 — Corpus and Match Quality ✅ Complete
 
-## Phase 3 — Corpus and Match Quality (planned)
+8 confirmed pairs with essays; all entity summaries and gallery narratives written; `markery site build information-systems` produces 14 pages with no placeholder content.
 
-Goal: information-systems project has 5 confirmed pairs with essays.
+## Phase 4 — Publication (active)
 
-- Fetch remaining CPC classes (D001 — typewriters, calculators, tabulating)
-- Build `tools/trademark_docs/` for non-image mark retrieval
-- Systematic scoring review (D006 — company-name mark false positives)
-- Add 2–3 new entities (Smead, Library Bureau, others from candidate list)
+- ✅ P1 — Initial GitHub Pages deployment
+- ✅ P2 — CI workflow (`.github/workflows/pages.yml`)
+- ✅ P3 — Open Graph metadata (`--base-url` flag, injected in CI)
+- 🔲 Referenced images — switch from base64-embedded to file references for cacheability
 
-## Phase 4 — Publication (planned)
+## Next priority
 
-Goal: one project publicly browsable at a stable URL.
+**D001** — Fetch remaining CPC classes (B41J typewriters, B41L duplicating, G06C calculating machines, G06K data recognition, G09F display devices) to expand patent corpus for typewriter and calculator entities.
 
-- Static site generator (Jinja2, two-level: project index + entry detail pages)
-- GitHub Pages deployment
-- Open Graph metadata for social sharing
-
-See `DEFERRED.md` for items blocking these phases and their reopen triggers.
+See `DEFERRED.md` for the full deferred register and reopen triggers.

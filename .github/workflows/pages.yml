@@ -21,7 +21,7 @@ jobs:
         run: pip install -e .
 
       - name: Build sites
-        run: markery site build information-systems
+        run: markery site build information-systems --base-url https://cosmogspacely.github.io/markery
 
       - name: Assemble deploy directory
         run: |

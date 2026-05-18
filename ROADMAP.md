@@ -141,7 +141,7 @@ These gaps were identified during the Phase 2 → Phase 3 handoff. Address befor
 
 3. **Trademark document retrieval** — build `tools/trademark_docs/` to fetch non-image mark content from TSDR for confirmed and candidate pairs in a project. The TSDR client already fetches case status and mark images; this extends it to retrieve goods-and-services descriptions, specimen of use text, and prosecution correspondence for a given serial. This text enriches the historian's analysis for word marks and text-heavy filings where the goods/services description is the primary source for what the company was actually selling under that mark. Entry point: `markery fetch-trademarks <project>`, which writes retrieved content alongside the existing `candidates.jsonl` / `confirmed.jsonl` in the project matches directory.
 
-4. **Scoring refinement** — address company-name mark false positives (D006). A heuristic that flags marks whose `mark_element` matches an entity canonical name would filter most without changing the scoring formula.
+4. ~~**Scoring refinement** — address company-name mark false positives (D006). A heuristic that flags marks whose `mark_element` matches an entity canonical name would filter most without changing the scoring formula.~~ ✅ `is_company_name_mark()` in `specialist/matchmaker/score.py`.
 
 5. **Confirmed entries and content** — reach 5 confirmed pairs with essays. ✅ Complete (8 confirmed pairs).
 
@@ -176,7 +176,7 @@ These gaps were identified during the Phase 2 → Phase 3 handoff. Address befor
 
 - ~~**P1** — Initial `gh-pages` deployment: orphan `gh-pages` branch; `information-systems/` = built site; root `index.html` redirect; push to `origin/gh-pages`. Enable Pages in repository settings (Branch: `gh-pages`, folder: `/`).~~ ✅
 - ~~**P2** — GitHub Actions CI workflow (`.github/workflows/pages.yml`): on push to `main`, rebuild all projects from tracked DuckDB files and force-push to `gh-pages`. Site stays current automatically.~~ ✅
-- **P3** — Open Graph metadata: add `<meta property="og:title/description/url">` to `render.py`; make base URL configurable via `project.yaml` or `--base-url` CLI arg. Required for clean link sharing.
+- ~~**P3** — Open Graph metadata: add `<meta property="og:title/description/url">` to `render.py`; make base URL configurable via `project.yaml` or `--base-url` CLI arg. Required for clean link sharing.~~ ✅
 
 **Deferred:**
 - Referenced images: switch from base64-embedded to referenced image files (`site/images/<serial>.png`) for cacheability.

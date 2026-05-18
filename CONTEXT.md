@@ -14,7 +14,9 @@ Markery is a patent-trademark cross-reference tool for early 20th-century Americ
 
 ## Next Action
 
-Phase 2 complete: `src/markery/` package; `tools/` tree; unified `markery` CLI; databases in `data/`; docs in `docs/`; `scripts/` removed. Next: Phase 3 — corpus and match quality (5 confirmed entries).
+Phases 2, 3, and 4 (P1–P3) are complete. The specialist refactor is done (`specialist/patent`, `trademark`, `matchmaker`, `historian`, `publisher`); the site is live on GitHub Pages with Open Graph metadata; 8 confirmed pairs with essays are published; D006 company-name mark filter is in place.
+
+Next: **D001** — fetch remaining CPC classes (B41J, B41L, G06C, G06K, G09F) via `markery patent build --resume` to expand the patent corpus for typewriter and calculator entities.
 
 ## Reference Docs
 
@@ -24,8 +26,8 @@ Phase 2 complete: `src/markery/` package; `tools/` tree; unified `markery` CLI; 
 | `STATUS.md` | Current phase, metrics, infrastructure ledger, phase gate |
 | `DEFERRED.md` | Deferred work register with reopen triggers |
 | `ROADMAP.md` | Phase goals, research agenda, candidate subjects |
-| `docs/reference/TSDR.md` | USPTO TSDR API reference + trademarks.duckdb schema notes and quirks |
-| `docs/reference/EPO.md` | EPO OPS API reference + patents.duckdb and entities.duckdb notes |
-| `docs/reference/DESIGN.md` | Architecture decisions — why DuckDB, why three databases, why human curation *(planned)* |
-| `docs/workflows/research-session.md` | Runnable operations checklist |
+| `specialist/trademark/TSDR.md` | USPTO TSDR API reference + trademarks.duckdb schema notes and quirks |
+| `specialist/patent/EPO.md` | EPO OPS API reference + patents.duckdb and entities.duckdb notes |
+| `DESIGN.md` | Architecture decisions — why DuckDB, why three databases, why human curation *(planned)* |
+| `research-session.md` | Runnable operations checklist |
 | `RESEARCH.md` | Scholarly framework and literature context |

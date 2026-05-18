@@ -17,7 +17,7 @@ from pathlib import Path
 import duckdb
 
 from markery.common.config import DB
-from markery.specialist.matchmaker.score import total_score
+from markery.specialist.matchmaker.score import is_company_name_mark, total_score
 
 
 def _connect() -> duckdb.DuckDBPyConnection:
@@ -133,6 +133,8 @@ def generate_candidates(
         cpc_map = cpc_for_patents(conn, [p["patent_no"] for p in patents])
 
         for tm in trademarks:
+            if is_company_name_mark(entity_names[eid], tm["mark"]):
+                continue
             tm_filing = tm["filing_dt"]
             for pat in patents:
                 cpc_classes = cpc_map.get(pat["patent_no"], [])

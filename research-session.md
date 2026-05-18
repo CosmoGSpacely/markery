@@ -37,14 +37,14 @@ Expected output: row counts for all three databases, project metrics (candidates
 
 ## 1. Add a new entity (skip if not needed)
 
-Entity data lives in `src/markery/db/build_entities_db.py`. To add a company:
+Entity data lives in `src/markery/specialist/matchmaker/build.py`. To add a company:
 
 1. Add a row to the `ENTITIES` list — fields: `(entity_id, canonical_name, entity_type, industry, notes)`.
 2. Add name variants to the `VARIANTS` list — one row per known spelling from patent assignee fields and trademark owner fields.
 3. Run the builder:
 
 ```bash
-python src/markery/db/build_entities_db.py
+markery matchmaker build
 ```
 
 Expected output: counts of entities and variants added. The builder is idempotent — running it again with no changes prints `0 entities added  0 variants added`.
@@ -148,7 +148,7 @@ Fields: `patent_no`, `trademark_serial`, `trademark`, `entity_id`, `entity`, `ty
 
 ## 6. Write an essay
 
-Open a Claude project and add the `tools/historian/` folder plus the three DuckDB files (`data/trademarks.duckdb`, `data/patents.duckdb`, `data/entities.duckdb`).
+Open a Claude project and add the `src/markery/specialist/historian/` folder plus the three DuckDB files (`data/trademarks.duckdb`, `data/patents.duckdb`, `data/entities.duckdb`).
 
 Prompt pattern:
 
@@ -226,7 +226,7 @@ markery enhance batch "cf.serial_no IN ('71235764','71237470','71237469')" \
   --out-dir projects/information-systems/output/wilson-jones-marks
 ```
 
-Output: 4× upscaled PNG. SVG written alongside for clean word marks and geometric designs. `--force` re-processes existing output. See `tools/image_enhancement/ENHANCE.md` for full workflow.
+Output: 4× upscaled PNG. SVG written alongside for clean word marks and geometric designs. `--force` re-processes existing output.
 
 ---
 
@@ -243,7 +243,7 @@ Run `markery status` one more time to confirm metrics match expectations before 
 | Task | Command |
 |---|---|
 | Session verifier | `markery status` |
-| Add entity | edit `src/markery/db/build_entities_db.py` → `python src/markery/db/build_entities_db.py` |
+| Add entity | edit `src/markery/specialist/matchmaker/build.py` → `markery matchmaker build` |
 | Generate candidates | `markery match information-systems` |
 | Score text signals | `markery score-signals information-systems` |
 | Review candidates | `markery review information-systems` |

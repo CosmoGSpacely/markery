@@ -9,7 +9,7 @@ from markery.specialist.publisher import queries as q
 from markery.specialist.publisher import render as r
 
 
-def build_site(project: str, out_dir: Path | None = None) -> list[Path]:
+def build_site(project: str, out_dir: Path | None = None, base_url: str | None = None) -> list[Path]:
     """Render all pages for a project; return list of written paths."""
     proj = Project(project)
     out  = out_dir if out_dir is not None else proj.site
@@ -29,13 +29,13 @@ def build_site(project: str, out_dir: Path | None = None) -> list[Path]:
 
     pages: list[Path] = []
 
-    pages.append(r.render_landing(project, entities, trademarks, patents, matches, stats, out))
+    pages.append(r.render_landing(project, entities, trademarks, patents, matches, stats, out, base_url=base_url))
     print(f"  landing          → {pages[-1].name}")
 
-    pages.append(r.render_trademark_gallery(project, entities, trademarks, matches, colors, out))
+    pages.append(r.render_trademark_gallery(project, entities, trademarks, matches, colors, out, base_url=base_url))
     print(f"  trademark gallery → {pages[-1].name}")
 
-    pages.append(r.render_patent_gallery(project, entities, patents, matches, colors, out))
+    pages.append(r.render_patent_gallery(project, entities, patents, matches, colors, out, base_url=base_url))
     print(f"  patent gallery   → {pages[-1].name}")
 
     for entity in entities:
@@ -43,7 +43,7 @@ def build_site(project: str, out_dir: Path | None = None) -> list[Path]:
         ent_pats  = [p for p in patents    if p["entity_id"] == entity["entity_id"]]
         ent_mats  = [m for m in matches    if m["entity_id"] == entity["entity_id"]]
         ent_stats = stats.get(entity["entity_id"], {})
-        p = r.render_entity_page(project, entity, entities, ent_tms, ent_pats, ent_mats, ent_stats, out)
+        p = r.render_entity_page(project, entity, entities, ent_tms, ent_pats, ent_mats, ent_stats, out, base_url=base_url)
         pages.append(p)
         print(f"  entity           → entities/{p.name}")
 
@@ -53,7 +53,7 @@ def build_site(project: str, out_dir: Path | None = None) -> list[Path]:
         if slug in seen:
             continue
         seen.add(slug)
-        p = r.render_match_essay(project, match, entities, out)
+        p = r.render_match_essay(project, match, entities, out, base_url=base_url)
         pages.append(p)
         print(f"  match essay      → matches/{p.name}")
 

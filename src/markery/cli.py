@@ -107,12 +107,14 @@ def cmd_site(rest: list[str]) -> None:
     build.add_argument("project", help="Project name (directory under projects/)")
     build.add_argument("--out", metavar="DIR",
                        help="Output directory (default: projects/<project>/site)")
+    build.add_argument("--base-url", metavar="URL", default=None,
+                       help="Absolute base URL for Open Graph og:url tags")
 
     args = parser.parse_args(rest)
 
     if args.action == "build":
         from markery.specialist.publisher.build import build_site
-        build_site(args.project, Path(args.out) if args.out else None)
+        build_site(args.project, Path(args.out) if args.out else None, base_url=args.base_url)
 
 
 def main() -> None:
