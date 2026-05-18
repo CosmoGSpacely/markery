@@ -26,12 +26,13 @@ from __future__ import annotations
 import sys
 
 _SUBCOMMANDS = {
-    "match":   "Generate patent-trademark candidate pairs",
-    "review":  "Interactive candidate pair review",
-    "status":  "Show database row counts and project metrics",
-    "enhance": "Enhance mark images  (enhance|batch|gallery)",
-    "patent":  "Patent specialist  (build|fetch|figures|signals|…)",
-    "site":    "Build static research site  (build <project>)",
+    "match":     "Generate patent-trademark candidate pairs",
+    "review":    "Interactive candidate pair review",
+    "status":    "Show database row counts and project metrics",
+    "enhance":   "Enhance mark images  (enhance|batch|gallery)",
+    "patent":    "Patent specialist  (build|fetch|figures|signals|…)",
+    "trademark": "Trademark specialist  (build|enrich|status|…)",
+    "site":      "Build static research site  (build <project>)",
 }
 
 
@@ -71,6 +72,12 @@ def cmd_enhance(rest: list[str]) -> None:
 def cmd_patent(rest: list[str]) -> None:
     from markery.specialist.patent.cli import main
     sys.argv = ["markery patent"] + rest
+    main()
+
+
+def cmd_trademark(rest: list[str]) -> None:
+    from markery.specialist.trademark.cli import main
+    sys.argv = ["markery trademark"] + rest
     main()
 
 
@@ -165,12 +172,13 @@ def main() -> None:
         sys.exit(1)
 
     {
-        "match":   lambda: cmd_match(rest),
-        "review":  lambda: cmd_review(rest),
-        "status":  lambda: cmd_status(),
-        "enhance": lambda: cmd_enhance(rest),
-        "patent":  lambda: cmd_patent(rest),
-        "site":    lambda: cmd_site(rest),
+        "match":     lambda: cmd_match(rest),
+        "review":    lambda: cmd_review(rest),
+        "status":    lambda: cmd_status(),
+        "enhance":   lambda: cmd_enhance(rest),
+        "patent":    lambda: cmd_patent(rest),
+        "trademark": lambda: cmd_trademark(rest),
+        "site":      lambda: cmd_site(rest),
     }[cmd]()
 
 
