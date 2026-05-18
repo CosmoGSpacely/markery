@@ -624,3 +624,288 @@ Commit order: (1) schema migration SQL, (2) `common/` + `specialist/patent/` mod
 ### Q27 -- MATCHMAKER Package Name
 **Decision: `matchmaker`.** Consistent with the specialist-as-persona pattern: `historian`, `publisher`, `matchmaker`. Import path: `from markery.specialist.matchmaker import generate_candidates`.
 
+---
+
+## Phase B -- TRADEMARK Specialist Migration Plan
+
+Phase A is complete as of 2026-05-18 (commits aa61059–4557811). Phase B migrates
+`src/markery/db/build_trademarks_db.py` and `src/markery/db/tsdr_client.py` into
+`src/markery/specialist/trademark/`, following the same specialist pattern.
+
+### Source code analysis
+
+**`build_trademarks_db.py`** (95 lines):
+- Drops and recreates `trademarks.duckdb` from scratch — not idempotent by design.
+  The CSV source does not change; a full rebuild is the correct operation.
+- Loads eight tables from the 2011 USPTO Trademark Case Files Dataset CSV files
+  in `csv/`: `case_file`, `owner`, `owner_name_change`, `classification`,
+  `intl_class`, `us_class`, `design_search`, `prior_mark`.
+- Filters to `filing_dt BETWEEN 1900-01-01 AND 1939-12-31`.
+- Builds a temp `target_serials` table to JOIN companion tables against
+  `case_file`'s filtered serial numbers -- efficient bulk load pattern to keep.
+- No resume capability needed -- it's all-or-nothing by definition.
+- Issues to fix: hardcoded `CSV_DIR` and `DB_PATH` strings; bare `print()`/`log()`
+  instead of returned counts; `os.remove()` before connect instead of `IF EXISTS` +
+  separate drop logic.
+
+**`tsdr_client.py`** (168 lines):
+- A module-level prototype, not a class. `API_KEY` is loaded at import time with
+  a hard `sys.exit(1)` if missing -- incompatible with testing.
+- No rate limiting. USPTO TSDR allows 60 req/min (1 per second).
+- No retry logic for transient failures.
+- `get_trademark_image()` is the only function used in the current workflow.
+  `get_case_status()`, `get_last_update()`, and `get_multiple_cases_status()` are
+  exploratory stubs. `download_document()` is unused.
+- Needs a full rewrite as a `TSDRClient` class symmetric to `EPOClient`.
+
+### Current `trademarks.duckdb` schema (no changes needed)
+
+The database already has the correct shape from prior work. No schema migration
+is required for Phase B.
+
+```
+Tables (current state, 2026-05-18):
+  case_file          25,473 rows   -- CSV bulk load
+  classification     25,497 rows   -- CSV bulk load
+  design_search      18,790 rows   -- CSV bulk load
+  intl_class         28,119 rows   -- CSV bulk load
+  mark_case_status       13 rows   -- TSDR API enrichment
+  mark_images           105 rows   -- TSDR API enrichment (BLOB)
+  owner              38,349 rows   -- CSV bulk load
+  owner_name_change   8,600 rows   -- CSV bulk load
+  prior_mark         11,329 rows   -- CSV bulk load
+  statement          35,077 rows   -- CSV bulk load
+  us_class           26,188 rows   -- CSV bulk load
+```
+
+`mark_images` schema: `serial_no VARCHAR, image_data BLOB, image_format VARCHAR,
+image_size INTEGER, fetched_dt DATE`
+
+`mark_case_status` schema: `serial_no VARCHAR, mark_text VARCHAR, filing_dt DATE,
+registration_no VARCHAR, registration_dt DATE, status_cd VARCHAR, goods_desc VARCHAR,
+intl_class VARCHAR, first_use_dt VARCHAR, first_use_comm_dt VARCHAR, raw_json VARCHAR,
+fetched_dt DATE`
+
+Both tables use `serial_no` as `VARCHAR` (not `BIGINT` like the CSV tables).
+Keep as-is — TSDR API returns serial numbers as strings.
+
+### Two data sources, one specialist
+
+Unlike PATENT (EPO OPS is the only source), TRADEMARK has two distinct sources:
+
+| Source | Tables | Entry point |
+|---|---|---|
+| 2011 USPTO CSV dataset | case_file, owner, owner_name_change, classification, intl_class, us_class, design_search, prior_mark, statement | `build.py` |
+| USPTO TSDR API | mark_images, mark_case_status | `enrich.py` via `TSDRClient` |
+
+Both are owned by the TRADEMARK specialist. `build.py` is a one-shot bulk loader;
+`enrich.py` is the ongoing enrichment path for individual marks.
+
+### `TSDRClient` class interface
+
+Symmetric to `EPOClient` but simpler: USPTO uses a static API key header (no
+OAuth2 token lifecycle). Rate limit: 60 req/min (sleep 1.0 s after each request).
+
+```python
+class TSDRClient:
+    _BASE_URL    = "https://tsdrapi.uspto.gov"
+    RATE_SLEEP   = 1.0          # 60 req/min
+    RETRY_DELAYS = [5, 15, 30]  # 429/503 backoff
+
+    def __init__(self, api_key: str) -> None:
+        # stores api_key; creates requests.Session with USPTO-API-KEY header
+
+    def _get(self, url: str, **kwargs) -> requests.Response:
+        # rate-limited GET with 429/503 retry; no token state
+
+    def fetch_case_status(self, serial_no: str) -> dict | None:
+        # GET /ts/cd/casestatus/sn{serial_no}/info
+        # returns parsed flat dict or None on 404
+        # parsed fields: mark_text, filing_dt, registration_no, registration_dt,
+        #                status_cd, goods_desc, intl_class, first_use_dt,
+        #                first_use_comm_dt (from JSON path)
+
+    def fetch_mark_image(self, serial_no: str) -> bytes | None:
+        # GET /ts/cd/rawImage/{serial_no}, Accept: image/png
+        # returns PNG bytes or None on 404
+
+    def token_info(self) -> dict:
+        # returns {"api_key_prefix": "...", "base_url": "..."} for verify-credentials
+        # no live check -- key validity only confirmed by actual requests
+```
+
+No equivalent to `_ensure_token()` -- the API key is static. Add a
+`verify_credentials()` method that makes a single cheap request (e.g., known
+serial number) to confirm the key is accepted.
+
+### Target directory layout
+
+```
+src/markery/specialist/trademark/
+    __init__.py          public interface exports
+    tsdr_client.py       TSDRClient class
+    build.py             CSV bulk loader (create/recreate trademarks.duckdb)
+    enrich.py            TSDR API enrichment (mark images, case status)
+    cli.py               markery trademark subcommand router
+```
+
+No `signals.py` equivalent -- signal enrichment reads trademark data but lives
+in `specialist/patent/signals.py` (it reads both DBs). No change needed there.
+
+### `build.py` public interface
+
+```python
+def build(
+    csv_dir: str | Path | None = None,
+    db_path: str | Path | None = None,
+    date_start: str = "1900-01-01",
+    date_end:   str = "1939-12-31",
+) -> None:
+    """Drop and recreate trademarks.duckdb from CSV source files.
+
+    csv_dir defaults to ROOT / "csv".
+    db_path defaults to DB["trademarks"].
+    Prints row counts per table on completion.
+    """
+```
+
+Key implementation changes from `build_trademarks_db.py`:
+- Accept `csv_dir` and `db_path` as parameters (testable, not hardcoded).
+- Return table row counts as a dict instead of printing inline.
+- Use `conn.execute("DROP TABLE IF EXISTS ...")` before `CREATE TABLE AS SELECT`
+  rather than `os.remove()` before `connect()`. This makes partial re-runs safer.
+- Keep the `target_serials` temp table JOIN pattern (correct and efficient).
+- Keep `PRAGMA threads=4`.
+
+### `enrich.py` public interface
+
+```python
+def store_mark_image(
+    serial_no: str,
+    client: TSDRClient,
+    conn: duckdb.DuckDBPyConnection,
+) -> bool:
+    """Fetch PNG from TSDR and upsert into mark_images. Returns True if stored."""
+
+def store_case_status(
+    serial_no: str,
+    client: TSDRClient,
+    conn: duckdb.DuckDBPyConnection,
+) -> bool:
+    """Fetch case status from TSDR and upsert into mark_case_status. Returns True if stored."""
+
+def enrich_project(
+    project: str,
+    client: TSDRClient,
+    conn: duckdb.DuckDBPyConnection,
+    source: str = "confirmed",   # "confirmed" | "candidates"
+    min_score: float = 0.0,
+    force: bool = False,
+) -> dict[str, int]:
+    """Fetch images and status for all marks in a project. Returns {"images": n, "status": n}."""
+```
+
+Both `store_*` functions are idempotent: skip if the row already has data and
+`force=False`. Both UPDATE existing rows or INSERT new ones (same pattern as
+`patent/figures.py:fetch_and_store`).
+
+### `markery trademark` CLI subcommands
+
+| Subcommand | Action |
+|---|---|
+| `build` | Run CSV bulk load; requires `csv/` directory |
+| `enrich <serial_no>` | Fetch image + status for one mark |
+| `enrich-project [project]` | Enrich all marks in confirmed.jsonl (or candidates above min-score) |
+| `verify-credentials` | Make a known-good TSDR request; confirm key is accepted |
+| `status` | Print row counts for all trademark tables |
+
+### `__init__.py` public interface
+
+```python
+from markery.specialist.trademark.build import build, open_db
+from markery.specialist.trademark.tsdr_client import TSDRClient
+from markery.specialist.trademark.enrich import store_mark_image, store_case_status
+
+__all__ = ["build", "open_db", "TSDRClient", "store_mark_image", "store_case_status"]
+```
+
+### Unit tests
+
+`tests/specialist/trademark/test_tsdr_client.py`:
+- `test_fetch_mark_image_returns_bytes` — mock `GET /ts/cd/rawImage/{sn}` → PNG bytes
+- `test_fetch_mark_image_returns_none_on_404`
+- `test_fetch_case_status_parses_response` — mock status JSON → check parsed fields
+- `test_fetch_case_status_returns_none_on_404`
+- `test_rate_sleep_applied` — monkeypatch `time.sleep`; confirm called after each request
+
+`tests/specialist/trademark/test_enrich.py`:
+- `test_store_mark_image_inserts_new` — in-memory DB; confirm BLOB stored
+- `test_store_mark_image_skips_if_already_stored`
+- `test_store_mark_image_updates_existing_row_without_data`
+- `test_store_case_status_inserts_new`
+- `test_store_case_status_is_idempotent`
+
+No `test_build.py` — the CSV bulk loader depends on 2 GB CSV files not in the
+repo. Test coverage for build logic is provided by smoke-test only.
+
+### Image enhancement (deferred)
+
+`tools/image_enhancement/` is still wired to `markery enhance`. It is not moved
+in Phase B. The `[enhance]` optional extra in `pyproject.toml` already declares
+the correct deps (opencv, realesrgan, vtracer). Migration to `specialist/` or a
+standalone `enhance` specialist is deferred until PUBLISHER is planned.
+
+### `markery enhance` CLI dependency on `tools/`
+
+The `markery enhance` subcommand still imports `from image_enhancement.cli import main`.
+The `tools/` directory is still needed for this path. It cannot be removed until
+`image_enhancement/` is migrated. This is the one remaining `tools/` dependency
+after Phase B completes.
+
+### Files to delete after Phase B
+
+```
+src/markery/db/build_trademarks_db.py
+src/markery/db/tsdr_client.py
+```
+
+`src/markery/db/` becomes empty after Phase B. The directory itself is removed
+when Phase C (MATCHMAKER) migrates `src/markery/matching/` and
+`src/markery/db/build_entities_db.py`.
+
+### Step-by-step migration sequence
+
+1. Create `src/markery/specialist/trademark/` with empty `__init__.py`
+2. Write `tsdr_client.py` -- `TSDRClient` class as specified above
+3. Write `build.py` -- CSV bulk loader; imports `load_tsdr_key` (unused in build
+   but needed to confirm auth is not accidentally required for bulk load)
+4. Write `enrich.py` -- `store_mark_image()`, `store_case_status()`,
+   `enrich_project()`; imports `TSDRClient`
+5. Write `cli.py` -- all `markery trademark` subcommands
+6. Write `__init__.py` -- public interface exports
+7. Update `src/markery/cli.py` -- add `"trademark": lambda: cmd_trademark(rest)`
+8. Write unit tests in `tests/specialist/trademark/`
+9. Smoke tests:
+   - `markery trademark verify-credentials` -- key accepted, no error
+   - `markery trademark status` -- row counts match current `markery status` output
+   - `markery trademark enrich-project information-systems` -- skips all (already enriched)
+   - `markery status` -- all three DB row counts unchanged
+10. Delete `src/markery/db/build_trademarks_db.py` and `src/markery/db/tsdr_client.py`
+11. Multi-commit: (1) new `specialist/trademark/` code, (2) CLI routing,
+    (3) unit tests, (4) delete old files
+
+### Deferred items (documented here for Phase B reference)
+
+These were identified during Phase A planning and remain deferred:
+
+- **`fetched_dt` staleness refresh**: `mark_images` and `mark_case_status` rows
+  older than a configurable threshold could be refreshed with a
+  `markery trademark refresh-stale [--days N]` subcommand. Not needed until the
+  corpus grows significantly or marks change status.
+- **TSDR bulk status endpoint**: `get_multiple_cases_status()` (up to N serial
+  numbers in one call) was explored in `tsdr_client.py` but not used. Deferred
+  until `enrich-project` proves too slow for larger corpora.
+- **Mark image enhancement**: `tools/image_enhancement/` pipeline (upscale,
+  binarize, vectorize) could be wired to `markery trademark enrich` as an
+  optional post-process step. Deferred to PUBLISHER or a dedicated enhance phase.
+
