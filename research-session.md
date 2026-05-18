@@ -148,7 +148,7 @@ Fields: `patent_no`, `trademark_serial`, `trademark`, `entity_id`, `entity`, `ty
 
 ## 6. Write an essay
 
-Open a Claude project and add the `src/markery/specialist/historian/` folder plus the three DuckDB files (`data/trademarks.duckdb`, `data/patents.duckdb`, `data/entities.duckdb`).
+Open a Claude project and add the `src/markery/specialist/historian/persona/` folder plus the three DuckDB files (`data/trademarks.duckdb`, `data/patents.duckdb`, `data/entities.duckdb`).
 
 Prompt pattern:
 
@@ -251,4 +251,4 @@ Run `markery status` one more time to confirm metrics match expectations before 
 | Gallery from DB images | `markery enhance gallery --where "..." --out <path>` |
 | Gallery from enhanced PNGs | `markery enhance gallery <dir>` |
 | Enhance mark (manual, selective) | `markery enhance enhance <serial> --out-dir <dir>` |
-| Historian session | Claude project + `tools/historian/` + 3 DuckDB files |
+| Historian session | Claude project + `src/markery/specialist/historian/persona/` + 3 DuckDB files |
