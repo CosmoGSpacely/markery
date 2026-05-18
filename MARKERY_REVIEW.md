@@ -909,3 +909,243 @@ These were identified during Phase A planning and remain deferred:
   binarize, vectorize) could be wired to `markery trademark enrich` as an
   optional post-process step. Deferred to PUBLISHER or a dedicated enhance phase.
 
+---
+
+## Phase C -- MATCHMAKER Specialist Migration Plan
+
+Phase B is complete as of 2026-05-18 (commits 2377c22–a48a6a5). Phase C migrates
+`src/markery/matching/` and the remaining `src/markery/db/` files into
+`src/markery/specialist/matchmaker/`, following the specialist pattern.
+After Phase C, `src/markery/db/` and `src/markery/matching/` are fully deleted.
+
+### Source code analysis
+
+**`matching/score.py`** (49 lines):
+- Pure scoring functions: `date_score`, `class_score`, `total_score`. No I/O.
+- No imports to update. Straight move to `specialist/matchmaker/score.py`.
+- Currently tested by `tests/test_score.py` (6 tests, all passing).
+  That file imports `from markery.matching.score import ...` — must be updated.
+
+**`matching/link.py`** (168 lines):
+- Core candidate generation: `generate_candidates`, `patents_for_entity`,
+  `trademarks_for_entity`, `cpc_for_patents`, `write_candidates`, `read_confirmed`,
+  `entity_ids_for_project`.
+- Hardcoded module-level path strings (`ENTITIES_DB = "data/entities.duckdb"`,
+  `PATENTS_DB`, `TRADEMARKS_DB`). Replace with `common/config.py` DB dict.
+- Uses DuckDB ATTACH to join entities, patents, and trademarks in one connection
+  (documented approach per Q19). The comment on `_connect()` should explicitly
+  note the cross-specialist ATTACH as the intended pattern.
+- `entity_ids_for_project()` reads a plain-text file — no DB dependency. Testable
+  without a database fixture.
+
+**`matching/cli.py`** (112 lines):
+- Entry point for `markery match`. Handles project/all/entity/list-entities modes.
+- Hardcoded `ENTITIES_DB = "data/entities.duckdb"` for `list_entities()`.
+- Imports from `.link` (relative) — update to `markery.specialist.matchmaker.link`.
+- The argument structure is clean and does not need to change.
+
+**`matching/__init__.py`** (8 lines) and `__main__.py` (2 lines):
+- Both are vestigial stubs. Not worth preserving; `__main__.py` support for
+  `python -m markery.matching` is dropped (use `markery match` instead).
+
+**`db/build_entities_db.py`** (190 lines):
+- Creates and seeds `entities.duckdb`: `company_entity` (5 rows) and
+  `entity_name_variant` (32 rows). Pure seed data — no external API calls.
+- Idempotent by design: skips entities and variants that already exist.
+- The seed data and `build()` function move to `specialist/matchmaker/entities.py`.
+- `open_db()` in entities.py ensures the schema exists before any operation.
+
+**`db/build_patents_db.py`** (544 lines):
+- A full reimplementation of what is now `specialist/patent/`. Every function
+  in this file has a direct equivalent already in production. Pure deletion.
+
+**`db/test_epo_credentials.py`** (119 lines):
+- A standalone smoke-test script superseded by `markery patent verify-credentials`.
+  Pure deletion.
+
+**`review.py`** (imports `from markery.matching.score import date_score, class_score`):
+- This import must be updated to `from markery.specialist.matchmaker.score import ...`
+  during Phase C. `review.py` itself moves in Phase D (HISTORIAN); only the
+  import changes now.
+
+### No schema changes
+
+`entities.duckdb` schema is already correct:
+
+```
+company_entity       INTEGER PK, canonical_name NOT NULL, entity_type, industry, notes
+entity_name_variant  INTEGER PK, entity_id FK, variant_name NOT NULL, source NOT NULL
+```
+
+No ALTER TABLE or DROP TABLE operations are needed for Phase C.
+
+### Two CLI surfaces
+
+Per Q25, `markery match` and `markery review` remain as human-facing verbs.
+Phase C adds `markery matchmaker` for entity registry management:
+
+| CLI surface | Routes to | Purpose |
+|---|---|---|
+| `markery match` | `specialist/matchmaker/cli.py` | Candidate generation (existing behavior) |
+| `markery matchmaker` | `specialist/matchmaker/cli.py` | Entity registry management |
+| `markery review` | `src/markery/review.py` | Unchanged until Phase D |
+
+### Target directory layout
+
+```
+src/markery/specialist/matchmaker/
+    __init__.py     public interface exports
+    entities.py     entity registry: open_db, build, list_entities
+    score.py        scoring functions (straight move from matching/score.py)
+    link.py         cross-DB candidate generation (from matching/link.py)
+    cli.py          markery match + markery matchmaker subcommand router
+```
+
+### `entities.py` public interface
+
+```python
+DDL = """
+CREATE TABLE IF NOT EXISTS company_entity ( ... );
+CREATE TABLE IF NOT EXISTS entity_name_variant ( ... );
+"""
+
+ENTITIES: list[tuple] = [...]   # seed data: 5 rows
+VARIANTS:  list[tuple] = [...]  # seed data: 32 rows
+
+def open_db(db_path: str | Path | None = None) -> duckdb.DuckDBPyConnection:
+    # Connect to entities.duckdb (DB["entities"]), ensure schema, return conn
+
+def build(db_path: str | Path | None = None) -> dict[str, int]:
+    # Idempotent: insert seed entities and variants, skip existing.
+    # Returns {"entities": n_added, "variants": n_added}.
+
+def list_entities(conn: duckdb.DuckDBPyConnection) -> list[dict]:
+    # Return [{entity_id, canonical_name, entity_type, industry, notes}]
+    # ordered by entity_id.
+```
+
+The seed data (`ENTITIES`, `VARIANTS`) is the source of truth for the entity
+registry. Adding a new entity means adding a tuple here and running
+`markery matchmaker build`.
+
+### `link.py` changes from `matching/link.py`
+
+- Remove `ENTITIES_DB`, `PATENTS_DB`, `TRADEMARKS_DB` module-level constants.
+- Import `DB` from `markery.common.config`.
+- `_connect()` uses `DB["entities"]`, `DB["patents"]`, `DB["trademarks"]` and
+  adds a comment: `# Cross-specialist ATTACH — permitted per Q19 for queries
+  that cannot be expressed through individual specialist APIs without multiple
+  round trips.`
+- All other logic is unchanged.
+
+### `markery match` subcommand (unchanged behavior)
+
+The existing argument structure is kept exactly:
+
+```
+markery match <project>          generate candidates for a project
+markery match --all              generate for all entities
+markery match --entity NAME      single entity
+markery match --list-entities    list entity registry
+markery match --min-score 0.1    score threshold
+```
+
+`--list-entities` prints from `entities.list_entities()` via a read-only
+connection (no separate `matchmaker list` needed for this quick lookup).
+
+### `markery matchmaker` subcommand (new)
+
+```
+markery matchmaker build         Idempotent seed insert; prints counts
+markery matchmaker list          List all entities with IDs and names
+markery matchmaker status        Row counts for company_entity and entity_name_variant
+```
+
+### `__init__.py` public interface
+
+```python
+from markery.specialist.matchmaker.entities import build as build_entities, open_db
+from markery.specialist.matchmaker.link import generate_candidates, write_candidates, read_confirmed
+from markery.specialist.matchmaker.score import total_score
+
+__all__ = [
+    "build_entities", "open_db",
+    "generate_candidates", "write_candidates", "read_confirmed",
+    "total_score",
+]
+```
+
+### Unit tests
+
+**`tests/specialist/matchmaker/test_score.py`**:
+- Move from `tests/test_score.py`. Update import to
+  `from markery.specialist.matchmaker.score import ...`.
+- All 6 existing tests kept unchanged. The old file is deleted.
+
+**`tests/specialist/matchmaker/test_entities.py`**:
+- `test_build_inserts_seed_data` — in-memory DB; assert 5 entities, 32 variants
+- `test_build_is_idempotent` — call build() twice; counts unchanged
+- `test_list_entities_returns_all` — assert 5 items, ordered by entity_id
+- `test_open_db_creates_schema` — confirm both tables exist after open_db(":memory:")
+
+**`tests/specialist/matchmaker/test_link.py`**:
+- `test_entity_ids_for_project` — writes an `entities.txt` to `tmp_path`,
+  calls `entity_ids_for_project`; no DB needed.
+- `test_entity_ids_for_project_ignores_comments` — lines starting with `#`
+  and inline `#` suffixes are ignored.
+- `test_read_confirmed_returns_empty_when_missing` — path that doesn't exist → `[]`.
+- `test_write_and_read_candidates_roundtrip` — write then read via `read_confirmed`.
+
+  Full `generate_candidates` integration (three DBs via ATTACH) is covered by the
+  existing smoke test (`markery match information-systems`) rather than unit tests,
+  since ATTACH across temp files in pytest is brittle and adds little value given
+  the smoke test exercises the real data.
+
+### Files to delete after Phase C
+
+```
+src/markery/matching/cli.py
+src/markery/matching/link.py
+src/markery/matching/score.py
+src/markery/matching/__init__.py
+src/markery/matching/__main__.py
+src/markery/db/build_entities_db.py
+src/markery/db/build_patents_db.py
+src/markery/db/test_epo_credentials.py
+src/markery/db/__init__.py
+tests/test_score.py
+```
+
+After deletion `src/markery/db/` and `src/markery/matching/` directories are gone.
+`src/markery/` then contains only: `__init__.py`, `cli.py`, `review.py`, `status.py`,
+`common/`, `specialist/`.
+
+### Step-by-step migration sequence
+
+1. Create `src/markery/specialist/matchmaker/` with empty `__init__.py`
+2. Write `entities.py` — DDL, seed data, `open_db`, `build`, `list_entities`
+3. Write `score.py` — straight move from `matching/score.py` (no changes)
+4. Write `link.py` — from `matching/link.py`; replace hardcoded paths with `DB` dict;
+   add cross-specialist ATTACH comment
+5. Write `cli.py` — `cmd_match` (existing behavior) + `cmd_matchmaker` (entity management)
+6. Write `__init__.py` — public interface exports
+7. Update `src/markery/review.py` import:
+   `from markery.matching.score` → `from markery.specialist.matchmaker.score`
+8. Update `src/markery/cli.py`:
+   - `cmd_match` routes to `specialist/matchmaker/cli.py`
+   - add `"matchmaker": lambda: cmd_matchmaker(rest)` dispatch
+9. Write unit tests:
+   - `tests/specialist/matchmaker/test_score.py` (moved + import updated)
+   - `tests/specialist/matchmaker/test_entities.py` (new)
+   - `tests/specialist/matchmaker/test_link.py` (new)
+10. Smoke tests:
+    - `markery match information-systems` — 2,412 candidates, output unchanged
+    - `markery match --list-entities` — 5 entities printed
+    - `markery matchmaker build` — 0 entities added (all already present)
+    - `markery matchmaker status` — 5 entities, 32 variants
+    - `markery status` — all row counts unchanged
+    - `markery site build information-systems` — 14 pages rendered
+11. Delete old files
+12. Multi-commit: (1) `specialist/matchmaker/` code + `review.py` import fix,
+    (2) CLI routing, (3) tests, (4) delete old files
+
