@@ -24,7 +24,7 @@ from pathlib import Path
 
 import duckdb
 
-from markery.matching.score import date_score, class_score
+from markery.specialist.matchmaker.score import date_score, class_score
 
 PROJECTS_DIR = Path("projects")
 
