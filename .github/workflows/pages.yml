@@ -18,9 +18,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: |
-          pip install duckdb Pillow
-          pip install --no-deps -e .
+        run: pip install -e .
 
       - name: Build sites
         run: markery site build information-systems

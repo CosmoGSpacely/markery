@@ -10,9 +10,13 @@ Usage:
   markery enhance enhance 71235764 --out-dir projects/information-systems/output/vi-dex
   markery enhance batch "cf.serial_no IN ('71235764')" --out-dir projects/.../output/batch
   markery enhance gallery projects/.../output/vi-dex --title "VI-DEX, Wilson Jones 1927"
-  markery fetch-patents information-systems --confirmed
-  markery fetch-patents --patent US1261167A
-  markery score-signals information-systems
+  markery patent build --seed-only
+  markery patent build --resume
+  markery patent fetch information-systems --confirmed
+  markery patent figures US1261167A
+  markery patent verify-credentials
+  markery patent signals information-systems
+  markery patent migrate-figures information-systems
   markery site build information-systems
   markery site build information-systems --out projects/information-systems/site
 """
@@ -22,13 +26,12 @@ from __future__ import annotations
 import sys
 
 _SUBCOMMANDS = {
-    "match":          "Generate patent-trademark candidate pairs",
-    "review":         "Interactive candidate pair review",
-    "status":         "Show database row counts and project metrics",
-    "enhance":        "Enhance mark images  (enhance|batch|gallery)",
-    "fetch-patents":  "Download patent PDFs and extract figures",
-    "score-signals":  "Enrich candidates.jsonl with text signals",
-    "site":           "Build static research site  (build <project>)",
+    "match":   "Generate patent-trademark candidate pairs",
+    "review":  "Interactive candidate pair review",
+    "status":  "Show database row counts and project metrics",
+    "enhance": "Enhance mark images  (enhance|batch|gallery)",
+    "patent":  "Patent specialist  (build|fetch|figures|signals|…)",
+    "site":    "Build static research site  (build <project>)",
 }
 
 
@@ -65,15 +68,9 @@ def cmd_enhance(rest: list[str]) -> None:
     main()
 
 
-def cmd_fetch_patents(rest: list[str]) -> None:
-    from patent_docs.cli import main
-    sys.argv = ["markery fetch-patents", "fetch"] + rest
-    main()
-
-
-def cmd_score_signals(rest: list[str]) -> None:
-    from patent_docs.cli import main
-    sys.argv = ["markery score-signals", "score"] + rest
+def cmd_patent(rest: list[str]) -> None:
+    from markery.specialist.patent.cli import main
+    sys.argv = ["markery patent"] + rest
     main()
 
 
@@ -168,13 +165,12 @@ def main() -> None:
         sys.exit(1)
 
     {
-        "match":         lambda: cmd_match(rest),
-        "review":        lambda: cmd_review(rest),
-        "status":        lambda: cmd_status(),
-        "enhance":       lambda: cmd_enhance(rest),
-        "fetch-patents":  lambda: cmd_fetch_patents(rest),
-        "score-signals": lambda: cmd_score_signals(rest),
-        "site":          lambda: cmd_site(rest),
+        "match":   lambda: cmd_match(rest),
+        "review":  lambda: cmd_review(rest),
+        "status":  lambda: cmd_status(),
+        "enhance": lambda: cmd_enhance(rest),
+        "patent":  lambda: cmd_patent(rest),
+        "site":    lambda: cmd_site(rest),
     }[cmd]()
 
 
