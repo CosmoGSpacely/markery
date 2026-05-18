@@ -19,6 +19,7 @@ Usage:
   markery patent migrate-figures information-systems
   markery site build information-systems
   markery site build information-systems --out projects/information-systems/site
+  markery publisher build information-systems
 """
 
 from __future__ import annotations
@@ -34,6 +35,7 @@ _SUBCOMMANDS = {
     "trademark":   "Trademark specialist  (build|enrich|status|…)",
     "matchmaker":  "Entity registry management  (build|list|status)",
     "site":        "Build static research site  (build <project>)",
+    "publisher":   "Publisher specialist  (build <project>)",
 }
 
 
@@ -71,7 +73,7 @@ def cmd_status() -> None:
 
 
 def cmd_enhance(rest: list[str]) -> None:
-    from image_enhancement.cli import main
+    from markery.specialist.publisher.image_enhancement.cli import main
     sys.argv = ["markery enhance"] + rest
     main()
 
@@ -86,6 +88,12 @@ def cmd_trademark(rest: list[str]) -> None:
     from markery.specialist.trademark.cli import main
     sys.argv = ["markery trademark"] + rest
     main()
+
+
+def cmd_publisher(rest: list[str]) -> None:
+    from markery.specialist.publisher.cli import publisher_main
+    sys.argv = ["markery publisher"] + rest
+    publisher_main()
 
 
 def cmd_site(rest: list[str]) -> None:
@@ -103,66 +111,8 @@ def cmd_site(rest: list[str]) -> None:
     args = parser.parse_args(rest)
 
     if args.action == "build":
-        _site_build(args.project, args.out)
-
-
-def _site_build(project: str, out: str | None) -> None:
-    from pathlib import Path
-    from site_builder import queries as q
-    from site_builder import render as r
-
-    db_paths = {
-        "entities":   "data/entities.duckdb",
-        "patents":    "data/patents.duckdb",
-        "trademarks": "data/trademarks.duckdb",
-    }
-
-    out_dir = Path(out) if out else Path(f"projects/{project}/site")
-    out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "entities").mkdir(exist_ok=True)
-    (out_dir / "matches").mkdir(exist_ok=True)
-
-    print(f"Building site for '{project}' → {out_dir}/")
-
-    entity_ids  = q.get_project_entity_ids(project)
-    entities    = q.get_entities(db_paths, entity_ids)
-    trademarks  = q.get_trademarks_for_project(db_paths, entity_ids)
-    patents     = q.get_patents_for_project(db_paths, entity_ids)
-    matches     = q.get_confirmed_matches(project, db_paths)
-    stats       = q.get_entity_stats(db_paths, entity_ids, trademarks, patents, matches)
-    colors      = r._entity_color_map(entity_ids)
-
-    pages: list[Path] = []
-
-    pages.append(r.render_landing(project, entities, trademarks, patents, matches, stats, db_paths, out_dir))
-    print(f"  landing          → {pages[-1].name}")
-
-    pages.append(r.render_trademark_gallery(project, entities, trademarks, matches, colors, db_paths, out_dir))
-    print(f"  trademark gallery → {pages[-1].name}")
-
-    pages.append(r.render_patent_gallery(project, entities, patents, matches, colors, db_paths, out_dir))
-    print(f"  patent gallery   → {pages[-1].name}")
-
-    for entity in entities:
-        ent_tms  = [t for t in trademarks if t["entity_id"] == entity["entity_id"]]
-        ent_pats = [p for p in patents    if p["entity_id"] == entity["entity_id"]]
-        ent_mats = [m for m in matches    if m["entity_id"] == entity["entity_id"]]
-        ent_stats = stats.get(entity["entity_id"], {})
-        p = r.render_entity_page(project, entity, entities, ent_tms, ent_pats, ent_mats, ent_stats, out_dir)
-        pages.append(p)
-        print(f"  entity           → entities/{p.name}")
-
-    seen_slugs: set[str] = set()
-    for match in matches:
-        slug = match.get("slug", "")
-        if slug in seen_slugs:
-            continue
-        seen_slugs.add(slug)
-        p = r.render_match_essay(project, match, entities, db_paths, out_dir)
-        pages.append(p)
-        print(f"  match essay      → matches/{p.name}")
-
-    print(f"\n{len(pages)} pages written to {out_dir}/")
+        from markery.specialist.publisher.build import build_site
+        build_site(args.project, Path(args.out) if args.out else None)
 
 
 def main() -> None:
@@ -187,6 +137,7 @@ def main() -> None:
         "trademark":  lambda: cmd_trademark(rest),
         "matchmaker": lambda: cmd_matchmaker(rest),
         "site":       lambda: cmd_site(rest),
+        "publisher":  lambda: cmd_publisher(rest),
     }[cmd]()
 
 
