@@ -1,27 +1,25 @@
 from datetime import date
-from markery.matching.score import date_score, class_score, total_score
+from markery.specialist.matchmaker.score import date_score, class_score, total_score
 
 
 def test_patent_before_trademark_is_positive():
-    # Patent granted ~10 days before trademark filed — canonical positive case
     grant  = date(1939, 3, 28)
     filing = date(1939, 4, 7)
     assert date_score(grant, filing) > 0
 
 
 def test_trademark_before_patent_is_negative():
-    # Trademark filed 5 years before patent grant — unusual but not disqualifying
     grant  = date(1930, 1, 1)
     filing = date(1925, 1, 1)
-    score = date_score(grant, filing)
+    score  = date_score(grant, filing)
     assert score < 0
-    assert score > -0.4  # penalty is bounded
+    assert score > -0.4
 
 
 def test_class_score_fires_for_product_class():
     assert class_score(["B42F"]) == 0.3
     assert class_score(["B42D"]) == 0.3
-    assert class_score(["G06C", "B42F"]) == 0.3  # only one boost regardless of count
+    assert class_score(["G06C", "B42F"]) == 0.3
 
 
 def test_class_score_zero_for_unrelated_class():
@@ -30,7 +28,6 @@ def test_class_score_zero_for_unrelated_class():
 
 
 def test_maximum_total_score_is_0_80():
-    # Patent granted same day as trademark filing + product CPC class → ceiling
     same_day = date(1939, 4, 7)
     score = total_score(same_day, same_day, ["B42F"])
     assert score == 0.80
