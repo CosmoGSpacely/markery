@@ -85,6 +85,20 @@ ENTITIES = [
             "BOOKS AND LOOSE LEAF DEVICES (1921). Later acquired by Esselte."
         ),
     ),
+    (
+        5,
+        "Library Bureau",
+        "manufacturer",
+        "office-systems",
+        (
+            "Chicago/New York manufacturer of card-index systems, filing cabinets, and "
+            "library furniture. Founded by Melvil Dewey in 1876 as a supply arm of the "
+            "American Library Association; incorporated as Library Bureau in the 1880s. "
+            "Holds the earliest B42F patent in the database (US664573A, 'File.', filed "
+            "October 1896) — the progenitor filing-appliance entity. Absorbed by "
+            "Remington Rand in the 1920s."
+        ),
+    ),
 ]
 
 # Each tuple: (entity_id, variant_name, source)
@@ -125,6 +139,13 @@ VARIANTS = [
     (4, "BOORUM AND PEASE COMPANY [US]",         "patent_assignee"),
     (4, "BOORUM & PEASE CO.",                    "trademark_owner"),
     (4, "BOORUM & PEASE COMPANY",                "trademark_owner"),
+
+    # ── Library Bureau ─────────────────────────────────────────────────────
+    (5, "LIBRARY BUREAU [US]",                   "patent_assignee"),
+    (5, "LIBRARY BUREAU",                        "patent_assignee"),
+    (5, "Library Bureau",                        "trademark_owner"),
+    (5, "LIBRARY BUREAU",                        "trademark_owner"),
+    (5, "LIBRARY BUREAU, INC.",                  "trademark_owner"),
 ]
 
 
