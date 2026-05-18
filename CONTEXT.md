@@ -25,11 +25,11 @@ Next: **D001** — fetch remaining CPC classes (B41J, B41L, G06C, G06K, G09F) vi
 | `README.md` | Full schema, match pipeline, entity procedure, project tree, setup commands |
 | `STATUS.md` | Current phase, metrics, infrastructure ledger |
 | `DEFERRED.md` | Deferred work register with reopen triggers |
-| `RESEARCH-AGENDA.md` | Candidate subjects, discovery methodology, key references |
-| `RESEARCH.md` | Scholarly framework and literature context |
 | `specialist/trademark/TSDR.md` | USPTO TSDR API reference + trademarks.duckdb schema notes and quirks |
 | `specialist/patent/EPO.md` | EPO OPS API reference + patents.duckdb and entities.duckdb notes |
 | `DESIGN.md` | Architecture decisions — why DuckDB, why three databases, why human curation *(planned)* |
 | `research-session.md` | Runnable operations checklist |
-| `archive/ROADMAP.md` | Phase plan (Phases 1–4, now complete) |
-| `archive/MARKERY_REVIEW.md` | Specialist refactor design record (Phases A–F) |
+| `projects/information-systems/RESEARCH.md` | Scholarly framework and literature context |
+| `projects/information-systems/RESEARCH-AGENDA.md` | Candidate subjects, discovery methodology, key references |
+| `archive/ROADMAP-2026-05-18.md` | Phase plan (Phases 1–4, now complete) |
+| `archive/MARKERY_REVIEW-2026-05-18.md` | Specialist refactor design record (Phases A–F) |
