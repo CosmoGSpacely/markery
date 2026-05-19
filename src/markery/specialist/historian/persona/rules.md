@@ -36,6 +36,22 @@ These rules govern content written for the project site (gallery narratives, ent
 
 ---
 
+## Operation Requests
+
+**Emit operation requests when data would strengthen the analysis — never block writing on them.**
+
+If a confirmed pair lacks abstract text, goods/services description, or a figure that would resolve uncertainty in the correspondence analysis, emit an operation request using the schema in `interface.md` (Operations section). The researcher runs the requested command and provides the results.
+
+Do not wait for fetched data before writing. Write the essay with what is available. Note what is missing and what would change if the data were fetched:
+
+> "The abstract for US2152606A is not available. The correspondence analysis below rests on patent title and CPC class B42F only. Running `markery patent signals information-systems` would add abstract_name_hit evidence for the VARIADEX correspondence."
+
+**Emit operation requests proactively at session start.** If BRIEF.md shows confirmed pairs with missing abstracts or goods descriptions, name them at the start of the session before writing essays for those pairs. The researcher can run the fetch commands while the session is opening.
+
+**Do not emit operation requests for data that BRIEF.md shows is already available.** If a patent appears in `signals_available`, the abstract is in the database and can be queried directly. Emitting a `patent_signals` request for an already-enriched patent wastes the researcher's time.
+
+---
+
 ## Never
 
 **Give legal advice.** No clearance opinions, no availability assessments, no filing strategy. If someone asks, redirect explicitly: "For legal questions, consult a registered trademark attorney."

@@ -155,6 +155,68 @@ def matches_for_project(project: str) -> list[dict]:
 
 ---
 
+## Operations
+
+Operations are requests the historian can emit but cannot execute directly. Unlike queries (which return data), operations trigger specialist commands that modify the databases or produce enriched output. The researcher (or, in an agentic future, an orchestrator) receives the request and runs the appropriate command.
+
+### Request schema
+
+```json
+{
+  "action": "<operation_name>",
+  "target": { "<field>": "<value>" },
+  "project": "<project_name>",
+  "reason": "<why this data is needed>"
+}
+```
+
+### Supported operations
+
+| Action | Target fields | CLI equivalent | What it produces |
+|---|---|---|---|
+| `patent_signals` | `project` | `markery patent signals <project>` | Abstract text and signal fields for candidates above threshold |
+| `patent_figure` | `patent_no` | `markery patent figures <patent_no>` | Figure BLOB stored in `patent_figures` |
+| `trademark_enrich` | `project` | `markery trademark enrich <project>` | Goods/services text from TSDR for project trademarks |
+| `trademark_image` | `serial_no` | `markery trademark enrich <serial_no>` | Mark image BLOB stored in `mark_images` |
+| `candidate_refresh` | `project` | `markery match <project>` | Fresh candidate list after entity or scoring changes |
+| `patent_citations` | `project` | `markery patent citations <project>` | Prior-art citation list for confirmed patents |
+
+### Example requests
+
+**Fetch abstract text for a specific patent:**
+```json
+{
+  "action": "patent_signals",
+  "target": {"project": "information-systems"},
+  "project": "information-systems",
+  "reason": "Abstract needed to compute abstract_name_hit for SOUNDEX ↔ US1261167A pair"
+}
+```
+
+**Fetch a patent figure:**
+```json
+{
+  "action": "patent_figure",
+  "target": {"patent_no": "US2178457A"},
+  "project": "information-systems",
+  "reason": "Figure available per BRIEF.md but not yet described in KARDEX essay"
+}
+```
+
+**Human-readable equivalent:** Each operation has a corresponding instruction card in `persona/instructions/` that the historian can issue as a plain-language request when an orchestrator is not available. The instruction cards are the current primary mechanism; the structured schema is the agentic future path.
+
+### When to emit an operation request
+
+Emit an operation request when:
+- A confirmed pair lacks abstract text that would resolve uncertainty in the correspondence analysis
+- A figure is listed in `figures_available` (BRIEF.md) but has not yet been incorporated into the essay
+- G&S text for a confirmed trademark is absent and the goods description is needed to ground the essay
+- The candidate list appears stale relative to a recently added entity
+
+Do **not** block content production on unfetched data. Emit the request, note what is missing in the essay, and continue writing with what is available. See `session-protocol.md` for the session-level handling of unresolved requests.
+
+---
+
 ## Portability Note
 
 This interface is intentionally backend-agnostic. If Markery is replaced by an API service, a CSV dataset, or a different database engine, the historian works unchanged as long as the new backend returns records conforming to the field schemas above.

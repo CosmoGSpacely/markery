@@ -34,6 +34,7 @@ _SUBCOMMANDS = {
     "patent":      "Patent specialist  (build|fetch|figures|signals|…)",
     "trademark":   "Trademark specialist  (build|enrich|status|…)",
     "matchmaker":  "Entity registry management  (build|list|status)",
+    "historian":   "Historian specialist  (prepare <project>)",
     "site":        "Build static research site  (build <project>)",
     "publisher":   "Publisher specialist  (build <project>)",
 }
@@ -90,6 +91,12 @@ def cmd_trademark(rest: list[str]) -> None:
     main()
 
 
+def cmd_historian(rest: list[str]) -> None:
+    from markery.specialist.historian.cli import historian_main
+    sys.argv = ["markery historian"] + rest
+    historian_main()
+
+
 def cmd_publisher(rest: list[str]) -> None:
     from markery.specialist.publisher.cli import publisher_main
     sys.argv = ["markery publisher"] + rest
@@ -138,6 +145,7 @@ def main() -> None:
         "patent":     lambda: cmd_patent(rest),
         "trademark":  lambda: cmd_trademark(rest),
         "matchmaker": lambda: cmd_matchmaker(rest),
+        "historian":  lambda: cmd_historian(rest),
         "site":       lambda: cmd_site(rest),
         "publisher":  lambda: cmd_publisher(rest),
     }[cmd]()

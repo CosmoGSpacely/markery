@@ -61,5 +61,17 @@ class Project:
     def entities_file(self) -> Path:
         return self.root / "entities.txt"
 
+    @property
+    def objectives(self) -> Path:
+        return self.root / "OBJECTIVES.md"
+
+    @property
+    def brief(self) -> Path:
+        return self.root / "BRIEF.md"
+
+    @property
+    def references(self) -> Path:
+        return self.root / "references"
+
     def exists(self) -> bool:
         return self.root.is_dir()
