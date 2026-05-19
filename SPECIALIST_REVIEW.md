@@ -958,3 +958,168 @@ markery trademark entity-forward information-systems --window 1940-1959 --csv cs
 4. Optionally add Library Bureau as an entity in `entities.duckdb` (`markery matchmaker build`)
 5. `markery match information-systems` — Library Bureau patents now appear as candidates against Library Bureau trademarks (ARMORCLAD, AUTOMATIC, LB — all in the existing 1900–1939 corpus, 17 patents already present)
 6. Review and confirm matching pairs; write essays grounding the pre-1900 patents in the project's argument about the card-index technology lineage
+
+---
+
+## Gap Analysis — Agent-to-Agent Communication
+
+A survey of the specialist codebase against the agentic design intent stated in `DESIGN.md`:
+
+> "The long-term design intent is that each specialist can be called by a hosted or local model without modification: the queries API is the model's tool interface, the CLI is the human interface, and the two are kept deliberately separate."
+
+Six gaps stand between the current state and that intent.
+
+---
+
+### G1 — Interface contract exists but Python implementations do not
+
+`specialist/historian/persona/interface.md` already defines a clean abstract tool interface — `trademarks.for_entity()`, `patents.for_entity()`, `entities.get()`, `matches.for_project()` — with DuckDB SQL implementations for each. This is the right design. The gap is that these implementations exist only as documentation examples, not as callable Python functions.
+
+`DESIGN.md` states: "Each specialist exposes three layers: a **queries module** (pure DB reads, no side effects)..." Only the matchmaker approximates this (`link.py`, `entities.py`, `score.py`). Patent and trademark have no `queries.py`. Publisher has no `queries.py`.
+
+**Missing modules:**
+
+| Module | Functions needed |
+|---|---|
+| `specialist/patent/queries.py` | `get_patent(conn, patent_no)`, `get_patents_for_entity(conn, entity_id)`, `get_cpc_classes(conn, patent_no)`, `has_abstract(conn, patent_no)`, `has_figure(conn, patent_no)`, `get_missing_signals(conn, patent_nos)` |
+| `specialist/trademark/queries.py` | `get_mark(conn, serial_no)`, `get_marks_for_entity(conn, entity_id)`, `has_image(conn, serial_no)`, `has_case_status(conn, serial_no)`, `get_goods_desc(conn, serial_no)`, `get_missing_enrichment(conn, serial_nos)` |
+| `specialist/publisher/queries.py` | `get_content_gaps(project)`, `get_rendered_pages(project)`, `content_gap_priority(gap)` |
+
+Until these exist, any model calling the interface must inline SQL — coupling the caller to the DB schema and making the abstraction in `interface.md` nominal rather than real.
+
+**Consequence for Phase 6A:** `markery historian prepare` will need to detect content gaps (what's missing from the site). Without `publisher/queries.py`, it either duplicates publisher logic or triggers a full site build to interrogate the output. Neither is correct.
+
+---
+
+### G2 — The historian interface is read-only; operation requests have no protocol
+
+The current interface in `interface.md` supports data retrieval only. The historian can ask "what patents exist for entity X?" but cannot request "run signals on patent Y" or "fetch the figure for patent Z."
+
+Phase 6A's instruction cards are the human-readable version of operation requests — templates the historian fills in and the researcher executes manually. But for agentic operation, the historian needs to emit structured requests that a Python controller can execute without human relay. No such schema exists.
+
+**The gap:** a request schema and a request executor.
+
+**Proposed request schema** (Phase 7 prerequisite to design now):
+
+```json
+{
+  "action": "patent_signals",
+  "target": {"patent_no": "US1261167A"},
+  "project": "information-systems",
+  "reason": "Abstract needed to compute abstract_name_hit for SOUNDEX pair"
+}
+```
+
+Actions: `patent_signals`, `patent_figure`, `trademark_enrich`, `trademark_image`, `candidate_refresh`, `patent_citations`. Each maps to a specific specialist function. The controller validates the request, calls the function, returns a structured result.
+
+The request executor lives in a new `specialist/orchestrator.py` — the only module permitted to import from multiple specialists for write/operation calls. This also resolves the cross-specialist call policy question from Phase 6C's `--auto-fetch` design (G5 below).
+
+**Consequence for Phase 6C:** `markery match <project> --auto-fetch` currently has no defined mechanism for how the matchmaker triggers patent signals and trademark enrichment. The request schema gives it one.
+
+---
+
+### G3 — No negative feedback channel from reviewer to matchmaker
+
+The interactive reviewer (`review.py`) captures Y/N decisions. Y writes to `confirmed.jsonl`. N is silently discarded. The matchmaker regenerates every candidate on every run — including all pairs the researcher has explicitly rejected.
+
+**Effect:** a researcher who has reviewed 500 candidates and rejected 480 gets all 480 rejections again on the next `markery match` run. The workflow degrades in usability the more it is used. This is the most practically painful gap in the current system.
+
+**Fix:**
+
+1. `projects/<project>/matches/rejected.jsonl` — populated by the reviewer on N, with the same schema as `confirmed.jsonl` plus a `rejection_note` field
+2. `common/config.py` `Project` class gets a `rejected` path property
+3. `matchmaker/link.py` `generate_candidates()` reads `rejected.jsonl` at the start and filters those pairs out of output
+4. `review.py` prompts for an optional rejection note (same as the confirmation note) before writing to `rejected.jsonl`
+
+Downstream: rejected pairs form a negative training signal for Phase 7 scoring refinement. A structural-only score of 0.65 that was rejected by the researcher is more informative than a 0.65 that was never reviewed.
+
+---
+
+### G4 — Workflow state is held entirely in candidates.jsonl, which is overwritten on each run
+
+`candidates.jsonl` is the sole durable artifact of the match pipeline. Running `markery match <project>` overwrites it completely — losing all signal enrichment and rescoring written by previous passes.
+
+Phase 6C's three-pass flow (generate → enrich → rescore) assumes that all three passes run in a single session. If the session ends after Pass 2 (signal enrichment), Pass 3 can be run separately only if `candidates.jsonl` still exists with the enriched signal fields. But if the researcher runs `markery match <project>` again (even to check on fresh data), the enrichment is lost.
+
+**Fix: `projects/<project>/matches/pipeline_state.json`**
+
+A small JSON file written by each pass:
+
+```json
+{
+  "generated_at":  "2026-05-18T14:00:00",
+  "enriched_at":   "2026-05-18T14:05:00",
+  "rescored_at":   null,
+  "candidate_count": 512,
+  "enriched_count":  512,
+  "score_p50":       0.42,
+  "score_p90":       0.71
+}
+```
+
+Behavior: `markery match <project>` checks `pipeline_state.json`. If `generated_at` is recent and the researcher did not pass `--force`, it warns: "candidates.jsonl was generated today; use --force to regenerate." This prevents accidental overwrites that discard enrichment work.
+
+`markery match rescore <project>` (Phase 6C) checks whether `enriched_at` is set before rescoring — refusing to rescore unenriched candidates.
+
+`markery status` includes the pipeline state in project metrics.
+
+---
+
+### G5 — No cross-specialist call policy for operations
+
+`DESIGN.md` permits DuckDB `ATTACH` for cross-specialist reads: "Cross-specialist ATTACH is used to join entities, patents, and trademarks in a single query — permitted per Q19." This covers all read operations cleanly.
+
+Phase 6C's `--auto-fetch` requires the matchmaker to invoke patent signals and trademark enrichment — write/operation calls that `ATTACH` does not cover. No policy governs this. Can `matchmaker/link.py` import from `specialist.patent.signals`? The design intent says specialists own their domain; importing across specialist boundaries creates coupling.
+
+**The gap:** the policy covers reads (DuckDB ATTACH) but not operations (Python function calls across specialists).
+
+**Resolution:** the orchestrator pattern from G2 resolves this. `specialist/orchestrator.py` is the only module permitted to import from multiple specialists for operation calls. The matchmaker's `--auto-fetch` invokes the orchestrator, not the patent or trademark specialist directly. The orchestrator:
+
+- Receives a list of operation requests (from the matchmaker's uncertainty band report)
+- Calls the appropriate specialist functions in order
+- Returns a structured result to the matchmaker for rescoring
+
+This keeps specialist boundaries clean. The matchmaker imports only from `orchestrator`; `orchestrator` imports from all specialists.
+
+---
+
+### G6 — Historian persona files don't describe the Phase 6A session protocol
+
+`specialist/historian/persona/` contains five files: `identity.md`, `rules.md`, `interface.md`, `examples.md`, and a `reference/` directory. Together they define who the historian is, what it knows, and how it queries data.
+
+None of the persona files describe how the historian should use `BRIEF.md` (planned in Phase 6A), how it should handle session startup, or how it should structure operation requests to other specialists (the schema from G2). These will need to be written alongside 6A implementation — not after.
+
+**Needed additions to persona:**
+
+1. `persona/session-protocol.md` — how to open a session: read `BRIEF.md` first, confirm the highest-priority gap with the researcher, state scope boundaries before proceeding. How to close a session: identify any unresolved requests, state what should be run before the next session.
+
+2. `interface.md` extension — add an **Operations** section alongside the current **Queries** section. Operations are requests the historian can emit but not execute: `patents.run_signals(patent_no)`, `trademark.enrich(serial_no)`, etc. Each operation has a structured format (the schema from G2) and a human-readable equivalent (the instruction card from Phase 6A-4).
+
+3. `rules.md` addition — a rule for when to emit operation requests vs. when to proceed without additional data: "If a confirmed pair lacks signal fields and the essay would be strengthened by them, emit a `patent_signals` request. Do not block essay writing on unfetched data — write with what is available and note what is missing."
+
+---
+
+### Priority and dependencies
+
+The gaps above are independent in cause but dependent in fix order:
+
+```
+G1 (queries.py modules)
+  └── G6 (persona session protocol) — can be written in parallel, but needs G1 for implementation
+  └── Phase 6A prepare command — needs publisher/queries.py
+
+G2 (request schema + orchestrator)
+  └── G5 (cross-specialist call policy) — orchestrator resolves this
+  └── Phase 6C --auto-fetch — needs orchestrator to be clean
+
+G3 (rejected.jsonl) — independent; fix is small and high-value
+G4 (pipeline_state.json) — independent; fix is small and prevents data loss
+```
+
+**Recommended implementation order:**
+
+1. **G3 first** — rejected.jsonl is the highest practical impact, smallest change. Fix: one property on Project, one write in review.py, one filter in link.py.
+2. **G4 next** — pipeline_state.json prevents accidental enrichment loss during 6C development. Fix before implementing three-pass flow.
+3. **G1** — queries.py modules are prerequisite to Phase 6A prepare command and Phase 7 agent calls.
+4. **G2 + G5 together** — orchestrator design; prerequisite to Phase 7.
+5. **G6** — persona updates depend on G1 and G2 being resolved; write alongside Phase 6A.
