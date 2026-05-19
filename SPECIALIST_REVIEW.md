@@ -4,6 +4,48 @@ Design record for the next phase of specialist development. Covers the historian
 
 ---
 
+## Decisions — Round 1 (2026-05-18)
+
+| Question | Decision |
+|---|---|
+| Historian mode | Both in parallel — strengthen the Claude persona AND build a thin Python preparation layer |
+| Publisher wiki target | Both — wiki-style static site first, Wikipedia publishing designed alongside |
+| Library reference retrieval | Mixed — Internet Archive for open-access/pre-1928 works; manual curation for in-copyright |
+| Librarian specialist scope | Defer to Phase 7 — prove `references/` format in 6A first |
+
+---
+
+## Recommendation: Python Layer Architecture
+
+**Recommendation: pre-session preparation command, not during-session tool calls.**
+
+The question was whether the thin Python layer should run *during* a Claude session (Claude triggers specialist calls as tools) or *before* a session (a prepare step the researcher runs first).
+
+During-session tool calls — where Claude autonomously invokes `markery patent signals` mid-conversation — require either an MCP server or a formal agent framework. Neither exists in the current architecture. Building that is Phase 7+ work and would be premature before the content and workflow design is proven.
+
+**The immediate path is `markery historian prepare <project>`.** This command runs before a Claude session and produces a refreshed `BRIEF.md` that the historian reads at session start. It:
+
+1. Runs patent signals for all confirmed pairs and any candidates above a threshold
+2. Fetches figures for confirmed patents not yet in `patent_figures`
+3. Fetches TSDR goods descriptions for confirmed trademarks not yet enriched
+4. Counts unreviewed candidates above min-score
+5. Writes a structured `BRIEF.md` with all of the above plus current confirmed pairs, content gaps, and project thesis
+
+The Claude session opens with a fully current brief. The historian can then issue instruction cards ("run `markery patent figures US1261167A`") and the researcher executes them in the terminal — or, since the user works in Claude Code, directly in the same session via the Bash tool. This is "during-session" in practice without requiring a formal agent framework.
+
+This is also the right foundation for an agentic future: the `prepare` command's output is exactly what a controller would feed to the historian model as structured context. The format decision (see open questions below) determines whether that transition is easy or hard.
+
+**Implementation: `markery historian prepare <project>`**
+
+```
+specialist/historian/prepare.py   — orchestration
+specialist/historian/cli.py       — add 'prepare' subcommand
+```
+
+Output: `projects/<project>/BRIEF.md` — overwritten on each prepare run, never committed (add to `.gitignore`). The researcher may also keep a hand-maintained `OBJECTIVES.md` alongside it for project thesis and scope constraints that don't change between sessions.
+
+---
+
 ## Current Specialist Inventory
 
 | Specialist | What it does today | Gap |
@@ -211,15 +253,57 @@ The librarian is not Phase 6 work. It becomes relevant when the reference corpus
 
 ---
 
-## Phase 6 Sequence
+## Phase 6 Sequence (updated)
 
-Given the dependencies between components, the recommended sequence:
+Dependencies flow left to right: BRIEF format must be resolved before `prepare` can be built; content types must be defined before publisher page types; static wiki must work before Wikipedia export is attempted.
 
-1. **6A-1: Project brief format** — define `BRIEF.md` structure; write the information-systems brief by hand
-2. **6A-2: Reference file format** — define `references/<work>.md` format; populate information-systems references by hand from physical/digital copies
-3. **6A-3: Historian instruction cards** — write `persona/instructions/` cards for the four specialist calls
-4. **6A-4: New historian content types** — write content-schema files for thematic essay, timeline annotation, sources page
-5. **6B-1: Publisher new page types** — implement thematic essay, sources page rendering in `build.py` / `render.py`
-6. **6B-2: Cross-link rendering** — `[[Mark]]` → `<a href>` resolution in markdown renderer
-7. **6B-3: Search index** — build `search.json` at site-build time; add Pagefind or lunr.js client
-8. **6B-4: Wikipedia feasibility** — research MediaWiki API, assess SOUNDEX article as a test case
+**6A — Historian**
+
+1. **BRIEF format decision** *(open question — see below)*
+2. **`OBJECTIVES.md` format** — hand-maintained project thesis and scope; define structure; write information-systems version
+3. **`references/` format** — define excerpt file structure; populate information-systems references (manual for in-copyright; IA fetch module for open-access)
+4. **`markery historian prepare <project>`** — build `prepare.py` + CLI subcommand; output `BRIEF.md`
+5. **Historian instruction cards** — `persona/instructions/` for patent-signals, trademark-enrich, candidate-refresh, figure-fetch
+6. **New content schemas** — thematic essay, timeline annotation, sources page *(depends on thematic essay decision — see below)*
+
+**6B — Publisher**
+
+7. **New page types** — thematic essay and sources page rendering in `build.py` / `render.py` *(depends on thematic essay decision)*
+8. **Cross-link rendering** — `[[Slug]]` → `<a href>` resolution in `_render_markdown()`
+9. **Search index** — `search.json` built at site-build time; Pagefind integration
+10. **Wikipedia scoping** — assess SOUNDEX article; determine contribution model *(depends on Wikipedia scope decision — see below)*
+11. **IA retrieval module** — `markery librarian fetch <ia-identifier>` for open-access works
+
+---
+
+## Open Questions — Round 2
+
+**Q1 — BRIEF.md format**
+
+The prepare command writes `BRIEF.md` and the historian reads it cold at session start. Three options:
+
+- **Prose markdown** — the prepare command writes human-readable narrative sections: "Current state", "Unreviewed candidates", "Content gaps". Natural for the historian to read; hard for a future agent controller to parse programmatically.
+
+- **YAML frontmatter + markdown body** — machine fields (counts, lists of confirmed pairs, content gap flags) in YAML; narrative sections in markdown. The historian reads the whole document; a future controller reads only the frontmatter. This is the recommended option for forward-compatibility.
+
+- **Pure structured data (JSON/YAML)** — fully machine-parseable; the historian uses it as a reference document rather than reading prose. Loses the narrative orientation that makes a cold session start effective.
+
+**Q2 — Wikipedia scope**
+
+Two distinct activities with different requirements:
+
+- **Enriching existing articles** — SOUNDEX has a Wikipedia page. Markery could add primary source citations: the USPTO serial number, the specific Odell patent number, exact filing dates. This is conservative, citation-only contribution that doesn't require passing notability review.
+
+- **Creating new articles** — Most Markery confirmed pairs (VI-DEX, VARIADEX, KARDEX) have no Wikipedia presence. Creating new articles requires establishing notability through secondary sources — exactly what the reference works provide. A well-sourced KARDEX article grounded in Yates and Cortada would be legitimately publishable.
+
+Which should Phase 6B prioritize, or both?
+
+**Q3 — Thematic essays and site architecture**
+
+Thematic essays (e.g. "The Card Index in American Business") are the content that makes the site interesting to a general reader rather than just a research record. Two architectural options:
+
+- **Supplementary** — thematic essays are additional pages alongside the existing structure. The landing page stays stats-focused (entities, marks, patents, confirmed pairs); essays are linked from it as "deeper reading".
+
+- **Primary narrative** — a thematic essay becomes the landing page. The site leads with the intellectual argument, not the database metrics. Stats and galleries are still present but accessed from the essay, not the other way around.
+
+The second option produces a more compelling public site but requires the historian to produce a strong thematic essay before the site is "complete". Which framing fits how you want the site to present itself?
