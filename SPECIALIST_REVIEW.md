@@ -2146,3 +2146,130 @@ The following tool work remains in Phase 6, identified during the post-6C/G2 aud
 **What is needed:** Load the foreign application table and surface it in trademark queries; add a `tm_foreign_priority` field to confirmed pairs where applicable.
 
 **Trigger:** When an international trademark comparison is needed — e.g., documenting a British predecessor mark (SHANNON) alongside its US equivalent.
+
+---
+
+## Phase 6D — Temporal Extension (commit 4e0eaf4)
+
+**Goal:** Extend the corpus in both directions from the 1900–1939 core. Pre-1900 patents reached via citation chaining; post-1939 trademarks documenting commercial continuity. All operations route through the orchestrator.
+
+### 6D-1 — EPOClient additions
+
+**`fetch_abstract(patent_no) -> str | None`**
+
+Calls the separate EPO OPS abstract endpoint (`/publication/epodoc/US{num}/abstract`). Handles both single-paragraph and multi-paragraph abstract responses (concatenates `<p>` elements). Returns `None` on 404 or if no English abstract is found. Called by `fetch_patent_record` when the biblio response does not include an abstract.
+
+**`fetch_citations(patent_no) -> list[str]`**
+
+Calls the EPO OPS citations endpoint (`/publication/epodoc/US{num}/citations`). Parses `patcit` entries only (non-patent literature `nplcit` ignored). Filters to US patents only. Returns the list of cited patent numbers in `US{num}{kind}` format. Returns `[]` on 404 or parse failure.
+
+### 6D-2 — `patent/fetch.py`
+
+New module for single-record patent operations, distinct from `build.py`'s bulk CPC/year-window ingestion.
+
+**`upsert_patent(conn, record)`**
+- On new record: INSERT into `patents` + `patent_inventors` + `patent_classes`
+- On existing record: UPDATE `patents` row; DELETE + re-insert `patent_inventors` and `patent_classes` so new EPO data replaces stale data
+- CPC list `[None]` when empty (preserves the "one row per patent" invariant in `patent_classes`)
+
+**`fetch_patent_record(patent_no, client, conn) -> bool`**
+- Calls `client.fetch_biblio()` — returns False if None (EPO 404)
+- If biblio does not include `abstract`, calls `client.fetch_abstract()` to enrich
+- Calls `upsert_patent()`; returns True
+
+**`fetch_citation_chain(patent_no, client, conn) -> int`**
+- Calls `client.fetch_citations()` to get backward citation list
+- Skips any cited patent already in `patents` (no API call)
+- Calls `fetch_patent_record()` for each new cited patent; prints result per patent
+- Returns count of new patents added
+
+### 6D-3 — `trademark/fetch.py` and `extended_marks` table
+
+**`extended_marks` schema** (added to `_ENRICHMENT_DDL` in `build.py`, created by `open_db()`):
+
+```sql
+CREATE TABLE IF NOT EXISTS extended_marks (
+    serial_no         VARCHAR PRIMARY KEY,
+    mark_text         VARCHAR,
+    filing_dt         DATE,
+    ...
+    owner_name        VARCHAR,   -- key addition vs mark_case_status
+    ...
+    fetched_dt        DATE
+);
+```
+
+`owner_name` is present here but not in `mark_case_status` because bulk-dataset marks have a separate `owner` table. For extended marks, TSDR is the only source for ownership.
+
+**`TSDRClient._parse_case_status()`** extended with:
+```python
+"owner_name": _get("registrantName") or _get("applicantName"),
+```
+This field is ignored by `enrich.py` (which writes to `mark_case_status`) but consumed by `fetch.py` (which writes to `extended_marks`).
+
+**`fetch_mark_record(serial_no, client, conn, force=False) -> bool`**
+- When `force=False`: skips the API call if `serial_no` already in `extended_marks`
+- Calls `client.fetch_case_status()` — returns False if None
+- Calls `_upsert_extended_mark()`; returns True
+
+**`_upsert_extended_mark(conn, record)`**: INSERT or UPDATE, sets `fetched_dt = date.today()`.
+
+### 6D-4 — `trademark/queries.py` addition
+
+**`get_extended_mark(conn, serial_no) -> dict | None`**: returns all columns from `extended_marks` for one serial, or None.
+
+### 6D-5 — `matchmaker/link.py` addition
+
+**`entity_forward_report(entity_name, after_year=1939) -> list[dict]`**
+
+Cross-specialist ATTACH query — consistent with the established pattern in `link.py`. Joins `entity_name_variant` (entities.duckdb) with `extended_marks` (trademarks.duckdb) via case-insensitive match. Returns rows with `serial_no, mark_text, filing_dt, owner_name, status_cd, goods_desc`. Returns `[]` on error (e.g., `extended_marks` empty or entity not found) via the `except Exception: rows = []` guard.
+
+### 6D-6 — CLI additions
+
+**`markery patent pull <patent_no>`** — fetch biblio + abstract for one patent; upsert into `patents.duckdb`.
+
+**`markery patent citations <patent_no>`** — fetch backward citation list; pull any cited patents not already in `patents.duckdb`. Prints each new patent as it is fetched.
+
+**`markery trademark fetch <serial_no> [--force]`** — fetch one mark from TSDR; upsert into `extended_marks`. Distinct from `markery trademark enrich`, which enriches bulk-dataset marks already in `case_file`.
+
+**`markery trademark entity-forward <entity> [--after-year YEAR]`** — list post-`after_year` marks in `extended_marks` for the named entity. Read-only; no API calls. Call `markery trademark fetch` first for any serials not yet in the DB.
+
+**`markery match status <project>`** — print pipeline state and review counts:
+```
+Project: information-systems
+  Generated:   2026-05-19T10:23:14  (47 candidates, P50=0.42, P90=0.71)
+  Enriched:    2026-05-19T10:25:01  (47 signals)
+  Rescored:    2026-05-19T10:26:33
+  Confirmed:   8 pair(s)
+  Rejected:    3 pair(s)
+  Unreviewed:  36 candidate(s)
+```
+
+### 6D-7 — Orchestrator additions
+
+Four new operations registered in `specialist/orchestrator.py`:
+
+| Operation | Delegates to |
+|---|---|
+| `fetch_patent(patent_no)` | `patent.fetch.fetch_patent_record` |
+| `fetch_patent_citations(patent_no)` | `patent.fetch.fetch_citation_chain` |
+| `fetch_trademark(serial_no, force=False)` | `trademark.fetch.fetch_mark_record` |
+| `entity_forward_report(entity_name, after_year=1939)` | `matchmaker.link.entity_forward_report` |
+
+Each manages its own DB connection (open → call → close in try/finally) so callers never handle connection lifetime.
+
+### Test coverage
+
+`tests/specialist/patent/test_fetch_6d.py` — 18 tests:
+- `upsert_patent`: insert, CPC/inventors populated, update overwrites abstract, CPC replaced on update, empty CPC inserts null row
+- `fetch_patent_record`: returns False on 404, upserts and returns True, does not call `fetch_abstract` when biblio has abstract
+- `fetch_citation_chain`: zero on no citations, skips existing patents, fetches new patents, counts only found patents
+- EPOClient `fetch_abstract`: returns text, returns None on 404, concatenates multiple paragraphs
+- EPOClient `fetch_citations`: returns US list, returns empty on 404, ignores `nplcit`
+
+`tests/specialist/trademark/test_fetch_6d.py` — 10 tests:
+- `_upsert_extended_mark`: inserts, updates, sets `fetched_dt` to today
+- `fetch_mark_record`: returns False on 404, upserts and returns True, skips existing without force, re-fetches with force
+- `get_extended_mark`: returns record, returns None for missing, all fields present
+
+278 tests pass after Phase 6D implementation (full suite).
