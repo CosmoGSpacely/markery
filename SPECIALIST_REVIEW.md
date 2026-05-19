@@ -1484,3 +1484,283 @@ Publisher queries retain the internal-connection pattern because they open three
 `tests/specialist/publisher/test_queries.py` — 11 new tests covering: `get_rendered_pages` with no site, sorted paths, non-HTML ignored; `get_content_gaps` all priority levels present/absent, existing files excluded, sort order verified, slug deduplication. Publisher tests mock `get_confirmed_matches()` and `get_entities()` via `unittest.mock.patch` — no real DB connection required.
 
 156 tests pass after G1 implementation (full suite).
+
+---
+
+## Implementation — G6: Historian session protocol (2026-05-19)
+
+**Commit:** 966d0bd  (bundled with Phase 6A)
+
+G6 closes the gap between the historian persona files and the Phase 6A session workflow. Before this change, nothing in `persona/` described how a session should start, how BRIEF.md should be used, or how the historian should emit structured operation requests.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `persona/session-protocol.md` | New — session open/close protocol |
+| `persona/interface.md` | Modified — added Operations section |
+| `persona/rules.md` | Modified — added Operation Requests rule block |
+
+### `persona/session-protocol.md` — new file
+
+Defines five steps for opening a session: (1) read BRIEF.md and verify its `prepared:` timestamp, (2) read OBJECTIVES.md for project thesis and scope, (3) confirm the session task with the researcher, (4) check `signals_available` before beginning, (5) start content production from the highest-priority gap.
+
+Closing protocol: state what was produced, list any unresolved operation requests with the commands needed to resolve them before the next session, and avoid summarizing content the researcher already knows.
+
+Session startup checklist table (five rows: read BRIEF.md, read OBJECTIVES.md, confirm task, check signals, begin writing) gives a scannable orientation format for session open.
+
+The key behavioral guarantee: if BRIEF.md does not exist or is stale, the historian asks the researcher to run `markery historian prepare <project>` before proceeding rather than working from a cold state.
+
+### `persona/interface.md` — Operations section
+
+Added between the Markery Implementation section and the Portability Note. The Operations section defines:
+
+**Request schema:**
+```json
+{
+  "action": "<operation_name>",
+  "target": { "<field>": "<value>" },
+  "project": "<project_name>",
+  "reason": "<why this data is needed>"
+}
+```
+
+**Six supported operations** with CLI equivalents:
+
+| Action | CLI equivalent | What it produces |
+|---|---|---|
+| `patent_signals` | `markery patent signals <project>` | Abstract text and signal fields |
+| `patent_figure` | `markery patent figures <patent_no>` | Figure BLOB in `patent_figures` |
+| `trademark_enrich` | `markery trademark enrich <project>` | Goods/services text from TSDR |
+| `trademark_image` | `markery trademark enrich <serial_no>` | Mark image BLOB |
+| `candidate_refresh` | `markery match <project>` | Fresh candidate list |
+| `patent_citations` | `markery patent citations <project>` | Prior-art citation list |
+
+Two worked examples (fetch abstract for a patent, fetch figure for KARDEX) show how the schema is used in context.
+
+The section closes with guidance on when to emit an operation request: when confirmed pair lacks abstract text, when a figure in `figures_available` hasn't been described, when G&S text is absent, or when the candidate list appears stale. The "do not block" rule — write with available data, note what is missing — is restated here in the interface context.
+
+**Design note:** The Operations section is forward-compatible. In the current human-in-the-loop workflow, the historian states the request in natural language (via instruction cards) and the researcher runs it. The structured JSON schema is the agentic future path — when a controller exists, it reads the schema directly. Both paths coexist because the instruction cards reference the same action names.
+
+### `persona/rules.md` — Operation Requests block
+
+Inserted before the Never section. Three rules:
+
+1. **Emit operation requests when data would strengthen the analysis — never block writing on them.** With a worked example of how to note a missing abstract in an essay without halting the session.
+
+2. **Emit operation requests proactively at session start.** If BRIEF.md shows missing abstracts or G&S text for confirmed pairs, name them before writing essays for those pairs so the researcher can run fetches while the session opens.
+
+3. **Do not emit operation requests for data already available.** If a patent appears in `signals_available`, the abstract is in the database. Emitting a redundant request wastes researcher time.
+
+---
+
+## Implementation — Phase 6A: Project orientation and historian prepare (2026-05-19)
+
+**Commit:** 966d0bd
+
+Phase 6A establishes the project document structure (OBJECTIVES.md, references/, BRIEF.md) and implements `markery historian prepare` — the prepare command that generates a fresh BRIEF.md before each historian session.
+
+### 6A-1 — OBJECTIVES.md
+
+**Format defined** (YAML frontmatter + markdown body):
+
+```yaml
+---
+site_mode: narrative          # or: metrics
+wikipedia_targets:
+  enrich: [SOUNDEX]
+  create: [KARDEX]
+scope:
+  date_range: "1900-1939"
+  technology: "..."
+  geography: "United States (primary)"
+  cpc_classes: [B42F, B42D, ...]
+---
+```
+
+Markdown body sections: **Thesis**, **Scope Boundaries**, **Target Audience**, **Content Priorities**.
+
+**`projects/information-systems/OBJECTIVES.md` written.** Key content:
+
+- *Thesis:* American office-systems manufacturers of 1900–1939 systematically bridged invention and product by filing trademarks for the branded names under which their patented indexing and filing systems were sold. The filing record — not trade press or corporate archives — is the primary evidence, because it survived where physical records have not.
+- *Scope:* 1900–1939 USPTO dataset; B42F, B42D, B41J, B41L, G06C, G06K, G09F CPC classes; entities: Remington Rand, Wilson Jones, Yawman & Erbe, Boorum & Pease. Pre-1900 via citation chaining (Phase 6D), post-1939 commercial continuity (Phase 6D).
+- *Hollerith boundary:* Tabulating machines are adjacent, not central — different CPC classes. Austrian's biography is reference context, not a source for confirmed pairs.
+- *Target audience:* Layered — general reader for landing/thematic content; specialist for match essays and source notes; Wikipedia standard for any contributed articles.
+- *Wikipedia targets:* enrich SOUNDEX article (primary-source citations), draft KARDEX article (secondary-source grounded).
+- *Content priorities:* HANDIREF essay (missing companion to REDIREF); entity summary for Library Bureau (precursor entity, citation-chain candidate); deepen SOUNDEX and KARDEX essays.
+
+**`common/config.py`** — three new `Project` properties:
+
+```python
+@property
+def objectives(self) -> Path:
+    return self.root / "OBJECTIVES.md"
+
+@property
+def brief(self) -> Path:
+    return self.root / "BRIEF.md"
+
+@property
+def references(self) -> Path:
+    return self.root / "references"
+```
+
+**`.gitignore`** — added `projects/*/BRIEF.md`. BRIEF.md is ephemeral (regenerated by `prepare` before each session) and must never be committed, as a stale brief is worse than no brief.
+
+---
+
+### 6A-2 — References format and information-systems skeletons
+
+**`projects/<project>/references/README.md`** defines the file format:
+
+```markdown
+---
+author: Last, First
+title: Full Title
+year: 1989
+ia_identifier: <IA item slug>
+ia_access: borrow | open | restricted
+---
+
+## Overview
+
+## Relevant passages
+
+### [Topic]
+> "Direct quotation." (p. 42)
+Context note.
+```
+
+Files are named `<author-surname>-<short-title>.md`. Passages are organized by topic (not page order) because the historian searches by subject, not by chapter. The `ia_identifier` field enables future automated retrieval from the Internet Archive.
+
+**Three skeleton files written** for information-systems:
+
+| File | Author | IA access |
+|---|---|---|
+| `yates-control-through-communication.md` | Yates, JoAnne (1989) | borrow |
+| `cortada-before-the-computer.md` | Cortada, James W. (1993) | borrow |
+| `austrian-herman-hollerith.md` | Austrian, Geoffrey D. (1982) | borrow |
+
+Each file has an Overview section (one paragraph on the book's argument and its relevance to this project) and placeholder `### [Topic]` sections with comments indicating what passages should be added. The researcher fills in the actual passages from the physical or IA-borrowed copy; the structure is pre-built.
+
+---
+
+### 6A-3 — `markery historian prepare <project>`
+
+**New file: `specialist/historian/prepare.py`**
+
+Five public functions, separated by concern so each is independently testable:
+
+```python
+def gather_confirmed(proj: Project) -> list[dict]
+    # Read confirmed.jsonl; add essay_path by computing slug and checking content/
+
+def gather_patent_state(conn, patent_nos: list[str]) -> dict[str, dict]
+    # Per-patent: {abstract: bool, figure: bool}
+    # Uses has_abstract() and has_figure() from patent/queries.py
+
+def gather_trademark_state(conn, serial_nos: list[str]) -> dict[str, bool]
+    # Per-trademark: goods description available?
+    # Uses get_goods_desc() from trademark/queries.py
+
+def count_unreviewed(proj: Project, min_score: float = 0.5) -> int
+    # Candidates above threshold not in confirmed or rejected (file-based)
+
+def top_candidates(proj: Project, min_score: float = 0.5, n: int = 5) -> list[dict]
+    # Top N unreviewed candidates by score descending
+
+def render_brief(project, confirmed, gaps, patent_state, tm_state,
+                 unreviewed_count, top_cands, prepared_at) -> str
+    # Pure function: builds full BRIEF.md string from gathered data
+
+def prepare(project: str, min_score: float = 0.5) -> None
+    # Orchestrates: gathers data, calls render_brief, writes proj.brief
+```
+
+**`prepare()` connection handling:** opens patent and trademark connections (read-only, via `patent/queries.connect()` and `trademark/queries.connect()`), gathers state, closes both before calling publisher queries. The `finally` block ensures connections close even if an error occurs mid-gather.
+
+**Essay path computation** in `prepare()` (not in `gather_confirmed`): after loading from JSONL, each confirmed pair gets `essay_path` set from the slug derived by `.lower().replace(" ", "-")`. This matches the slug convention used by `publisher/queries.get_confirmed_matches()` and `get_content_gaps()`.
+
+**BRIEF.md format** — YAML frontmatter followed by five markdown sections:
+
+```yaml
+---
+project: information-systems
+prepared: 2026-05-19T11:21:45
+confirmed_count: 8
+candidate_count_unreviewed: 1903
+content_gaps:
+  - {type: sources_page, slug: sources, priority: 3}
+signals_available:
+  [US1261167A, US1435663A]
+figures_available:
+  []
+enriched_trademarks:
+  ["71246709", "71255821", ...]
+---
+```
+
+Sections: **Project State** (confirmed pairs with ✓ essay / **no essay** tags), **Content Gaps** (ranked by priority), **Candidate Highlights** (table of top unreviewed by score), **Available Signals** (patents with abstract, patents with figure), **Session Recommendation** (first gap stated as a plain task).
+
+**Session recommendation logic:** picks the first gap from the sorted gap list and produces a prescriptive one-line task. If no gaps exist, recommends a thematic essay or sources page. This gives the historian a default starting point without requiring the researcher to re-read the full gap list.
+
+**`specialist/historian/cli.py`** — replaced the placeholder stub with real argparse:
+
+```
+markery historian prepare <project> [--min-score SCORE]
+```
+
+**`src/markery/cli.py`** — added `historian` to `_SUBCOMMANDS` and `cmd_historian()`.
+
+### Live output (information-systems, 2026-05-19)
+
+```
+BRIEF.md written → projects/information-systems/BRIEF.md
+  8 confirmed pairs  ·  1903 unreviewed candidates
+  2 content gap(s)  ·  signals: 2/7 patents
+```
+
+Content gaps: `sources_page` and `timeline_page` (P3 only — all match essays and entity summaries already exist). `signals_available`: US1261167A, US1435663A (the two SOUNDEX patents have abstracts in the DB). All 7 confirmed trademarks have goods descriptions (`enriched_trademarks` fully populated).
+
+### 6A-4 — Specialist instruction cards
+
+**`persona/instructions/`** — new directory with four files:
+
+| Card | When to use | CLI it requests |
+|---|---|---|
+| `patent-signals.md` | Missing abstract text for confirmed pairs | `markery patent signals <project>` |
+| `trademark-enrich.md` | Missing G&S description for confirmed marks | `markery trademark enrich <project>` |
+| `figure-fetch.md` | Figure not yet described in essay | `markery patent figures <patent_no>` |
+| `candidate-refresh.md` | Candidate list stale after entity changes | `markery match <project>` |
+
+Each card specifies: when to use (including when NOT to use — check BRIEF.md first), what the command produces, where the output lands, the human-readable request to make to the researcher, the structured JSON request (for agentic use), and expected output. The `candidate-refresh.md` card includes the important warning about `--force` when enrichment has already been run.
+
+### 6A-5 — New content schemas and identity.md update
+
+**Three new content schema files:**
+
+`persona/content-schemas/thematic-essay.md` — cross-entity narrative synthesizing multiple confirmed pairs. Key design: explicit layered audience handling within one document. Two registers are specified per section: *accessible* (general reader, no assumed knowledge, magazine register) and *technical depth* (specialist, citation-precise, academic register). The opening argument and context sections use accessible register; the evidence section uses technical depth. Length target 800–1,500 words.
+
+`persona/content-schemas/sources-page.md` — consolidated project bibliography. Four sections: (1) USPTO trademark filings (confirmed serials with TSDR links), (2) US patents (confirmed numbers with Google Patents links), (3) secondary literature (Chicago author-date from `references/` files), (4) archival sources if applicable. Closes with a method note paragraph documenting the cross-reference research technique. Format: bulleted lists throughout, no narrative except the method note.
+
+`persona/content-schemas/timeline-annotation.md` — annotated chronological entries for the full arc. Format: `### [Year]` headings, bold event description, 1–3 sentence context per entry. Preamble (100–150 words) and closing note (50–100 words) as unmarked prose. Site builder reads `###` heading format to detect entry boundaries. Length: 15–30 entries for a project with 8 confirmed pairs.
+
+**`persona/identity.md`** — added **Writing Register — Layered Audience** section between Areas of Strength and Explicit Limits. Defines three registers with explicit format guidance:
+
+- *General reader* — landing, thematic essay leads, entity summary leads: magazine register, define terms on first use, open with historical situation not record identifiers
+- *Specialist reader* — match essays, source notes, patent/trademark sections: evidence-forward, explicit serial and publication number citations, gaps acknowledged
+- *Wikipedia standard* — any Wikipedia-bound content: neutral POV, secondary-source grounded, no original research
+
+The registers coexist: a thematic essay opens in general-reader, transitions to specialist for evidence, closes in general-reader. Active register per section is defined in each content schema.
+
+### Test coverage
+
+`tests/specialist/historian/test_prepare.py` — 20 tests:
+
+- `gather_patent_state`: abstract true/false/null, figure true/false, empty list
+- `gather_trademark_state`: goods desc present/absent, empty list
+- `count_unreviewed`: basic count, excludes confirmed, excludes below min_score, excludes rejected, empty candidates
+- `top_candidates`: sorted by score descending, returns at most N
+- `render_brief`: YAML frontmatter present, signals in YAML, content gaps listed, session recommendation present, no-gaps message, candidate highlights table
+
+176 tests pass after Phase 6A + G6 implementation (full suite).
