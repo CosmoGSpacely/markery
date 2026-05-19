@@ -310,22 +310,62 @@ The "session recommendation" is generated automatically by the prepare command �
 
 Dependencies flow left to right: BRIEF format must be resolved before `prepare` can be built; content types must be defined before publisher page types; static wiki must work before Wikipedia export is attempted.
 
-**6A — Historian**
+**6A-1 — Project orientation documents**
 
-1. **BRIEF format decision** *(open question — see below)*
-2. **`OBJECTIVES.md` format** — hand-maintained project thesis and scope; define structure; write information-systems version
-3. **`references/` format** — define excerpt file structure; populate information-systems references (manual for in-copyright; IA fetch module for open-access)
-4. **`markery historian prepare <project>`** — build `prepare.py` + CLI subcommand; output `BRIEF.md`
-5. **Historian instruction cards** — `persona/instructions/` for patent-signals, trademark-enrich, candidate-refresh, figure-fetch
-6. **New content schemas** — thematic essay, timeline annotation, sources page *(depends on thematic essay decision — see below)*
+- Define and document `OBJECTIVES.md` format (YAML block + markdown body)
+- Write `projects/information-systems/OBJECTIVES.md` by hand
+- Add `BRIEF.md` to `.gitignore`; document that it is ephemeral
 
-**6B — Publisher**
+**6A-2 — Reference file format and initial population**
 
-7. **New page types** — thematic essay and sources page rendering in `build.py` / `render.py` *(depends on thematic essay decision)*
-8. **Cross-link rendering** — `[[Slug]]` → `<a href>` resolution in `_render_markdown()`
-9. **Search index** — `search.json` built at site-build time; Pagefind integration
-10. **Wikipedia scoping** — assess SOUNDEX article; determine contribution model *(depends on Wikipedia scope decision — see below)*
-11. **IA retrieval module** — `markery librarian fetch <ia-identifier>` for open-access works
+- Define `projects/<name>/references/<author-shorttitle>.md` format: YAML header (author, title, year, IA identifier), then excerpt sections with page numbers
+- Populate information-systems references manually from physical/digital copies (Yates, Cortada, Austrian, Chandler)
+- Build `markery librarian fetch <ia-identifier>` for open-access works (pre-1928 or openly licensed); outputs a draft `references/` file the researcher then curates
+
+**6A-3 — `markery historian prepare <project>`**
+
+- Build `specialist/historian/prepare.py` — calls patent signals, trademark enrich, figure fetch, counts candidates
+- Add `prepare` subcommand to `specialist/historian/cli.py`
+- Output: `projects/<project>/BRIEF.md` (YAML frontmatter + ranked gap list + markdown sections)
+- Unit tests for gap ranking logic
+
+**6A-4 — Historian instruction cards**
+
+- Write `persona/instructions/patent-signals.md`, `trademark-enrich.md`, `candidate-refresh.md`, `figure-fetch.md`
+- Each card: what information is needed, which command produces it, where the output lands, expected format back
+
+**6A-5 — New historian content schemas**
+
+- Write `persona/content-schemas/thematic-essay.md` — layered audience: narrative lead + technical depth sections
+- Write `persona/content-schemas/sources-page.md` — primary sources (USPTO, EPO) + secondary (references/)
+- Write `persona/content-schemas/timeline-annotation.md`
+- Update `persona/identity.md` to reflect layered audience writing register
+
+**6B-1 — Publisher new page types**
+
+- Implement thematic essay page rendering in `render.py` / `build.py`
+- Implement sources page rendering
+- `build.py`: read `OBJECTIVES.md` site_mode; switch landing page architecture accordingly
+- Unit tests for new render functions
+
+**6B-2 — Cross-link rendering**
+
+- Extend `_render_markdown()` to resolve `[[Slug]]` → `<a href="...">` using a slug→path index built at site-build time
+- Slugs resolve to: entity pages, match essay pages, thematic essay pages
+
+**6B-3 — Search index**
+
+- Build `search.json` at site-build time: all pages with title, type, slug, first 200 chars of text
+- Integrate Pagefind (static binary, no server required, works on GitHub Pages)
+- Add search input to site header
+
+**6B-4 — Wikipedia**
+
+- Add `WIKIPEDIA_USERNAME` and `WIKIPEDIA_BOT_PASSWORD` to `.env` (documented in `SETUP.md`)
+- Build `markery wikipedia draft <project> <slug>` — generates wikitext from essay + source notes into `projects/<project>/wikipedia/<slug>.wiki`
+- Build `markery wikipedia submit <project> <slug>` — shows diff, prompts confirmation, POSTs to MediaWiki API
+- Test case: enrich SOUNDEX article with primary source citations
+- Draft case: new article for one confirmed pair (KARDEX recommended — strongest secondary source grounding)
 
 ---
 
@@ -365,6 +405,33 @@ Which should Phase 6B prioritize, or both?
 
 **Q3 — Thematic essays and site architecture** *(answered: configurable per project via OBJECTIVES.md)*
 
-**Q4 — Target audience** *(open — see Round 3)*
+---
 
-**Q5 — Wikipedia contribution workflow** *(open — see Round 3)*
+## Decisions — Round 3 (2026-05-18)
+
+| Question | Decision |
+|---|---|
+| Target audience | Layered — general narrative (essays, landing) accessible to any reader; technical depth (patent gallery, source notes, metadata) for specialists; Wikipedia to encyclopedic standard |
+| Wikipedia workflow | Draft + API submission with confirmation (`markery wikipedia submit`) — credentials in `.env` |
+| Prepare output depth | Full ranked gap list — all content gaps ranked by type priority, not just the top one |
+
+### Implications
+
+**Layered audience** means the historian must write in two registers:
+- Thematic essays and landing narrative: no assumed knowledge, defines terms, explains why the technology mattered
+- Match essays and source notes: primary-source grounded, citation-precise, suitable for scholarly reference
+
+The publisher's site mode (`narrative` vs `metrics`) operates at the page-architecture level; the layered audience operates at the content level. Both settings coexist: a `narrative`-mode project still has technical depth pages; a `metrics`-mode project can still carry thematic essays.
+
+**Wikipedia API** requires two new `.env` keys: `WIKIPEDIA_USERNAME` and `WIKIPEDIA_BOT_PASSWORD`. The submit command presents the diff, prompts for confirmation, and POSTs to the MediaWiki API's `edit` action. Edits are attributed to the researcher's Wikipedia account, not a bot.
+
+**Full ranked gap list** in BRIEF.md means the YAML frontmatter carries a `content_gaps` list sorted by priority tier:
+```yaml
+content_gaps:
+  - {type: match_essay,     slug: handiref,         priority: 1}
+  - {type: match_essay,     slug: boorum-pease-clip, priority: 1}
+  - {type: entity_summary,  slug: boorum-and-pease,  priority: 2}
+  - {type: thematic_essay,  slug: card-index,        priority: 3}
+  - {type: sources_page,    slug: sources,            priority: 3}
+```
+Priority tiers: 1 = missing match essays, 2 = missing entity summaries, 3 = enrichment pages (thematic, sources, timeline). The markdown body expands each gap with context.
