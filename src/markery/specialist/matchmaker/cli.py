@@ -38,7 +38,7 @@ def _list_entities() -> None:
 def _run_project(project_name: str, min_score: float) -> None:
     from markery.specialist.matchmaker.link import (
         entity_ids_for_project, generate_candidates,
-        write_candidates, read_confirmed,
+        write_candidates, read_confirmed, read_rejected,
     )
     proj = Project(project_name)
     if not proj.exists():
@@ -55,13 +55,23 @@ def _run_project(project_name: str, min_score: float) -> None:
     print(f"Entities in scope: {entity_ids}")
 
     candidates = generate_candidates(entity_ids, min_score=min_score)
+
+    rejected_keys = read_rejected(proj.rejected)
+    if rejected_keys:
+        before = len(candidates)
+        candidates = [
+            c for c in candidates
+            if (c["patent_no"], str(c["trademark_serial"])) not in rejected_keys
+        ]
+        print(f"  {before - len(candidates)} previously rejected pairs filtered")
+
     write_candidates(candidates, proj.candidates)
 
     confirmed = read_confirmed(proj.confirmed)
     if confirmed:
-        confirmed_keys = {(c["patent_no"], c["trademark_serial"]) for c in confirmed}
+        confirmed_keys = {(c["patent_no"], str(c["trademark_serial"])) for c in confirmed}
         novel = [c for c in candidates
-                 if (c["patent_no"], c["trademark_serial"]) not in confirmed_keys]
+                 if (c["patent_no"], str(c["trademark_serial"])) not in confirmed_keys]
         print(f"  {len(confirmed)} confirmed pairs already in confirmed.jsonl")
         print(f"  {len(novel)} novel candidates (not yet confirmed)")
 

@@ -175,3 +175,16 @@ def read_confirmed(path: Path) -> list[dict]:
     if not path.exists():
         return []
     return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+
+def read_rejected(path: Path) -> set[tuple]:
+    """Load rejected.jsonl as a set of (patent_no, trademark_serial) tuples."""
+    if not path.exists():
+        return set()
+    pairs: set[tuple] = set()
+    for line in path.read_text().splitlines():
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        pairs.add((row["patent_no"], str(row["trademark_serial"])))
+    return pairs

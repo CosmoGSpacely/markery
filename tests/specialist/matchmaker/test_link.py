@@ -8,6 +8,7 @@ from pathlib import Path
 from markery.specialist.matchmaker.link import (
     entity_ids_for_project,
     read_confirmed,
+    read_rejected,
     write_candidates,
 )
 
@@ -62,3 +63,26 @@ def test_write_candidates_creates_parent_dir(tmp_path: Path):
     out = tmp_path / "deep" / "nested" / "candidates.jsonl"
     write_candidates([{"x": 1}], out)
     assert out.exists()
+
+
+def test_read_rejected_returns_empty_when_missing(tmp_path: Path):
+    assert read_rejected(tmp_path / "missing.jsonl") == set()
+
+
+def test_read_rejected_parses_jsonl(tmp_path: Path):
+    p = tmp_path / "rejected.jsonl"
+    rows = [
+        {"patent_no": "US123A", "trademark_serial": "71000001", "rejection_note": ""},
+        {"patent_no": "US456A", "trademark_serial": 71000002,   "rejection_note": ""},
+    ]
+    p.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    result = read_rejected(p)
+    assert ("US123A", "71000001") in result
+    assert ("US456A", "71000002") in result
+
+
+def test_read_rejected_handles_integer_serial(tmp_path: Path):
+    p = tmp_path / "rejected.jsonl"
+    p.write_text(json.dumps({"patent_no": "US789A", "trademark_serial": 71000003}) + "\n")
+    result = read_rejected(p)
+    assert ("US789A", "71000003") in result

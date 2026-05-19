@@ -50,6 +50,10 @@ class Project:
         return self.root / "site"
 
     @property
+    def rejected(self) -> Path:
+        return self.root / "matches" / "rejected.jsonl"
+
+    @property
     def entities_file(self) -> Path:
         return self.root / "entities.txt"
 

@@ -128,7 +128,23 @@ def load_confirmed(path: Path) -> set[tuple]:
     }
 
 
+def load_rejected(path: Path) -> set[tuple]:
+    if not path.exists():
+        return set()
+    return {
+        (json.loads(l)["patent_no"], json.loads(l)["trademark_serial"])
+        for l in path.read_text().splitlines()
+        if l.strip()
+    }
+
+
 def write_confirmed(path: Path, entry: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a") as f:
+        f.write(json.dumps(entry) + "\n")
+
+
+def write_rejected(path: Path, entry: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "a") as f:
         f.write(json.dumps(entry) + "\n")
@@ -239,6 +255,7 @@ def main() -> None:
     proj            = Project(args.project)
     candidates_path = proj.candidates
     confirmed_path  = proj.confirmed
+    rejected_path   = proj.rejected
 
     if not candidates_path.exists():
         print(f"No candidates.jsonl at {candidates_path}")
@@ -253,6 +270,7 @@ def main() -> None:
     }
 
     already_confirmed = load_confirmed(confirmed_path)
+    already_rejected  = load_rejected(rejected_path)
     all_cands = [
         json.loads(l) for l in candidates_path.read_text().splitlines() if l.strip()
     ]
@@ -263,6 +281,7 @@ def main() -> None:
         if (
             key not in seen
             and key not in already_confirmed
+            and key not in already_rejected
             and c["score"] >= args.min_score
             and (args.mark is None or args.mark.upper() in c["trademark"].upper())
         ):
@@ -278,7 +297,7 @@ def main() -> None:
           f"  ·  score ≥ {args.min_score}")
     print("Y = confirm   N = skip   Q = quit")
 
-    confirmed_n = skipped_n = 0
+    confirmed_n = rejected_n = 0
     _tmp_figures: list[str] = []
 
     try:
@@ -310,7 +329,15 @@ def main() -> None:
                 confirmed_n += 1
                 print("  ✓ Written to confirmed.jsonl")
             elif ch == "n":
-                skipped_n += 1
+                write_rejected(rejected_path, {
+                    "patent_no":        cand["patent_no"],
+                    "trademark_serial": cand["trademark_serial"],
+                    "trademark":        cand["trademark"],
+                    "entity_id":        cand["entity_id"],
+                    "entity":           cand["entity"],
+                    "rejection_note":   "",
+                })
+                rejected_n += 1
 
     except KeyboardInterrupt:
         print("\n  (interrupted)")
@@ -321,7 +348,7 @@ def main() -> None:
         conn_pat.close()
         conn_ent.close()
 
-    print(f"\nSession: {confirmed_n} confirmed  ·  {skipped_n} skipped  ·  {total - confirmed_n - skipped_n} unreviewed\n")
+    print(f"\nSession: {confirmed_n} confirmed  ·  {rejected_n} rejected  ·  {total - confirmed_n - rejected_n} unreviewed\n")
 
 
 if __name__ == "__main__":
