@@ -35,7 +35,80 @@ def _list_entities() -> None:
     conn.close()
 
 
-def _run_project(project_name: str, min_score: float, force: bool = False) -> None:
+def _print_resolve_report(report: dict, project: str, auto_fetch: bool) -> None:
+    low, high = 0.40, 0.60
+    print(f"\n{report['band_count']} pair(s) in uncertainty band [{low}, {high}]")
+    n_abs = len(report["missing_abstracts"])
+    n_gds = len(report["missing_goods"])
+    print(f"  Missing abstracts : {n_abs} patent(s)")
+    if n_abs:
+        print(f"    → run: markery patent signals {project}")
+    print(f"  Missing G&S text  : {n_gds} trademark(s)")
+    if n_gds:
+        print(f"    → run: markery trademark enrich-project {project} --source candidates --min-score 0.40")
+    print(f"  Resolvable now    : {report['resolvable']} pair(s)")
+    if report["resolvable"] and not auto_fetch:
+        print(f"    → run: markery match rescore {project}")
+
+    if not auto_fetch:
+        return
+
+    if report["resolvable"] == 0:
+        print("\n--auto-fetch: no pairs resolvable from existing DB data; run specialist fetch commands first.")
+        return
+
+    print(f"\n--auto-fetch: enriching signals from existing DB data and rescoring ...")
+    from markery.specialist.patent.signals import enrich_candidates
+    from markery.specialist.matchmaker.link import rescore_candidates
+    from markery.specialist.matchmaker.pipeline import mark_enriched, mark_rescored
+
+    proj = Project(project)
+    n_enriched = enrich_candidates(proj.candidates)
+    mark_enriched(proj.pipeline_state, n_enriched)
+    rescore_candidates(proj.candidates)
+    mark_rescored(proj.pipeline_state)
+    if n_abs or n_gds:
+        print(f"  {n_abs + n_gds} patent/trademark(s) still need external API fetch.")
+        print("  After fetching, run 'markery match rescore' again to update those pairs.")
+
+
+def _run_rescore(rest: list[str]) -> None:
+    """Entry point for `markery match rescore <project>`."""
+    parser = argparse.ArgumentParser(
+        prog="markery match rescore",
+        description="Pass 3: rewrite score field using existing signal fields",
+    )
+    parser.add_argument("project", help="Project name under projects/")
+    args = parser.parse_args(rest)
+
+    from markery.specialist.matchmaker.link import rescore_candidates
+    from markery.specialist.matchmaker.pipeline import mark_rescored
+
+    proj = Project(args.project)
+    if not proj.exists():
+        print(f"Project not found: {proj.root}")
+        sys.exit(1)
+    if not proj.candidates.exists():
+        print(f"No candidates file. Run 'markery match {args.project}' first.")
+        sys.exit(1)
+
+    n = rescore_candidates(proj.candidates)
+    if n:
+        mark_rescored(proj.pipeline_state)
+        print("Pipeline state updated (rescored_at set).")
+    else:
+        print("Nothing to rescore.")
+
+
+def _run_project(
+    project_name: str,
+    min_score: float,
+    force: bool = False,
+    signals: bool = False,
+    full: bool = False,
+    resolve: bool = False,
+    auto_fetch: bool = False,
+) -> None:
     from markery.specialist.matchmaker.link import (
         entity_ids_for_project, generate_candidates,
         write_candidates, read_confirmed, read_rejected,
@@ -91,6 +164,24 @@ def _run_project(project_name: str, min_score: float, force: bool = False) -> No
         print(f"  {len(confirmed)} confirmed pairs already in confirmed.jsonl")
         print(f"  {len(novel)} novel candidates (not yet confirmed)")
 
+    if signals or full:
+        from markery.specialist.patent.signals import enrich_candidates
+        from markery.specialist.matchmaker.pipeline import mark_enriched
+        print("Enriching candidates with text signals ...")
+        n = enrich_candidates(proj.candidates)
+        mark_enriched(proj.pipeline_state, n)
+
+    if full:
+        from markery.specialist.matchmaker.link import rescore_candidates
+        from markery.specialist.matchmaker.pipeline import mark_rescored
+        rescore_candidates(proj.candidates)
+        mark_rescored(proj.pipeline_state)
+
+    if resolve:
+        from markery.specialist.matchmaker.link import resolve_report
+        report = resolve_report(project_name)
+        _print_resolve_report(report, project_name, auto_fetch)
+
 
 def _run_all(min_score: float) -> None:
     from markery.specialist.matchmaker.link import generate_candidates, write_candidates
@@ -117,6 +208,12 @@ def _run_entity(name: str, min_score: float) -> None:
 
 def match_main() -> None:
     """Entry point for `markery match`."""
+    # Dispatch `rescore` subcommand before the main parser sees it.
+    rest = sys.argv[1:]
+    if rest and rest[0] == "rescore":
+        _run_rescore(rest[1:])
+        return
+
     parser = argparse.ArgumentParser(
         prog="markery match",
         description="Generate patent-trademark candidate pairs via entities.duckdb",
@@ -134,6 +231,14 @@ def match_main() -> None:
                         help="Minimum score to include in output (default: 0.1)")
     parser.add_argument("--force", action="store_true",
                         help="Regenerate even if candidates have been enriched")
+    parser.add_argument("--signals", action="store_true",
+                        help="Pass 1+2: generate then enrich with text signals")
+    parser.add_argument("--full", action="store_true",
+                        help="Pass 1+2+3: generate, enrich, and rescore")
+    parser.add_argument("--resolve", action="store_true",
+                        help="After generating, report uncertainty band and missing data")
+    parser.add_argument("--auto-fetch", action="store_true",
+                        help="With --resolve: enrich and rescore resolvable pairs automatically")
     args = parser.parse_args()
 
     if args.list_entities:
@@ -143,7 +248,14 @@ def match_main() -> None:
     elif args.entity:
         _run_entity(args.entity, args.min_score)
     elif args.project:
-        _run_project(args.project, args.min_score, force=args.force)
+        _run_project(
+            args.project, args.min_score,
+            force=args.force,
+            signals=args.signals,
+            full=args.full,
+            resolve=args.resolve,
+            auto_fetch=args.auto_fetch,
+        )
 
 
 # ---------------------------------------------------------------------------

@@ -16,8 +16,13 @@ from pathlib import Path
 
 import duckdb
 
-from markery.common.config import DB
-from markery.specialist.matchmaker.score import is_company_name_mark, total_score
+from markery.common.config import DB, Project
+from markery.specialist.matchmaker.score import (
+    is_company_name_mark, total_score,
+    date_score, class_score, semantic_score, SEMANTIC_CAP,
+)
+
+UNCERTAINTY_BAND: tuple[float, float] = (0.40, 0.60)
 
 
 def _connect() -> duckdb.DuckDBPyConnection:
@@ -188,3 +193,120 @@ def read_rejected(path: Path) -> set[tuple]:
         row = json.loads(line)
         pairs.add((row["patent_no"], str(row["trademark_serial"])))
     return pairs
+
+
+# ---------------------------------------------------------------------------
+# Pass 3: rescore
+# ---------------------------------------------------------------------------
+
+def _parse_date(s: str | None):
+    """Parse an ISO date string; return None on failure."""
+    if not s:
+        return None
+    try:
+        from datetime import date
+        return date.fromisoformat(s)
+    except (ValueError, TypeError):
+        return None
+
+
+def rescore_candidates(path: Path) -> int:
+    """Pass 3: rewrite the score field for every candidate using signal fields.
+
+    Reads candidates.jsonl, recomputes score = structural + min(SEMANTIC_CAP,
+    semantic_bonus), writes the file in-place. Returns count rescored.
+    Candidates without signal fields are rescored with a zero semantic bonus
+    (identical to their original structural score).
+    """
+    if not path.exists():
+        print(f"No candidates file at {path}")
+        return 0
+
+    lines = [ln for ln in path.read_text().splitlines() if ln.strip()]
+    candidates = [json.loads(ln) for ln in lines]
+
+    for c in candidates:
+        grant_dt  = _parse_date(c.get("patent_grant_dt"))
+        filing_dt = _parse_date(c.get("tm_filing_dt"))
+        structural = date_score(grant_dt, filing_dt) + class_score(c.get("cpc_classes", []))
+        sem = min(SEMANTIC_CAP, semantic_score(
+            title_name_hit=bool(c.get("title_name_hit", False)),
+            abstract_name_hit=bool(c.get("abstract_name_hit", False)),
+            goods_title_overlap=float(c.get("goods_title_overlap", 0.0)),
+            goods_abstract_overlap=float(c.get("goods_abstract_overlap", 0.0)),
+        ))
+        c["score"] = round(structural + sem, 4)
+
+    with open(path, "w") as f:
+        for c in candidates:
+            f.write(json.dumps(c) + "\n")
+
+    print(f"  {len(candidates):,} candidates rescored → {path}")
+    return len(candidates)
+
+
+# ---------------------------------------------------------------------------
+# Resolution report (used by --resolve flag)
+# ---------------------------------------------------------------------------
+
+def resolve_report(project: str) -> dict:
+    """Analyse the structural uncertainty band for a project's current candidates.
+
+    Returns a dict:
+        band_count        int          pairs whose structural score ∈ UNCERTAINTY_BAND
+        missing_abstracts list[str]    patent_nos without abstract text in patents.duckdb
+        missing_goods     list[str]    serial_nos without G&S text in trademarks.duckdb
+        resolvable        int          band pairs where BOTH abstract AND goods are present
+    """
+    from markery.specialist.patent.queries   import connect as pat_connect, has_abstract
+    from markery.specialist.trademark.queries import connect as tm_connect, get_goods_desc
+
+    proj = Project(project)
+    low, high = UNCERTAINTY_BAND
+
+    candidates_all: list[dict] = []
+    if proj.candidates.exists():
+        candidates_all = [
+            json.loads(ln)
+            for ln in proj.candidates.read_text().splitlines()
+            if ln.strip()
+        ]
+
+    band = [
+        c for c in candidates_all
+        if low <= (
+            date_score(_parse_date(c.get("patent_grant_dt")),
+                       _parse_date(c.get("tm_filing_dt")))
+            + class_score(c.get("cpc_classes", []))
+        ) <= high
+    ]
+
+    if not band:
+        return {"band_count": 0, "missing_abstracts": [], "missing_goods": [], "resolvable": 0}
+
+    pat_nos    = list(dict.fromkeys(c["patent_no"]              for c in band))
+    serial_nos = list(dict.fromkeys(str(c["trademark_serial"])  for c in band))
+
+    pat_conn = pat_connect()
+    tm_conn  = tm_connect()
+    try:
+        missing_abstracts = [p for p in pat_nos    if not has_abstract(pat_conn, p)]
+        missing_goods     = [s for s in serial_nos if get_goods_desc(tm_conn, s) is None]
+    finally:
+        pat_conn.close()
+        tm_conn.close()
+
+    missing_pat = set(missing_abstracts)
+    missing_sno = set(missing_goods)
+    resolvable  = sum(
+        1 for c in band
+        if c["patent_no"] not in missing_pat
+        and str(c["trademark_serial"]) not in missing_sno
+    )
+
+    return {
+        "band_count":        len(band),
+        "missing_abstracts": missing_abstracts,
+        "missing_goods":     missing_goods,
+        "resolvable":        resolvable,
+    }

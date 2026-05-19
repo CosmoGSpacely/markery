@@ -64,9 +64,55 @@ def class_score(cpc_classes: list[str]) -> float:
     return 0.3 if any(c in PRODUCT_CLASSES for c in cpc_classes) else 0.0
 
 
+# Bonus weights for each semantic signal component
+SEMANTIC_CAP = 0.25
+_TITLE_HIT_WEIGHT    = 0.20  # mark name in patent title — controlled vocab, specific
+_ABSTRACT_HIT_WEIGHT = 0.10  # mark name in abstract — broader, weaker signal
+_GOODS_TITLE_WEIGHT  = 0.10  # G&S tokens overlap patent title tokens
+_GOODS_ABSTRACT_WEIGHT = 0.05  # G&S tokens overlap abstract tokens
+_GOODS_OVERLAP_THRESHOLD = 0.05  # minimum Jaccard to fire goods overlap signals
+
+
+def semantic_score(
+    title_name_hit: bool = False,
+    abstract_name_hit: bool = False,
+    goods_title_overlap: float = 0.0,
+    goods_abstract_overlap: float = 0.0,
+) -> float:
+    """Compute raw semantic bonus from text-match signals (not yet capped).
+
+    The caller is responsible for capping at SEMANTIC_CAP before adding to
+    structural score. Keeping cap outside this function makes it testable.
+    """
+    score = 0.0
+    if title_name_hit:
+        score += _TITLE_HIT_WEIGHT
+    if abstract_name_hit:
+        score += _ABSTRACT_HIT_WEIGHT
+    if goods_title_overlap > _GOODS_OVERLAP_THRESHOLD:
+        score += _GOODS_TITLE_WEIGHT
+    if goods_abstract_overlap > _GOODS_OVERLAP_THRESHOLD:
+        score += _GOODS_ABSTRACT_WEIGHT
+    return score
+
+
 def total_score(
     grant_dt: date | None,
     filing_dt: date | None,
     cpc_classes: list[str],
+    title_name_hit: bool = False,
+    abstract_name_hit: bool = False,
+    goods_title_overlap: float = 0.0,
+    goods_abstract_overlap: float = 0.0,
 ) -> float:
-    return round(date_score(grant_dt, filing_dt) + class_score(cpc_classes), 4)
+    """Structural + capped semantic score. All signal params default to off.
+
+    Calling total_score(grant_dt, filing_dt, cpc_classes) without signal args
+    is identical to the pre-6C behaviour.
+    """
+    structural = date_score(grant_dt, filing_dt) + class_score(cpc_classes)
+    semantic   = min(SEMANTIC_CAP, semantic_score(
+        title_name_hit, abstract_name_hit,
+        goods_title_overlap, goods_abstract_overlap,
+    ))
+    return round(structural + semantic, 4)
