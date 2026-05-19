@@ -2023,3 +2023,56 @@ All 6C code is in `specialist/matchmaker/`. The `resolve_report()` function read
 - `rescore_candidates`: score updated, title_hit adds +0.20 delta, semantic cap enforced, no-signal-fields uses structural only, missing file, other fields preserved, multi-row
 
 247 tests pass after Phase 6C implementation (full suite).
+
+---
+
+## G2 — `specialist/orchestrator.py` (commit ae33d4d)
+
+**Decision prompt:** After Phase 6C shipped, the question arose: is the orchestrator eventually unavoidable given the specialist structure? The answer is yes. Phase 6C's `--auto-fetch` flag already broke the boundary — `matchmaker/cli.py` imported directly from `patent.signals`. As Phase 6D (fetch operations) and the agentic historian add more cross-specialist operations, ad-hoc direct imports compound into unmaintainable coupling. The orchestrator is the right pattern and the need is already present. Decision: build it now, before 6D adds more crossings.
+
+### What was built
+
+**`src/markery/specialist/orchestrator.py`** — new module, single cross-specialist dispatch point.
+
+Design principles:
+- All imports from other specialists are deferred (lazy, inside each function). Importing the module does not pull in every specialist's dependencies.
+- Each exported function is a named *operation*, not a re-export of a specialist API function. The name describes what is happening from the caller's perspective, not which specialist implements it.
+- The docstring at module level lists all current operations and states the policy (G5).
+
+**G5 policy (now documented at module level):**
+> Any call that crosses a specialist boundary routes through this module. Callers import from here; they do not import from other specialists directly.
+
+**Current operations:**
+
+| Function | Specialist called | Purpose |
+|---|---|---|
+| `enrich_signal_fields(candidates_path)` | `patent.signals.enrich_candidates` | Add text-match signals to candidates.jsonl |
+
+### Retrofit of matchmaker/cli.py
+
+Three direct imports of `patent.signals.enrich_candidates` were replaced with `orchestrator.enrich_signal_fields`:
+
+1. `_run_project()` — `--signals` and `--full` flags
+2. `_print_resolve_report()` — `--auto-fetch` flag
+
+No behaviour change. The call graph is identical; only the import path changed.
+
+### Why deferred imports
+
+The orchestrator module sits at `specialist/orchestrator.py` — one level above every specialist package. If each operation function imported its specialist at module load time, importing the orchestrator would import all specialists at once (pulling in duckdb, requests, etc. even when unused). Deferred imports mean the cost is paid only when an operation is actually called.
+
+### Test coverage
+
+`tests/specialist/test_orchestrator.py` — 3 tests:
+- `test_enrich_signal_fields_delegates_to_patent_signals`: patches `patent.signals.enrich_candidates`, calls `enrich_signal_fields`, asserts mock called once with correct path and return value forwarded
+- `test_enrich_signal_fields_returns_zero_for_missing_file`: same mock pattern, verifies zero return propagates correctly
+- `test_enrich_signal_fields_passes_path_unchanged`: captures the argument received by the specialist; asserts path is forwarded without modification
+
+250 tests pass after G2 implementation (full suite).
+
+### Status after G2
+
+| Gap | Status |
+|---|---|
+| G2 `specialist/orchestrator.py` | **Closed** — module exists; all cross-specialist calls route through it |
+| G5 cross-specialist call policy | **Closed** — policy documented in `orchestrator.py` module docstring |
