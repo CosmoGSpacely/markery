@@ -17,10 +17,8 @@ from pathlib import Path
 
 import duckdb
 
-from markery.common.config import DB, Project
-from markery.specialist.patent.queries import connect as pat_connect, has_abstract, has_figure
-from markery.specialist.publisher.queries import get_content_gaps
-from markery.specialist.trademark.queries import connect as tm_connect, get_goods_desc
+from markery.common.config import Project
+from markery.specialist.historian import queries as hq
 
 
 # ---------------------------------------------------------------------------
@@ -45,8 +43,8 @@ def gather_patent_state(
     """Return per-patent enrichment state: {patent_no: {abstract, figure}}."""
     return {
         pno: {
-            "abstract": has_abstract(conn, pno),
-            "figure":   has_figure(conn, pno),
+            "abstract": hq.patent_has_abstract(conn, pno),
+            "figure":   hq.patent_has_figure(conn, pno),
         }
         for pno in patent_nos
     }
@@ -58,7 +56,7 @@ def gather_trademark_state(
 ) -> dict[str, bool]:
     """Return per-trademark goods-description availability: {serial_no: bool}."""
     return {
-        sn: get_goods_desc(conn, sn) is not None
+        sn: hq.trademark_goods_available(conn, sn)
         for sn in serial_nos
     }
 
@@ -272,8 +270,8 @@ def prepare(project: str, min_score: float = 0.5) -> None:
     patent_nos = list(dict.fromkeys(m["patent_no"] for m in confirmed))
     serial_nos = list(dict.fromkeys(str(m["trademark_serial"]) for m in confirmed))
 
-    pat_conn = pat_connect()
-    tm_conn  = tm_connect()
+    pat_conn = hq.connect_patents()
+    tm_conn  = hq.connect_trademarks()
     try:
         patent_state = gather_patent_state(pat_conn, patent_nos)
         tm_state     = gather_trademark_state(tm_conn, serial_nos)
@@ -281,7 +279,7 @@ def prepare(project: str, min_score: float = 0.5) -> None:
         pat_conn.close()
         tm_conn.close()
 
-    gaps             = get_content_gaps(project)
+    gaps             = hq.content_gaps(project)
     unreviewed_count = count_unreviewed(proj, min_score)
     top_cands        = top_candidates(proj, min_score)
 

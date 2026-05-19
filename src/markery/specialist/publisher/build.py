@@ -84,12 +84,33 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
     link_index  = r.build_link_index(entities, matches, theme_slugs)
     extra_nav   = _build_extra_nav(proj, theme_slugs)
 
+    # Write image files to disk and build figure_index for [[figure:]] cross-links.
+    images_dir = out / "images"
+    (images_dir / "marks").mkdir(parents=True, exist_ok=True)
+    (images_dir / "patents").mkdir(parents=True, exist_ok=True)
+
+    for tm in trademarks:
+        if tm.get("image_available"):
+            data = q.get_mark_image_bytes(tm["serial_no"])
+            if data:
+                (images_dir / "marks" / f"{tm['serial_no']}.png").write_bytes(data)
+
+    figure_index: dict[str, str] = {}
+    for pat in patents:
+        if pat.get("figure_available"):
+            data = q.get_patent_figure_bytes(pat["patent_no"])
+            if data:
+                dest = images_dir / "patents" / f"{pat['patent_no']}.png"
+                dest.write_bytes(data)
+                figure_index[pat["patent_no"]] = f"images/patents/{pat['patent_no']}.png"
+
     pages: list[Path] = []
     search_records: list[dict] = []
 
     pages.append(r.render_landing(
         project, entities, trademarks, patents, matches, stats, out,
         base_url=base_url, link_index=link_index, extra_nav=extra_nav,
+        images_dir=images_dir,
     ))
     print(f"  landing          → {pages[-1].name}")
     search_records.append(_build_search_record(
@@ -100,12 +121,14 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
     pages.append(r.render_trademark_gallery(
         project, entities, trademarks, matches, colors, out,
         base_url=base_url, link_index=link_index, extra_nav=extra_nav,
+        images_dir=images_dir,
     ))
     print(f"  trademark gallery → {pages[-1].name}")
 
     pages.append(r.render_patent_gallery(
         project, entities, patents, matches, colors, out,
         base_url=base_url, link_index=link_index, extra_nav=extra_nav,
+        images_dir=images_dir,
     ))
     print(f"  patent gallery   → {pages[-1].name}")
 
@@ -135,6 +158,7 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
         p = r.render_match_essay(
             project, match, entities, out,
             base_url=base_url, link_index=link_index, extra_nav=extra_nav,
+            images_dir=images_dir, figure_index=figure_index,
         )
         pages.append(p)
         print(f"  match essay      → matches/{p.name}")

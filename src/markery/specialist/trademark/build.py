@@ -72,7 +72,84 @@ CREATE TABLE IF NOT EXISTS extended_marks (
     raw_json          VARCHAR,
     fetched_dt        DATE
 );
+
+CREATE TABLE IF NOT EXISTS events (
+    serial_no    VARCHAR,
+    event_dt     DATE,
+    event_cd     VARCHAR,
+    event_desc_t VARCHAR,
+    party_cd     VARCHAR
+);
+
+CREATE TABLE IF NOT EXISTS foreign_app (
+    serial_no          VARCHAR,
+    foreign_appl_no    VARCHAR,
+    foreign_country_cd VARCHAR,
+    foreign_filing_dt  DATE,
+    foreign_reg_no     VARCHAR,
+    foreign_reg_dt     DATE
+);
 """
+
+
+def load_events(
+    csv_dir: str | Path,
+    conn: duckdb.DuckDBPyConnection | None = None,
+    db_path: str | Path | None = None,
+) -> int:
+    """Load event.csv into the events table (filtered to case_file serial numbers).
+
+    Drops and recreates the events table from CSV each call.
+    Returns the row count loaded.
+    """
+    csv_dir = Path(csv_dir)
+    _own = conn is None
+    if _own:
+        conn = open_db(db_path)
+    try:
+        conn.execute("DROP TABLE IF EXISTS events")
+        conn.execute(f"""
+            CREATE TABLE events AS
+            SELECT o.*
+            FROM {_rc(csv_dir, 'event')} o
+            JOIN (SELECT serial_no FROM case_file) t USING (serial_no)
+        """)
+        conn.execute("CREATE INDEX idx_ev_serial ON events(serial_no)")
+        n = conn.execute("SELECT count(*) FROM events").fetchone()[0]
+    finally:
+        if _own:
+            conn.close()
+    return n
+
+
+def load_foreign_app(
+    csv_dir: str | Path,
+    conn: duckdb.DuckDBPyConnection | None = None,
+    db_path: str | Path | None = None,
+) -> int:
+    """Load foreign_application.csv into the foreign_app table (filtered to case_file serials).
+
+    Drops and recreates the foreign_app table from CSV each call.
+    Returns the row count loaded.
+    """
+    csv_dir = Path(csv_dir)
+    _own = conn is None
+    if _own:
+        conn = open_db(db_path)
+    try:
+        conn.execute("DROP TABLE IF EXISTS foreign_app")
+        conn.execute(f"""
+            CREATE TABLE foreign_app AS
+            SELECT o.*
+            FROM {_rc(csv_dir, 'foreign_application')} o
+            JOIN (SELECT serial_no FROM case_file) t USING (serial_no)
+        """)
+        conn.execute("CREATE INDEX idx_fa_serial ON foreign_app(serial_no)")
+        n = conn.execute("SELECT count(*) FROM foreign_app").fetchone()[0]
+    finally:
+        if _own:
+            conn.close()
+    return n
 
 
 def _rc(csv_dir: Path, name: str) -> str:

@@ -350,6 +350,11 @@ a:hover { color: #8b5e3c; }
   background: #1a1208; color: #e8dcc8; font-size: .8em; width: 140px;
 }
 .site-search input[type=search]::placeholder { color: #888; }
+
+/* ── Patent figure (embedded via [[figure:patent_no]]) ── */
+.patent-figure { margin: 24px 0; text-align: center; }
+.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
 """
 
 # ---------------------------------------------------------------------------
@@ -373,6 +378,26 @@ def _esc(s: str | None) -> str:
             .replace("<", "&lt;")
             .replace(">", "&gt;")
             .replace('"', "&quot;"))
+
+
+def _img_src(
+    kind: str,
+    key: str,
+    depth: int,
+    images_dir: Path | None,
+) -> str | None:
+    """Return an img src value: file-relative path if available on disk, else base64 data URL."""
+    if images_dir is not None:
+        subdir = "marks" if kind == "mark" else "patents"
+        fpath  = images_dir / subdir / f"{key}.png"
+        if fpath.exists():
+            prefix = "../" * depth
+            return f"{prefix}images/{subdir}/{key}.png"
+    if kind == "mark":
+        b64 = get_mark_image_b64(key)
+    else:
+        b64 = get_patent_figure_b64(key)
+    return f"data:image/png;base64,{b64}" if b64 else None
 
 
 def _page(
@@ -434,10 +459,12 @@ def _render_markdown(
     text: str,
     link_index: dict[str, str] | None = None,
     depth: int = 0,
+    figure_index: dict[str, str] | None = None,
 ) -> str:
     """Minimal Markdown → HTML: headings, paragraphs, bold, inline code, fenced blocks.
 
-    link_index maps slug → root-relative URL; [[Slug]] in text resolves to an <a> tag.
+    link_index maps slug → root-relative URL; [[Slug]] resolves to <a>.
+    figure_index maps patent_no → root-relative image path; [[figure:patent_no]] renders <figure>.
     depth controls how many ../ prefixes to prepend to root-relative URLs.
     """
     stash: dict[str, str] = {}
@@ -449,17 +476,31 @@ def _render_markdown(
 
     text = re.sub(r'```[^\n]*\n(.*?)```', _stash_block, text, flags=re.DOTALL)
 
-    if link_index:
+    if link_index or figure_index:
         prefix = "../" * depth
 
         def _stash_link(m: re.Match) -> str:
             raw = m.group(1)
             key = f"\x00LINK{len(stash)}\x00"
-            url = link_index.get(raw.lower().replace(" ", "-"))
-            if url:
-                stash[key] = f'<a href="{prefix}{url}">{_esc(raw)}</a>'
-            else:
-                stash[key] = _esc(raw)
+            if figure_index is not None and raw.startswith("figure:"):
+                pno      = raw[7:]
+                img_path = figure_index.get(pno)
+                if img_path:
+                    stash[key] = (
+                        f'<figure class="patent-figure">'
+                        f'<img src="{prefix}{img_path}" alt="Patent drawing: {_esc(pno)}">'
+                        f'<figcaption>Patent drawing: {_esc(pno)}</figcaption>'
+                        f'</figure>'
+                    )
+                else:
+                    stash[key] = f'<em>[Figure: {_esc(pno)}]</em>'
+                return key
+            if link_index:
+                url = link_index.get(raw.lower().replace(" ", "-"))
+                if url:
+                    stash[key] = f'<a href="{prefix}{url}">{_esc(raw)}</a>'
+                    return key
+            stash[key] = _esc(raw)
             return key
 
         text = re.sub(r'\[\[([^\]]+)\]\]', _stash_link, text)
@@ -515,9 +556,11 @@ def _read_narrative(
     path: Path,
     link_index: dict[str, str] | None = None,
     depth: int = 0,
+    figure_index: dict[str, str] | None = None,
 ) -> str:
     if path.exists():
-        return _render_markdown(path.read_text(), link_index=link_index, depth=depth)
+        return _render_markdown(path.read_text(), link_index=link_index,
+                                depth=depth, figure_index=figure_index)
     return (
         f'<p style="color:#999;font-style:italic">'
         f'Narrative not yet written. See <code>{path.name}</code> for the content schema.</p>'
@@ -633,6 +676,7 @@ def render_landing(
     base_url: str | None = None,
     link_index: dict[str, str] | None = None,
     extra_nav: dict[str, str] | None = None,
+    images_dir: Path | None = None,
 ) -> Path:
     narrative = _read_narrative(Project(project).content / "index-narrative.md",
                                 link_index=link_index, depth=0)
@@ -640,9 +684,9 @@ def render_landing(
 
     match_cards = []
     for m in matches:
-        img_b64 = get_mark_image_b64(str(m["trademark_serial"])) if m.get("has_image") else None
-        if img_b64:
-            thumb = f'<img class="match-card-thumb" src="data:image/png;base64,{img_b64}" alt="{_esc(m["trademark"])}">'
+        src = _img_src("mark", str(m["trademark_serial"]), 0, images_dir) if m.get("has_image") else None
+        if src:
+            thumb = f'<img class="match-card-thumb" src="{src}" alt="{_esc(m["trademark"])}">'
         else:
             thumb = f'<div class="match-card-thumb-placeholder">{_esc(m["trademark"][:3])}</div>'
 
@@ -727,6 +771,7 @@ def render_trademark_gallery(
     base_url: str | None = None,
     link_index: dict[str, str] | None = None,
     extra_nav: dict[str, str] | None = None,
+    images_dir: Path | None = None,
 ) -> Path:
     narrative = _read_narrative(Project(project).content / "trademarks-narrative.md",
                                 link_index=link_index, depth=0)
@@ -737,10 +782,10 @@ def render_trademark_gallery(
 
     cards = []
     for tm in trademarks:
-        sn = tm["serial_no"]
-        img_b64 = get_mark_image_b64(sn) if tm.get("image_available") else None
-        if img_b64:
-            img_html = f'<img class="card-image" src="data:image/png;base64,{img_b64}" alt="{_esc(tm["mark_name"])}">'
+        sn  = tm["serial_no"]
+        src = _img_src("mark", sn, 0, images_dir) if tm.get("image_available") else None
+        if src:
+            img_html = f'<img class="card-image" src="{src}" alt="{_esc(tm["mark_name"])}">'
         else:
             img_html = f'<div class="card-image-placeholder">{_esc(sn)}</div>'
 
@@ -805,6 +850,7 @@ def render_patent_gallery(
     base_url: str | None = None,
     link_index: dict[str, str] | None = None,
     extra_nav: dict[str, str] | None = None,
+    images_dir: Path | None = None,
 ) -> Path:
     narrative = _read_narrative(Project(project).content / "patents-narrative.md",
                                 link_index=link_index, depth=0)
@@ -815,10 +861,10 @@ def render_patent_gallery(
 
     cards = []
     for pat in patents:
-        pn = pat["patent_no"]
-        fig_b64 = get_patent_figure_b64(pn) if pat.get("figure_available") else None
-        if fig_b64:
-            img_html = f'<img class="card-image" src="data:image/png;base64,{fig_b64}" alt="{_esc(pn)}">'
+        pn  = pat["patent_no"]
+        src = _img_src("patent", pn, 0, images_dir) if pat.get("figure_available") else None
+        if src:
+            img_html = f'<img class="card-image" src="{src}" alt="{_esc(pn)}">'
         else:
             img_html = f'<div class="card-image-placeholder">{_esc(pn)}</div>'
 
@@ -956,34 +1002,37 @@ def render_match_essay(
     base_url: str | None = None,
     link_index: dict[str, str] | None = None,
     extra_nav: dict[str, str] | None = None,
+    images_dir: Path | None = None,
+    figure_index: dict[str, str] | None = None,
 ) -> Path:
     slug = match["slug"]
     nav = _nav_links(project, entities, extra_nav)
 
     if match.get("essay_path") and Path(match["essay_path"]).exists():
         essay_md = _render_markdown(Path(match["essay_path"]).read_text(),
-                                    link_index=link_index, depth=1)
+                                    link_index=link_index, depth=1,
+                                    figure_index=figure_index)
     else:
         essay_md = (
             f'<p style="color:#999;font-style:italic">'
             f'Essay not yet written. See <code>content-schemas/match-narrative.md</code>.</p>'
         )
 
-    mark_img = get_mark_image_b64(str(match["trademark_serial"]))
-    fig_img  = get_patent_figure_b64(match["patent_no"])
+    mark_src = _img_src("mark",   str(match["trademark_serial"]), 1, images_dir)
+    fig_src  = _img_src("patent", match["patent_no"],             1, images_dir)
 
     media = ""
-    if mark_img or fig_img:
+    if mark_src or fig_src:
         media_parts = []
-        if mark_img:
+        if mark_src:
             media_parts.append(
-                f'<div><img src="data:image/png;base64,{mark_img}" alt="{_esc(match["trademark"])}">'
+                f'<div><img src="{mark_src}" alt="{_esc(match["trademark"])}">'
                 f'<div class="media-label">{_esc(match["trademark"])} · Serial {_esc(str(match["trademark_serial"]))}</div>'
                 f'</div>'
             )
-        if fig_img:
+        if fig_src:
             media_parts.append(
-                f'<div><img src="data:image/png;base64,{fig_img}" alt="{_esc(match["patent_no"])}">'
+                f'<div><img src="{fig_src}" alt="{_esc(match["patent_no"])}">'
                 f'<div class="media-label">{_esc(match["patent_no"])} · Patent figure</div>'
                 f'</div>'
             )

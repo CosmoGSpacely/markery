@@ -1,5 +1,7 @@
 # Specialist Review — Phase 6
 
+**Archived: 2026-05-19. Phase 6 complete. Active design work continues in DATABASE_REVIEW.md and PROJECT_REVIEW.md.**
+
 Design record for the next phase of specialist development. Covers the historian and publisher specialists in depth, and introduces the librarian specialist concept.
 
 ---
@@ -2273,3 +2275,122 @@ Each manages its own DB connection (open → call → close in try/finally) so c
 - `get_extended_mark`: returns record, returns None for missing, all fields present
 
 278 tests pass after Phase 6D implementation (full suite).
+
+---
+
+## Phase 6 — G1 and D002–D005 (2026-05-19)
+
+### G1 — `historian/queries.py` (cross-specialist wrapper)
+
+**Problem:** `historian/prepare.py` imported directly from three other specialist packages (`patent.queries`, `trademark.queries`, `publisher.queries`), violating the G5 policy that all cross-specialist calls route through a single auditable point.
+
+**Solution:** Created `src/markery/specialist/historian/queries.py` as the historian's own query layer, using deferred imports inside each function (same pattern as `orchestrator.py`).
+
+Functions provided:
+
+| Function | Delegates to |
+|---|---|
+| `connect_patents() -> DuckDBPyConnection` | `patent.queries.connect` |
+| `connect_trademarks() -> DuckDBPyConnection` | `trademark.queries.connect` |
+| `patent_has_abstract(conn, patent_no) -> bool` | `patent.queries.has_abstract` |
+| `patent_has_figure(conn, patent_no) -> bool` | `patent.queries.has_figure` |
+| `trademark_goods_available(conn, serial_no) -> bool` | `trademark.queries.get_goods_desc` |
+| `content_gaps(project) -> list[dict]` | `publisher.queries.get_content_gaps` |
+
+`historian/prepare.py` now has one cross-specialist import: `from markery.specialist.historian import queries as hq`. All three original cross-specialist imports removed.
+
+**Tests:** `tests/specialist/historian/test_queries.py` — 8 tests covering `patent_has_abstract`, `patent_has_figure`, and `trademark_goods_available` with in-memory DuckDB connections.
+
+---
+
+### D002 — Publisher: File-Referenced Images
+
+**What changed:**
+
+- `publisher/queries.py`: added `get_mark_image_bytes(serial_no) -> bytes | None` and `get_patent_figure_bytes(patent_no) -> bytes | None` (raw bytes variants alongside existing base64 functions).
+
+- `publisher/render.py`: added `_img_src(kind, key, depth, images_dir) -> str | None` helper:
+  - When `images_dir` is set and `images_dir/{kind}/{key}.png` exists on disk → returns depth-adjusted relative path (`images/marks/xxx.png` at depth 0, `../images/marks/xxx.png` at depth 1, etc.)
+  - Otherwise falls back to calling `get_mark_image_b64()` / `get_patent_figure_b64()` and returning a `data:image/png;base64,...` URI
+  - Returns `None` when neither source has data
+
+- `render_landing`, `render_trademark_gallery`, `render_patent_gallery`, `render_match_essay` each gained an `images_dir: Path | None = None` parameter; inline `get_mark_image_b64()` / `get_patent_figure_b64()` calls replaced with `_img_src()`.
+
+- `publisher/build.py`: `build_site()` now creates `out/images/marks/` and `out/images/patents/`, writes image files there before rendering, and passes `images_dir=out / "images"` to all four render functions. No backward-compat break — callers that do not pass `images_dir` continue to get inline base64.
+
+---
+
+### D003 — Patent Drawings in Essays via `[[figure:patent_no]]`
+
+**What changed:**
+
+- `publisher/render.py` — `_render_markdown(text, link_index, depth, figure_index=None)`:
+  - New parameter `figure_index: dict[str, str] | None` — maps `patent_no → root-relative image path`
+  - The `[[...]]` stash handler now activates when either `link_index` or `figure_index` is truthy
+  - If the raw cross-link text starts with `figure:`, the patent number is extracted and looked up in `figure_index`:
+    - Found: renders `<figure class="patent-figure"><img ...><figcaption>Patent drawing: {pno}</figcaption></figure>`
+    - Not found: renders `<em>[Figure: {pno}]</em>`
+  - Falls through to normal `link_index` resolution for non-figure cross-links
+
+- `_read_narrative()` gained `figure_index` parameter and threads it into `_render_markdown`.
+
+- `render_match_essay()` gained `figure_index: dict[str, str] | None = None` parameter and passes it to `_render_markdown`.
+
+- CSS: added `.patent-figure` styles (centered block, border, italic caption) to `_CSS`.
+
+- `build_site()` builds `figure_index` while writing patent figures to disk, then passes it to `render_match_essay`.
+
+**Usage in essays:**
+```markdown
+[[figure:US1261167A]] shows the phonetic indexing grid in detail.
+```
+This renders as a full `<figure>` block if the figure was fetched (via `markery patent pull`) and written to disk during `build_site`.
+
+---
+
+### D004 — Events Table (Prosecution History)
+
+**What changed:**
+
+- `trademark/build.py`:
+  - Added `events` table DDL to `_ENRICHMENT_DDL` (created by `open_db()`)
+  - Added `load_events(csv_dir, conn=None, db_path=None) -> int` — drops and recreates the `events` table from `event.csv`, filtered to `case_file` serial numbers; indexes on `serial_no`; returns row count
+
+- `trademark/queries.py`: added `get_events(conn, serial_no) -> list[dict]` — returns all events for a serial ordered by `event_dt`
+
+- `trademark/cli.py`: added `markery trademark load-events --csv-dir DIR` subcommand
+
+---
+
+### D005 — Foreign Application Data
+
+**What changed:**
+
+- `trademark/build.py`:
+  - Added `foreign_app` table DDL to `_ENRICHMENT_DDL`
+  - Added `load_foreign_app(csv_dir, conn=None, db_path=None) -> int` — drops and recreates the `foreign_app` table from `foreign_application.csv`, filtered to `case_file` serial numbers; indexes on `serial_no`; returns row count
+
+- `trademark/queries.py`: added `get_foreign_apps(conn, serial_no) -> list[dict]` — returns all foreign application records ordered by `foreign_filing_dt`
+
+- `trademark/cli.py`: added `markery trademark load-foreign --csv-dir DIR` subcommand
+
+---
+
+### Test coverage after G1 + D002–D005
+
+`tests/specialist/historian/test_queries.py` — 8 tests:
+- `patent_has_abstract`: true with text, false with NULL, false when patent missing
+- `patent_has_figure`: true when figure row exists, false when absent
+- `trademark_goods_available`: true via statement table, true via mark_case_status, false when neither
+
+`tests/specialist/publisher/test_render_d02d03.py` — 9 tests:
+- `_img_src`: returns relative path when file exists, correct depth prefix, None when no file and no DB, None without images_dir
+- `_render_markdown` figure: renders `<figure>` with index, correct depth prefix, fallback text when patent missing from index, ignored without figure_index, coexists with regular cross-links
+
+`tests/specialist/trademark/test_events_d04d05.py` — 18 tests:
+- `load_events`: inserts only case_file-filtered rows, replaces on reload
+- `get_events`: returns ordered records, empty for missing serial, empty before load
+- `load_foreign_app`: inserts only case_file-filtered rows, replaces on reload
+- `get_foreign_apps`: returns records, empty for missing serial, empty before load
+
+**305 tests pass** after G1 + D002–D005 implementation (full suite).

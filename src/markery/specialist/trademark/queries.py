@@ -98,6 +98,52 @@ def get_extended_mark(conn: duckdb.DuckDBPyConnection, serial_no: str) -> dict |
     }
 
 
+def get_events(
+    conn: duckdb.DuckDBPyConnection,
+    serial_no: str,
+) -> list[dict]:
+    """Return all events for a serial number, ordered by event_dt."""
+    rows = conn.execute(
+        "SELECT serial_no, event_dt, event_cd, event_desc_t, party_cd "
+        "FROM events WHERE serial_no = ? ORDER BY event_dt",
+        [serial_no],
+    ).fetchall()
+    return [
+        {
+            "serial_no":   str(r[0]),
+            "event_dt":    r[1],
+            "event_cd":    r[2],
+            "event_desc_t": r[3],
+            "party_cd":    r[4],
+        }
+        for r in rows
+    ]
+
+
+def get_foreign_apps(
+    conn: duckdb.DuckDBPyConnection,
+    serial_no: str,
+) -> list[dict]:
+    """Return all foreign application records for a serial number."""
+    rows = conn.execute(
+        "SELECT serial_no, foreign_appl_no, foreign_country_cd, "
+        "       foreign_filing_dt, foreign_reg_no, foreign_reg_dt "
+        "FROM foreign_app WHERE serial_no = ? ORDER BY foreign_filing_dt",
+        [serial_no],
+    ).fetchall()
+    return [
+        {
+            "serial_no":          str(r[0]),
+            "foreign_appl_no":    r[1],
+            "foreign_country_cd": r[2],
+            "foreign_filing_dt":  r[3],
+            "foreign_reg_no":     r[4],
+            "foreign_reg_dt":     r[5],
+        }
+        for r in rows
+    ]
+
+
 def get_missing_enrichment(
     conn: duckdb.DuckDBPyConnection,
     serial_nos: list[str],

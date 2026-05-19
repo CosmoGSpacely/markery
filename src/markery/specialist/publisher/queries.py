@@ -205,6 +205,27 @@ def get_confirmed_matches(project: str) -> list[dict]:
     return matches
 
 
+def get_mark_image_bytes(serial_no: str) -> bytes | None:
+    conn = duckdb.connect(str(DB["trademarks"]), read_only=True)
+    row = conn.execute(
+        "SELECT image_data FROM mark_images WHERE serial_no = ?", [serial_no]
+    ).fetchone()
+    conn.close()
+    return bytes(row[0]) if row else None
+
+
+def get_patent_figure_bytes(patent_no: str) -> bytes | None:
+    conn = duckdb.connect(str(DB["patents"]), read_only=True)
+    try:
+        row = conn.execute(
+            "SELECT figure_data FROM patent_figures WHERE patent_no = ? LIMIT 1", [patent_no]
+        ).fetchone()
+    except Exception:
+        row = None
+    conn.close()
+    return bytes(row[0]) if row else None
+
+
 def get_mark_image_b64(serial_no: str) -> str | None:
     import base64
     conn = duckdb.connect(str(DB["trademarks"]), read_only=True)

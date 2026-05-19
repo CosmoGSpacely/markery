@@ -82,6 +82,26 @@ def cmd_enrich_project(args: argparse.Namespace) -> None:
     print(f"\n{result['images']} image(s) stored, {result['status']} status record(s) stored.")
 
 
+def cmd_load_events(args: argparse.Namespace) -> None:
+    from markery.specialist.trademark.build import open_db, load_events
+    conn = open_db()
+    try:
+        n = load_events(args.csv_dir, conn)
+    finally:
+        conn.close()
+    print(f"events: {n:,} rows loaded.")
+
+
+def cmd_load_foreign(args: argparse.Namespace) -> None:
+    from markery.specialist.trademark.build import open_db, load_foreign_app
+    conn = open_db()
+    try:
+        n = load_foreign_app(args.csv_dir, conn)
+    finally:
+        conn.close()
+    print(f"foreign_app: {n:,} rows loaded.")
+
+
 def cmd_fetch(args: argparse.Namespace) -> None:
     from markery.specialist.trademark.build import open_db
     from markery.specialist.trademark.fetch import fetch_mark_record
@@ -182,6 +202,18 @@ def main() -> None:
     p_ep.add_argument("--force", action="store_true",
                       help="Re-fetch even if already stored")
 
+    # load-events
+    p_lev = sub.add_parser("load-events",
+                            help="Load event.csv into the events table")
+    p_lev.add_argument("--csv-dir", metavar="DIR", required=True,
+                       help="Path to CSV directory containing event.csv")
+
+    # load-foreign
+    p_lfa = sub.add_parser("load-foreign",
+                            help="Load foreign_application.csv into the foreign_app table")
+    p_lfa.add_argument("--csv-dir", metavar="DIR", required=True,
+                       help="Path to CSV directory containing foreign_application.csv")
+
     # fetch
     p_fetch = sub.add_parser("fetch",
                               help="Fetch a post-1939 or extended mark from TSDR into extended_marks")
@@ -209,6 +241,8 @@ def main() -> None:
         "build":               cmd_build,
         "enrich":              cmd_enrich,
         "enrich-project":      cmd_enrich_project,
+        "load-events":         cmd_load_events,
+        "load-foreign":        cmd_load_foreign,
         "fetch":               cmd_fetch,
         "entity-forward":      cmd_entity_forward,
         "verify-credentials":  cmd_verify_credentials,
