@@ -232,6 +232,83 @@ def get_patent_figure_b64(patent_no: str) -> str | None:
     return base64.b64encode(bytes(row[0])).decode()
 
 
+def get_content_gaps(project: str) -> list[dict]:
+    """Return a prioritised list of missing content items for a project.
+
+    Priority tiers:
+      1 — match essays (one per confirmed pair)
+      2 — entity summaries (one per project entity)
+      3 — optional enrichment pages (sources, timeline)
+
+    Each gap dict has: type, slug, priority, label, path.
+    The list is sorted by (priority, slug) so the most critical gaps appear first.
+    """
+    proj        = Project(project)
+    content_dir = proj.content
+    matches     = get_confirmed_matches(project)
+    entity_ids  = get_project_entity_ids(project)
+    entities    = get_entities(entity_ids)
+
+    gaps: list[dict] = []
+
+    # Priority 1 — missing match essays
+    seen_slugs: set[str] = set()
+    for m in matches:
+        slug = m.get("slug") or m["trademark"].lower().replace(" ", "-")
+        if slug in seen_slugs:
+            continue
+        seen_slugs.add(slug)
+        essay = content_dir / f"{slug}.md"
+        if not essay.exists():
+            gaps.append({
+                "type":     "match_essay",
+                "slug":     slug,
+                "priority": 1,
+                "label":    f"{m['trademark']} ↔ {m['patent_no']}",
+                "path":     str(essay),
+            })
+
+    # Priority 2 — missing entity summaries
+    for e in entities:
+        slug    = e["slug"]
+        summary = content_dir / f"entity-{slug}.md"
+        if not summary.exists():
+            gaps.append({
+                "type":     "entity_summary",
+                "slug":     slug,
+                "priority": 2,
+                "label":    e["canonical_name"],
+                "path":     str(summary),
+            })
+
+    # Priority 3 — optional enrichment pages
+    for fname, gtype, label in [
+        ("sources.md",  "sources_page",  "Source bibliography"),
+        ("timeline.md", "timeline_page", "Annotated timeline"),
+    ]:
+        if not (content_dir / fname).exists():
+            gaps.append({
+                "type":     gtype,
+                "slug":     fname.replace(".md", ""),
+                "priority": 3,
+                "label":    label,
+                "path":     str(content_dir / fname),
+            })
+
+    gaps.sort(key=lambda g: (g["priority"], g["slug"]))
+    return gaps
+
+
+def get_rendered_pages(project: str) -> list[str]:
+    """Return relative paths of all rendered HTML pages in the project site."""
+    site_dir = Project(project).site
+    if not site_dir.exists():
+        return []
+    return sorted(
+        str(p.relative_to(site_dir)) for p in site_dir.rglob("*.html")
+    )
+
+
 def get_entity_stats(entity_ids: list[int],
                      trademarks: list[dict],
                      patents: list[dict],
