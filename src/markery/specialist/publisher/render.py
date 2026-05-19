@@ -305,6 +305,51 @@ a:hover { color: #8b5e3c; }
 .sources h2 { font-size: .95em; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
 .sources dt { font-weight: bold; margin-top: 8px; }
 .sources dd { margin-left: 16px; }
+
+/* ── Timeline annotation page ── */
+.timeline-entries { max-width: 700px; margin-top: 40px; }
+.timeline-entries h3 {
+  font-size: 1.05em;
+  font-weight: bold;
+  color: #3d2b1a;
+  margin: 32px 0 6px;
+  border-left: 3px solid #8b5e3c;
+  padding-left: 10px;
+}
+.timeline-entries p { margin-bottom: .8em; }
+
+/* ── Thematic essay ── */
+.theme-essay { max-width: 700px; }
+.theme-essay h2 { font-size: 1.2em; font-weight: normal; margin: 32px 0 10px; color: #3d2b1a; }
+.theme-essay h3 { font-size: 1.05em; font-weight: normal; margin: 24px 0 8px; color: #5a3e28; }
+.theme-essay p { margin-bottom: 1em; }
+.theme-essay table { width: 100%; border-collapse: collapse; font-size: .88em; margin: 16px 0; }
+.theme-essay th, .theme-essay td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ddd; }
+.theme-essay th { background: #ede8de; font-weight: normal; color: #555; }
+
+/* ── Search page ── */
+.search-form { display: flex; gap: 8px; margin-bottom: 32px; }
+.search-form input[type=search] {
+  flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 3px;
+  font-size: 1em; font-family: Georgia, serif; background: #fff;
+}
+.search-form button {
+  padding: 8px 18px; background: #5a3e28; color: #f5f0e8;
+  border: none; border-radius: 3px; cursor: pointer; font-size: .9em;
+}
+.search-results { list-style: none; }
+.search-results li { margin-bottom: 20px; }
+.search-results .result-title { font-size: 1.05em; font-weight: bold; }
+.search-results .result-type { font-size: .75em; color: #888; font-family: monospace; margin-left: 6px; }
+.search-results .result-excerpt { font-size: .88em; color: #444; margin-top: 4px; }
+
+/* ── Search input in header ── */
+.site-search { margin-left: auto; }
+.site-search input[type=search] {
+  padding: 3px 8px; border: 1px solid #555; border-radius: 3px;
+  background: #1a1208; color: #e8dcc8; font-size: .8em; width: 140px;
+}
+.site-search input[type=search]::placeholder { color: #888; }
 """
 
 # ---------------------------------------------------------------------------
@@ -361,33 +406,63 @@ def _page(
         f'<header class="site-header">'
         f'<a class="site-title" href="{prefix}index.html">Markery Research</a>'
         f'<nav>{nav}</nav>'
+        f'<form class="site-search" action="{prefix}search.html" method="get">'
+        f'<input type="search" name="q" placeholder="Search…" aria-label="Search"></form>'
         '</header>\n'
         + body
         + '\n</body>\n</html>\n'
     )
 
 
-def _nav_links(project: str, entities: list[dict]) -> dict[str, str]:
+def _nav_links(
+    project: str,
+    entities: list[dict],
+    extra: dict[str, str] | None = None,
+) -> dict[str, str]:
     links: dict[str, str] = {
         "Trademarks": "trademarks.html",
         "Patents": "patents.html",
     }
     for e in entities:
         links[e["canonical_name"]] = f"entities/{e['slug']}.html"
+    if extra:
+        links.update(extra)
     return links
 
 
-def _render_markdown(text: str) -> str:
-    """Minimal Markdown → HTML: headings, paragraphs, bold, inline code, fenced blocks."""
-    # Extract fenced blocks before line processing so they don't get _esc()'d.
-    blocks: dict[str, str] = {}
+def _render_markdown(
+    text: str,
+    link_index: dict[str, str] | None = None,
+    depth: int = 0,
+) -> str:
+    """Minimal Markdown → HTML: headings, paragraphs, bold, inline code, fenced blocks.
 
-    def _stash(m: re.Match) -> str:
-        key = f"\x00BLOCK{len(blocks)}\x00"
-        blocks[key] = f'<pre><code>{_esc(m.group(1))}</code></pre>'
+    link_index maps slug → root-relative URL; [[Slug]] in text resolves to an <a> tag.
+    depth controls how many ../ prefixes to prepend to root-relative URLs.
+    """
+    stash: dict[str, str] = {}
+
+    def _stash_block(m: re.Match) -> str:
+        key = f"\x00BLOCK{len(stash)}\x00"
+        stash[key] = f'<pre><code>{_esc(m.group(1))}</code></pre>'
         return key
 
-    text = re.sub(r'```[^\n]*\n(.*?)```', _stash, text, flags=re.DOTALL)
+    text = re.sub(r'```[^\n]*\n(.*?)```', _stash_block, text, flags=re.DOTALL)
+
+    if link_index:
+        prefix = "../" * depth
+
+        def _stash_link(m: re.Match) -> str:
+            raw = m.group(1)
+            key = f"\x00LINK{len(stash)}\x00"
+            url = link_index.get(raw.lower().replace(" ", "-"))
+            if url:
+                stash[key] = f'<a href="{prefix}{url}">{_esc(raw)}</a>'
+            else:
+                stash[key] = _esc(raw)
+            return key
+
+        text = re.sub(r'\[\[([^\]]+)\]\]', _stash_link, text)
 
     lines = text.split("\n")
     html_parts: list[str] = []
@@ -413,15 +488,18 @@ def _render_markdown(text: str) -> str:
             if in_para:
                 html_parts.append("</p>")
                 in_para = False
-        elif line.startswith("\x00BLOCK"):
+        elif line.startswith("\x00BLOCK") and line.rstrip() in stash:
             if in_para:
                 html_parts.append("</p>")
                 in_para = False
-            html_parts.append(blocks[line])
+            html_parts.append(stash[line.rstrip()])
         else:
             processed = _esc(line)
             processed = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', processed)
             processed = re.sub(r'`(.+?)`', r'<code>\1</code>', processed)
+            for k, v in stash.items():
+                if k in processed:
+                    processed = processed.replace(k, v)
             if not in_para:
                 html_parts.append("<p>")
                 in_para = True
@@ -433,13 +511,66 @@ def _render_markdown(text: str) -> str:
     return "\n".join(html_parts)
 
 
-def _read_narrative(path: Path) -> str:
+def _read_narrative(
+    path: Path,
+    link_index: dict[str, str] | None = None,
+    depth: int = 0,
+) -> str:
     if path.exists():
-        return _render_markdown(path.read_text())
+        return _render_markdown(path.read_text(), link_index=link_index, depth=depth)
     return (
         f'<p style="color:#999;font-style:italic">'
-        f'Narrative not yet written. See <code>{path}</code> for the content schema.</p>'
+        f'Narrative not yet written. See <code>{path.name}</code> for the content schema.</p>'
     )
+
+
+def _strip_frontmatter(text: str) -> str:
+    """Remove YAML frontmatter (--- ... ---) from the start of a file."""
+    if not text.startswith("---"):
+        return text
+    end = text.find("\n---", 3)
+    if end == -1:
+        return text
+    return text[end + 4:].lstrip("\n")
+
+
+def _parse_site_mode(proj: Project) -> str:
+    """Return site_mode from OBJECTIVES.md frontmatter; default 'narrative'."""
+    if not proj.objectives.exists():
+        return "narrative"
+    m = re.search(r'^site_mode:\s*(\w+)', proj.objectives.read_text(), re.MULTILINE)
+    return m.group(1) if m else "narrative"
+
+
+def _text_excerpt(path: Path, max_chars: int = 200) -> str:
+    """Return a plain-text excerpt from a markdown file (frontmatter stripped)."""
+    if not path.exists():
+        return ""
+    text = _strip_frontmatter(path.read_text())
+    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    text = re.sub(r'`(.+?)`', r'\1', text)
+    text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
+    text = re.sub(r'\[\[(.+?)\]\]', r'\1', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text[:max_chars]
+
+
+def build_link_index(
+    entities: list[dict],
+    matches: list[dict],
+    theme_slugs: list[str],
+) -> dict[str, str]:
+    """Build slug → root-relative-URL mapping for [[cross-link]] resolution."""
+    index: dict[str, str] = {}
+    for e in entities:
+        index[e["slug"]] = f"entities/{e['slug']}.html"
+    for m in matches:
+        if m.get("slug"):
+            index[m["slug"]] = f"matches/{m['slug']}.html"
+    for slug in theme_slugs:
+        index[slug] = f"themes/{slug}.html"
+    return index
 
 
 def _timeline_svg(records: list[dict], date_field: str, label_field: str,
@@ -500,9 +631,12 @@ def render_landing(
     entity_stats: dict[int, dict],
     out_dir: Path,
     base_url: str | None = None,
+    link_index: dict[str, str] | None = None,
+    extra_nav: dict[str, str] | None = None,
 ) -> Path:
-    narrative = _read_narrative(Project(project).content / "index-narrative.md")
-    nav = _nav_links(project, entities)
+    narrative = _read_narrative(Project(project).content / "index-narrative.md",
+                                link_index=link_index, depth=0)
+    nav = _nav_links(project, entities, extra_nav)
 
     match_cards = []
     for m in matches:
@@ -591,9 +725,12 @@ def render_trademark_gallery(
     entity_colors: dict[int, str],
     out_dir: Path,
     base_url: str | None = None,
+    link_index: dict[str, str] | None = None,
+    extra_nav: dict[str, str] | None = None,
 ) -> Path:
-    narrative = _read_narrative(Project(project).content / "trademarks-narrative.md")
-    nav = _nav_links(project, entities)
+    narrative = _read_narrative(Project(project).content / "trademarks-narrative.md",
+                                link_index=link_index, depth=0)
+    nav = _nav_links(project, entities, extra_nav)
     match_serials = {str(m["trademark_serial"]): m["slug"] for m in matches if m.get("essay_path")}
 
     timeline = _timeline_svg(trademarks, "filing_dt", "mark_name", "entity_id", entity_colors)
@@ -666,9 +803,12 @@ def render_patent_gallery(
     entity_colors: dict[int, str],
     out_dir: Path,
     base_url: str | None = None,
+    link_index: dict[str, str] | None = None,
+    extra_nav: dict[str, str] | None = None,
 ) -> Path:
-    narrative = _read_narrative(Project(project).content / "patents-narrative.md")
-    nav = _nav_links(project, entities)
+    narrative = _read_narrative(Project(project).content / "patents-narrative.md",
+                                link_index=link_index, depth=0)
+    nav = _nav_links(project, entities, extra_nav)
     match_patents = {m["patent_no"]: m["slug"] for m in matches if m.get("essay_path")}
 
     timeline = _timeline_svg(patents, "grant_dt", "title", "entity_id", entity_colors)
@@ -744,10 +884,13 @@ def render_entity_page(
     stats: dict,
     out_dir: Path,
     base_url: str | None = None,
+    link_index: dict[str, str] | None = None,
+    extra_nav: dict[str, str] | None = None,
 ) -> Path:
     slug = entity["slug"]
-    narrative = _read_narrative(Project(project).content / f"entity-{slug}.md")
-    nav = _nav_links(project, entities)
+    narrative = _read_narrative(Project(project).content / f"entity-{slug}.md",
+                                link_index=link_index, depth=1)
+    nav = _nav_links(project, entities, extra_nav)
 
     variants_rows = "".join(
         f'<tr><td>{_esc(v["name"])}</td><td>{_esc(v["source"])}</td></tr>'
@@ -811,12 +954,15 @@ def render_match_essay(
     entities: list[dict],
     out_dir: Path,
     base_url: str | None = None,
+    link_index: dict[str, str] | None = None,
+    extra_nav: dict[str, str] | None = None,
 ) -> Path:
     slug = match["slug"]
-    nav = _nav_links(project, entities)
+    nav = _nav_links(project, entities, extra_nav)
 
     if match.get("essay_path") and Path(match["essay_path"]).exists():
-        essay_md = _render_markdown(Path(match["essay_path"]).read_text())
+        essay_md = _render_markdown(Path(match["essay_path"]).read_text(),
+                                    link_index=link_index, depth=1)
     else:
         essay_md = (
             f'<p style="color:#999;font-style:italic">'
@@ -884,4 +1030,225 @@ def render_match_essay(
     (out_dir / "matches").mkdir(exist_ok=True)
     out_path = out_dir / "matches" / f"{slug}.html"
     out_path.write_text(_page(essay_title, body, nav, depth=1, og=og), encoding="utf-8")
+    return out_path
+
+
+def render_thematic_essay(
+    project: str,
+    slug: str,
+    out_dir: Path,
+    entities: list[dict],
+    base_url: str | None = None,
+    link_index: dict[str, str] | None = None,
+    extra_nav: dict[str, str] | None = None,
+) -> Path:
+    """Render a thematic essay from content/theme-<slug>.md → themes/<slug>.html."""
+    proj = Project(project)
+    src  = proj.content / f"theme-{slug}.md"
+    nav  = _nav_links(project, entities, extra_nav)
+
+    raw = _strip_frontmatter(src.read_text()) if src.exists() else ""
+    title_match = re.search(r'^#\s+(.+)', raw, re.MULTILINE)
+    essay_title = title_match.group(1).strip() if title_match else slug.replace("-", " ").title()
+
+    essay_html = _render_markdown(raw, link_index=link_index, depth=1) if raw else (
+        '<p style="color:#999;font-style:italic">Essay not yet written.</p>'
+    )
+
+    body = (
+        f'<div class="page-header">'
+        f'<h1>{_esc(essay_title)}</h1>'
+        f'<div class="subtitle">Thematic essay · {_esc(project.replace("-", " ").title())}</div>'
+        f'</div>'
+        f'<div class="page-body">'
+        f'<div class="theme-essay">{essay_html}</div>'
+        f'</div>'
+    )
+
+    og = {
+        "title": essay_title,
+        "description": _text_excerpt(src, 160),
+        "url": f"{base_url}/{project}/themes/{slug}.html",
+    } if base_url else None
+    (out_dir / "themes").mkdir(exist_ok=True)
+    out_path = out_dir / "themes" / f"{slug}.html"
+    out_path.write_text(_page(essay_title, body, nav, depth=1, og=og), encoding="utf-8")
+    return out_path
+
+
+def render_sources_page(
+    project: str,
+    out_dir: Path,
+    entities: list[dict],
+    base_url: str | None = None,
+    link_index: dict[str, str] | None = None,
+    extra_nav: dict[str, str] | None = None,
+) -> Path:
+    """Render content/sources.md → sources.html."""
+    proj = Project(project)
+    src  = proj.content / "sources.md"
+    nav  = _nav_links(project, entities, extra_nav)
+
+    raw = _strip_frontmatter(src.read_text()) if src.exists() else ""
+    content_html = _render_markdown(raw, link_index=link_index, depth=0) if raw else (
+        '<p style="color:#999;font-style:italic">Sources page not yet written.</p>'
+    )
+
+    body = (
+        f'<div class="page-header">'
+        f'<h1>Sources</h1>'
+        f'<div class="subtitle">{_esc(project.replace("-", " ").title())} · Primary and secondary sources</div>'
+        f'</div>'
+        f'<div class="page-body">'
+        f'<div class="narrative">{content_html}</div>'
+        f'</div>'
+    )
+
+    og = {
+        "title": "Sources",
+        "description": f"Primary and secondary sources for the {project.replace('-', ' ').title()} project",
+        "url": f"{base_url}/{project}/sources.html",
+    } if base_url else None
+    out_path = out_dir / "sources.html"
+    out_path.write_text(_page("Sources", body, nav, og=og), encoding="utf-8")
+    return out_path
+
+
+def render_timeline_page(
+    project: str,
+    out_dir: Path,
+    entities: list[dict],
+    patents: list[dict],
+    trademarks: list[dict],
+    entity_colors: dict[int, str],
+    base_url: str | None = None,
+    link_index: dict[str, str] | None = None,
+    extra_nav: dict[str, str] | None = None,
+) -> Path:
+    """Render content/timeline.md → timeline.html with combined patent+trademark SVG."""
+    proj = Project(project)
+    src  = proj.content / "timeline.md"
+    nav  = _nav_links(project, entities, extra_nav)
+
+    raw = _strip_frontmatter(src.read_text()) if src.exists() else ""
+
+    preamble_html = ""
+    entries_html  = ""
+    if raw:
+        lines = raw.split("\n")
+        preamble_lines: list[str] = []
+        found_first_entry = False
+        for line in lines:
+            if line.startswith("### "):
+                found_first_entry = True
+            if not found_first_entry:
+                preamble_lines.append(line)
+        preamble_text = "\n".join(preamble_lines).strip()
+        if preamble_text:
+            preamble_html = _render_markdown(preamble_text, link_index=link_index, depth=0)
+        entries_html = (
+            f'<div class="timeline-entries">'
+            + _render_markdown(raw, link_index=link_index, depth=0)
+            + '</div>'
+        )
+
+    pat_svg  = _timeline_svg(patents,    "grant_dt",  "title",     "entity_id", entity_colors)
+    tm_svg   = _timeline_svg(trademarks, "filing_dt", "mark_name", "entity_id", entity_colors)
+
+    body = (
+        f'<div class="page-header">'
+        f'<h1>Timeline</h1>'
+        f'<div class="subtitle">{_esc(project.replace("-", " ").title())} · Patent grants and trademark filings</div>'
+        f'</div>'
+        f'<div class="page-body">'
+        + (f'<div class="narrative">{preamble_html}</div>' if preamble_html else '')
+        + f'<div class="timeline-section">'
+        f'<p class="section-title">Patent Grants</p>{pat_svg}'
+        f'<p class="section-title" style="margin-top:16px">Trademark Filings</p>{tm_svg}'
+        f'</div>'
+        + entries_html
+        + f'</div>'
+    )
+
+    og = {
+        "title": "Timeline",
+        "description": f"Chronological arc of patents and trademarks in the {project.replace('-', ' ').title()} project",
+        "url": f"{base_url}/{project}/timeline.html",
+    } if base_url else None
+    out_path = out_dir / "timeline.html"
+    out_path.write_text(_page("Timeline", body, nav, og=og), encoding="utf-8")
+    return out_path
+
+
+def render_search_page(
+    project: str,
+    out_dir: Path,
+    entities: list[dict],
+    extra_nav: dict[str, str] | None = None,
+) -> Path:
+    """Render a client-side search page backed by search.json."""
+    nav  = _nav_links(project, entities, extra_nav)
+
+    search_js = r"""
+(function () {
+  var idx = null;
+  function load(cb) {
+    if (idx !== null) { cb(); return; }
+    fetch('search.json').then(function(r){ return r.json(); }).then(function(data){
+      idx = data;
+      cb();
+    }).catch(function(){ idx = []; cb(); });
+  }
+  function run(q) {
+    q = q.toLowerCase().trim();
+    var ul = document.getElementById('results');
+    ul.innerHTML = '';
+    if (!q) return;
+    var hits = idx.filter(function(p){
+      return (p.title + ' ' + p.excerpt).toLowerCase().indexOf(q) !== -1;
+    });
+    if (!hits.length) {
+      ul.innerHTML = '<li>No results.</li>';
+      return;
+    }
+    hits.forEach(function(p) {
+      var li = document.createElement('li');
+      li.innerHTML = '<div class="result-title"><a href="' + p.url + '">' +
+        p.title.replace(/</g,'&lt;') + '</a><span class="result-type">' +
+        p.type + '</span></div><div class="result-excerpt">' +
+        p.excerpt.replace(/</g,'&lt;').substring(0,180) + '…</div>';
+      ul.appendChild(li);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var input = document.getElementById('q');
+    var btn   = document.getElementById('search-btn');
+    var params = new URLSearchParams(window.location.search);
+    var initial = params.get('q') || '';
+    if (initial) { input.value = initial; load(function(){ run(initial); }); }
+    btn.addEventListener('click', function(){ load(function(){ run(input.value); }); });
+    input.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') { load(function(){ run(input.value); }); }
+    });
+  });
+})();
+"""
+
+    body = (
+        f'<div class="page-header">'
+        f'<h1>Search</h1>'
+        f'<div class="subtitle">{_esc(project.replace("-", " ").title())}</div>'
+        f'</div>'
+        f'<div class="page-body">'
+        f'<div class="search-form">'
+        f'<input type="search" id="q" placeholder="Search marks, patents, essays…" autofocus>'
+        f'<button id="search-btn">Search</button>'
+        f'</div>'
+        f'<ul class="search-results" id="results"></ul>'
+        f'<script>{search_js}</script>'
+        f'</div>'
+    )
+
+    out_path = out_dir / "search.html"
+    out_path.write_text(_page("Search", body, nav), encoding="utf-8")
     return out_path
