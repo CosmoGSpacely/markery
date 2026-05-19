@@ -1904,3 +1904,122 @@ Unknown slugs resolve to plain text (link removed, display text kept), not broke
 - `build_draft_wikitext`: sources section present, categories present, essay body converted
 
 220 tests pass after Phase 6B implementation (full suite).
+
+---
+
+## Phase 6C Implementation — 2026-05-19
+
+**Commit:** 81713c3 — "Implement Phase 6C: semantic matchmaker scoring and resolution loop"
+
+All Phase 6C code is in the **matchmaker specialist** (`specialist/matchmaker/`), as directed.
+
+### Files modified
+
+| File | Change |
+|---|---|
+| `src/markery/specialist/matchmaker/score.py` | `semantic_score()`, extended `total_score()`, `SEMANTIC_CAP` |
+| `src/markery/specialist/matchmaker/link.py` | `rescore_candidates()`, `resolve_report()`, `_parse_date()`, `UNCERTAINTY_BAND` |
+| `src/markery/specialist/matchmaker/cli.py` | `rescore` subcommand, `--signals`, `--full`, `--resolve`, `--auto-fetch` flags |
+| `tests/specialist/matchmaker/test_score_6c.py` | 18 new tests |
+| `tests/specialist/matchmaker/test_link_6c.py` | 9 new tests |
+
+### 6C-1 — `semantic_score()` in score.py
+
+Pure function, no external dependencies. Four additive components:
+
+| Component | Condition | Value |
+|---|---|---|
+| `title_hit_score` | `title_name_hit == True` | +0.20 |
+| `abstract_hit_score` | `abstract_name_hit == True` | +0.10 |
+| `goods_title_score` | `goods_title_overlap > 0.05` | +0.10 |
+| `goods_abstract_score` | `goods_abstract_overlap > 0.05` | +0.05 |
+
+`SEMANTIC_CAP = 0.25` is defined as a module-level constant so tests can reference it directly and the cap value is single-sourced.
+
+`total_score()` gains four keyword arguments (all defaulting to zero/False) and applies the cap internally:
+
+```python
+def total_score(
+    grant_dt, filing_dt, cpc_classes,
+    title_name_hit=False, abstract_name_hit=False,
+    goods_title_overlap=0.0, goods_abstract_overlap=0.0,
+) -> float:
+    structural = date_score(grant_dt, filing_dt) + class_score(cpc_classes)
+    semantic   = min(SEMANTIC_CAP, semantic_score(...))
+    return round(structural + semantic, 4)
+```
+
+Calling `total_score(grant_dt, filing_dt, cpc_classes)` without signal args is identical to the pre-6C behaviour — existing callers unaffected.
+
+**Design decision:** `semantic_score()` returns the raw (uncapped) bonus; `total_score()` applies the cap. This makes the raw signal contribution testable independently of the cap.
+
+### 6C-2 — `rescore_candidates(path)` in link.py
+
+Pass 3. Reads `candidates.jsonl`, recomputes every candidate's `score` field as `structural + min(SEMANTIC_CAP, semantic_bonus)`, writes in-place. Uses `_parse_date()` to convert ISO date strings back to `datetime.date` objects for scoring.
+
+Candidates without signal fields (no `title_name_hit`, etc.) are rescored with zero semantic bonus — identical to their original structural score. This means `rescore_candidates` is safe to run on a candidates file that has not been enriched.
+
+**`_parse_date(s: str | None) -> date | None`** — shared helper for both `rescore_candidates` and `resolve_report`. Handles `None`, empty string, and malformed dates without raising.
+
+**`UNCERTAINTY_BAND: tuple[float, float] = (0.40, 0.60)`** — module-level constant for the structural confidence band.
+
+### 6C-3 — `resolve_report(project)` in link.py
+
+Reads `candidates.jsonl`, computes structural score for each candidate, identifies those in `UNCERTAINTY_BAND`. Queries both specialist databases **via their published query APIs** (not cross-specialist ATTACH):
+
+- `patent.queries.has_abstract(conn, patent_no)` — checks `patents.duckdb`
+- `trademark.queries.get_goods_desc(conn, serial_no)` — checks `trademarks.duckdb`
+
+Returns:
+```python
+{
+    "band_count":        int,     # pairs in [0.40, 0.60] structural band
+    "missing_abstracts": list[str],  # patent_nos without abstract text
+    "missing_goods":     list[str],  # serial_nos without G&S text
+    "resolvable":        int,    # pairs where BOTH are present — can rescore now
+}
+```
+
+### 6C-4 — CLI additions in cli.py
+
+**`markery match rescore <project>`** — Pass 3 only. Dispatched before the main argparse parser by checking `sys.argv[1] == "rescore"`. This avoids argparse collision with the existing `project` positional argument (which would otherwise consume `"rescore"` as a project name).
+
+**New flags on `markery match <project>`:**
+
+| Flag | Behaviour |
+|---|---|
+| `--signals` | Pass 1 + 2: generate + enrich with text signals |
+| `--full` | Pass 1 + 2 + 3: generate + enrich + rescore |
+| `--resolve` | After Pass 1, print uncertainty band report |
+| `--auto-fetch` | With `--resolve`: enrich + rescore resolvable pairs automatically |
+
+**`--auto-fetch` scope:** Runs the signal enrichment pass (reads from existing DB data, no external API calls) and then rescores. Pairs that need external data fetch (missing patent abstracts from EPO, missing G&S from TSDR) are identified in the report but not auto-fetched — the researcher runs the specialist fetch commands for those. This keeps `--auto-fetch` atomic and safe (no live API calls from matchmaker).
+
+**Resolution report output:**
+```
+47 pair(s) in uncertainty band [0.40, 0.60]
+  Missing abstracts : 12 patent(s)
+    → run: markery patent signals <project>
+  Missing G&S text  : 8 trademark(s)
+    → run: markery trademark enrich-project <project> --source candidates --min-score 0.40
+  Resolvable now    : 27 pair(s)
+    → run: markery match rescore <project>
+```
+
+### Placement decision
+
+All 6C code is in `specialist/matchmaker/`. The `resolve_report()` function reads from patent and trademark databases but does so via their published query module APIs (`patent.queries.has_abstract`, `trademark.queries.get_goods_desc`) — this is read-only specialist API usage, not a cross-specialist ATTACH query. The actual fetch logic (EPO API, TSDR API) remains in the patent and trademark specialists.
+
+### Test coverage
+
+`tests/specialist/matchmaker/test_score_6c.py` — 18 tests:
+- `semantic_score`: zero when no signals, each component individually, below-threshold does not fire, at-threshold for goods overlap does not fire, all signals sum correctly
+- `SEMANTIC_CAP` value is 0.25
+- `total_score`: backward compatibility (no-signal call unchanged), max without signals = 0.80, title_hit bonus exactly +0.20, all-signals cap enforced, None dates still allow semantic bonus, result rounded to 4 decimal places
+
+`tests/specialist/matchmaker/test_link_6c.py` — 9 tests:
+- `_parse_date`: valid ISO, None, empty string, invalid string
+- `UNCERTAINTY_BAND` values (0.40, 0.60)
+- `rescore_candidates`: score updated, title_hit adds +0.20 delta, semantic cap enforced, no-signal-fields uses structural only, missing file, other fields preserved, multi-row
+
+247 tests pass after Phase 6C implementation (full suite).
