@@ -1,6 +1,6 @@
-# Research Session Workflow
+# Research Session Workflow — Match-Review-Essay Projects
 
-Single runnable checklist for a Markery research session. Every command assumes you are at the project root with the virtual environment active.
+Runnable checklist for **match-review-essay projects** (e.g. `information-systems`). For other project types, see that project's `README.md`. Every command assumes you are at the project root with the virtual environment active.
 
 ---
 

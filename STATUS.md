@@ -22,8 +22,9 @@
 
 ## Active Projects
 
-| Project | Entities | Confirmed pairs | Essays | Site | Next action |
-|---|---|---|---|---|---|
-| `information-systems` | 4 | 8 | 7 | Built | Add Smead entity; fetch D001 CPC classes |
+| Project | Type | Next action |
+|---|---|---|
+| `information-systems` | Match-review-essay | Add Smead entity; fetch D001 CPC classes |
+| `monthly-image-review` | Gallery/exploration | Run June–December 1930 months |
 
 See each project's `STATUS.md` for detail.

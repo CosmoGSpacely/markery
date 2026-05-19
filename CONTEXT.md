@@ -25,24 +25,31 @@ DEFERRED.md  →  ROADMAP.md  →  STATUS.md  →  archive/
 
 ## Project Work Lifecycle
 
-```
-project/RESEARCH-AGENDA.md  →  review  →  content/  →  site/
-```
+Each project under `projects/<name>/` is independent and defines its own workflow in its `README.md`. Projects vary in structure depending on what they are doing.
 
-Each project under `projects/<name>/` is independent. A project contains:
+**Common to all projects:**
+
+| Path | Purpose |
+|---|---|
+| `README.md` | Project overview and workflow description |
+| `STATUS.md` | Project-local metrics and next action |
+| `output/` | Enhanced images, PDFs — gitignored, regenerable |
+
+**Match-review-essay projects** (e.g. `information-systems`) also have:
 
 | Path | Purpose |
 |---|---|
 | `RESEARCH-AGENDA.md` | Candidate subjects, methodology, key references |
-| `RESEARCH.md` | Scholarly framework for this project |
-| `STATUS.md` | Project-local metrics and next action |
-| `README.md` | Project overview and entity list |
+| `RESEARCH.md` | Scholarly framework |
 | `entities.txt` | Entity IDs scoped to this project |
 | `matches/candidates.jsonl` | Generated — never edited |
 | `matches/confirmed.jsonl` | Hand-curated confirmed pairs |
 | `content/` | Research essays and narrative pages |
 | `site/` | Built static site — gitignored, regenerable |
-| `output/` | Enhanced images, PDFs — gitignored, regenerable |
+
+**Gallery/exploration projects** (e.g. `monthly-image-review`) have a lighter structure — typically just `README.md`, `STATUS.md`, and `output/` galleries. They surface leads that may feed into match-review projects or stand alone as visual surveys.
+
+A project's `README.md` is the authority on its workflow. `research-session.md` at root documents the match-review-essay workflow specifically.
 
 Project-local `STATUS.md` carries the metrics and next action for that project. The root `STATUS.md` carries only a one-line summary per project.
 
