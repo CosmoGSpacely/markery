@@ -435,3 +435,254 @@ content_gaps:
   - {type: sources_page,    slug: sources,            priority: 3}
 ```
 Priority tiers: 1 = missing match essays, 2 = missing entity summaries, 3 = enrichment pages (thematic, sources, timeline). The markdown body expands each gap with context.
+
+---
+
+## Phase 6C — Semantic Matchmaker
+
+### Current state and the critical gap
+
+The matchmaker currently uses two structural signals:
+
+| Signal | Range | Source |
+|---|---|---|
+| `date_score` | −0.4 to +0.5 | Patent grant date vs. trademark filing date |
+| `class_score` | 0.0 or 0.3 | CPC class membership in product signal set |
+| **Total** | max 0.80 | |
+
+`signals.py` in the patent specialist already computes four semantic fields and writes them to `candidates.jsonl`:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `title_name_hit` | bool | Mark words appear in patent title |
+| `abstract_name_hit` | bool | Mark words appear in patent abstract |
+| `goods_title_overlap` | float | Jaccard(G&S tokens, title tokens) |
+| `goods_abstract_overlap` | float | Jaccard(G&S tokens, abstract tokens) |
+
+**These are displayed in the reviewer for human judgment but do not affect the `score` field.** The matchmaker computes semantic evidence and then discards it before scoring. This is the primary gap.
+
+A pair like SOUNDEX ↔ US1261167A — where the mark name appears in the patent abstract and the G&S description overlaps the title vocabulary — scores identically to a pair with the same date gap but no textual evidence. Fixing this is Phase 6C.
+
+---
+
+### New scoring architecture
+
+The current flow is:
+
+```
+generate_candidates() → candidates.jsonl (score field from date+class only)
+enrich_candidates()   → candidates.jsonl (adds signal fields, score unchanged)
+```
+
+The new flow separates scoring into two passes:
+
+```
+Pass 1: generate_candidates()  → candidates.jsonl  (structural score: date + class)
+Pass 2: enrich_candidates()    → adds signal fields
+Pass 3: rescore_candidates()   → updates score field using signal fields
+```
+
+Pass 3 is new. It reads candidates.jsonl, computes the semantic bonus from existing signal fields, adds it to the structural score, and rewrites the score field. The semantic bonus is pure — it only reads from already-fetched data, no new DB calls.
+
+**CLI:**
+
+```bash
+markery match <project>                    # Pass 1 only (current behaviour, unchanged)
+markery match <project> --signals          # Pass 1 + 2: generate + enrich
+markery match <project> --full             # Pass 1 + 2 + 3: generate + enrich + rescore
+markery match rescore <project>            # Pass 3 only: rescore from existing signal fields
+```
+
+This preserves backward compatibility: `markery match <project>` continues to work as before. `--full` is the new recommended default for a complete match run.
+
+---
+
+### New scoring components
+
+**Recommendation: additive bonus components with a capped semantic ceiling.**
+
+Semantic signals provide additional evidence on top of structural signals — they should raise confidence in strong pairs and help surface uncertain pairs. They should not manufacture confidence from structural weakness: a pair with no temporal alignment should not score high just because the mark appears in the patent title.
+
+**Proposed cap:** semantic bonus is individually additive but capped at 0.25 total, regardless of how many signals fire. This limits the maximum score to approximately 1.05 (0.80 structural + 0.25 semantic) and prevents the semantic layer from overwhelming the structural foundation.
+
+| Component | Signal source | Value | Notes |
+|---|---|---|---|
+| `title_hit_score` | `title_name_hit` == True | +0.20 | Strong signal: controlled vocabulary, specific |
+| `abstract_hit_score` | `abstract_name_hit` == True | +0.10 | Weaker: abstracts are broader |
+| `goods_title_score` | `goods_title_overlap` > 0.05 | +0.10 | G&S and patent title describe the same product domain |
+| `goods_abstract_score` | `goods_abstract_overlap` > 0.05 | +0.05 | Supporting evidence only |
+| **Semantic bonus** | (sum of above, capped) | **max 0.25** | |
+| **New total max** | | **~1.05** | |
+
+**Updated `score.py` signature (backward-compatible):**
+
+```python
+def total_score(
+    grant_dt: date | None,
+    filing_dt: date | None,
+    cpc_classes: list[str],
+    title_name_hit: bool = False,
+    abstract_name_hit: bool = False,
+    goods_title_overlap: float = 0.0,
+    goods_abstract_overlap: float = 0.0,
+) -> float:
+    structural = date_score(grant_dt, filing_dt) + class_score(cpc_classes)
+    semantic   = min(0.25, semantic_score(
+        title_name_hit, abstract_name_hit,
+        goods_title_overlap, goods_abstract_overlap,
+    ))
+    return round(structural + semantic, 4)
+```
+
+The existing two-argument call `total_score(grant_dt, filing_dt, cpc_classes)` continues to work and produces the same result as before.
+
+---
+
+### Uncertainty resolution loop
+
+When the structural score alone falls in a **confidence band** [T1, T2] — strong enough to not discard, not strong enough to confidently surface — the matchmaker cannot distinguish a genuine match from a coincidence. Semantic signals are most valuable here.
+
+**Confidence band: [0.40, 0.60]**
+
+- Below 0.40: discard (structural signals weak, unlikely to recover)
+- 0.40–0.60: uncertain — semantic signals may resolve
+- Above 0.60: surface for review (strong structural case regardless of semantics)
+
+**Resolution request mechanism:**
+
+```
+markery match <project> --resolve
+```
+
+The `--resolve` flag:
+
+1. Runs Pass 1 (generate)
+2. Identifies pairs in the confidence band by structural score
+3. Checks which uncertain patents already have abstract text in `patents.duckdb`
+4. Checks which uncertain trademarks already have G&S text in `statement`/`mark_case_status`
+5. Prints a resolution report:
+   ```
+   47 pairs in uncertainty band [0.40, 0.60]
+   Missing abstracts: 12 patents → run: markery patent signals <project>
+   Missing G&S text:  8 trademarks → run: markery trademark enrich <project>
+   Resolvable now (data already fetched): 27 pairs → run: markery match rescore <project>
+   ```
+6. Optionally fetches the missing data automatically if `--auto-fetch` is also set
+
+Without `--auto-fetch`, the researcher reads the report and runs the recommended commands. With `--auto-fetch`, the matchmaker calls the specialist fetch functions inline and then rescores. **This is the "asking specialists" behaviour.**
+
+---
+
+### New data requirements
+
+**Patent abstracts** are already in `patents.duckdb` (`abstract` column in the `patents` table). `signals.py` already reads them. No new fetch required for pairs where abstracts exist.
+
+However, some patents in the database were ingested without abstract text (the EPO OPS bulk fetch sometimes omits it for older records). The patent specialist's `build.py` should be extended to back-fill missing abstracts on re-fetch.
+
+**Goods-and-services text** is in `statement.statement_text` (already read by signals.py) and `mark_case_status.goods_desc`. Both are already fetched when available. Gap: many trademarks have neither, because TSDR does not expose G&S text via the raw image endpoint used for bulk ingestion.
+
+**New: `markery trademark enrich <project>`** — fetches G&S text via the TSDR case file API for confirmed pairs and high-scoring candidates in a project. Stores in `mark_case_status` or a new `trademark_enrichment` table. This is the resolution step the matchmaker requests.
+
+---
+
+### Inventor entity alignment (new signal — open question)
+
+A fourth potential new signal: does the patent's inventor have a known relationship to the entity?
+
+Example: Robert C. Russell is the inventor of US1261167A (SOUNDEX patent). Russell is not in the entity registry — but Rand Kardex Bureau, the trademark owner, was a successor company to the organization Russell worked for. If the entity registry tracked inventor-entity associations, this would be a strong confirming signal.
+
+**Implementation options:**
+
+1. **Manual annotation** — researcher adds known inventor→entity links to `entity_name_variant` with a new `source = 'patent_inventor'` type. Low automation, high precision.
+2. **Name match heuristic** — check if any inventor surname appears in the entity's known name variants. Low precision (many false positives on common names) but zero additional data.
+3. **Defer** — this signal is valuable for a small number of pairs; the structural + G&S signals handle most uncertainty; treat inventor alignment as future work.
+
+**Recommendation: defer for Phase 6C. Implement manual annotation as Phase 6D** if the resolution loop identifies pairs where inventor context would change the score.
+
+---
+
+### Implementation plan
+
+**Files changed:**
+
+| File | Change |
+|---|---|
+| `specialist/matchmaker/score.py` | Add `semantic_score()`, extend `total_score()` with signal params |
+| `specialist/matchmaker/link.py` | Add `rescore_candidates(path)` function using signal fields |
+| `specialist/matchmaker/cli.py` | Add `--signals`, `--full`, `--resolve`, `--auto-fetch` flags; add `rescore` subcommand |
+| `specialist/patent/signals.py` | No change (already correct) |
+| `specialist/trademark/` | Add `enrich.py` — TSDR G&S fetch for a project's candidates |
+| `specialist/trademark/cli.py` | Add `enrich <project>` subcommand |
+| `src/markery/cli.py` | Wire `markery trademark enrich` |
+| `tests/specialist/matchmaker/test_score.py` | Add semantic_score tests; test total_score with signal params |
+| `tests/specialist/matchmaker/test_link.py` | Add rescore_candidates tests |
+
+**New test coverage:**
+
+- `semantic_score()` with all combinations of signal presence
+- Semantic bonus cap at 0.25
+- `total_score()` backward compatibility (existing tests must still pass unchanged)
+- `rescore_candidates()` reads signal fields correctly
+- Uncertainty band detection: pairs correctly classified as below/in/above band
+
+---
+
+### Open questions — Round 4
+
+**Q1 — Score integration timing**
+
+The plan above uses a two-pass architecture: generate structural scores first, enrich with signals separately, rescore. An alternative is to fetch and score inline during `generate_candidates()` — every pair is fully scored in one pass.
+
+- **Two-pass (recommended):** Structural scores are immediately available. Signal enrichment is optional and additive. The researcher can inspect structural-only candidates before running signals.
+- **Inline:** One command produces fully-scored candidates. Slower (DB queries per pair during generation). No intermediate state to inspect.
+
+Which better fits how you work?
+
+**Q2 — Score ceiling**
+
+The plan caps semantic bonus at 0.25, giving a new max of ~1.05. An alternative is to rescale all components so the ceiling remains exactly 0.80 — pairs that currently score 0.80 would score lower, making room for semantic signals to push strong pairs toward 0.80.
+
+- **Let ceiling rise to ~1.05 (recommended):** Existing score thresholds for review (0.5) are unchanged. A score above 0.80 becomes a new "semantic confirmation" tier.
+- **Renormalize to 0.80:** Current scores shift downward. The review threshold must be recalibrated. Cleaner ceiling, breaking change.
+
+**Q3 — Confidence band threshold**
+
+The plan proposes [0.30, 0.60] as the uncertainty band. Does this match your experience reviewing the information-systems candidates? Are there pairs in the 0.30–0.60 range that signals genuinely resolved, or that turned out to be false positives structural signals should have discarded?
+
+**Q4 — `markery trademark enrich` scope**
+
+The TSDR G&S fetch is the most expensive new operation (API calls per trademark, rate-limited). Should `markery trademark enrich <project>` fetch for:
+- Confirmed pairs only (small, high-value)
+- Confirmed pairs + candidates above min-score (larger, more useful for resolution)
+- All candidates in the uncertainty band (targeted, avoids unnecessary fetches)
+
+---
+
+## Decisions — Round 4 (2026-05-18)
+
+| Question | Decision |
+|---|---|
+| Score integration timing | Two-pass: structural first, enrich+rescore as separate passes |
+| Score ceiling | Uncapped additive — total can reach ~1.05; existing thresholds unchanged |
+| Confidence band | Tighter: [0.40, 0.60] — drop pairs below 0.40, they aren't worth resolving |
+| `markery trademark enrich` scope | Confirmed pairs + uncertainty band [0.40, 0.60] |
+
+### Implications
+
+**Two-pass confirmed** — the three-step flow stands as designed:
+```
+Pass 1: markery match <project>            → structural score
+Pass 2: markery patent signals <project>   → adds signal fields
+Pass 3: markery match rescore <project>    → updates score from signal fields
+```
+`markery match <project> --full` runs all three passes in sequence.
+
+**Uncapped ceiling** — pairs that score above 0.80 after semantic bonus become a "semantic confirmation" tier requiring no reclassification of existing scores. The `min-score` threshold for review (currently 0.50) is unaffected.
+
+**Tighter band [0.40, 0.60]** — pairs scoring below 0.40 on structural signals alone are discarded without resolution. This is a stricter filter than the initial [0.30, 0.60] proposal; it reduces the resolution workload and avoids spending API calls on structurally weak pairs.
+
+**Enrich scope: confirmed + uncertainty band** — `markery trademark enrich <project>` fetches G&S text for:
+1. All confirmed pairs (small, guaranteed value — needed for essay context)
+2. All candidates in the [0.40, 0.60] band (targeted resolution)
+
+Candidates outside the band (below 0.40 or above 0.60) are not enriched unless explicitly requested. This is the correct balance between API cost and resolution value.
