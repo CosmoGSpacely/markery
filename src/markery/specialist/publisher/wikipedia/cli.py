@@ -37,7 +37,7 @@ def _draft_path(project: str, slug: str) -> Path:
 
 def cmd_draft(project: str, slug: str) -> None:
     """Generate a wikitext draft from the match essay and save it."""
-    from markery.specialist.wikipedia.wikitext import build_draft_wikitext
+    from markery.specialist.publisher.wikipedia.wikitext import build_draft_wikitext
 
     match = _load_match(project, slug)
     proj  = Project(project)
@@ -70,7 +70,7 @@ def cmd_draft(project: str, slug: str) -> None:
 
 def cmd_submit(project: str, slug: str, page_title: str | None, summary: str) -> None:
     """Show diff against current Wikipedia article and prompt before submitting."""
-    from markery.specialist.wikipedia.api import WikipediaClient
+    from markery.specialist.publisher.wikipedia.api import WikipediaClient
 
     match = _load_match(project, slug)
     title = page_title or match.get("wikipedia_title") or match["trademark"]

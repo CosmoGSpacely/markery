@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from markery.specialist.wikipedia.wikitext import markdown_to_wikitext, build_draft_wikitext
+from markery.specialist.publisher.wikipedia.wikitext import markdown_to_wikitext, build_draft_wikitext
 
 
 # ---------------------------------------------------------------------------

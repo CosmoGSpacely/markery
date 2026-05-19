@@ -105,7 +105,7 @@ def cmd_publisher(rest: list[str]) -> None:
 
 
 def cmd_wikipedia(rest: list[str]) -> None:
-    from markery.specialist.wikipedia.cli import wikipedia_main
+    from markery.specialist.publisher.wikipedia.cli import wikipedia_main
     sys.argv = ["markery wikipedia"] + rest
     wikipedia_main()
 
