@@ -686,3 +686,275 @@ Pass 3: markery match rescore <project>    → updates score from signal fields
 2. All candidates in the [0.40, 0.60] band (targeted resolution)
 
 Candidates outside the band (below 0.40 or above 0.60) are not enriched unless explicitly requested. This is the correct balance between API cost and resolution value.
+
+---
+
+## Phase 6D — Temporal Extension: Out-of-Range Patent and Trademark Fetch
+
+### The gap
+
+Both databases are hard-filtered to 1900–1939 at build time. The filters are enforced by `build.py` parameters (`year_start`, `year_end`, `DATE_START`, `DATE_END`), not schema constraints — the underlying schemas have no date checks. This distinction matters: `insert_patent()` will happily insert a pre-1900 record; `mark_case_status` already accepts any date.
+
+The limitation surfaces in two concrete situations:
+
+1. **Prior art citations** — A confirmed patent like US1261167A (Soundex, 1918) cites earlier patents in its bibliography. Those citations may reference pre-1900 Library Bureau or card-index patents that are directly relevant to the project's historical argument. They exist in EPO OPS (which covers US patents from 1790 to present) but are absent from `patents.duckdb` because the bulk build only reaches back to 1900.
+
+2. **Post-registration commercial longevity** — A trademark filed in 1927 (SOUNDEX, serial 71246709) may remain in active use through the 1940s and 1950s. Later filings by the same entity under the same or related marks show how a product brand persisted or evolved after the 1939 corpus boundary. These marks are in the 2011 USPTO CSV but filtered out by the `DATE_END` constraint.
+
+---
+
+### Decisions — Round 5 (2026-05-18)
+
+| Question | Decision |
+|---|---|
+| Library Bureau patent origin | Pre-1900, cited in a confirmed patent's bibliography (not found through secondary literature) |
+| Forward scope | 1940s–1950s only, trademarks showing continued commercial use |
+| Trigger model | Both: explicit targeted fetch by number + citation-chasing discovery |
+| Match role | Full participation — out-of-range records scored and surfaced as candidates |
+
+### Implications
+
+**Full participation** means out-of-range records enter the matchmaker's candidate pool alongside in-range records. A pre-1900 Library Bureau patent, once fetched, can produce a confirmed pair. This is the right design: the historical argument benefits from the full innovation chain, not only the 1900–1939 slice. The matchmaker's `date_score()` handles large temporal gaps naturally — a pre-1900 patent matched against a 1927 trademark will score on the same curve as any other pair; the researcher decides in review whether the gap is historically meaningful.
+
+**Citation chasing** is depth-1 by default. Prior art citations of confirmed patents point to direct predecessors; going to depth 2 (citations of citations) expands exponentially and could pull in hundreds of tangentially related patents. Depth-2 is available as an explicit flag, not the default.
+
+**Forward extension is trademark-only in Phase 6D.** Post-1939 patents (continuation work, successor inventions) are a different research question — the focus of the forward window is commercial longevity of already-confirmed marks, not new patent-trademark pairs from the 1940s.
+
+---
+
+### Current architecture (no changes needed at schema level)
+
+| Database | Build constraint | Schema constraint | Out-of-range feasibility |
+|---|---|---|---|
+| `patents.duckdb` | `year_start=1900, year_end=1939` in `build.py` | None — `insert_patent()` accepts any date | Insert pre-1900 patent via targeted fetch: **already works** |
+| `trademarks.duckdb` — `case_file` | `DATE_START`, `DATE_END` in `build.py` CSV load | None — date is just a column | Cannot insert into `case_file` via TSDR alone: **many CSV columns have no TSDR equivalent** |
+| `trademarks.duckdb` — `mark_case_status` | None | None | Can store any date: **already works**, but not queried by matchmaker |
+
+The patent path is straightforward: insert a pre-1900 patent into `patents.duckdb` the same way a seed patent is inserted. The trademark path requires a new table because `case_file` was designed for bulk CSV loading and has columns (draw code, mark_id_cd format, etc.) that TSDR case status does not provide.
+
+---
+
+### Patent specialist: backward extension
+
+**New EPOClient method: `fetch_citations(patent_no) -> list[str]`**
+
+EPO OPS provides a citations endpoint that returns a patent's prior-art references:
+
+```
+GET /3.2/rest-services/published-data/publication/epodoc/US{num}/citations
+Accept: application/json
+```
+
+The response contains a `references-cited` block with `citation` entries. Each citation has a `patcit` (patent citation) node with a `document-id` carrying `@country`, `@doc-number`, `@kind`, and `@date`. The method filters for `@country == "US"`, constructs `US{doc_number}{kind}` strings, and returns the list. Non-patent citations (literature, `nplcit` nodes) are ignored.
+
+Pagination: the citations endpoint is not paginated — it returns all citations in one response. For patents with many citations this is a single request.
+
+**New CLI: `markery patent fetch <patent_no>`**
+
+```bash
+markery patent fetch US495147A
+```
+
+Wraps the existing `fetch_biblio(patent_no)` and `insert_patent(conn, record)` calls. No year check — the date filter is the responsibility of the `build` command, not the `fetch` command. Output:
+
+```
+US495147A  ✓ added to patents.duckdb  (grant_dt: 1893-04-04, assignee: LIBRARY BUREAU [US])
+US789654A  — already present
+```
+
+Idempotent: `insert_patent()` already checks existence and returns `False` without inserting if the patent is already present.
+
+**New CLI: `markery patent citations <project> [--auto-fetch] [--depth 1]`**
+
+```bash
+markery patent citations information-systems
+markery patent citations information-systems --auto-fetch
+markery patent citations information-systems --depth 2
+```
+
+Algorithm:
+1. Read all confirmed patent numbers from `projects/<project>/matches/confirmed.jsonl`
+2. For each, call `fetch_citations(patent_no)` → list of cited US patent numbers
+3. Check which cited patents are already in `patents.duckdb`
+4. Print resolution report:
+
+```
+Confirmed patent US1261167A (SOUNDEX, 1918) — 4 citations
+  US495147A  (1893-04)  LIBRARY BUREAU [US]     — NOT IN CORPUS → candidate
+  US523014A  (1894-07)  HALL THOMAS S [US]      — NOT IN CORPUS → candidate
+  US1183571A (1916-05)  already in corpus
+  US1219636A (1917-03)  already in corpus
+
+Confirmed patent US1435663A (SOUNDEX, 1922) — 2 citations
+  US1261167A (1918-04)  already in corpus
+  US495147A  (1893-04)  already in corpus (fetched above)
+
+Out-of-range candidates: 2 new patents
+  Run: markery patent fetch US495147A US523014A
+  Or:  markery patent citations information-systems --auto-fetch
+```
+
+With `--auto-fetch`: fetches and inserts all out-of-range citations immediately after the report.
+
+With `--depth 2`: repeats the citation fetch for each newly discovered out-of-range patent (one additional level). Depth-2 should warn about scale ("N additional patents found at depth 2; confirm before fetching").
+
+**Files changed — patent specialist:**
+
+| File | Change |
+|---|---|
+| `specialist/patent/epo_client.py` | Add `fetch_citations(patent_no) -> list[str]` method |
+| `specialist/patent/build.py` | Add `fetch_one(patent_no, conn, client) -> bool` function wrapping `fetch_biblio` + `insert_patent` |
+| `specialist/patent/cli.py` | Add `fetch <patent_no>` subcommand; add `citations <project>` subcommand |
+| `specialist/patent/EPO.md` | Document the citations endpoint (URL, response structure, parsing notes) |
+| `src/markery/cli.py` | Wire `markery patent fetch` and `markery patent citations` |
+| `tests/specialist/patent/test_epo_client.py` | Add `fetch_citations` unit test (mock response) |
+| `tests/specialist/patent/test_build.py` | Add `fetch_one` unit test |
+
+---
+
+### Trademark specialist: forward extension
+
+**New schema: `extended_marks` in `trademarks.duckdb`**
+
+`extended_marks` stores out-of-range trademarks fetched via TSDR. It holds the subset of `case_file` columns the matchmaker needs, plus an `entity_id` column that bypasses the need for the `owner → entity_name_variant` join used for in-range marks.
+
+```sql
+CREATE TABLE IF NOT EXISTS extended_marks (
+    serial_no         VARCHAR PRIMARY KEY,
+    mark_text         VARCHAR,
+    filing_dt         DATE,
+    registration_no   VARCHAR,
+    registration_dt   DATE,
+    status_cd         VARCHAR,
+    goods_desc        VARCHAR,
+    intl_class        VARCHAR,
+    first_use_dt      VARCHAR,
+    first_use_comm_dt VARCHAR,
+    entity_id         INTEGER,       -- FK to entities.duckdb company_entity
+    source            VARCHAR DEFAULT 'tsdr_extended',
+    fetched_dt        DATE
+);
+```
+
+The `entity_id` column is the critical addition. `case_file` has no entity column — the matchmaker discovers the entity relationship through `owner → entity_name_variant`. For `extended_marks`, the researcher supplies the entity association at fetch time (or the `entity-forward` command infers it from the CSV owner name match). This makes the matchmaker's `extended_marks` query simpler and faster.
+
+The DDL belongs in `trademark/build.py` (the `_ENRICHMENT_DDL` block) so it is created alongside `mark_images` and `mark_case_status` on every `open_db()` call. This means `extended_marks` exists (empty) in any trademarks.duckdb created or opened after Phase 6D ships, with no migration required.
+
+**New CLI: `markery trademark fetch <serial_no> [--entity-id <id>]`**
+
+```bash
+markery trademark fetch 71550000 --entity-id 1
+```
+
+1. Calls `client.fetch_case_status(serial_no)` (existing method in `tsdr_client.py`)
+2. Also calls `client.fetch_mark_image(serial_no)` and stores into `mark_images`
+3. Upserts into `mark_case_status` (existing enrichment table)
+4. Upserts into `extended_marks` with the supplied `entity_id`
+5. Output: one-line summary per serial
+
+If `--entity-id` is omitted, the record is inserted into `mark_case_status` only (not `extended_marks`) and therefore does not participate in matching. The researcher must supply an entity association for the mark to become matchable.
+
+**New CLI: `markery trademark entity-forward <project> [--window 1940-1959] [--csv csv/]`**
+
+```bash
+markery trademark entity-forward information-systems --window 1940-1959 --csv csv/
+```
+
+Discovers post-1939 trademarks filed by confirmed entities, using the full 2011 USPTO CSV (which contains post-1939 marks filtered out by the build command):
+
+1. Loads entity IDs from `projects/<project>/matches/confirmed.jsonl` (unique entity_ids from confirmed pairs)
+2. Loads all name variants for those entities from `entities.duckdb`
+3. Runs a DuckDB query against the raw `owner.csv` and `case_file.csv` files (via `read_csv_auto()`, not `trademarks.duckdb`) filtering to the forward window:
+
+```sql
+SELECT cf.serial_no, cf.filing_dt, cf.mark_id_char, o.own_name
+FROM read_csv_auto('csv/case_file.csv', ...) cf
+JOIN read_csv_auto('csv/owner.csv', ...) o USING (serial_no)
+WHERE o.own_name IN ('REMINGTON RAND INC', 'REMINGTON RAND INC.', ...)
+  AND cf.filing_dt >= '1940-01-01'
+  AND cf.filing_dt <= '1959-12-31'
+ORDER BY cf.filing_dt
+```
+
+4. Prints a candidate list for the researcher to review:
+
+```
+Entity: Remington Rand (entity_id 1)
+  71520000  SOUNDEX         1941-03-12  REMINGTON RAND INC
+  71531000  VARIADEX        1942-07-08  REMINGTON RAND INC
+  71588000  KARDEX VISIBLE  1948-01-15  REMINGTON RAND INC.
+  ...
+  12 candidates in window 1940–1959
+
+To fetch: markery trademark fetch <serial_no> --entity-id 1
+```
+
+The researcher reviews the list and selects marks to fetch. No automatic fetch — the forward window can produce many marks, and the researcher should judge which are relevant to the project's thesis (commercial longevity of a specific product line, not every Remington Rand mark from the era).
+
+**Files changed — trademark specialist:**
+
+| File | Change |
+|---|---|
+| `specialist/trademark/build.py` | Add `extended_marks` DDL to `_ENRICHMENT_DDL`; add to `open_db()` |
+| `specialist/trademark/enrich.py` | Add `store_extended_mark(serial_no, parsed, entity_id, conn)` function; update `store_case_status()` to also write `extended_marks` when `entity_id` is supplied |
+| `specialist/trademark/cli.py` | Add `fetch <serial_no>` subcommand; add `entity-forward <project>` subcommand |
+| `src/markery/cli.py` | Wire `markery trademark fetch` and `markery trademark entity-forward` |
+| `tests/specialist/trademark/test_enrich.py` | Add `store_extended_mark` unit test |
+
+---
+
+### Matchmaker: include extended_marks in candidate generation
+
+`link.py` generates candidates by joining `patents` with `case_file` via entity name variants. To include `extended_marks`, a second query path is added: one that joins `patents` with `extended_marks` directly via the stored `entity_id` (bypassing the `owner → entity_name_variant` join, since extended marks already carry the entity association).
+
+```python
+def generate_candidates(project, conn_tm, conn_pt, conn_ent, ...) -> int:
+    # Existing path: patents × case_file via entity name variants
+    n1 = _generate_from_case_file(...)
+    # New path: patents × extended_marks via entity_id
+    n2 = _generate_from_extended_marks(...)
+    return n1 + n2
+```
+
+Deduplication: `candidates.jsonl` deduplicates by `(patent_no, trademark_serial)`. The same pair cannot be generated from both paths because `extended_marks` serial numbers are distinct from `case_file` serial numbers (they are out-of-range marks not loaded by the build).
+
+The new `_generate_from_extended_marks()` function is a simplified version of the existing generator: it queries `extended_marks` filtered by `entity_id IN (...)` and joins against `patents` by assignee entity_id. This is simpler than the current case_file path because the entity relationship is pre-stored.
+
+**Files changed — matchmaker:**
+
+| File | Change |
+|---|---|
+| `specialist/matchmaker/link.py` | Add `_generate_from_extended_marks()` function; call it in `generate_candidates()` |
+| `tests/specialist/matchmaker/test_link.py` | Add test: extended_marks candidates are generated when table is populated |
+
+---
+
+### Full CLI surface — Phase 6D additions
+
+```bash
+# Patent: targeted fetch
+markery patent fetch US495147A
+
+# Patent: citation discovery
+markery patent citations information-systems
+markery patent citations information-systems --auto-fetch
+markery patent citations information-systems --depth 2
+
+# Trademark: targeted fetch (requires --entity-id for match participation)
+markery trademark fetch 71550000 --entity-id 1
+
+# Trademark: forward entity scan
+markery trademark entity-forward information-systems
+markery trademark entity-forward information-systems --window 1940-1959 --csv csv/
+```
+
+---
+
+### What the Library Bureau workflow looks like end-to-end
+
+1. `markery patent citations information-systems` — discovers that US1261167A cites US495147A (1893, Library Bureau) and US523014A (1894) as prior art
+2. Researcher reviews the report — both citations are relevant (Library Bureau was a direct predecessor in card-index technology)
+3. `markery patent fetch US495147A US523014A` — inserts both patents into `patents.duckdb`
+4. Optionally add Library Bureau as an entity in `entities.duckdb` (`markery matchmaker build`)
+5. `markery match information-systems` — Library Bureau patents now appear as candidates against Library Bureau trademarks (ARMORCLAD, AUTOMATIC, LB — all in the existing 1900–1939 corpus, 17 patents already present)
+6. Review and confirm matching pairs; write essays grounding the pre-1900 patents in the project's argument about the card-index technology lineage
