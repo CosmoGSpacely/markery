@@ -71,6 +71,33 @@ def get_goods_desc(conn: duckdb.DuckDBPyConnection, serial_no: str) -> str | Non
     return row[0] if row else None
 
 
+def get_extended_mark(conn: duckdb.DuckDBPyConnection, serial_no: str) -> dict | None:
+    """Return one extended_marks record, or None if not found."""
+    row = conn.execute(
+        "SELECT serial_no, mark_text, filing_dt, registration_no, "
+        "       registration_dt, status_cd, goods_desc, intl_class, "
+        "       owner_name, first_use_dt, first_use_comm_dt, fetched_dt "
+        "FROM extended_marks WHERE serial_no = ?",
+        [serial_no],
+    ).fetchone()
+    if not row:
+        return None
+    return {
+        "serial_no":          str(row[0]),
+        "mark_text":          row[1],
+        "filing_dt":          row[2],
+        "registration_no":    row[3],
+        "registration_dt":    row[4],
+        "status_cd":          row[5],
+        "goods_desc":         row[6],
+        "intl_class":         row[7],
+        "owner_name":         row[8],
+        "first_use_dt":       row[9],
+        "first_use_comm_dt":  row[10],
+        "fetched_dt":         row[11],
+    }
+
+
 def get_missing_enrichment(
     conn: duckdb.DuckDBPyConnection,
     serial_nos: list[str],

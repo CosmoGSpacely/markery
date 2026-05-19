@@ -82,6 +82,39 @@ def cmd_enrich_project(args: argparse.Namespace) -> None:
     print(f"\n{result['images']} image(s) stored, {result['status']} status record(s) stored.")
 
 
+def cmd_fetch(args: argparse.Namespace) -> None:
+    from markery.specialist.trademark.build import open_db
+    from markery.specialist.trademark.fetch import fetch_mark_record
+    from markery.specialist.trademark.tsdr_client import TSDRClient
+    from markery.common.auth import load_tsdr_key
+
+    client = TSDRClient(load_tsdr_key())
+    conn   = open_db()
+    ok = fetch_mark_record(args.serial_no, client, conn, force=args.force)
+    conn.close()
+    if ok:
+        print(f"{args.serial_no}: stored in extended_marks.")
+    else:
+        print(f"{args.serial_no}: not found on TSDR (or already stored; use --force to re-fetch).")
+
+
+def cmd_entity_forward(args: argparse.Namespace) -> None:
+    from markery.specialist.orchestrator import entity_forward_report
+
+    rows = entity_forward_report(args.entity, after_year=args.after_year)
+    if not rows:
+        print(f"No extended marks found for '{args.entity}' filed after {args.after_year}.")
+        return
+    print(f"Post-{args.after_year} marks for '{args.entity}':")
+    print(f"  {'Serial':<12}  {'Filed':<12}  {'Mark':<30}  Status")
+    print("  " + "-" * 72)
+    for r in rows:
+        filing = str(r["filing_dt"])[:10] if r["filing_dt"] else "unknown"
+        mark   = (r["mark_text"] or "")[:30]
+        status = r["status_cd"] or ""
+        print(f"  {r['serial_no']:<12}  {filing:<12}  {mark:<30}  {status}")
+
+
 def cmd_verify_credentials(args: argparse.Namespace) -> None:
     from markery.specialist.trademark.tsdr_client import TSDRClient
     from markery.common.auth import load_tsdr_key
@@ -149,6 +182,21 @@ def main() -> None:
     p_ep.add_argument("--force", action="store_true",
                       help="Re-fetch even if already stored")
 
+    # fetch
+    p_fetch = sub.add_parser("fetch",
+                              help="Fetch a post-1939 or extended mark from TSDR into extended_marks")
+    p_fetch.add_argument("serial_no", metavar="SERIAL_NO")
+    p_fetch.add_argument("--force", action="store_true",
+                         help="Re-fetch even if already stored")
+
+    # entity-forward
+    p_ef = sub.add_parser("entity-forward",
+                           help="List post-1939 extended marks for a named entity")
+    p_ef.add_argument("entity", metavar="ENTITY_NAME",
+                      help="Canonical entity name (e.g. 'Remington Rand')")
+    p_ef.add_argument("--after-year", type=int, default=1939, metavar="YEAR",
+                      help="Show marks filed after this year (default: 1939)")
+
     # verify-credentials
     sub.add_parser("verify-credentials",
                    help="Verify USPTO API key with a live TSDR request")
@@ -161,6 +209,8 @@ def main() -> None:
         "build":               cmd_build,
         "enrich":              cmd_enrich,
         "enrich-project":      cmd_enrich_project,
+        "fetch":               cmd_fetch,
+        "entity-forward":      cmd_entity_forward,
         "verify-credentials":  cmd_verify_credentials,
         "status":              cmd_status,
     }[args.cmd](args)

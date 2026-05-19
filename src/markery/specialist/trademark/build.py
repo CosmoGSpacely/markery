@@ -31,7 +31,8 @@ _COMPANION_TABLES = [
     "statement",
 ]
 
-# Tables added by TSDR enrichment (enrich.py) -- preserved across rebuilds
+# Tables added by TSDR enrichment (enrich.py) and single-fetch (fetch.py).
+# Created on open_db() so they survive across CSV rebuilds.
 _ENRICHMENT_DDL = """
 CREATE TABLE IF NOT EXISTS mark_images (
     serial_no    VARCHAR PRIMARY KEY,
@@ -50,6 +51,22 @@ CREATE TABLE IF NOT EXISTS mark_case_status (
     status_cd         VARCHAR,
     goods_desc        VARCHAR,
     intl_class        VARCHAR,
+    first_use_dt      VARCHAR,
+    first_use_comm_dt VARCHAR,
+    raw_json          VARCHAR,
+    fetched_dt        DATE
+);
+
+CREATE TABLE IF NOT EXISTS extended_marks (
+    serial_no         VARCHAR PRIMARY KEY,
+    mark_text         VARCHAR,
+    filing_dt         DATE,
+    registration_no   VARCHAR,
+    registration_dt   DATE,
+    status_cd         VARCHAR,
+    goods_desc        VARCHAR,
+    intl_class        VARCHAR,
+    owner_name        VARCHAR,
     first_use_dt      VARCHAR,
     first_use_comm_dt VARCHAR,
     raw_json          VARCHAR,

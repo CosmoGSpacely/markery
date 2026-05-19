@@ -136,6 +136,38 @@ def cmd_signals(args: argparse.Namespace) -> None:
     print(f"Enriched {n} candidates with text signals.")
 
 
+def cmd_pull(args: argparse.Namespace) -> None:
+    from markery.specialist.patent.build import open_db
+    from markery.specialist.patent.fetch import fetch_patent_record
+    from markery.specialist.patent.epo_client import EPOClient
+    from markery.common.auth import load_epo_credentials
+
+    key, secret = load_epo_credentials()
+    client = EPOClient(key, secret)
+    conn   = open_db()
+    ok = fetch_patent_record(args.patent_no, client, conn)
+    conn.close()
+    if ok:
+        print(f"{args.patent_no}: stored.")
+    else:
+        print(f"{args.patent_no}: not found on EPO.")
+
+
+def cmd_citations(args: argparse.Namespace) -> None:
+    from markery.specialist.patent.build import open_db
+    from markery.specialist.patent.fetch import fetch_citation_chain
+    from markery.specialist.patent.epo_client import EPOClient
+    from markery.common.auth import load_epo_credentials
+
+    key, secret = load_epo_credentials()
+    client = EPOClient(key, secret)
+    conn   = open_db()
+    print(f"Fetching citations for {args.patent_no} ...")
+    n = fetch_citation_chain(args.patent_no, client, conn)
+    conn.close()
+    print(f"{n} new patent(s) added.")
+
+
 def cmd_migrate_figures(args: argparse.Namespace) -> None:
     from markery.specialist.patent.build import open_db
     from markery.specialist.patent.figures import migrate_path_figures
@@ -189,6 +221,17 @@ def main() -> None:
     p_sig = sub.add_parser("signals", help="Enrich candidates.jsonl with text signals")
     p_sig.add_argument("project", nargs="?", default="information-systems")
 
+    # pull
+    p_pull = sub.add_parser("pull",
+                             help="Fetch a single patent from EPO and upsert into patents.duckdb")
+    p_pull.add_argument("patent_no", metavar="PATENT_NO",
+                        help="Full patent number, e.g. US1261167A")
+
+    # citations
+    p_cit = sub.add_parser("citations",
+                            help="Fetch backward citations for a patent; pull any new ones")
+    p_cit.add_argument("patent_no", metavar="PATENT_NO")
+
     # migrate-figures
     p_mig = sub.add_parser("migrate-figures",
                             help="Migrate on-disk PNGs to BLOB storage (one-time)")
@@ -199,6 +242,8 @@ def main() -> None:
         "build":               cmd_build,
         "fetch":               cmd_fetch,
         "figures":             cmd_figures,
+        "pull":                cmd_pull,
+        "citations":           cmd_citations,
         "verify-credentials":  cmd_verify_credentials,
         "signals":             cmd_signals,
         "migrate-figures":     cmd_migrate_figures,

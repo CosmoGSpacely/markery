@@ -261,6 +261,87 @@ class EPOClient:
                 return parsed
         return None
 
+    def fetch_abstract(self, patent_no: str) -> str | None:
+        """Fetch the English abstract for a patent. Returns None on 404 or if absent."""
+        num = _epodoc_num(patent_no)
+        url = f"https://ops.epo.org/3.2/rest-services/published-data/publication/epodoc/US{num}/abstract"
+        r   = self._get(url)
+        if r.status_code == 404:
+            return None
+        r.raise_for_status()
+        try:
+            docs = (
+                r.json()
+                .get("ops:world-patent-data", {})
+                .get("exchange-documents", {})
+                .get("exchange-document", {})
+            )
+            # exchange-document may be a list; take first
+            if isinstance(docs, list):
+                docs = docs[0]
+            abstracts = _list(docs.get("abstract"))
+            for ab in abstracts:
+                if not isinstance(ab, dict):
+                    continue
+                if ab.get("@lang", "en") != "en":
+                    continue
+                paras = _list(ab.get("p"))
+                parts = [_text(p) for p in paras if _text(p)]
+                if parts:
+                    return " ".join(parts)
+        except Exception:
+            pass
+        return None
+
+    def fetch_citations(self, patent_no: str) -> list[str]:
+        """Return backward citation patent numbers (US only) for a patent.
+
+        Fetches the citations endpoint and extracts patcit entries whose
+        country is US. Non-patent literature citations (nplcit) are ignored.
+        Returns [] on 404 or if no US patent citations are found.
+        """
+        num = _epodoc_num(patent_no)
+        url = (
+            f"https://ops.epo.org/3.2/rest-services/published-data/"
+            f"publication/epodoc/US{num}/citations"
+        )
+        r = self._get(url)
+        if r.status_code == 404:
+            return []
+        r.raise_for_status()
+        try:
+            docs = (
+                r.json()
+                .get("ops:world-patent-data", {})
+                .get("exchange-documents", {})
+                .get("exchange-document", {})
+            )
+            if isinstance(docs, list):
+                docs = docs[0]
+            refs = docs.get("references-cited", {})
+            citations = _list(refs.get("citation"))
+            patent_nos: list[str] = []
+            for cit in citations:
+                if not isinstance(cit, dict):
+                    continue
+                patcit = cit.get("patcit")
+                if not patcit:
+                    continue
+                for doc_id in _list(patcit.get("document-id")):
+                    if not isinstance(doc_id, dict):
+                        continue
+                    country = _text(doc_id.get("country"))
+                    if country != "US":
+                        continue
+                    doc_num = _text(doc_id.get("doc-number"))
+                    kind    = _text(doc_id.get("kind"))
+                    if doc_num:
+                        patent_nos.append(f"US{doc_num}{kind}")
+                        break
+            return patent_nos
+        except Exception:
+            return []
+
     def fetch_figure(self, patent_no: str, page: int = 1) -> bytes | None:
         """Fetch page-1 drawing as TIFF bytes. Returns None on 404.
 

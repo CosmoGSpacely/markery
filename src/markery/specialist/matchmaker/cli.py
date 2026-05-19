@@ -72,6 +72,48 @@ def _print_resolve_report(report: dict, project: str, auto_fetch: bool) -> None:
         print("  After fetching, run 'markery match rescore' again to update those pairs.")
 
 
+def _run_status(rest: list[str]) -> None:
+    """Entry point for `markery match status <project>`."""
+    parser = argparse.ArgumentParser(
+        prog="markery match status",
+        description="Print pipeline and review state for a project",
+    )
+    parser.add_argument("project", help="Project name under projects/")
+    args = parser.parse_args(rest)
+
+    from markery.specialist.matchmaker.pipeline import read_state
+    from markery.specialist.matchmaker.link import read_confirmed, read_rejected
+
+    proj  = Project(args.project)
+    state = read_state(proj.pipeline_state)
+
+    confirmed = read_confirmed(proj.confirmed)
+    rejected  = read_rejected(proj.rejected)
+
+    print(f"Project: {args.project}")
+    if state:
+        gen_at  = state.get("generated_at",  "never")
+        enr_at  = state.get("enriched_at",   "never")
+        rsc_at  = state.get("rescored_at",   "never")
+        n_cands = state.get("candidate_count", 0) or 0
+        p50     = state.get("score_p50", "-")
+        p90     = state.get("score_p90", "-")
+        enr_n   = state.get("enriched_count", "-")
+        print(f"  Generated:   {gen_at}  ({n_cands} candidates, P50={p50}, P90={p90})")
+        print(f"  Enriched:    {enr_at}  ({enr_n} signals)")
+        print(f"  Rescored:    {rsc_at}")
+    else:
+        print("  No pipeline state found. Run 'markery match <project>' first.")
+
+    n_conf = len(confirmed)
+    n_rej  = len(rejected)
+    n_cands = state.get("candidate_count", 0) or 0 if state else 0
+    unreviewed = max(0, n_cands - n_conf - n_rej)
+    print(f"  Confirmed:   {n_conf} pair(s)")
+    print(f"  Rejected:    {n_rej} pair(s)")
+    print(f"  Unreviewed:  {unreviewed} candidate(s)")
+
+
 def _run_rescore(rest: list[str]) -> None:
     """Entry point for `markery match rescore <project>`."""
     parser = argparse.ArgumentParser(
@@ -210,6 +252,9 @@ def match_main() -> None:
     """Entry point for `markery match`."""
     # Dispatch `rescore` subcommand before the main parser sees it.
     rest = sys.argv[1:]
+    if rest and rest[0] == "status":
+        _run_status(rest[1:])
+        return
     if rest and rest[0] == "rescore":
         _run_rescore(rest[1:])
         return

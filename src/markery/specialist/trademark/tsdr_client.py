@@ -129,6 +129,7 @@ def _parse_case_status(data: dict, serial_no: str) -> dict:
         "status_cd":          _get("caseStatusCode"),
         "goods_desc":         goods_desc,
         "intl_class":         intl_class,
+        "owner_name":         _get("registrantName") or _get("applicantName"),
         "first_use_dt":       _get("firstUseAnywhere"),
         "first_use_comm_dt":  _get("firstUseInCommerce"),
         "raw_json":           None,  # populated by caller with json.dumps(data)

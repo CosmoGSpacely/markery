@@ -196,6 +196,48 @@ def read_rejected(path: Path) -> set[tuple]:
 
 
 # ---------------------------------------------------------------------------
+# Entity forward report (Phase 6D)
+# ---------------------------------------------------------------------------
+
+def entity_forward_report(entity_name: str, after_year: int = 1939) -> list[dict]:
+    """Return extended marks for entity_name filed after after_year.
+
+    Joins entity_name_variant (entities.duckdb) with extended_marks
+    (trademarks.duckdb) via cross-specialist ATTACH — permitted per Q19 for
+    queries that cannot be expressed without multiple round trips.
+    Returns [] if no matches found or if extended_marks is empty.
+    """
+    conn = duckdb.connect(str(DB["entities"]), read_only=True)
+    conn.execute(f"ATTACH '{DB['trademarks']}' AS tm (READ_ONLY)")
+    try:
+        rows = conn.execute("""
+            SELECT DISTINCT em.serial_no, em.mark_text, em.filing_dt,
+                            em.owner_name, em.status_cd, em.goods_desc
+            FROM entity_name_variant v
+            JOIN company_entity e ON e.entity_id = v.entity_id
+            JOIN tm.extended_marks em ON LOWER(em.owner_name) = LOWER(v.variant_name)
+            WHERE LOWER(e.canonical_name) = LOWER(?)
+              AND (em.filing_dt IS NULL OR em.filing_dt > ?)
+            ORDER BY em.filing_dt
+        """, [entity_name, f"{after_year}-12-31"]).fetchall()
+    except Exception:
+        rows = []
+    finally:
+        conn.close()
+    return [
+        {
+            "serial_no":  str(r[0]),
+            "mark_text":  r[1],
+            "filing_dt":  str(r[2]) if r[2] else None,
+            "owner_name": r[3],
+            "status_cd":  r[4],
+            "goods_desc": r[5],
+        }
+        for r in rows
+    ]
+
+
+# ---------------------------------------------------------------------------
 # Pass 3: rescore
 # ---------------------------------------------------------------------------
 
