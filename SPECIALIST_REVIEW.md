@@ -1128,3 +1128,359 @@ G4 (pipeline_state.json) — independent; fix is small and prevents data loss
 | 5 | G5 — cross-specialist call policy | During Phase 6C | G5 is resolved *by* the G2 orchestrator; lands when `--auto-fetch` is implemented |
 
 G5 is not a separate implementation item — the orchestrator from G2 *is* the policy resolution. Documenting G5 as "during Phase 6C" means: when the orchestrator is built, add a one-paragraph note to `DESIGN.md` formalising the rule ("operation calls across specialists route through `specialist/orchestrator.py`").
+
+---
+
+## Implementation — G3: rejected.jsonl (2026-05-19)
+
+**Commit:** 125a284
+
+G3 adds a negative feedback channel from the reviewer to the matchmaker. Previously, N-key decisions were silently discarded; every `markery match` run regenerated all rejected pairs alongside new ones.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `src/markery/common/config.py` | Add `rejected` property to `Project` dataclass |
+| `src/markery/specialist/matchmaker/link.py` | Add `read_rejected()` function |
+| `src/markery/specialist/historian/review.py` | Add `load_rejected()`, `write_rejected()`; update `main()` |
+| `tests/specialist/matchmaker/test_link.py` | 3 new tests for `read_rejected` |
+| `tests/specialist/historian/test_review.py` | 4 new tests for `load_rejected` / `write_rejected` |
+
+### `common/config.py` — new `Project` property
+
+```python
+@property
+def rejected(self) -> Path:
+    return self.root / "matches" / "rejected.jsonl"
+```
+
+### `matchmaker/link.py` — new `read_rejected()`
+
+```python
+def read_rejected(path: Path) -> set[tuple]:
+    """Load rejected.jsonl as a set of (patent_no, trademark_serial) tuples."""
+    if not path.exists():
+        return set()
+    pairs: set[tuple] = set()
+    for line in path.read_text().splitlines():
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        pairs.add((row["patent_no"], str(row["trademark_serial"])))
+    return pairs
+```
+
+`str()` normalization on `trademark_serial` is required: the field is stored as an integer in some JSONL files (the candidate generator writes it as int) and as a string in others. The reviewer's filter key uses `str(c["trademark_serial"])` to match.
+
+`read_rejected()` lives in `link.py` (not `review.py`) because it is the matchmaker's consumer of the file — it reads the set to filter candidates before writing `candidates.jsonl`. This keeps the write path (`review.py`) separate from the read path (`link.py`).
+
+### `matchmaker/cli.py` — candidate filtering
+
+In `_run_project()`:
+
+```python
+rejected_keys = read_rejected(proj.rejected)
+candidates = [
+    c for c in candidates
+    if (c["patent_no"], str(c["trademark_serial"])) not in rejected_keys
+]
+```
+
+Run before `write_candidates()`. Rejected pairs are excluded from `candidates.jsonl` on every subsequent generation pass without any further action from the researcher.
+
+### `historian/review.py` — two new functions
+
+```python
+def load_rejected(path: Path) -> set[tuple]:
+    if not path.exists():
+        return set()
+    return {
+        (json.loads(l)["patent_no"], json.loads(l)["trademark_serial"])
+        for l in path.read_text().splitlines()
+        if l.strip()
+    }
+
+def write_rejected(path: Path, entry: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a") as f:
+        f.write(json.dumps(entry) + "\n")
+```
+
+`load_rejected()` in `review.py` uses `trademark_serial` without `str()` normalization — it matches against the reviewer's own in-memory key format, which is consistent within a session. The string normalization is only needed in `link.py` where the keys may come from different JSONL sources.
+
+In `main()`, the queue filter adds `key not in already_rejected`, and the N branch calls:
+
+```python
+write_rejected(rejected_path, {
+    "patent_no":         cand["patent_no"],
+    "trademark_serial":  cand["trademark_serial"],
+    "trademark":         cand["trademark"],
+    "entity_id":         cand["entity_id"],
+    "entity":            cand["entity"],
+    "rejection_note":    "",
+})
+```
+
+Session summary says "rejected" (not "skipped") and counts `rejected_n` separately from `skipped_n`.
+
+### Key design decisions
+
+**No rejection note prompt.** Unlike confirmation (which prompts for a note before writing), the N key writes immediately with `rejection_note: ""`. Prompting for a note on every N keypress would add a mandatory Enter for each of potentially hundreds of rejections in a session. The empty field is preserved in the schema for future annotation if needed.
+
+**`rejection_note: ""`** is included in the written record deliberately — it reserves the field in the JSONL schema so downstream tooling (Phase 7 scoring refinement) can parse it without schema changes.
+
+---
+
+## Implementation — G4: pipeline_state.json (2026-05-19)
+
+**Commit:** 3ac91cf
+
+G4 protects enriched candidate data from accidental overwrite. Before this change, running `markery match` again after a signal enrichment pass silently destroyed all enrichment work by regenerating `candidates.jsonl` from scratch.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `src/markery/common/config.py` | Add `pipeline_state` property to `Project` dataclass |
+| `src/markery/specialist/matchmaker/pipeline.py` | New file — state tracking functions |
+| `src/markery/specialist/matchmaker/cli.py` | Guard + `--force` flag; call `mark_generated()` |
+| `src/markery/specialist/patent/cli.py` | Call `mark_enriched()` after `cmd_signals()` |
+| `src/markery/specialist/historian/status.py` | Show pipeline state in project summary |
+| `tests/specialist/matchmaker/test_pipeline.py` | New file — 10 tests |
+
+### `common/config.py` — new `Project` property
+
+```python
+@property
+def pipeline_state(self) -> Path:
+    return self.root / "matches" / "pipeline_state.json"
+```
+
+### `matchmaker/pipeline.py` — new module
+
+Six public functions:
+
+```python
+def read_state(path: Path) -> dict
+    # Returns {} if file is missing or malformed JSON.
+
+def mark_generated(path: Path, candidate_count: int, scores: list[float]) -> None
+    # Writes generated_at (now), clears enriched_at and rescored_at,
+    # sets candidate_count, score_p50, score_p90. Clears enriched_count.
+
+def mark_enriched(path: Path, enriched_count: int) -> None
+    # Merges into existing state: sets enriched_at (now), enriched_count,
+    # clears rescored_at. Preserves generated_at and score percentiles.
+
+def mark_rescored(path: Path) -> None
+    # Merges into existing state: sets rescored_at (now).
+
+def is_enriched(path: Path) -> bool
+    # True if enriched_at is set in the current state.
+
+def _percentile(values: list[float], p: float) -> float | None
+    # Simple sorted-index percentile. Returns None for empty list.
+    # No numpy/statistics dependency — sufficient precision for score distributions.
+```
+
+**State JSON structure:**
+
+```json
+{
+  "generated_at":  "2026-05-19T14:00:00",
+  "enriched_at":   "2026-05-19T14:05:00",
+  "rescored_at":   null,
+  "candidate_count": 512,
+  "enriched_count":  512,
+  "score_p50":       0.42,
+  "score_p90":       0.71
+}
+```
+
+### Cascading state resets
+
+`mark_generated()` clears both `enriched_at` and `rescored_at`. `mark_enriched()` clears `rescored_at`. This means each pass invalidates downstream passes automatically — the state always reflects the most recent complete pass chain, not a mix of timestamps from different runs. The rule is: if you re-run a pass, all later passes are stale.
+
+### `matchmaker/cli.py` — guard and `--force`
+
+In `_run_project()`:
+
+```python
+if not force and is_enriched(proj.pipeline_state):
+    print(
+        f"WARNING: candidates.jsonl has enriched signal fields "
+        f"(enriched_at set). Regenerating will lose enrichment work. "
+        f"Use --force to regenerate anyway."
+    )
+    return
+```
+
+After writing candidates:
+
+```python
+mark_generated(
+    proj.pipeline_state,
+    candidate_count=len(candidates),
+    scores=[c["score"] for c in candidates],
+)
+```
+
+`--force` flag added to `match_main()` parser. The guard checks `is_enriched()` specifically — not just `is_generated()` — because regenerating un-enriched candidates is harmless; the expensive work to protect is signal enrichment.
+
+### `patent/cli.py` — mark enriched after signals
+
+After `cmd_signals()` completes its enrichment loop:
+
+```python
+from markery.specialist.matchmaker.pipeline import mark_enriched
+mark_enriched(project.pipeline_state, enriched_count=n)
+```
+
+`n` is the count of candidates that received signal enrichment. This updates `pipeline_state.json` without touching `candidates.jsonl`.
+
+### `historian/status.py` — pipeline state in project summary
+
+```python
+if pipeline_path.exists():
+    ps = json.loads(pipeline_path.read_text())
+    gen = (ps.get("generated_at") or "")[:10]
+    enr = ps.get("enriched_at")
+    enr_str = f"  enriched {enr[:10]}" if enr else ""
+    pipeline_str = f"  (generated {gen}{enr_str})"
+
+print(f"    candidates: {candidates:,}{pipeline_str}")
+```
+
+`markery status` output now shows both the candidate count and the pipeline timestamps inline, e.g. `candidates: 512  (generated 2026-05-19  enriched 2026-05-19)`.
+
+### Test coverage
+
+`tests/specialist/matchmaker/test_pipeline.py` — 10 tests:
+
+- `test_read_state_missing_file` — returns `{}`
+- `test_read_state_malformed_json` — returns `{}`
+- `test_mark_generated_writes_fields` — verifies all fields written correctly
+- `test_mark_generated_clears_enriched` — enriched_at reset on re-generate
+- `test_mark_enriched_sets_timestamp` — enriched_at set; rescored_at still null
+- `test_mark_enriched_clears_rescored` — rescored_at cleared by re-enrichment
+- `test_mark_rescored_sets_timestamp`
+- `test_is_enriched_false_when_missing`
+- `test_percentile_empty_scores` — both percentiles return None
+- `test_state_file_is_valid_json` — verifiable JSON with expected shape after multiple passes
+
+---
+
+## Implementation — G1: queries.py modules (2026-05-19)
+
+**Commit:** 1f44ce5
+
+G1 creates the callable Python query layer that `interface.md`'s abstract tool interface requires. Without these modules, any model using the historian interface would need to inline SQL — coupling the caller to the DB schema.
+
+### Files created / modified
+
+| File | Change |
+|---|---|
+| `src/markery/specialist/patent/queries.py` | New — 6 functions, conn-as-parameter |
+| `src/markery/specialist/trademark/queries.py` | New — 6 functions, conn-as-parameter |
+| `src/markery/specialist/publisher/queries.py` | Modified — added `get_content_gaps()` and `get_rendered_pages()` |
+| `tests/specialist/patent/test_queries.py` | New — 18 tests |
+| `tests/specialist/trademark/test_queries.py` | New — 21 tests |
+| `tests/specialist/publisher/test_queries.py` | Modified — 11 new tests added |
+
+### `patent/queries.py` — 6 functions
+
+```python
+def connect() -> duckdb.DuckDBPyConnection
+    # Opens a read-only connection to patents.duckdb.
+
+def get_patent(conn, patent_no: str) -> dict | None
+    # Returns {patent_no, title, app_dt, grant_dt, abstract, assignee_name,
+    #          cpc_classes: list[str], inventors: list[str]} or None.
+
+def has_abstract(conn, patent_no: str) -> bool
+    # True if abstract is non-null and non-empty.
+
+def has_figure(conn, patent_no: str) -> bool
+    # True if a non-null figure_data BLOB exists in patent_figures.
+
+def get_cpc_classes(conn, patent_no: str) -> list[str]
+    # Returns distinct 4-char CPC class codes. Empty list if not found.
+
+def get_missing_signals(conn, patent_nos: list[str]) -> list[str]
+    # Returns patent_nos from the list whose abstract is NULL or empty.
+    # Order from input list is preserved.
+```
+
+All functions take `conn` as their first argument. The caller controls connection lifetime and tests inject in-memory connections via `open_db(":memory:")` from `patent/build.py`.
+
+### `trademark/queries.py` — 6 functions
+
+```python
+def connect() -> duckdb.DuckDBPyConnection
+    # Opens a read-only connection to trademarks.duckdb.
+
+def get_mark(conn, serial_no: str) -> dict | None
+    # Returns {serial_no, mark_name, filing_dt, draw_cd, registration_no,
+    #          status_cd} or None. serial_no is always returned as str.
+
+def has_image(conn, serial_no: str) -> bool
+    # True if a non-null image_data BLOB exists in mark_images.
+
+def has_case_status(conn, serial_no: str) -> bool
+    # True if any row exists in mark_case_status for this serial.
+
+def get_goods_desc(conn, serial_no: str) -> str | None
+    # Checks statement.statement_text first; falls back to
+    # mark_case_status.goods_desc. Returns None if neither has text.
+
+def get_missing_enrichment(conn, serial_nos: list[str]) -> list[str]
+    # Returns serial_nos not covered by either statement or mark_case_status.
+    # A serial covered by either table is excluded from the result.
+    # Input list order is preserved.
+```
+
+`get_goods_desc()` checks `statement` first because it is populated during the bulk CSV build and is the authoritative source for in-range marks. `mark_case_status.goods_desc` is the TSDR-enriched fallback, written by `enrich.py`. The priority reflects data provenance: bulk CSV data predates TSDR enrichment.
+
+`get_missing_enrichment()` computes the union of covered serials across both tables before filtering. This correctly handles the case where a serial has `statement` text but no `mark_case_status` row (or vice versa).
+
+### `publisher/queries.py` — two new functions
+
+**Discovery:** the publisher already had substantial coverage when examined for G1 implementation: `get_entities()`, `get_trademarks_for_project()`, `get_patents_for_project()`, `get_confirmed_matches()`, and `get_entity_stats()` were all present. Only `get_content_gaps()` and `get_rendered_pages()` were genuinely absent. The G1 inventory in the gap analysis overestimated what was missing here.
+
+```python
+def get_content_gaps(project: str) -> list[dict]
+    # Returns gaps sorted by (priority, slug).
+    # Priority 1: match essays missing from content/<slug>.md (one per confirmed pair slug, deduplicated)
+    # Priority 2: entity summaries missing from content/entity-<slug>.md
+    # Priority 3: sources.md and timeline.md if absent
+    #
+    # Each gap dict: {type, slug, priority, label, path}
+    # Calls get_confirmed_matches() and get_entities() internally.
+
+def get_rendered_pages(project: str) -> list[str]
+    # Returns sorted relative paths of all .html files under site/.
+    # Returns [] if site/ does not exist.
+```
+
+`get_content_gaps()` priority tiers match the `content_gaps` YAML schema defined in Round 3 — `BRIEF.md` will consume this function's output directly. The deduplication of match essay slugs prevents a trademark that appears in multiple confirmed pairs from generating multiple essay gap entries.
+
+### conn-as-parameter design rationale
+
+The patent and trademark query modules use conn-as-parameter consistently. This was chosen over the publisher's internal-connection pattern because:
+
+1. **Testability** — tests inject `open_db(":memory:")` without touching any file. No patching of `DB["patents"]` or `DB["trademarks"]` is needed.
+2. **Lifetime control** — callers that need to run multiple queries over a batch can open one connection and pass it to each function, avoiding repeated connect/close overhead.
+3. **Alignment with `interface.md`** — the abstract tool interface in the historian persona specifies connection-taking functions (`trademarks.for_entity(conn, entity_id)`). The conn-as-parameter pattern makes the Python implementation match the interface's intent.
+
+Publisher queries retain the internal-connection pattern because they open three databases via ATTACH — a connection that the caller cannot easily construct — and because the publisher's callers (the site builder and `BRIEF.md` generation) are one-shot batch operations where lifetime control is less important.
+
+### Test coverage summary
+
+`tests/specialist/patent/test_queries.py` — 18 tests covering: None on missing patent, dict on found, CPC classes and inventors populated, `has_abstract` true/false/null/empty, `has_figure` with and without BLOB, `get_cpc_classes` distinct deduplication, `get_missing_signals` all combinations (all absent, all present, mixed, unknown IDs).
+
+`tests/specialist/trademark/test_queries.py` — 21 tests covering: `get_mark` None and dict, serial_no string type guarantee, `has_image` with null BLOB vs real BLOB vs no row, `has_case_status` true/false, `get_goods_desc` statement priority over case_status, null-statement fallback, `get_missing_enrichment` covered-by-statement, covered-by-case-status, covered-by-both, all-missing, input order preserved.
+
+`tests/specialist/publisher/test_queries.py` — 11 new tests covering: `get_rendered_pages` with no site, sorted paths, non-HTML ignored; `get_content_gaps` all priority levels present/absent, existing files excluded, sort order verified, slug deduplication. Publisher tests mock `get_confirmed_matches()` and `get_entities()` via `unittest.mock.patch` — no real DB connection required.
+
+156 tests pass after G1 implementation (full suite).
