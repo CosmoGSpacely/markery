@@ -1116,10 +1116,15 @@ G3 (rejected.jsonl) — independent; fix is small and high-value
 G4 (pipeline_state.json) — independent; fix is small and prevents data loss
 ```
 
-**Recommended implementation order:**
+**Implementation sequence (decided 2026-05-18):**
 
-1. **G3 first** — rejected.jsonl is the highest practical impact, smallest change. Fix: one property on Project, one write in review.py, one filter in link.py.
-2. **G4 next** — pipeline_state.json prevents accidental enrichment loss during 6C development. Fix before implementing three-pass flow.
-3. **G1** — queries.py modules are prerequisite to Phase 6A prepare command and Phase 7 agent calls.
-4. **G2 + G5 together** — orchestrator design; prerequisite to Phase 7.
-5. **G6** — persona updates depend on G1 and G2 being resolved; write alongside Phase 6A.
+| Order | Gap | When | Rationale |
+|---|---|---|---|
+| 1 | G3 — rejected.jsonl | Now, before any phase | Highest practical impact, smallest change; workflow degrades without it |
+| 1 | G4 — pipeline_state.json | Now, before any phase | Prevents enrichment loss during Phase 6C development |
+| 2 | G1 — queries.py modules | Before Phase 6A | Prerequisite for prepare command (publisher/queries.py) and for G6 |
+| 3 | G6 — persona session protocol | During Phase 6A | Persona updates written alongside the prepare command; G1 gives the Operations section real implementations to reference |
+| 4 | G2 — request schema + orchestrator | Between 6A and 6C | Prerequisite for Phase 6C `--auto-fetch`; 6A context informs what operations are needed |
+| 5 | G5 — cross-specialist call policy | During Phase 6C | G5 is resolved *by* the G2 orchestrator; lands when `--auto-fetch` is implemented |
+
+G5 is not a separate implementation item — the orchestrator from G2 *is* the policy resolution. Documenting G5 as "during Phase 6C" means: when the orchestrator is built, add a one-paragraph note to `DESIGN.md` formalising the rule ("operation calls across specialists route through `specialist/orchestrator.py`").
