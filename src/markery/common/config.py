@@ -54,6 +54,10 @@ class Project:
         return self.root / "matches" / "rejected.jsonl"
 
     @property
+    def pipeline_state(self) -> Path:
+        return self.root / "matches" / "pipeline_state.json"
+
+    @property
     def entities_file(self) -> Path:
         return self.root / "entities.txt"
 

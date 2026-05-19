@@ -122,6 +122,7 @@ def cmd_verify_credentials(args: argparse.Namespace) -> None:
 
 def cmd_signals(args: argparse.Namespace) -> None:
     from markery.specialist.patent.signals import enrich_candidates
+    from markery.specialist.matchmaker.pipeline import mark_enriched
 
     project = Project(args.project)
     if not project.exists():
@@ -131,6 +132,7 @@ def cmd_signals(args: argparse.Namespace) -> None:
     candidates_path = project.candidates
     print(f"Enriching {candidates_path} ...")
     n = enrich_candidates(candidates_path)
+    mark_enriched(project.pipeline_state, enriched_count=n)
     print(f"Enriched {n} candidates with text signals.")
 
 

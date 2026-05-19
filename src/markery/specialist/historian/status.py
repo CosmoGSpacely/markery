@@ -1,5 +1,6 @@
 """Session handoff verifier. Run: markery status"""
 
+import json
 import re
 from datetime import date
 from pathlib import Path
@@ -112,9 +113,22 @@ def main() -> None:
         entities_f  = project_dir / "entities.txt"
         entities    = len([l for l in entities_f.read_text().splitlines()
                            if l.strip() and not l.startswith("#")]) if entities_f.exists() else "—"
+        pipeline_path = matches_dir / "pipeline_state.json"
+        if pipeline_path.exists():
+            try:
+                ps = json.loads(pipeline_path.read_text())
+                gen = (ps.get("generated_at") or "")[:10]
+                enr = ps.get("enriched_at")
+                enr_str = f"  enriched {enr[:10]}" if enr else ""
+                pipeline_str = f"  (generated {gen}{enr_str})"
+            except Exception:
+                pipeline_str = ""
+        else:
+            pipeline_str = ""
+
         print(f"  {project_dir.name}")
         print(f"    entities:   {entities}")
-        print(f"    candidates: {candidates:,}")
+        print(f"    candidates: {candidates:,}{pipeline_str}")
         print(f"    confirmed:  {confirmed}")
         print(f"    essays:     {essays}")
         found_any = True

@@ -35,15 +35,26 @@ def _list_entities() -> None:
     conn.close()
 
 
-def _run_project(project_name: str, min_score: float) -> None:
+def _run_project(project_name: str, min_score: float, force: bool = False) -> None:
     from markery.specialist.matchmaker.link import (
         entity_ids_for_project, generate_candidates,
         write_candidates, read_confirmed, read_rejected,
+    )
+    from markery.specialist.matchmaker.pipeline import (
+        is_enriched, mark_generated,
     )
     proj = Project(project_name)
     if not proj.exists():
         print(f"Project not found: {proj.root}")
         sys.exit(1)
+
+    if not force and is_enriched(proj.pipeline_state):
+        print(
+            f"candidates.jsonl has been enriched with signals since last generation.\n"
+            f"Re-generating will discard those signal fields.\n"
+            f"Use --force to regenerate anyway."
+        )
+        return
 
     entity_ids = entity_ids_for_project(proj.entities_file)
     if not entity_ids:
@@ -66,6 +77,11 @@ def _run_project(project_name: str, min_score: float) -> None:
         print(f"  {before - len(candidates)} previously rejected pairs filtered")
 
     write_candidates(candidates, proj.candidates)
+    mark_generated(
+        proj.pipeline_state,
+        candidate_count=len(candidates),
+        scores=[c["score"] for c in candidates],
+    )
 
     confirmed = read_confirmed(proj.confirmed)
     if confirmed:
@@ -116,6 +132,8 @@ def match_main() -> None:
                        help="List all entities in entities.duckdb and exit")
     parser.add_argument("--min-score", type=float, default=0.1,
                         help="Minimum score to include in output (default: 0.1)")
+    parser.add_argument("--force", action="store_true",
+                        help="Regenerate even if candidates have been enriched")
     args = parser.parse_args()
 
     if args.list_entities:
@@ -125,7 +143,7 @@ def match_main() -> None:
     elif args.entity:
         _run_entity(args.entity, args.min_score)
     elif args.project:
-        _run_project(args.project, args.min_score)
+        _run_project(args.project, args.min_score, force=args.force)
 
 
 # ---------------------------------------------------------------------------
