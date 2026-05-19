@@ -2076,3 +2076,73 @@ The orchestrator module sits at `specialist/orchestrator.py` — one level above
 |---|---|
 | G2 `specialist/orchestrator.py` | **Closed** — module exists; all cross-specialist calls route through it |
 | G5 cross-specialist call policy | **Closed** — policy documented in `orchestrator.py` module docstring |
+
+---
+
+## Phase 6 — Remaining Scope
+
+The following tool work remains in Phase 6, identified during the post-6C/G2 audit. Items are ordered by dependency: 6D is the primary implementation phase; G1 is a prerequisite for making historian and publisher query-driven; D002–D005 are promotions from DEFERRED.md triggered by project needs or design cleanliness.
+
+### 6D — Temporal Extension
+
+**Goal:** Extend the corpus in both directions from the 1900–1939 core. Pre-1900 patents are reached via citation chaining from confirmed pairs. Post-1939 trademark filings document commercial continuity through the 1940s–1950s.
+
+**Scope:**
+
+| Subcommand | Description |
+|---|---|
+| `markery patent fetch <patent_no>` | Fetch a single patent from EPO OPS API; upsert into patents.duckdb |
+| `markery patent citations <patent_no>` | Pull citation list from EPO; fetch any citing/cited patents not already in DB |
+| `markery trademark fetch <serial_no>` | Fetch a single trademark from TSDR; upsert into trademarks.duckdb |
+| `markery trademark entity-forward <entity>` | Fetch post-1939 filings for a confirmed entity (commercial continuity) |
+
+**New schema:** `extended_marks` table in trademarks.duckdb for enrichment data beyond the 1939 bulk dataset boundary.
+
+**Rejection state persistence:** `projects/<name>/matches/status.json` — tracks rejected candidate keys so they are not re-presented after a regeneration run. Currently rejections live only in `rejected.jsonl`, which filters candidates at write time but requires reading the full file on every run; `status.json` adds a fast lookup layer.
+
+**Orchestrator additions:** `fetch_patent(patent_no)`, `fetch_patent_citations(patent_no)`, `fetch_trademark(serial_no)`, `fetch_entity_forward(entity, after_year)` — each wraps the appropriate specialist API call, keeping matchmaker and historian callers insulated from specialist internals.
+
+### G1 — `queries.py` for Historian and Publisher
+
+**Status: open.** The historian and publisher specialists currently have no `queries.py` module. This means:
+
+- `markery historian prepare` cannot detect content gaps by querying the project's confirmed pairs — it would need to import from matchmaker directly, violating G5.
+- The publisher cannot query which entity summaries are missing from `content/` without reading the filesystem by convention rather than by DB query.
+
+**What is needed:**
+- `specialist/historian/queries.py` — read confirmed pairs, check content gap status (which slugs have essays, which do not)
+- `specialist/publisher/queries.py` — read confirmed pairs and entity roster for site-build purposes (already partially served by `publisher/queries.py` which exists but is minimal)
+
+**Prerequisite for:** agentic historian workflow (Phase 7D), automated content-gap detection in `markery historian prepare`.
+
+### D002 — Publisher: File-Referenced Images
+
+**Status: partially closed.** The publisher currently embeds all images as base64 data URIs in the HTML output. This was the correct bootstrap choice (no separate image directory to manage, single-file pages). The remaining open case is referenced images — mark images fetched from TSDR and stored in `mark_images`, which are large PNGs that inflate page weight and defeat HTTP caching.
+
+**What is needed:** During site build, copy mark images to `site/images/<serial>.png` and reference them with `<img src="../images/<serial>.png">` instead of a data URI. Embed flag remains available for single-file export.
+
+**Trigger:** When page-weight or deploy-time caching becomes a concern. P1–P3 (deploy CI, Open Graph) are complete; this is a quality-of-life improvement, not a blocker.
+
+### D003 — Patent Drawings from PDF
+
+**Status: deferred.** The patent specialist can fetch patent PDFs from EPO (Phase 6D adds `markery patent fetch`). Patent drawings are currently not extracted or displayed. Essays reference patent numbers but cannot inline the technical figures.
+
+**What is needed:** A `patent.figures` operation that extracts individual drawing pages from a PDF, converts to PNG, and stores in `patent_figures` table (or as files). The publisher would then include them in match essays via a `[[figure:US1261167A-1]]` cross-link syntax or similar.
+
+**Trigger:** When an essay needs inline patent figure images. Not required for Phase 6D; promoted to Phase 6 backlog so it is tracked alongside the patent fetch infrastructure it depends on.
+
+### D004 — Events Table (Prosecution History)
+
+**Status: deferred.** The trademark bulk dataset includes `event.csv` (~3 GB) containing prosecution history events (office actions, responses, extensions, final decisions). This data is not loaded.
+
+**What is needed:** A `trademark build --events` flag that loads `event.csv` into an `events` table in trademarks.duckdb. Columns: `serial_no`, `event_dt`, `event_cd`, `event_desc_text`.
+
+**Trigger:** When prosecution history is needed for a specific research question — e.g., tracking why a filing was abandoned, or documenting the gap between filing and registration for a specific mark.
+
+### D005 — Foreign Application Data
+
+**Status: deferred.** Some marks in the bulk dataset include foreign application priority claims (Madrid Protocol records). This data is not loaded or surfaced.
+
+**What is needed:** Load the foreign application table and surface it in trademark queries; add a `tm_foreign_priority` field to confirmed pairs where applicable.
+
+**Trigger:** When an international trademark comparison is needed — e.g., documenting a British predecessor mark (SHANNON) alongside its US equivalent.
