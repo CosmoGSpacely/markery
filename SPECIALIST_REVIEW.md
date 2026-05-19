@@ -1764,3 +1764,143 @@ The registers coexist: a thematic essay opens in general-reader, transitions to 
 - `render_brief`: YAML frontmatter present, signals in YAML, content gaps listed, session recommendation present, no-gaps message, candidate highlights table
 
 176 tests pass after Phase 6A + G6 implementation (full suite).
+
+---
+
+## Phase 6B Implementation — 2026-05-19
+
+**Commit:** 11fc37b — "Implement Phase 6B: new page types, cross-links, search, Wikipedia tooling"
+
+### Files modified
+
+| File | Change |
+|---|---|
+| `src/markery/specialist/publisher/render.py` | New page renderers, cross-link support, search form, CSS additions |
+| `src/markery/specialist/publisher/build.py` | Full rewrite: theme detection, link index, search.json, pagefind |
+| `src/markery/specialist/wikipedia/__init__.py` | New module |
+| `src/markery/specialist/wikipedia/wikitext.py` | Markdown → MediaWiki wikitext converter |
+| `src/markery/specialist/wikipedia/api.py` | MediaWiki API client |
+| `src/markery/specialist/wikipedia/cli.py` | `markery wikipedia draft / submit` CLI |
+| `src/markery/cli.py` | `wikipedia` subcommand wired up |
+| `tests/specialist/publisher/test_render_6b.py` | 29 new tests |
+| `tests/specialist/wikipedia/test_wikitext.py` | 15 new tests |
+
+### 6B-1 — New page types
+
+Three optional page types, each sourced from a content file the historian writes:
+
+| Source file | Output page | Render function |
+|---|---|---|
+| `content/theme-<slug>.md` | `themes/<slug>.html` | `render_thematic_essay()` |
+| `content/sources.md` | `sources.html` | `render_sources_page()` |
+| `content/timeline.md` | `timeline.html` | `render_timeline_page()` |
+
+All three render placeholder text when the source file does not exist, so `build_site()` can call them unconditionally without failing on incomplete projects.
+
+**`render_timeline_page()`** generates two SVG timelines (patent grants + trademark filings) from the existing database records, then renders the historian's `timeline.md` annotations (which use `### YYYY` headings) below them using the standard `_render_markdown()` pipeline.
+
+**`render_thematic_essay()`** extracts the essay title from the first `# Heading` line in the content file (falls back to the slug). Strips YAML frontmatter before rendering.
+
+**OBJECTIVES.md integration:** `_parse_site_mode(proj)` reads `site_mode:` from the YAML frontmatter of `OBJECTIVES.md` using a regex (no PyYAML dependency). Returns `"narrative"` if missing. Consumed by `build_site()` but the landing page architecture switch between `narrative` and `metrics` modes is deferred to Phase 6C when the content is available to warrant it.
+
+### 6B-2 — Cross-link rendering
+
+`_render_markdown()` gains two new optional parameters:
+
+```python
+def _render_markdown(
+    text: str,
+    link_index: dict[str, str] | None = None,
+    depth: int = 0,
+) -> str:
+```
+
+**Implementation:** Before per-line processing, `[[Slug]]` occurrences are stashed (like fenced code blocks) into a shared `stash` dict, keyed with `\x00LINK{n}\x00` sentinels. The stash values are pre-built `<a href="...">` tags with the correct `../` prefix for the page's depth. After `_esc()` runs on each content line (which leaves the `\x00` sentinel intact), the stash values are restored by a dict scan. This keeps `[[Slug]]` out of code blocks (which are stashed first) and avoids double-escaping.
+
+**`build_link_index(entities, matches, theme_slugs) -> dict[str, str]`** builds the slug→root-relative-URL mapping used for resolution:
+- Entity slugs → `entities/<slug>.html`
+- Match slugs → `matches/<slug>.html`
+- Theme slugs → `themes/<slug>.html`
+
+All existing render functions (`render_landing`, `render_trademark_gallery`, `render_patent_gallery`, `render_entity_page`, `render_match_essay`) gain optional `link_index` and `extra_nav` parameters, threaded through from `build_site()`. Backward-compatible: existing call sites with no link_index behave identically.
+
+Unknown slugs resolve to plain text (link removed, display text kept), not broken `<a>` tags.
+
+### 6B-3 — Search index + search page
+
+**`search.json`** is written to the site output directory at the end of every build. Format:
+
+```json
+[
+  {"title": "...", "type": "match_essay", "url": "matches/soundex.html", "excerpt": "..."},
+  ...
+]
+```
+
+`_text_excerpt(path, max_chars=200)` strips frontmatter, headings, bold, inline code, fenced blocks, and `[[cross-links]]` from the markdown source, then normalizes whitespace before truncating.
+
+**`render_search_page()`** produces `search.html` with a self-contained client-side JavaScript search engine (~40 lines) that:
+1. Fetches `search.json` lazily on first query
+2. Filters records by substring match across title + excerpt
+3. Renders clickable results with type badges and excerpts
+
+**`_run_pagefind(out_dir)`** is called at the end of `build_site()`. If the `pagefind` binary is in PATH, it runs `pagefind --site <out_dir>` to build a full-text index. If not installed, it skips silently. The search page works either way: `search.json` provides the baseline, Pagefind provides enhanced search if available.
+
+**Header search form:** `_page()` now emits a `<form class="site-search">` in the site header that submits `?q=` to `search.html`. Styled with CSS to sit right-aligned in the dark header bar.
+
+**Extra nav links** are built by `_build_extra_nav()` in `build_site()` and passed to all render functions. Entries added for each thematic essay by title, plus Timeline, Sources, and Search when those pages exist.
+
+### 6B-4 — Wikipedia tooling
+
+**`specialist/wikipedia/wikitext.py`** — `markdown_to_wikitext(text)` converts the historian's markdown to MediaWiki syntax:
+
+| Markdown | Wikitext |
+|---|---|
+| `## Heading` | `== Heading ==` |
+| `### Sub` | `=== Sub ===` |
+| `**bold**` | `'''bold'''` |
+| `*italic*` / `_italic_` | `''italic''` |
+| `[text](url)` | `[url text]` |
+| `` `code` `` | `<code>code</code>` |
+| ```` ```lang\n...\n``` ```` | `<syntaxhighlight lang="lang">` |
+| `[[cross-link]]` | `[[cross-link]]` (left as wikilink for researcher review) |
+
+`build_draft_wikitext()` wraps `markdown_to_wikitext()` and appends a `== Sources ==` section with `<references />`, structured primary source entries (USPTO serial number, patent number), and Wikipedia category tags.
+
+**`specialist/wikipedia/api.py`** — `WikipediaClient`:
+- Credentials from `WIKIPEDIA_USERNAME` and `WIKIPEDIA_BOT_PASSWORD` env vars
+- Bot password authentication (`lgtoken` → login flow)
+- `get_page(title)` — fetches current wikitext via `revisions` API; returns `None` for missing pages
+- `edit_page(title, wikitext, summary)` — full-page replacement with CSRF token
+- `append_section(title, section_title, content, summary)` — adds a new section (for citation-only enrichments)
+
+**`markery wikipedia draft <project> <slug>`** — generates wikitext from the match essay and saves to `projects/<project>/wikipedia/<slug>.wiki`. Requires the match essay to exist.
+
+**`markery wikipedia submit <project> <slug>`** — shows a `unified_diff` of the draft vs. current Wikipedia content (or vs. empty for new articles), then prompts `[y/N]` before POSTing. Uses `page_title` from CLI `--title` flag, falling back to `match["wikipedia_title"]` or the trademark name.
+
+### Design decisions
+
+**No PyYAML dependency:** `_parse_site_mode()` uses `re.search(r'^site_mode:\s*(\w+)', ...)` rather than parsing the full YAML frontmatter. This avoids adding a dependency for a one-field read. The OBJECTIVES.md frontmatter has a richer structure, but only `site_mode` is consumed programmatically by the publisher.
+
+**Pagefind as optional post-processing:** The site build always produces `search.json` (the primary search mechanism). Pagefind adds full-text search if the binary is installed. This means the build works in CI without Pagefind installed, and researchers can add Pagefind to the workflow incrementally.
+
+**Wikipedia `[[cross-links]]` preserved as wikilinks:** The historian writes `[[SOUNDEX]]` as cross-links within the Markery site. In wikitext, `[[SOUNDEX]]` is a Wikipedia internal link to the SOUNDEX article. This is intentional: the historian's cross-links become Wikipedia internal links in the draft, which the researcher reviews and adjusts before submitting.
+
+### Test coverage
+
+`tests/specialist/publisher/test_render_6b.py` — 29 tests:
+- `_strip_frontmatter`: removes YAML block, noop without markers, noop single dash
+- `_render_markdown` cross-links: resolves known slug, depth-0/depth-1 prefix, unknown slug → plain text, no index → no links, inline placement, does not affect code blocks
+- `_parse_site_mode`: reads from OBJECTIVES.md, default narrative when missing
+- `build_link_index`: entities, matches, themes, combined, match without slug
+- `_text_excerpt`: strips markdown, strips frontmatter, missing file, truncation
+- `render_thematic_essay`: creates file, placeholder when source missing
+- `render_sources_page`: creates file, placeholder when source missing
+- `render_timeline_page`: creates file with year entries rendered, placeholder when source missing
+- `render_search_page`: creates file, search.json fetch in JS, query input present
+
+`tests/specialist/wikipedia/test_wikitext.py` — 15 tests:
+- `markdown_to_wikitext`: all heading levels, bold, italic (asterisks + underscores), markdown links, inline code, fenced blocks, cross-link preservation, frontmatter stripping, plain paragraph
+- `build_draft_wikitext`: sources section present, categories present, essay body converted
+
+220 tests pass after Phase 6B implementation (full suite).
