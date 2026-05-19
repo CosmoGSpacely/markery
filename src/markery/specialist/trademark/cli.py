@@ -180,8 +180,10 @@ def main() -> None:
                               help="Rebuild trademarks.duckdb from CSV source files")
     p_build.add_argument("--csv-dir", metavar="DIR",
                          help="Path to CSV directory (default: csv/)")
-    p_build.add_argument("--date-start", default="1900-01-01", metavar="DATE")
-    p_build.add_argument("--date-end",   default="1939-12-31", metavar="DATE")
+    p_build.add_argument("--date-start", default=None, metavar="DATE",
+                         help="Filter case_file to filing_dt >= DATE (omit for full dataset)")
+    p_build.add_argument("--date-end",   default=None, metavar="DATE",
+                         help="Filter case_file to filing_dt <= DATE (omit for full dataset)")
 
     # enrich
     p_enrich = sub.add_parser("enrich",

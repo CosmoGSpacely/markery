@@ -309,7 +309,7 @@ def match_main() -> None:
 
 def cmd_build(args: argparse.Namespace) -> None:
     from markery.specialist.matchmaker.entities import build
-    counts = build()
+    counts = build(data_dir=args.data_dir)
     print(f"entities.duckdb:")
     print(f"  {counts['entities']} entity/entities added")
     print(f"  {counts['variants']} variant(s) added")
@@ -346,7 +346,9 @@ def matchmaker_main() -> None:
     )
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("build",  help="Insert seed entities/variants (idempotent)")
+    p_build_ent = sub.add_parser("build",  help="Insert entities/variants from CSV (idempotent)")
+    p_build_ent.add_argument("--data-dir", metavar="DIR", required=True,
+                             help="Directory containing entities.csv and variants.csv")
     sub.add_parser("list",   help="List all entities with IDs and names")
     sub.add_parser("status", help="Row counts for entity registry tables")
 

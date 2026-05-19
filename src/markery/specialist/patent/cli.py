@@ -30,6 +30,7 @@ def cmd_build(args: argparse.Namespace) -> None:
         resume     = args.resume,
         year_start = args.year_start,
         year_end   = args.year_end,
+        seed_path  = args.seed_path or None,
         seed_only  = args.seed_only,
     )
 
@@ -192,11 +193,15 @@ def main() -> None:
     # build
     p_build = sub.add_parser("build", help="Populate patents.duckdb from EPO OPS")
     p_build.add_argument("--classes", nargs="+", metavar="CPC",
-                         help="CPC class codes to fetch (default: all 7)")
+                         help="CPC class codes to fetch (required unless --seed-only)")
     p_build.add_argument("--resume", action="store_true",
-                         help="Skip windows already in fetch_log")
-    p_build.add_argument("--year-start", type=int, default=1900, metavar="YEAR")
-    p_build.add_argument("--year-end",   type=int, default=1939, metavar="YEAR")
+                         help="Skip windows already in the fetch-log JSON")
+    p_build.add_argument("--year-start", type=int, default=None, metavar="YEAR",
+                         help="Start year for EPO query window (required unless --seed-only)")
+    p_build.add_argument("--year-end",   type=int, default=None, metavar="YEAR",
+                         help="End year for EPO query window (required unless --seed-only)")
+    p_build.add_argument("--seed-path", metavar="FILE",
+                         help="Path to a JSON file of seed patent records to insert")
     p_build.add_argument("--seed-only",  action="store_true",
                          help="Insert seed patents only, skip EPO fetch")
 

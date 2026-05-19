@@ -2,7 +2,7 @@
 
 Owns trademarks.duckdb. Two data sources:
   - CSV bulk load (build.py): case_file and companion tables
-  - TSDR API (enrich.py): mark_images and mark_case_status
+  - TSDR API (enrich.py): mark_images and extended_marks
 """
 
 from markery.specialist.trademark.build import build, open_db

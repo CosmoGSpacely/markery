@@ -48,16 +48,16 @@ def has_image(conn: duckdb.DuckDBPyConnection, serial_no: str) -> bool:
 
 
 def has_case_status(conn: duckdb.DuckDBPyConnection, serial_no: str) -> bool:
-    """True if a TSDR case status record exists for this serial."""
+    """True if a TSDR case status record exists in extended_marks for this serial."""
     row = conn.execute(
-        "SELECT 1 FROM mark_case_status WHERE serial_no = ? LIMIT 1",
+        "SELECT 1 FROM extended_marks WHERE serial_no = ? LIMIT 1",
         [serial_no],
     ).fetchone()
     return row is not None
 
 
 def get_goods_desc(conn: duckdb.DuckDBPyConnection, serial_no: str) -> str | None:
-    """Return goods/services text, checking statement table first then mark_case_status."""
+    """Return goods/services text, checking statement table first then extended_marks."""
     row = conn.execute(
         "SELECT statement_text FROM statement WHERE serial_no = ? LIMIT 1",
         [serial_no],
@@ -65,7 +65,7 @@ def get_goods_desc(conn: duckdb.DuckDBPyConnection, serial_no: str) -> str | Non
     if row and row[0]:
         return row[0]
     row = conn.execute(
-        "SELECT goods_desc FROM mark_case_status WHERE serial_no = ? LIMIT 1",
+        "SELECT goods_desc FROM extended_marks WHERE serial_no = ? LIMIT 1",
         [serial_no],
     ).fetchone()
     return row[0] if row else None
@@ -102,19 +102,25 @@ def get_events(
     conn: duckdb.DuckDBPyConnection,
     serial_no: str,
 ) -> list[dict]:
-    """Return all events for a serial number, ordered by event_dt."""
-    rows = conn.execute(
-        "SELECT serial_no, event_dt, event_cd, event_desc_t, party_cd "
-        "FROM events WHERE serial_no = ? ORDER BY event_dt",
-        [serial_no],
-    ).fetchall()
+    """Return all events for a serial number, ordered by event_dt.
+
+    Returns [] if the events table has not been loaded (via load_events()).
+    """
+    try:
+        rows = conn.execute(
+            "SELECT serial_no, event_dt, event_cd, event_desc_t, party_cd "
+            "FROM events WHERE serial_no = ? ORDER BY event_dt",
+            [serial_no],
+        ).fetchall()
+    except Exception:
+        return []
     return [
         {
-            "serial_no":   str(r[0]),
-            "event_dt":    r[1],
-            "event_cd":    r[2],
+            "serial_no":    str(r[0]),
+            "event_dt":     r[1],
+            "event_cd":     r[2],
             "event_desc_t": r[3],
-            "party_cd":    r[4],
+            "party_cd":     r[4],
         }
         for r in rows
     ]
@@ -124,13 +130,19 @@ def get_foreign_apps(
     conn: duckdb.DuckDBPyConnection,
     serial_no: str,
 ) -> list[dict]:
-    """Return all foreign application records for a serial number."""
-    rows = conn.execute(
-        "SELECT serial_no, foreign_appl_no, foreign_country_cd, "
-        "       foreign_filing_dt, foreign_reg_no, foreign_reg_dt "
-        "FROM foreign_app WHERE serial_no = ? ORDER BY foreign_filing_dt",
-        [serial_no],
-    ).fetchall()
+    """Return all foreign application records for a serial number.
+
+    Returns [] if the foreign_app table has not been loaded (via load_foreign_app()).
+    """
+    try:
+        rows = conn.execute(
+            "SELECT serial_no, foreign_appl_no, foreign_country_cd, "
+            "       foreign_filing_dt, foreign_reg_no, foreign_reg_dt "
+            "FROM foreign_app WHERE serial_no = ? ORDER BY foreign_filing_dt",
+            [serial_no],
+        ).fetchall()
+    except Exception:
+        return []
     return [
         {
             "serial_no":          str(r[0]),
@@ -162,11 +174,11 @@ def get_missing_enrichment(
         f"AND statement_text IS NOT NULL AND statement_text != ''",
         serial_nos,
     ).fetchall()}
-    with_mcs = {r[0] for r in conn.execute(
-        f"SELECT serial_no FROM mark_case_status "
+    with_em = {r[0] for r in conn.execute(
+        f"SELECT serial_no FROM extended_marks "
         f"WHERE serial_no IN ({placeholders}) "
         f"AND goods_desc IS NOT NULL AND goods_desc != ''",
         serial_nos,
     ).fetchall()}
-    covered = with_stmt | with_mcs
+    covered = with_stmt | with_em
     return [sn for sn in serial_nos if sn not in covered]

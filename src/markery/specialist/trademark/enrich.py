@@ -6,7 +6,7 @@ Two entry points:
         Fetch PNG from TSDR, upsert BLOB into mark_images. Idempotent.
 
     store_case_status(serial_no, client, conn)
-        Fetch case status from TSDR, upsert into mark_case_status. Idempotent.
+        Fetch case status from TSDR, upsert into extended_marks. Idempotent.
 
     enrich_project(project, client, conn, source, min_score, force)
         Enrich all marks referenced in a project's confirmed or candidates file.
@@ -67,9 +67,9 @@ def store_case_status(
     conn: duckdb.DuckDBPyConnection,
     force: bool = False,
 ) -> bool:
-    """Fetch case status from TSDR and upsert into mark_case_status. Returns True if stored."""
+    """Fetch case status from TSDR and upsert into extended_marks. Returns True if stored."""
     existing = conn.execute(
-        "SELECT fetched_dt FROM mark_case_status WHERE serial_no = ?", [serial_no]
+        "SELECT fetched_dt FROM extended_marks WHERE serial_no = ?", [serial_no]
     ).fetchone()
 
     if existing and not force:
@@ -84,7 +84,7 @@ def store_case_status(
 
     if existing:
         conn.execute(
-            """UPDATE mark_case_status
+            """UPDATE extended_marks
                SET mark_text = ?, filing_dt = ?, registration_no = ?,
                    registration_dt = ?, status_cd = ?, goods_desc = ?,
                    intl_class = ?, first_use_dt = ?, first_use_comm_dt = ?,
@@ -100,11 +100,11 @@ def store_case_status(
         )
     else:
         conn.execute(
-            """INSERT INTO mark_case_status
+            """INSERT INTO extended_marks
                (serial_no, mark_text, filing_dt, registration_no,
                 registration_dt, status_cd, goods_desc, intl_class,
-                first_use_dt, first_use_comm_dt, raw_json, fetched_dt)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                owner_name, first_use_dt, first_use_comm_dt, raw_json, fetched_dt)
+               VALUES (?,?,?,?,?,?,?,?,NULL,?,?,?,?)""",
             [
                 serial_no, parsed["mark_text"], parsed["filing_dt"],
                 parsed["registration_no"], parsed["registration_dt"],

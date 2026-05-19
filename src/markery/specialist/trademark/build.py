@@ -16,9 +16,6 @@ import duckdb
 
 from markery.common.config import DB, ROOT
 
-DATE_START = "1900-01-01"
-DATE_END   = "1939-12-31"
-
 # Tables loaded from CSV companion files (joined to case_file's serial_no set)
 _COMPANION_TABLES = [
     "owner",
@@ -33,6 +30,8 @@ _COMPANION_TABLES = [
 
 # Tables added by TSDR enrichment (enrich.py) and single-fetch (fetch.py).
 # Created on open_db() so they survive across CSV rebuilds.
+# Note: events and foreign_app are on-demand — created by load_events() and
+# load_foreign_app() respectively. They do not appear until explicitly loaded.
 _ENRICHMENT_DDL = """
 CREATE TABLE IF NOT EXISTS mark_images (
     serial_no    VARCHAR PRIMARY KEY,
@@ -40,21 +39,6 @@ CREATE TABLE IF NOT EXISTS mark_images (
     image_format VARCHAR DEFAULT 'PNG',
     image_size   INTEGER,
     fetched_dt   DATE
-);
-
-CREATE TABLE IF NOT EXISTS mark_case_status (
-    serial_no         VARCHAR PRIMARY KEY,
-    mark_text         VARCHAR,
-    filing_dt         DATE,
-    registration_no   VARCHAR,
-    registration_dt   DATE,
-    status_cd         VARCHAR,
-    goods_desc        VARCHAR,
-    intl_class        VARCHAR,
-    first_use_dt      VARCHAR,
-    first_use_comm_dt VARCHAR,
-    raw_json          VARCHAR,
-    fetched_dt        DATE
 );
 
 CREATE TABLE IF NOT EXISTS extended_marks (
@@ -66,30 +50,33 @@ CREATE TABLE IF NOT EXISTS extended_marks (
     status_cd         VARCHAR,
     goods_desc        VARCHAR,
     intl_class        VARCHAR,
-    owner_name        VARCHAR,
+    owner_name        VARCHAR,   -- NULL for bulk-enrichment rows; set for standalone TSDR fetches
     first_use_dt      VARCHAR,
     first_use_comm_dt VARCHAR,
     raw_json          VARCHAR,
     fetched_dt        DATE
 );
-
-CREATE TABLE IF NOT EXISTS events (
-    serial_no    VARCHAR,
-    event_dt     DATE,
-    event_cd     VARCHAR,
-    event_desc_t VARCHAR,
-    party_cd     VARCHAR
-);
-
-CREATE TABLE IF NOT EXISTS foreign_app (
-    serial_no          VARCHAR,
-    foreign_appl_no    VARCHAR,
-    foreign_country_cd VARCHAR,
-    foreign_filing_dt  DATE,
-    foreign_reg_no     VARCHAR,
-    foreign_reg_dt     DATE
-);
 """
+
+
+def _migrate_mark_case_status(conn: duckdb.DuckDBPyConnection) -> None:
+    """One-time migration: copy mark_case_status rows into extended_marks and drop it."""
+    tables = {r[0] for r in conn.execute("SHOW TABLES").fetchall()}
+    if "mark_case_status" not in tables:
+        return
+    conn.execute("""
+        INSERT INTO extended_marks
+            (serial_no, mark_text, filing_dt, registration_no, registration_dt,
+             status_cd, goods_desc, intl_class, owner_name,
+             first_use_dt, first_use_comm_dt, raw_json, fetched_dt)
+        SELECT serial_no, mark_text, filing_dt, registration_no, registration_dt,
+               status_cd, goods_desc, intl_class, NULL,
+               first_use_dt, first_use_comm_dt, raw_json, fetched_dt
+        FROM mark_case_status
+        ON CONFLICT DO NOTHING
+    """)
+    conn.execute("DROP TABLE mark_case_status")
+    conn.commit()
 
 
 def load_events(
@@ -166,18 +153,21 @@ def open_db(db_path: str | Path | None = None) -> duckdb.DuckDBPyConnection:
     path = str(db_path or DB["trademarks"])
     conn = duckdb.connect(path)
     conn.execute(_ENRICHMENT_DDL)
+    _migrate_mark_case_status(conn)
     return conn
 
 
 def build(
     csv_dir:    str | Path | None = None,
     db_path:    str | Path | None = None,
-    date_start: str = DATE_START,
-    date_end:   str = DATE_END,
+    date_start: str | None = None,
+    date_end:   str | None = None,
 ) -> dict[str, int]:
     """Drop and recreate all CSV-sourced tables in trademarks.duckdb.
 
-    Enrichment tables (mark_images, mark_case_status) are preserved.
+    Enrichment tables (mark_images, extended_marks) are preserved.
+    Supply date_start/date_end to restrict case_file rows by filing_dt;
+    omit both to load the full dataset.
     Returns a dict of table → row count.
     """
     csv_dir = Path(csv_dir or ROOT / "csv")
@@ -198,12 +188,17 @@ def build(
     # ── case_file ─────────────────────────────────────────────────────────────
     _log("Loading case_file ...")
     conn.execute("DROP TABLE IF EXISTS case_file")
+    _conds = []
+    if date_start:
+        _conds.append(f"filing_dt >= '{date_start}'")
+    if date_end:
+        _conds.append(f"filing_dt <= '{date_end}'")
+    _where = ("WHERE " + " AND ".join(_conds)) if _conds else ""
     conn.execute(f"""
         CREATE TABLE case_file AS
         SELECT *
         FROM {_rc(csv_dir, 'case_file')}
-        WHERE filing_dt >= '{date_start}'
-          AND filing_dt <= '{date_end}'
+        {_where}
     """)
     conn.execute("CREATE INDEX idx_cf_serial ON case_file(serial_no)")
     conn.execute("CREATE INDEX idx_cf_filing  ON case_file(filing_dt)")

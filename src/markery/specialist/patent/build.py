@@ -1,15 +1,15 @@
 """Build and populate patents.duckdb from EPO OPS.
 
-Schema owns: patents, patent_classes, patent_inventors, patent_figures, fetch_log.
+Schema owns: patents, patent_classes, patent_inventors, patent_figures.
 The patent_figures table stores drawing images as BLOBs (see figures.py).
-fetch_log tracks completed CPC class/year windows to enable --resume.
+Resume state is stored in a JSON file alongside patents.duckdb (see _fetch_log_path).
 
-Entry point: build(classes, resume, year_start, year_end, seed_only)
+Entry point: build(classes, resume, year_start, year_end, seed_path, seed_only)
 """
 
 from __future__ import annotations
 
-import sys
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -19,21 +19,8 @@ from markery.common.auth import load_epo_credentials
 from markery.common.config import DB
 from markery.specialist.patent.epo_client import EPOClient
 
-START_YEAR = 1900
-END_YEAR   = 1939
-
 RESULTS_PER_PAGE = 100
 MAX_PER_QUERY    = 2000
-
-CPC_CLASSES: dict[str, str] = {
-    "B42F": "Filing appliances, card-index systems, loose-leaf binders",
-    "B42D": "Books, printed matter, forms, index cards, ledger sheets",
-    "B41J": "Typewriters, selective printing mechanisms",
-    "B41L": "Addressing and duplicating machines for office use",
-    "G06C": "Mechanical calculators, tabulating machines",
-    "G06K": "Punched cards, record carriers, recognition of data",
-    "G09F": "Displaying, advertising, visible record systems, signs",
-}
 
 # ---------------------------------------------------------------------------
 # Schema DDL
@@ -63,53 +50,75 @@ CREATE TABLE IF NOT EXISTS patent_inventors (
 );
 
 CREATE TABLE IF NOT EXISTS patent_figures (
-    patent_no    VARCHAR  NOT NULL,
-    figure_no    INTEGER  NOT NULL,
-    figure_data  BLOB,
+    patent_no     VARCHAR  NOT NULL,
+    figure_no     INTEGER  NOT NULL,
+    figure_data   BLOB,
     figure_format VARCHAR DEFAULT 'PNG',
-    fetched_dt   DATE,
+    fetched_dt    DATE,
     PRIMARY KEY (patent_no, figure_no)
-);
-
-CREATE TABLE IF NOT EXISTS fetch_log (
-    cpc_class     VARCHAR,
-    year_start    INTEGER,
-    year_end      INTEGER,
-    fetch_dt      TIMESTAMP,
-    patents_added INTEGER
 );
 """
 
 # ---------------------------------------------------------------------------
-# Seed data — manually curated records with enriched abstracts
+# Fetch-log helpers (resume state stored in JSON, not in the research DB)
 # ---------------------------------------------------------------------------
 
-SEED_PATENTS: list[dict] = [
-    {
-        "patent_no":     "US1261167A",
-        "title":         "Index",
-        "app_dt":        "1917-10-25",
-        "grant_dt":      "1918-04-02",
-        "abstract":      "Phonetic indexing system that encodes surnames by consonant sound "
-                         "into a letter-number code, enabling retrieval of records without "
-                         "exact spelling. Known as the Soundex system.",
-        "assignee_name": "Remington Typewriter Company",
-        "cpc":           ["B42F17/00"],
-        "inventors":     ["Russell Robert C"],
-    },
-    {
-        "patent_no":     "US1435663A",
-        "title":         "Index",
-        "app_dt":        "1921-12-19",
-        "grant_dt":      "1922-11-14",
-        "abstract":      "Improved phonetic indexing system extending the Russell Soundex "
-                         "method. Assigned to Remington Typewriter Company; commercialized "
-                         "by Rand Kardex Bureau as the SOUNDEX product line.",
-        "assignee_name": "Remington Typewriter Company",
-        "cpc":           ["B42F17/00"],
-        "inventors":     ["Odell Margaret K"],
-    },
-]
+def _fetch_log_path(db_path: str) -> Path | None:
+    """Return path to the JSON fetch-log file, or None for in-memory DBs."""
+    p = Path(db_path)
+    if str(p) == ":memory:":
+        return None
+    return p.with_name(p.stem + "_fetch_log.json")
+
+
+def _load_fetch_log(log_path: Path | None) -> set[tuple]:
+    """Return set of (cpc_class, year_start, year_end) tuples already fetched."""
+    if log_path is None or not log_path.exists():
+        return set()
+    entries = json.loads(log_path.read_text())
+    return {(e["cpc_class"], e["year_start"], e["year_end"]) for e in entries}
+
+
+def _append_fetch_log(log_path: Path | None, entry: dict) -> None:
+    """Append one fetch entry to the JSON log file."""
+    if log_path is None:
+        return
+    entries: list[dict] = []
+    if log_path.exists():
+        entries = json.loads(log_path.read_text())
+    entries.append(entry)
+    log_path.write_text(json.dumps(entries, indent=2))
+
+
+def _migrate_fetch_log(conn: duckdb.DuckDBPyConnection, db_path: str) -> None:
+    """One-time migration: export fetch_log table to JSON and drop it from the DB."""
+    tables = {r[0] for r in conn.execute("SHOW TABLES").fetchall()}
+    if "fetch_log" not in tables:
+        return
+    rows = conn.execute(
+        "SELECT cpc_class, year_start, year_end, fetch_dt, patents_added FROM fetch_log"
+    ).fetchall()
+    log_path = _fetch_log_path(db_path)
+    if rows and log_path is not None:
+        existing: list[dict] = []
+        if log_path.exists():
+            existing = json.loads(log_path.read_text())
+        new_entries = [
+            {
+                "cpc_class":     r[0],
+                "year_start":    r[1],
+                "year_end":      r[2],
+                "fetch_dt":      str(r[3]),
+                "patents_added": r[4],
+            }
+            for r in rows
+        ]
+        seen = {(e["cpc_class"], e["year_start"], e["year_end"]) for e in existing}
+        merged = existing + [e for e in new_entries
+                             if (e["cpc_class"], e["year_start"], e["year_end"]) not in seen]
+        log_path.write_text(json.dumps(merged, indent=2))
+    conn.execute("DROP TABLE fetch_log")
+    conn.commit()
 
 # ---------------------------------------------------------------------------
 # DB helpers
@@ -119,6 +128,7 @@ def open_db(db_path: str | Path | None = None) -> duckdb.DuckDBPyConnection:
     path = str(db_path or DB["patents"])
     conn = duckdb.connect(path)
     conn.execute(DDL)
+    _migrate_fetch_log(conn, path)
     return conn
 
 
@@ -152,10 +162,17 @@ def insert_patent(conn: duckdb.DuckDBPyConnection, p: dict) -> bool:
     return True
 
 
-def load_seed(conn: duckdb.DuckDBPyConnection) -> int:
-    added = sum(1 for s in SEED_PATENTS if insert_patent(conn, s))
+def load_seed(conn: duckdb.DuckDBPyConnection, seeds: list[dict]) -> int:
+    """Insert seed patent records. Skips existing records. Returns count added."""
+    added = sum(1 for s in seeds if insert_patent(conn, s))
     conn.commit()
     return added
+
+
+def load_seed_from_file(conn: duckdb.DuckDBPyConnection, seed_path: str | Path) -> int:
+    """Read seed patents from a JSON file and insert them. Returns count added."""
+    seeds = json.loads(Path(seed_path).read_text())
+    return load_seed(conn, seeds)
 
 
 # ---------------------------------------------------------------------------
@@ -205,24 +222,25 @@ def _fetch_class(
     resume: bool,
     year_start: int,
     year_end: int,
+    log_path: Path | None,
 ) -> int:
     total = 0
+    fetched = _load_fetch_log(log_path) if resume else set()
     windows = [(y, min(y + 4, year_end)) for y in range(year_start, year_end + 1, 5)]
     for ys, ye in windows:
-        if resume and conn.execute(
-            "SELECT 1 FROM fetch_log WHERE cpc_class=? AND year_start=? AND year_end=?",
-            [cpc_class, ys, ye],
-        ).fetchone():
+        if resume and (cpc_class, ys, ye) in fetched:
             print(f"    skipping {cpc_class} {ys}–{ye} (already in fetch_log)")
             continue
         added = _fetch_window(conn, client, cpc_class, ys, ye)
         total += added
         print(f"    {cpc_class} {ys}–{ye}  +{added}")
-        conn.execute(
-            "INSERT INTO fetch_log VALUES (?,?,?,?,?)",
-            [cpc_class, ys, ye, datetime.now(), added],
-        )
-        conn.commit()
+        _append_fetch_log(log_path, {
+            "cpc_class":     cpc_class,
+            "year_start":    ys,
+            "year_end":      ye,
+            "fetch_dt":      datetime.now().isoformat(),
+            "patents_added": added,
+        })
     return total
 
 
@@ -231,32 +249,48 @@ def _fetch_class(
 # ---------------------------------------------------------------------------
 
 def build(
-    classes: list[str] | None = None,
-    resume: bool = False,
-    year_start: int = START_YEAR,
-    year_end: int = END_YEAR,
-    seed_only: bool = False,
-    db_path: str | Path | None = None,
+    classes:   list[str] | None = None,
+    resume:    bool = False,
+    year_start: int | None = None,
+    year_end:   int | None = None,
+    seed_path:  str | Path | None = None,
+    seed_only:  bool = False,
+    db_path:    str | Path | None = None,
 ) -> None:
-    conn = open_db(db_path)
-    print(f"Database: {db_path or DB['patents']}")
+    """Populate patents.duckdb from EPO OPS.
 
-    n = load_seed(conn)
+    seed_path: path to a JSON file of seed patent records. Omit to skip seeding.
+    classes:   CPC class codes to fetch (required when not seed_only).
+    year_start/year_end: date window (required when not seed_only).
+    """
+    db_path_str = str(db_path or DB["patents"])
+    conn = open_db(db_path_str)
+    print(f"Database: {db_path_str}")
+
+    if seed_path:
+        n = load_seed_from_file(conn, seed_path)
+    else:
+        n = 0
     print(f"  {n} seed patent(s) added")
 
     if seed_only:
         conn.close()
         return
 
+    if not classes:
+        raise ValueError("--classes is required (no default class list)")
+    if year_start is None or year_end is None:
+        raise ValueError("--year-start and --year-end are required")
+
     key, secret = load_epo_credentials()
     client = EPOClient(key, secret)
+    log_path = _fetch_log_path(db_path_str)
 
-    target = classes or list(CPC_CLASSES)
-    print(f"\nFetching: {', '.join(target)}  ({year_start}–{year_end})")
+    print(f"\nFetching: {', '.join(classes)}  ({year_start}–{year_end})")
     grand_total = 0
-    for cls in target:
-        print(f"\nCPC {cls}  {CPC_CLASSES.get(cls, '')}")
-        grand_total += _fetch_class(conn, client, cls, resume, year_start, year_end)
+    for cls in classes:
+        print(f"\nCPC {cls}")
+        grand_total += _fetch_class(conn, client, cls, resume, year_start, year_end, log_path)
 
     conn.close()
     print(f"\nDone. {grand_total:,} patents added.")

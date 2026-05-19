@@ -117,7 +117,7 @@ def test_has_case_status_false_when_no_row():
 def test_has_case_status_true_when_row_exists():
     conn = _db()
     conn.execute(
-        "INSERT INTO mark_case_status (serial_no, mark_text) VALUES (?,?)",
+        "INSERT INTO extended_marks (serial_no, mark_text) VALUES (?,?)",
         ["71165547", "VI-DEX"],
     )
     assert has_case_status(conn, "71165547") is True
@@ -144,25 +144,25 @@ def test_get_goods_desc_from_statement():
     conn.close()
 
 
-def test_get_goods_desc_falls_back_to_mark_case_status():
+def test_get_goods_desc_falls_back_to_extended_marks():
     conn = _db()
     conn.execute(
-        "INSERT INTO mark_case_status (serial_no, goods_desc) VALUES (?,?)",
+        "INSERT INTO extended_marks (serial_no, goods_desc) VALUES (?,?)",
         ["71165547", "Filing equipment"],
     )
     assert get_goods_desc(conn, "71165547") == "Filing equipment"
     conn.close()
 
 
-def test_get_goods_desc_prefers_statement_over_case_status():
+def test_get_goods_desc_prefers_statement_over_extended_marks():
     conn = _db()
     conn.execute(
         "INSERT INTO statement (serial_no, statement_type_cd, statement_text) VALUES (?,?,?)",
         ["71165547", "GS0001", "From statement table"],
     )
     conn.execute(
-        "INSERT INTO mark_case_status (serial_no, goods_desc) VALUES (?,?)",
-        ["71165547", "From case status"],
+        "INSERT INTO extended_marks (serial_no, goods_desc) VALUES (?,?)",
+        ["71165547", "From extended marks"],
     )
     assert get_goods_desc(conn, "71165547") == "From statement table"
     conn.close()
@@ -175,7 +175,7 @@ def test_get_goods_desc_falls_back_when_statement_is_null():
         ["71165547", "GS0001", None],
     )
     conn.execute(
-        "INSERT INTO mark_case_status (serial_no, goods_desc) VALUES (?,?)",
+        "INSERT INTO extended_marks (serial_no, goods_desc) VALUES (?,?)",
         ["71165547", "Fallback goods"],
     )
     assert get_goods_desc(conn, "71165547") == "Fallback goods"
@@ -211,10 +211,10 @@ def test_get_missing_enrichment_covered_by_statement():
     conn.close()
 
 
-def test_get_missing_enrichment_covered_by_mark_case_status():
+def test_get_missing_enrichment_covered_by_extended_marks():
     conn = _db()
     conn.execute(
-        "INSERT INTO mark_case_status (serial_no, goods_desc) VALUES (?,?)",
+        "INSERT INTO extended_marks (serial_no, goods_desc) VALUES (?,?)",
         ["71111111", "Office equipment"],
     )
     result = get_missing_enrichment(conn, ["71111111", "71222222"])
@@ -230,7 +230,7 @@ def test_get_missing_enrichment_all_covered():
         ["71111111", "GS0001", "Card systems"],
     )
     conn.execute(
-        "INSERT INTO mark_case_status (serial_no, goods_desc) VALUES (?,?)",
+        "INSERT INTO extended_marks (serial_no, goods_desc) VALUES (?,?)",
         ["71222222", "Filing equipment"],
     )
     result = get_missing_enrichment(conn, ["71111111", "71222222"])

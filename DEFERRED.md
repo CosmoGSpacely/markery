@@ -4,7 +4,7 @@ Items explicitly deferred — not forgotten, not blocked, just not the current p
 
 | ID | Deferred item | Reopen trigger |
 |---|---|---|
-| D001 | Fetch remaining CPC classes: B41J (typewriters), B41L (duplicating), G06C (calculating machines), G06K (data recognition), G09F (display devices) | When information-systems project needs typewriter, tabulating, or calculator entries |
+| D001 | Fetch remaining CPC classes: G06C (1930–1939), G06K, G09F | EPO OPS 403 daily quota hit 2026-05-19. B41J (10,031) and B41L (3,073) complete; G06C partial (1900–1929, 2,568 patents). Reopen trigger: run `markery patent build --classes G06C G06K G09F --resume` the next day when quota resets. Note: project work, not Markery infrastructure. |
 | ~~D002~~ | ~~Referenced images — switch from base64-embedded to file references~~ | ✅ Done — `_img_src()` in `publisher/render.py`; `build_site()` writes `out/images/{marks,patents}/`; render functions accept `images_dir` |
 | ~~D003~~ | ~~Patent drawings extraction from PDF figures~~ | ✅ Done — `[[figure:patent_no]]` in `_render_markdown()` resolves via `figure_index`; `<figure class="patent-figure">` rendered in essays |
 | ~~D004~~ | ~~Events table from `event.csv`~~ | ✅ Done — `events` DDL in `_ENRICHMENT_DDL`; `load_events()`; `get_events()`; `markery trademark load-events` |
@@ -13,4 +13,4 @@ Items explicitly deferred — not forgotten, not blocked, just not the current p
 
 ## Notes
 
-D001 is the only remaining open item. B41J and G06C are the highest-priority classes for the information-systems research agenda (typewriters and calculating machines are well-represented in the 1900–1939 trademark record). The infrastructure for loading CPC classes already exists; this is a data-population task for the project phase.
+All items closed. DEFERRED register is empty. Phase 7 work (database improvements per DATABASE_REVIEW.md) is tracked separately.

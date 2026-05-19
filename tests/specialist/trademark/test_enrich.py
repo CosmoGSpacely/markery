@@ -134,7 +134,7 @@ def test_store_case_status_inserts_new():
     assert result is True
 
     row = conn.execute(
-        "SELECT mark_text, status_cd FROM mark_case_status WHERE serial_no = '71165547'"
+        "SELECT mark_text, status_cd FROM extended_marks WHERE serial_no = '71165547'"
     ).fetchone()
     assert row[0] == "VI-DEX"
     assert row[1] == "700"

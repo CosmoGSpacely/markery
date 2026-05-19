@@ -46,7 +46,7 @@ CREATE TABLE statement (
     statement_type_cd VARCHAR,
     statement_text VARCHAR
 );
-CREATE TABLE mark_case_status (
+CREATE TABLE extended_marks (
     serial_no  VARCHAR PRIMARY KEY,
     goods_desc VARCHAR
 );
@@ -111,9 +111,9 @@ def test_trademark_goods_available_via_statement():
     assert hq.trademark_goods_available(conn, "71000001") is True
 
 
-def test_trademark_goods_available_via_case_status():
+def test_trademark_goods_available_via_extended_marks():
     conn = _tm_conn()
-    conn.execute("INSERT INTO mark_case_status VALUES ('71000002','Filing systems.')")
+    conn.execute("INSERT INTO extended_marks VALUES ('71000002','Filing systems.')")
     assert hq.trademark_goods_available(conn, "71000002") is True
 
 

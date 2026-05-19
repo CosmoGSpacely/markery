@@ -78,7 +78,7 @@ def main() -> None:
 
     section("Databases")
     dbs = [
-        (DB["trademarks"], ["case_file", "mark_images", "mark_case_status"]),
+        (DB["trademarks"], ["case_file", "mark_images", "extended_marks"]),
         (DB["patents"],    ["patents", "patent_classes", "patent_inventors"]),
         (DB["entities"],  ["company_entity", "entity_name_variant"]),
     ]

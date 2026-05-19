@@ -61,7 +61,7 @@ def _fetch_goods(conn_tm: duckdb.DuckDBPyConnection, serial_no: str) -> str | No
     if row and row[0]:
         return row[0]
     row = conn_tm.execute(
-        "SELECT goods_desc FROM mark_case_status WHERE serial_no = ? LIMIT 1", [serial_no]
+        "SELECT goods_desc FROM extended_marks WHERE serial_no = ? LIMIT 1", [serial_no]
     ).fetchone()
     return row[0] if row else None
 

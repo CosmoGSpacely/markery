@@ -68,7 +68,7 @@ def fetch_tm(conn, serial: str) -> dict:
         "SELECT first_use_any_dt, first_use_com_dt FROM classification WHERE serial_no = ?", [sn]
     ).fetchone()
     mcs = conn.execute(
-        "SELECT first_use_dt, goods_desc FROM mark_case_status WHERE serial_no = ?", [sn]
+        "SELECT first_use_dt, goods_desc FROM extended_marks WHERE serial_no = ?", [sn]
     ).fetchone()
 
     goods = (st[0] if st else (mcs[1] if mcs else None)) or "—"
