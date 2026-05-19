@@ -58,12 +58,12 @@ def _print_resolve_report(report: dict, project: str, auto_fetch: bool) -> None:
         return
 
     print(f"\n--auto-fetch: enriching signals from existing DB data and rescoring ...")
-    from markery.specialist.patent.signals import enrich_candidates
+    from markery.specialist.orchestrator import enrich_signal_fields
     from markery.specialist.matchmaker.link import rescore_candidates
     from markery.specialist.matchmaker.pipeline import mark_enriched, mark_rescored
 
     proj = Project(project)
-    n_enriched = enrich_candidates(proj.candidates)
+    n_enriched = enrich_signal_fields(proj.candidates)
     mark_enriched(proj.pipeline_state, n_enriched)
     rescore_candidates(proj.candidates)
     mark_rescored(proj.pipeline_state)
@@ -165,10 +165,10 @@ def _run_project(
         print(f"  {len(novel)} novel candidates (not yet confirmed)")
 
     if signals or full:
-        from markery.specialist.patent.signals import enrich_candidates
+        from markery.specialist.orchestrator import enrich_signal_fields
         from markery.specialist.matchmaker.pipeline import mark_enriched
         print("Enriching candidates with text signals ...")
-        n = enrich_candidates(proj.candidates)
+        n = enrich_signal_fields(proj.candidates)
         mark_enriched(proj.pipeline_state, n)
 
     if full:
