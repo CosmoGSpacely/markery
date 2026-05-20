@@ -240,6 +240,28 @@ Both commands exist and both route to `build_site()`. The difference in entry po
 
 ---
 
+### P3 — Flesh out trademark specialist persona *(2026-05-20 — complete)*
+
+**Deliverables confirmed:**
+
+`instructions/entity-forward.md` (new): `markery trademark entity-forward <entity_name> [--after-year YEAR]` — when to use (brand continuity, company survival, scope expansion); how matching works via entity name variants in `entities.duckdb`; critical constraint that only TSDR-fetched marks in `extended_marks` appear (not bulk-only marks); fetch-then-query pattern for marks not yet in extended_marks.
+
+`instructions/load-supplemental.md` (new): Both on-demand tables in one card — `events` (prosecution history via `markery trademark load-events`) with full column schema and when to use (prosecution timeline, office action gaps, abandonment analysis); `foreign_app` (Madrid Protocol via `markery trademark load-foreign`) with full column schema and when to use (foreign priority claims, international brand reach); notes on drop-and-recreate behavior and `case_file` filtering.
+
+`reference/bulk-tables.md` expanded: On-demand table section rewritten to include full column schemas for `events` and `foreign_app`; new "serial_no Type Split" section with the rule stated explicitly (`CAST(cf.serial_no AS VARCHAR)`) and four concrete cross-layer query patterns demonstrating when to cast and when not to.
+
+`README.md` updated: reference table expanded to include all new instruction and reference files.
+
+**DEFERRED updated:** D018 added — trademark persona instruction cards for `fetch`, `status`, and `verify-credentials` (next persona completeness pass after Phase 8).
+
+**Commit:** `37be307` — "Phase 8 P3: flesh out trademark specialist persona (entity-forward, load-supplemental, bulk-tables expansion); add D018"
+
+**Closes:** P3 (D009 partial)
+
+**Status:** Complete. Closed in ROADMAP.
+
+---
+
 ### P2 — Flesh out patent specialist persona *(2026-05-20 — complete)*
 
 **Deliverables confirmed:**
