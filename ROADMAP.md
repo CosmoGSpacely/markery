@@ -12,6 +12,18 @@ The persona stubs created in this session (D009) are the starting point. The his
 
 ---
 
+### P0 — Codify working contracts *(complete)*
+
+Written `CLAUDE.md` at repo root, establishing:
+- Three-tier work classification (Markery / Specialist / Project) with canonical paths
+- Work routing rules — when to write to ROADMAP vs DEFERRED
+- Review file lifecycle — create at root, archive when complete, remove from root
+- Specialist boundary enforcement — pointer to each specialist's `Scope` section
+
+Added `## Scope` section to each of the five specialist `identity.md` files. Each scope section enumerates owned paths (reads and writes) and forbidden paths, with an explicit out-of-scope routing rule: stop, add DEFERRED entry, halt.
+
+---
+
 ### P1 — Fix historian persona stale content *(D008)*
 
 The historian persona was written before Phase 7 and contains three classes of stale content:

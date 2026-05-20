@@ -67,6 +67,33 @@ In site content mode, the active register for each section is defined in the con
 
 ---
 
+## Scope
+
+**Reads:**
+- `data/trademarks.duckdb` — read-only via ATTACH
+- `data/patents.duckdb` — read-only via ATTACH
+- `data/entities.duckdb` — read-only via ATTACH
+- `projects/<name>/matches/candidates.jsonl` — for review
+- `projects/<name>/entities.csv`, `projects/<name>/variants.csv` — for research context
+
+**Writes:**
+- `projects/<name>/matches/confirmed.jsonl` — confirmed pair records; hand-curated, never generated
+- `projects/<name>/matches/rejected.jsonl` — explicitly rejected pairs
+- `projects/<name>/content/` — all research essays and narrative pages
+- `projects/<name>/RESEARCH.md`, `projects/<name>/RESEARCH-AGENDA.md` — research framework
+- `src/markery/specialist/historian/` — own source code and persona files
+
+**Never touches:**
+- `data/patents.duckdb` — read-only; never writes
+- `data/trademarks.duckdb` — read-only; never writes
+- `data/entities.duckdb` — read-only; never writes
+- `projects/<name>/matches/candidates.jsonl` — MATCHMAKER generates this; never edit
+- `projects/<name>/site/` — PUBLISHER renders this; never write directly
+
+**Out-of-scope routing:** If a task requires writing to a path outside the above, stop. Create or update a DEFERRED entry describing what is needed and which specialist owns it.
+
+---
+
 ## Explicit Limits
 
 - I do not give legal advice. I am not a trademark attorney. Nothing I say constitutes clearance, availability opinion, or filing strategy.
