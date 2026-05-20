@@ -20,9 +20,9 @@ The Python API returns results directly as Python objects or Pandas DataFrames, 
 
 Each database has an independent source and independent rebuild path:
 
-- `trademarks.duckdb` — built from the USPTO bulk CSV download (a static 2011 snapshot)
+- `trademarks.duckdb` — built from the USPTO bulk CSV download (2011 snapshot) or incrementally via the TSDR API; the two routes are not mutually exclusive
 - `patents.duckdb` — built by querying the EPO OPS API, class by class, year by year
-- `entities.duckdb` — hand-maintained canonical company registry
+- `entities.duckdb` — populated from per-project CSV files (`entities.csv`, `variants.csv`)
 
 Separation means a database can be rebuilt, extended, or replaced without touching the others. Adding new CPC classes to `patents.duckdb` does not require dropping or reloading trademark data. Changing the entity registry does not invalidate either primary source.
 
@@ -80,7 +80,7 @@ The codebase is organized into five specialists under `src/markery/specialist/`.
 
 A specialist exposes three layers: a **queries module** (pure DB reads, no side effects), a **build/pipeline module** (writes or transforms), and a **CLI module** (entry point). Cross-specialist reads use DuckDB `ATTACH` where a join cannot be expressed through individual specialist APIs without multiple round trips — this is the only permitted cross-specialist coupling.
 
-Each specialist also owns its reference documentation: `EPO.md` lives in `specialist/patent/`, `TSDR.md` lives in `specialist/trademark/`, and the historian Claude persona lives in `specialist/historian/persona/`.
+Each specialist also owns a **`persona/` directory** containing its agent contract: `README.md` (purpose and commands), `identity.md` (role, capabilities, explicit limits), `instructions/` (operation-specific instruction cards), and `reference/` (domain reference material). This structure is uniform across all five specialists — acquisition agents and editorial agents alike.
 
 ---
 
@@ -101,9 +101,15 @@ Projects do not share confirmed pairs, entities, or content. The same entity (e.
 
 Markery is an agentic tool, not a pipeline. The specialist pattern is the structural expression of that: five bounded agents, each with its own data domain and API, coordinated by an orchestrator. An agent calling `markery patent build` or `markery match generate` is making the same call a human makes at the terminal — the CLI is the agent interface and the human interface simultaneously.
 
-Each specialist's queries module is a clean programmatic API: pure functions, typed inputs and outputs, no CLI dependency. A model calling `get_entities()` or `get_confirmed_matches()` gets the same result as the site builder. The two interfaces — CLI for humans, queries module for agents — are kept deliberately separate so neither contaminates the other.
+Each specialist exposes three surfaces:
 
-The historian specialist makes the agentic design concrete: `specialist/historian/persona/` contains the Claude persona configuration that turns a model into a research collaborator with a specific scholarly voice, review protocol, and content schema. The Python review tool and the persona files serve the same role through different surfaces — the human sits at a terminal, the agent operates in a Claude project.
+1. **CLI** — the human interface. Every operation is a named subcommand with documented arguments.
+2. **Queries module** — the programmatic interface. Pure functions, typed inputs and outputs, no CLI dependency. A model calling `get_confirmed_matches()` gets the same result as the site builder, without going through the CLI.
+3. **`persona/` directory** — the agent-as-collaborator interface. A structured set of documents that define the specialist's identity, scope, capabilities, and explicit limits. Loaded into a Claude project, the persona turns a model into that specialist without requiring knowledge of the codebase.
+
+The three surfaces serve different callers but describe the same agent. This is why the persona format is uniform across all five specialists — `README.md`, `identity.md`, `instructions/`, `reference/` — even for purely mechanical acquisition agents like PATENT and TRADEMARK. A data-acquisition agent still has a defined scope (what classes, what years, what rate limits), still has explicit limits (what it will not do), and still benefits from instruction cards for its key operations.
+
+The `identity.md` file in each persona is particularly important: it states what the agent does *not* do as explicitly as what it does. These limits prevent a model operating as the Patent specialist from making research judgments it is not equipped to make, and prevent the Historian from attempting database operations that belong to another specialist.
 
 ---
 
