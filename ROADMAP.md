@@ -157,6 +157,60 @@ Clarify the three-tier install in pyproject.toml comments and SETUP.md:
 - `[enhance]` (after P1 fix): enhance + batch + gallery work, Lanczos upscaling (cv2 + vtracer required, auto-installed)
 - `[enhance]` with realesrgan manually installed: full Real-ESRGAN 4× upscaling activated automatically
 
+**P4 — Wikipedia live edit test**
+
+P4 depends on P2 (from-essay command). Goal: demonstrate the full write path — auth, targeted edit, diff review, submission — on real Wikipedia articles using primary source data from Markery databases. Graduated from zero-risk sandbox through to a mainspace citation or external link.
+
+**What the article scan found (2026-05-20, read-only):**
+
+| Article | Length | TSDR ref | Relevant gap | Markery data available |
+|---|---|---|---|---|
+| Chicago Pneumatic | 15,173 chars | None | External links section has 5 links, no TSDR; article has no mention of 1930 CP trademark filing | Serial 71299042, Reg 274,689, filed 1930-04-18; essay and wikitext draft already written |
+| Soundex | 11,723 chars | None | Russell/Odell sentence uncited for trademark/patent filing; no trademark section | Serial 71246709 filed 1927-03-31; but owner chain complex (Kardex Systems now, Remington Rand historically) — requires attribution research before editing |
+| Remington Rand | 16,502 chars | None | Mentions Rand Kardex as subsidiary; no trademark citations | SOUNDEX, VARIADEX, KARDEX pairs confirmed; good second-tier target |
+| Kardex | 454 chars | None | Disambiguation stub; KARDEX trademark confirmed (serial 71426576, Reg 377,986) | Better as addition to Kardex Group article than the dab page |
+
+Chicago Pneumatic is the primary test target: clean owner chain, existing essay, article already has a logo on Commons, and the External links gap is the lowest-risk entry point.
+
+**Infrastructure needed before P4 can run:**
+
+1. **Wikipedia account** — Must be created manually at en.wikipedia.org. Bot passwords are issued under Special:BotPasswords once logged in. Credentials go in `.env` as `WIKIPEDIA_USERNAME` and `WIKIPEDIA_BOT_PASSWORD`. The API client (`wikipedia/api.py`) already reads these.
+
+2. **`markery wikipedia verify-credentials`** — New subcommand. Calls `client.login()`, reports success or the error from the API. No read or write operation beyond the login token exchange. Analogous to `markery trademark verify-credentials`. Add to `wikipedia/cli.py`.
+
+3. **`markery wikipedia add-external-link`** — New subcommand for targeted read-modify-write on an External links section. Safer than full-page replacement for this class of edit. Signature: `markery wikipedia add-external-link <page-title> <url> <label> [--summary <msg>]`. Reads current wikitext, finds the `== External links ==` section, appends `* [<url> <label>]`, shows a unified diff, prompts for confirmation, then calls `edit_page()`. If the URL is already present, exits with a "already linked" notice.
+
+**Test sequence (graduated):**
+
+*Stage 4a — Sandbox* (zero risk)  
+Write a dated test note to `Wikipedia:Sandbox` using the existing `submit` command with `--title "Wikipedia:Sandbox"`. Draft content: a single paragraph noting that this is a test edit from a research tool verifying the auth and write flow. Confirm the edit appears in the sandbox revision history. Verify the interactive diff-and-confirm flow works end-to-end. Revert is automatic (sandbox is periodically reset by Wikipedia bots).
+
+*Stage 4b — External link addition* (minimal impact, mainspace)  
+Add the TSDR filing URL to the Chicago Pneumatic article's External links section using `add-external-link`:
+```
+markery wikipedia add-external-link "Chicago Pneumatic" \
+  "https://tsdr.uspto.gov/#caseNumber=71299042&caseType=SERIAL_NO&searchType=statusSearch" \
+  "USPTO TSDR — CP trademark Serial No. 71299042 (filed 1930)" \
+  --summary "Add primary USPTO filing record for the CP trademark (Serial No. 71299042, filed 1930-04-18)"
+```
+This adds one line to an existing section. No existing content is modified. The edit is additive and verifiable. Easily reverted by any editor.
+
+*Stage 4c — Inline citation* (small content addition, mainspace)  
+After Stage 4b is live and unreverted (give it 48 hours), add one sentence to the Chicago Pneumatic History section citing the 1930 trademark filing. Example: "The CP monogram design trademark (USPTO Serial No. 71299042) was filed on April 18, 1930, covering pneumatic tools, air compressors, and related apparatus.<ref>{{cite web|url=https://tsdr.uspto.gov/#caseNumber=71299042&caseType=SERIAL_NO&searchType=statusSearch|title=TSDR Serial No. 71299042|publisher=United States Patent and Trademark Office}}</ref>" Use `edit_page()` with read-modify-write, show full diff, confirm before submitting.
+
+*Stage 4d — Second article* (deferred)  
+After Stages 4a–4c complete, identify the next target. Remington Rand or the Soundex article (pending resolution of the owner attribution question: 1927 filer was almost certainly Rand Kardex Corporation or a predecessor, not Remington Rand itself, since the SOUNDEX filing predates the 1927 merger by months).
+
+**Safety principles:**
+
+- Never modify or remove sourced existing content — only add
+- All added facts must cite a public primary source (TSDR URL or USPTO patent number)
+- Always show and review the unified diff before confirming
+- `bot: false` is already set in `api.py` — all edits are attributed to the account, not flagged as automated
+- Edit summary must name the primary source (serial number and filing date)
+- Minimum 48 hours between Stages 4b and 4c to monitor for reversions
+- If any edit is reverted, treat it as a signal to reconsider the content before proceeding
+
 ---
 
 ### Phase Gate
@@ -167,4 +221,6 @@ P2 PASSED when: `markery wikipedia from-essay <essay_path> --serial <serial>` pr
 
 P3 PASSED when: `SETUP.md` accurately describes the three dependency tiers and a new contributor can reach each tier by following the documented steps.
 
-Phase PASSED when P1, P2, and P3 all pass.
+P4 PASSED when: Stage 4b (Chicago Pneumatic external link) is live on English Wikipedia and unreverted after 48 hours.
+
+Phase PASSED when P1, P2, P3, and P4 all pass.
