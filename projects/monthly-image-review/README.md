@@ -16,5 +16,9 @@ Enhancement (step 5) is manual and selective — not run automatically on the fu
 
 | Month | Marks | Gallery |
 |---|---|---|
+| January 1930 | 22 design marks | `output/jan1930/gallery.html` |
+| February 1930 | 18 design marks | `output/feb1930/gallery.html` |
+| March 1930 | 17 design marks | `output/mar1930/gallery.html` |
+| April 1930 | 27 design marks | `output/apr1930/gallery.html` |
 | May 1930 | 39 design marks | `output/may1930/gallery.html` |
 | June 1930 | 7 design marks | `output/june1930/gallery.html` |

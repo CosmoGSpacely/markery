@@ -8,6 +8,10 @@
 
 | Month | Design marks queried | Gallery |
 |---|---|---|
+| January 1930 | 22 | `output/jan1930/gallery.html` |
+| February 1930 | 18 | `output/feb1930/gallery.html` |
+| March 1930 | 17 | `output/mar1930/gallery.html` |
+| April 1930 | 27 | `output/apr1930/gallery.html` |
 | May 1930 | 39 | `output/may1930/gallery.html` |
 | June 1930 | 7 | `output/june1930/gallery.html` |
 
