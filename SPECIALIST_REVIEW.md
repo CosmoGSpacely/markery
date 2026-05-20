@@ -240,6 +240,22 @@ Both commands exist and both route to `build_site()`. The difference in entry po
 
 ---
 
+### P6 — Patent bulk CSV route: research and design *(2026-05-20 — complete)*
+
+**Deliverables confirmed:**
+
+`src/markery/specialist/patent/BULK_CSV.md` (new): Source evaluation (PatentsView ✅ recommended, Google Patents Public Data ❌ BigQuery dependency, USPTO Bulk XML ❌ complex parser); full schema mapping for all four `patents.duckdb` tables; `patent_no` construction rule (`US{number}{kind}`, kind=`A` for pre-1940 utility grants); mixed-source assignee name mismatch warning; planned command signature (`markery patent bulk-import --tsv-dir --year-start --year-end --classes`); DuckDB implementation notes (predicate pushdown, idempotent insert, no fetch-log integration).
+
+**DEFERRED updated:** D007 updated from stub to full implementation spec — command signature, source files, key implementation points, reopen trigger.
+
+**Commit:** `b5d2e8f` — "Phase 8 P6: patent bulk import design (PatentsView route); update D007 in DEFERRED with implementation spec"
+
+**Closes:** P6 (D007 design phase; implementation remains D007 in DEFERRED)
+
+**Status:** Complete. Closed in ROADMAP.
+
+---
+
 ### P5 — Flesh out publisher specialist persona *(2026-05-20 — complete)*
 
 **Deliverables confirmed:**
