@@ -1,6 +1,6 @@
 # Setup Guide
 
-Complete instructions for setting up Markery from scratch on a new machine.
+Complete instructions for setting up Markery on a new machine.
 
 ---
 
@@ -8,17 +8,17 @@ Complete instructions for setting up Markery from scratch on a new machine.
 
 - **Python 3.11 or later** (`python --version`)
 - **Git**
-- Two API credentials (both free — see below)
-- ~500 MB disk space for the databases and model weights
+- API credentials for the data sources you plan to use (see below)
+- ~100 MB disk space for the committed databases; ~4 GB additional if rebuilding the trademark bulk tables from the USPTO CSV download
 
-The three `.duckdb` files are committed to the repository. You do not need to rebuild them to start working — they already contain data. Rebuilding from scratch requires the EPO OPS credentials and, for trademarks, the raw USPTO CSV files (which are not committed).
+The three `.duckdb` files are committed to the repository and ready to use. You do not need to rebuild them to start working. Rebuilding from scratch requires the relevant credentials and, for the trademark bulk route, the raw USPTO CSV files (not committed).
 
 ---
 
 ## 1. Clone and create environment
 
 ```bash
-git clone git@github.com:CosmoGSpacely/markery.git
+git clone <repository-url>
 cd markery
 
 python -m venv .venv
@@ -27,11 +27,13 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+All `markery` commands below assume the venv is active.
+
 ---
 
 ## 2. API credentials
 
-Create a `.env` file in the project root (it is gitignored):
+Create a `.env` file in the project root (gitignored):
 
 ```bash
 touch .env
@@ -39,10 +41,10 @@ touch .env
 
 ### EPO Open Patent Services
 
-Used by `build_patents_db.py` and `test_epo_ops.py`.
+Required for fetching patent records from the EPO OPS API.
 
 1. Register at **https://developers.epo.org** — free, requires email verification
-2. Create an application to get a Consumer Key and Consumer Secret
+2. Create an application to receive a Consumer Key and Consumer Secret
 3. Add to `.env`:
 
 ```
@@ -50,16 +52,14 @@ EPO_CONSUMER_KEY=your_key_here
 EPO_CONSUMER_SECRET=your_secret_here
 ```
 
-Verify credentials:
+Verify:
 ```bash
-.venv/bin/python test_epo_ops.py
+markery patent verify-credentials
 ```
-
-Expected output: token obtained, a known patent retrieved, a CQL search returning results.
 
 ### USPTO TSDR API
 
-Used by `tsdr_client.py` for fetching mark images and case status.
+Required for fetching individual trademark records and mark images.
 
 1. Register at **https://account.uspto.gov/api-manager/**
 2. Create an API key
@@ -69,113 +69,203 @@ Used by `tsdr_client.py` for fetching mark images and case status.
 USPTO_API_KEY=your_key_here
 ```
 
----
-
-## 3. Verify the databases
-
-The committed databases are ready to use. Confirm they're working:
-
+Verify:
 ```bash
-.venv/bin/python -c "
-import duckdb
-
-p = duckdb.connect('data/patents.duckdb', read_only=True)
-print('patents:', p.execute('SELECT COUNT(*) FROM patents').fetchone()[0])
-
-t = duckdb.connect('data/trademarks.duckdb', read_only=True)
-print('trademarks:', t.execute('SELECT COUNT(*) FROM case_file').fetchone()[0])
-
-e = duckdb.connect('data/entities.duckdb', read_only=True)
-print('entities:', e.execute('SELECT COUNT(*) FROM company_entity').fetchone()[0])
-"
+markery trademark verify-credentials
 ```
-
-Expected: ~11,284 patents, ~25,473 trademarks, 4 entities.
 
 ---
 
-## 4. Run the match pipeline
-
-Generate patent-trademark candidate pairs for the information-systems project:
+## 3. Verify the committed databases
 
 ```bash
-.venv/bin/python -m match information-systems
+markery status
 ```
 
-Output is written to `projects/information-systems/matches/candidates.jsonl`.
+This prints row counts for all three databases and a one-line summary for each project. Use it any time to confirm the databases are intact and the venv is correctly set up.
 
 ---
 
-## Rebuilding from scratch
+## 4. Set up the entity registry
 
-### entities.duckdb
-
-Safe to rebuild at any time — idempotent:
+Entities are defined per project in `projects/<project>/entities.csv` and `projects/<project>/variants.csv`. Load them into `entities.duckdb`:
 
 ```bash
-rm data/entities.duckdb
-.venv/bin/python src/markery/db/build_entities_db.py
+markery matchmaker build --data-dir projects/<project>
 ```
 
-### patents.duckdb
-
-Requires EPO OPS credentials. The full B42F + B42D fetch takes approximately 20–30 minutes and makes several hundred API calls.
+The build is idempotent — re-running adds any new rows and skips existing ones. Confirm:
 
 ```bash
-rm data/patents.duckdb
-.venv/bin/python src/markery/db/build_patents_db.py --seed-only       # create schema, load 2 seed patents
-.venv/bin/python src/markery/db/build_patents_db.py --classes B42F B42D   # full fetch
-
-# Or fetch a single year to test:
-.venv/bin/python src/markery/db/build_patents_db.py --classes B42F --year-start 1918 --year-end 1918
+markery matchmaker list
 ```
 
-Use `--resume` to continue a partial build without re-fetching already-completed windows.
+---
 
-### trademarks.duckdb
+## 5. Build the trademark database
 
-Requires the USPTO Trademark Case Files Dataset CSV files in `csv/`. The CSVs are not committed (combined ~4 GB). Download from:
+Two routes depending on what you have available.
+
+### Route A: Bulk CSV (full USPTO dataset)
+
+The 2011 USPTO Trademark Case Files Dataset provides ~5 million case files with companion tables (owner, classification, statement, and others). This route populates the full bulk schema and is required for candidate generation via the matchmaker.
+
+**When to use:** Starting a new project where you need to discover which marks belong to your entities across the full USPTO corpus, or when your project's date window falls within the 2011 bulk snapshot.
+
+Download the dataset from:
 
 > https://www.uspto.gov/ip-policy/economic-research/research-datasets/trademark-case-files-dataset
 
 Extract to `csv/`, then:
 
 ```bash
-rm data/trademarks.duckdb
-.venv/bin/python src/markery/db/build_trademarks_db.py
+markery trademark build --csv-dir csv/
 ```
 
-The rebuild takes 2–5 minutes depending on disk speed. The resulting database is ~150 MB.
+Supply `--date-start` and `--date-end` to load only a date window:
+
+```bash
+markery trademark build --csv-dir csv/ --date-start 1900-01-01 --date-end 1939-12-31
+```
+
+The full dataset takes 2–5 minutes depending on disk speed. The filtered build is faster. Row counts in `case_file` will reflect the window you chose.
+
+### Route B: TSDR API (targeted fetch)
+
+Fetches specific marks by serial number from the USPTO TSDR API into `extended_marks`. Does not populate the bulk tables (`case_file`, `owner`, etc.).
+
+**When to use:** You already know which marks you need; your marks are post-2011 and not in the bulk dataset; or you are building a project from confirmed pairs rather than from candidate discovery.
+
+Fetch a specific mark:
+
+```bash
+markery trademark fetch <serial_no>
+```
+
+Enrich all marks in a project's confirmed or candidates file:
+
+```bash
+markery trademark enrich-project <project> --source confirmed
+markery trademark enrich-project <project> --source candidates --min-score 0.50
+```
+
+With this route, `extended_marks` is the primary trademark table. Candidate generation via the matchmaker requires the bulk tables; if using Route B, candidates must be supplied by other means (manual curation, seed records).
+
+---
+
+## 6. Build the patent database
+
+### Route A: EPO OPS API (current)
+
+Fetches patent records by CPC class and year range from the EPO OPS API. This is the primary and currently supported fetch mechanism.
+
+```bash
+markery patent build --classes B42F B42D --year-start 1900 --year-end 1939
+```
+
+Use `--resume` to continue a fetch interrupted by rate limits or quota:
+
+```bash
+markery patent build --classes B42F B42D --year-start 1900 --year-end 1939 --resume
+```
+
+Resume state is tracked in `data/patents_fetch_log.json` alongside the database. Each completed class/window is recorded; `--resume` skips already-completed entries.
+
+To add seed patents without triggering an API fetch (useful for patents identified by manual research):
+
+```bash
+markery patent build --seed-only --seed-path projects/<project>/seed_patents.json
+```
+
+Fetch a single patent by number on demand:
+
+```bash
+markery patent pull <patent_no>
+```
+
+### Route B: Bulk CSV import (planned, not yet implemented)
+
+A future route will support bulk import from sources such as PatentsView or Google Patents Public Data, allowing `patents.duckdb` to be populated without EPO OPS API calls. This is useful for large class sweeps, offline environments, or projects covering CPC classes that EPO OPS rate limits make impractical to fetch incrementally. Implementation is pending.
+
+---
+
+## 7. Run the match pipeline
+
+Generate patent-trademark candidate pairs for a project:
+
+```bash
+markery match <project>
+```
+
+This reads the project's `entities.txt` (the entity IDs in scope), queries all three databases via DuckDB ATTACH, scores every patent-trademark pair, and writes `projects/<project>/matches/candidates.jsonl`.
+
+To also enrich with text signals in one step:
+
+```bash
+markery match <project> --full
+```
+
+Check pipeline state at any time:
+
+```bash
+markery match status <project>
+```
+
+---
+
+## 8. Review and publish
+
+Interactive candidate review:
+
+```bash
+markery review <project>
+```
+
+Keys: `Y` confirm · `N` skip · `Q` quit. Confirmed pairs are written to `confirmed.jsonl`.
+
+Build the static site:
+
+```bash
+markery site build <project>
+```
 
 ---
 
 ## Image enhancement
 
-Mark image enhancement uses Real-ESRGAN. Model weights (~17 MB) are downloaded automatically on first use to `tools/image_enhancement/weights/`.
+Mark image enhancement uses Real-ESRGAN. Model weights (~17 MB) are downloaded automatically on first use to `src/markery/specialist/publisher/image_enhancement/weights/`.
 
-Before running enhancement, review `tools/image_enhancement/ENHANCE.md`. Enhancement is a selective, manually-confirmed step — not a batch operation on query results.
+Enhancement is selective and manually confirmed — not a batch operation on all candidates. See `markery enhance --help` for options.
 
 ---
 
-## Project layout summary
+## Project layout
 
 ```
 markery/
 ├── data/
-│   ├── patents.duckdb          US patents 1900–1939 (B42F + B42D)
-│   ├── trademarks.duckdb       USPTO trademark applications 1900–1939
-│   └── entities.duckdb         Canonical company registry
+│   ├── patents.duckdb              Shared patent corpus (EPO OPS)
+│   ├── patents_fetch_log.json      Resume state for patent builds
+│   ├── trademarks.duckdb           Shared trademark corpus (USPTO)
+│   └── entities.duckdb             Canonical entity registry
 ├── src/markery/
-│   ├── matching/               Patent-trademark candidate pipeline
-│   └── db/                     DB builders and TSDR client
-├── tools/
-│   ├── image_enhancement/      Mark image enhancement pipeline
-│   ├── patent_docs/            Patent PDF fetch and text-signal scoring
-│   └── historian/              Historian agent
+│   ├── specialist/
+│   │   ├── patent/                 Patent specialist + EPO.md
+│   │   ├── trademark/              Trademark specialist + TSDR.md
+│   │   ├── matchmaker/             Entity registry + candidate generation
+│   │   ├── historian/              Review tool + persona/
+│   │   └── publisher/              Site renderer + image enhancement
+│   ├── common/                     Config, auth, shared utilities
+│   └── cli.py                      Unified entry point
 ├── projects/
-│   └── information-systems/    Active research project
-│       ├── entities.txt        Companies in scope
-│       ├── matches/            candidates.jsonl + confirmed.jsonl
-│       └── content/            Research essays per entry
-└── .env                        API credentials (gitignored)
+│   └── <project>/
+│       ├── entities.csv            Entity definitions (loaded into entities.duckdb)
+│       ├── variants.csv            Name variant definitions
+│       ├── seed_patents.json       Manually-identified seed patent records
+│       ├── entities.txt            Entity IDs in scope for this project
+│       ├── matches/
+│       │   ├── candidates.jsonl    Generated — never edited
+│       │   └── confirmed.jsonl     Hand-curated — authoritative
+│       └── content/                Research essays and narrative pages
+└── .env                            API credentials (gitignored)
 ```
