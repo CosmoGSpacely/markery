@@ -237,3 +237,41 @@ Both commands exist and both route to `build_site()`. The difference in entry po
 **Commit:** `a18e477` — "Phase 8 P0: add CLAUDE.md and Scope sections to all five specialist identity files"
 
 **Status:** Complete. Closed in ROADMAP.
+
+---
+
+### P1 — Fix historian persona stale content and session workflow *(2026-05-20 — complete)*
+
+**Deliverables confirmed:**
+
+`historian/persona/README.md`:
+- `mark_case_status` → `extended_marks` in Databases table
+- Row counts removed; replaced with "date window set per project" / "scope set per project"
+- `src/markery/matching/` → `src/markery/specialist/matchmaker/`
+
+`historian/persona/reference/markery-database.md`:
+- `serial_no` type corrected from VARCHAR to BIGINT in all five bulk tables (`case_file`, `owner`, `statement`, `classification`, `design_search`)
+- `extended_marks` table added with full column schema and cross-layer cast example
+- Opening sentence: hardcoded row count removed
+- Closing notes: "serial_no is VARCHAR throughout" replaced with the BIGINT/VARCHAR split explanation
+
+`historian/persona/research-session.md`:
+- Step 0 expanded: `markery historian prepare <project>` added as the first command in every session
+- Step 1 (add entity): procedure rewritten — `entities.csv` / `variants.csv` + `markery matchmaker build --data-dir projects/<project>` + `markery matchmaker list`; old `build.py` editing procedure removed
+- Step 3: `markery score-signals <project>` → `markery patent signals <project>`
+- Step 7: `markery fetch-patents <project> --confirmed` → `markery patent fetch <project> --confirmed`; `markery fetch-patents --patent US1261167A` → `markery patent pull US1261167A`
+- End of session: "Update `CONTEXT.md` → `## Next Action`" → "Update the project's `STATUS.md`"
+- Quick-reference table: all stale commands corrected; `prepare` and `patent pull` added
+
+`historian/persona/instructions/prepare.md` (new):
+- Documents `markery historian prepare <project>`; explains BRIEF.md sections and how to read them; includes human-readable and structured request forms
+
+`historian/persona/instructions/trademark-enrich.md`:
+- `markery trademark enrich <project>` → `markery trademark enrich-project <project>`
+- `mark_case_status` → `extended_marks` in prose, table reference, and SQL example
+
+**Commit:** `0521246` — "Phase 8 P1: fix historian persona stale content and session workflow"
+
+**Closes:** D008, S01-HI, S02-HI, S03-HI, S04-HI (side effect)
+
+**Status:** Complete. Closed in ROADMAP.
