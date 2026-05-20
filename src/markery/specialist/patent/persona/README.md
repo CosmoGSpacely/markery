@@ -74,7 +74,11 @@ Drop this folder into a Claude project with access to the Markery repository. Th
 
 | File | Contains |
 |---|---|
-| `identity.md` | Agent role, capabilities, and explicit limits |
-| `instructions/build.md` | When and how to run a patent build |
+| `identity.md` | Agent role, capabilities, explicit limits, and scope |
+| `instructions/build.md` | When and how to run a bulk patent build; resume after quota |
+| `instructions/pull.md` | On-demand single patent fetch; when to use vs bulk build |
+| `instructions/figures.md` | Fetching and storing drawing figures; single and batch; no-figure fallback |
+| `instructions/citations.md` | Backward citation chain expansion; organic corpus growth pattern |
 | `reference/epo-ops.md` | EPO OPS rate limits, quota, and CQL syntax |
+| `reference/cpc-classes.md` | CPC class system; how to read codes; classes used in this project; pre-1940 caveats |
 | `src/markery/specialist/patent/EPO.md` | Full EPO OPS API reference |
