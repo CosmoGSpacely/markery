@@ -25,38 +25,37 @@ Verify DuckDB files are present:
 ls -lh data/trademarks.duckdb data/patents.duckdb data/entities.duckdb
 ```
 
-Run the session-start verifier:
+Generate the project brief and run the session-start verifier:
 
 ```bash
+markery historian prepare <project>
 markery status
 ```
 
-Expected output: row counts for all three databases, project metrics (candidates, confirmed, essays), deferred items list, and next action from `CONTEXT.md`. Any `MISSING` database line is a blocker — rebuild the affected database before proceeding.
+`markery historian prepare` reads the project's confirmed pairs, candidates, signals, and enriched marks and writes `projects/<project>/matches/BRIEF.md`. Read it before any other step — it shows what is confirmed, what is unreviewed, what signals are available, and what trademarks are enriched.
+
+`markery status` prints row counts for all three databases and a one-line summary per project. Any `MISSING` database line is a blocker — rebuild the affected database before proceeding.
 
 ---
 
 ## 1. Add a new entity (skip if not needed)
 
-Entity data lives in `src/markery/specialist/matchmaker/build.py`. To add a company:
+Entity data lives in `projects/<project>/entities.csv` and `projects/<project>/variants.csv`. To add a company:
 
-1. Add a row to the `ENTITIES` list — fields: `(entity_id, canonical_name, entity_type, industry, notes)`.
-2. Add name variants to the `VARIANTS` list — one row per known spelling from patent assignee fields and trademark owner fields.
-3. Run the builder:
+1. Add a row to `entities.csv` — columns: `entity_id`, `canonical_name`, `entity_type`, `industry`.
+2. Add name variants to `variants.csv` — one row per known spelling from patent assignee fields and trademark owner fields. The `source` column must be `patent_assignee` or `trademark_owner`.
+3. Load into the registry:
 
 ```bash
-markery matchmaker build
+markery matchmaker build --data-dir projects/<project>
 ```
 
-Expected output: counts of entities and variants added. The builder is idempotent — running it again with no changes prints `0 entities added  0 variants added`.
+Expected output: counts of entities and variants added. The builder is idempotent — running it again with no changes adds nothing.
 
 Confirm the entity landed:
 
 ```bash
-python - <<'EOF'
-import duckdb
-conn = duckdb.connect("data/entities.duckdb", read_only=True)
-print(conn.execute("SELECT entity_id, canonical_name FROM company_entity ORDER BY entity_id").fetchall())
-EOF
+markery matchmaker list
 ```
 
 ---
@@ -94,7 +93,7 @@ EOF
 Enriches `candidates.jsonl` with four text-signal fields: `title_name_hit`, `abstract_name_hit`, `goods_title_overlap`, `goods_abstract_overlap`. These are displayed in the reviewer and used to surface the strongest matches.
 
 ```bash
-markery score-signals <project>
+markery patent signals <project>
 ```
 
 Run this after generating candidates and before reviewing. Safe to re-run — it overwrites only the signal fields.
@@ -168,19 +167,19 @@ Essay structure: lead with historical context, ground all claims in specific fil
 Download PDF and extract page-1 figure for confirmed pairs:
 
 ```bash
-markery fetch-patents <project> --confirmed
+markery patent fetch <project> --confirmed
 ```
 
-For a specific patent:
+For a specific patent by number:
 
 ```bash
-markery fetch-patents --patent US1261167A
+markery patent pull US1261167A
 ```
 
 For high-scoring candidates before review:
 
 ```bash
-markery fetch-patents <project> --min-score 0.70
+markery patent fetch <project> --min-score 0.70
 ```
 
 PDFs land in `projects/<project>/output/` alongside the existing figure PNGs. Figures extracted into `data/patents.duckdb` (`patent_figures` table) and displayed automatically in the reviewer.
@@ -232,7 +231,7 @@ Output: 4× upscaled PNG. SVG written alongside for clean word marks and geometr
 
 ## End of session
 
-Update `CONTEXT.md` → `## Next Action` with the specific next step (mark + serial or task).
+Update the project's `STATUS.md` with the specific next action (mark + serial or task).
 
 Run `markery status` one more time to confirm metrics match expectations before closing.
 
@@ -242,12 +241,14 @@ Run `markery status` one more time to confirm metrics match expectations before 
 
 | Task | Command |
 |---|---|
+| Generate project brief | `markery historian prepare <project>` |
 | Session verifier | `markery status` |
-| Add entity | edit `src/markery/specialist/matchmaker/build.py` → `markery matchmaker build` |
+| Add entity | edit `entities.csv` + `variants.csv` → `markery matchmaker build --data-dir projects/<project>` |
 | Generate candidates | `markery match <project>` |
-| Score text signals | `markery score-signals <project>` |
+| Score text signals | `markery patent signals <project>` |
 | Review candidates | `markery review <project>` |
-| Fetch patent docs | `markery fetch-patents <project> --confirmed` |
+| Fetch figures (confirmed) | `markery patent fetch <project> --confirmed` |
+| Fetch single patent | `markery patent pull <patent_no>` |
 | Gallery from DB images | `markery enhance gallery --where "..." --out <path>` |
 | Gallery from enhanced PNGs | `markery enhance gallery <dir>` |
 | Enhance mark (manual, selective) | `markery enhance enhance <serial> --out-dir <dir>` |

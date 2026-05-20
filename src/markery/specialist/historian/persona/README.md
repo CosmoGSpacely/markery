@@ -35,8 +35,8 @@ The specialist reads three DuckDB files via `ATTACH` cross-database queries:
 
 | Database | Contents | Key tables |
 |---|---|---|
-| `data/trademarks.duckdb` | 25,473 USPTO trademark filings, 1900–1939 | `case_file`, `owner`, `statement`, `mark_images`, `mark_case_status` |
-| `data/patents.duckdb` | 11,284 US patents in filing-system CPC classes (B42F, B42D), 1900–1939 | `patents`, `patent_classes`, `patent_inventors` |
+| `data/trademarks.duckdb` | USPTO trademark filings (bulk dataset, date window set per project) | `case_file`, `owner`, `statement`, `mark_images`, `extended_marks` |
+| `data/patents.duckdb` | US patents by CPC class and year range (scope set per project) | `patents`, `patent_classes`, `patent_inventors` |
 | `data/entities.duckdb` | Canonical company registry mapping name variants across both databases | `company_entity`, `entity_name_variant` |
 
 ```python
@@ -53,7 +53,7 @@ See `interface.md` for the full data interface definition — the abstract tool 
 
 The specialist identifies and documents **confirmed patent-trademark pairs** recorded in `projects/<project>/matches/confirmed.jsonl`. Each entry links a specific patent to a specific trademark held by the same entity, with a note on the correspondence. Confirmed pairs are then developed into research essays (match narratives) and eventually rendered into the project site.
 
-Confirmed pairs are curated by hand. The scoring pipeline in `src/markery/matching/` generates candidates, but a pair is confirmed only after historical review. The specialist evaluates candidates and drafts the essay.
+Confirmed pairs are curated by hand. The scoring pipeline in `src/markery/specialist/matchmaker/` generates candidates, but a pair is confirmed only after historical review. The specialist evaluates candidates and drafts the essay.
 
 ---
 

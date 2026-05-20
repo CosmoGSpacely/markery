@@ -1,6 +1,6 @@
 # Markery Database Reference
 
-The `trademarks.duckdb` database contains 25,473 USPTO trademark applications filed 1900–1939, built from the 2011 USPTO Trademark Case Files Dataset. Connect with DuckDB.
+The `trademarks.duckdb` database is built from the 2011 USPTO Trademark Case Files Dataset, filtered to a project-supplied date window. Connect with DuckDB.
 
 ```python
 import duckdb
@@ -16,7 +16,7 @@ One row per trademark application.
 
 | Column | Type | Notes |
 |---|---|---|
-| `serial_no` | VARCHAR | Primary key. 8-digit USPTO serial number. |
+| `serial_no` | BIGINT | Primary key. 8-digit USPTO serial number. Cast to VARCHAR when joining to `mark_images` or `extended_marks`. |
 | `mark_id_char` | VARCHAR | The mark text (word marks). Null for pure design marks. |
 | `mark_draw_cd` | VARCHAR | Drawing code — see `mark-drawing-codes.md` |
 | `filing_dt` | DATE | Application filing date |
@@ -29,7 +29,7 @@ Multiple rows per `serial_no` when ownership transferred.
 
 | Column | Type | Notes |
 |---|---|---|
-| `serial_no` | VARCHAR | Foreign key to case_file |
+| `serial_no` | BIGINT | Foreign key to case_file |
 | `own_id` | INTEGER | Owner sequence number |
 | `own_name` | VARCHAR | Owner name — inconsistently cased; use `UPPER()` for matching |
 | `own_entity_cd` | INTEGER | Entity type (01=individual, 02=corporation, etc.) |
@@ -39,14 +39,14 @@ Multiple rows per `serial_no` when ownership transferred.
 ### statement — Goods and services descriptions
 | Column | Type | Notes |
 |---|---|---|
-| `serial_no` | VARCHAR | Foreign key to case_file |
+| `serial_no` | BIGINT | Foreign key to case_file |
 | `statement_type_cd` | VARCHAR | Type of statement |
 | `statement_text` | VARCHAR | Full text of goods/services description |
 
 ### classification — Classification with first-use dates
 | Column | Type | Notes |
 |---|---|---|
-| `serial_no` | VARCHAR | Foreign key to case_file |
+| `serial_no` | BIGINT | Foreign key to case_file |
 | `class_id` | INTEGER | Key to intl_class and us_class |
 | `first_use_any_dt` | DATE | Earliest known use anywhere |
 | `first_use_com_dt` | DATE | First use in interstate commerce |
@@ -62,8 +62,34 @@ Visual element classification for design marks.
 
 | Column | Type | Notes |
 |---|---|---|
-| `serial_no` | VARCHAR | Foreign key to case_file |
+| `serial_no` | BIGINT | Foreign key to case_file |
 | `design_search_cd` | VARCHAR | 6-digit code; first 2 digits = category |
+
+### extended_marks — TSDR-enriched mark records
+One row per mark fetched from the USPTO TSDR API. Extends the bulk record with goods description, status, registration, and first-use dates. `serial_no` is VARCHAR here (as returned by TSDR) — cast bulk table keys when joining.
+
+| Column | Type | Notes |
+|---|---|---|
+| `serial_no` | VARCHAR | Primary key; cast `case_file.serial_no` to VARCHAR to join |
+| `goods_desc` | VARCHAR | Full goods and services description from TSDR |
+| `mark_text` | VARCHAR | Mark text as registered |
+| `registration_no` | VARCHAR | Registration number |
+| `registration_dt` | DATE | Date of registration |
+| `status_cd` | VARCHAR | Current status code — see `status-codes.md` |
+| `intl_class` | VARCHAR | International class(es) |
+| `first_use_dt` | DATE | Earliest known use anywhere (self-reported) |
+| `first_use_comm_dt` | DATE | First use in interstate commerce (self-reported) |
+| `fetched_dt` | DATE | Date retrieved from TSDR |
+
+```python
+# Cross-layer join: bulk case_file to TSDR extended_marks
+conn.execute("""
+    SELECT cf.mark_id_char, cf.filing_dt, em.goods_desc, em.first_use_dt
+    FROM case_file cf
+    JOIN extended_marks em ON CAST(cf.serial_no AS VARCHAR) = em.serial_no
+    WHERE em.serial_no = '71246709'
+""")
+```
 
 ### mark_images — Trademark drawing images
 PNG images fetched from the TSDR API.
@@ -139,7 +165,7 @@ ORDER BY year;
 
 ## Notes
 
-- `serial_no` is VARCHAR throughout. Cast explicitly if needed.
+- **`serial_no` type split:** `serial_no` is BIGINT in the bulk tables (`case_file`, `owner`, `statement`, `classification`, `design_search`) as delivered by the USPTO CSV. It is VARCHAR in the TSDR tables (`extended_marks`, `mark_images`) as returned by the TSDR API. Queries joining across the boundary must cast: `CAST(cf.serial_no AS VARCHAR)`.
 - Owner names are inconsistently cased in the source data. Always use `UPPER()` or `LOWER()` for string matching.
 - The `owner` table has multiple rows per `serial_no` when ownership transferred. A bare `JOIN` can multiply rows. Filter by `own_id = 1` for original applicant only, or aggregate intentionally.
 - `mark_id_char` is null for pure design marks — don't filter it to find word marks without also checking `mark_draw_cd`.
