@@ -221,3 +221,19 @@ Both commands exist and both route to `build_site()`. The difference in entry po
 | P4 — Flesh out matchmaker persona | S02-MM, S03-MM; **does not address S01-MM (missing queries.py)** |
 | P5 — Flesh out publisher persona | S02-PB |
 | Not planned | S01-HI (stale commands — **fix in P1**), S01-MM (queries.py), S01/S01-OR (build module tests), S02-P (migrate-figures), S03-HI (prepare card), S03-PB (alias) |
+
+---
+
+## Phase 8 Work Log
+
+### P0 — Codify working contracts *(2026-05-20 — complete)*
+
+**Deliverables confirmed:**
+- `CLAUDE.md` written at repo root — four sections: three-tier work classification with path tables, work routing rules (ROADMAP vs DEFERRED triggers), review file lifecycle (create → use → archive → remove from root), specialist boundary enforcement with pointers to each `identity.md`
+- `## Scope` section added to all five specialist `identity.md` files — each enumerates owned reads, owned writes, and forbidden paths by name, with a uniform out-of-scope routing rule: stop, add DEFERRED entry, halt
+
+**Verification:** All six files confirmed present. `grep -l "## Scope"` returns all five `identity.md` paths. `CLAUDE.md` exists at repo root.
+
+**Commit:** `a18e477` — "Phase 8 P0: add CLAUDE.md and Scope sections to all five specialist identity files"
+
+**Status:** Complete. Closed in ROADMAP.
