@@ -36,4 +36,12 @@ Marks of interest identified through gallery review that may connect to active p
 
 | Serial | Mark | Filed | Interest |
 |---|---|---|---|
-| — | — | — | — |
+| 71299042 | CHICAGO PNEUMATIC CP DEPEND UPON THAT NAME | 1930-04-18 | Full workflow test: essay + Wikipedia draft complete. Enhanced image at `output/apr1930-enhanced/71299042.png`. |
+
+---
+
+## Deep-Dive Files
+
+| Serial | Essay | Wikipedia draft |
+|---|---|---|
+| 71299042 | `essays/chicago-pneumatic-cp.md` | `wikipedia/chicago-pneumatic-cp.wiki` |

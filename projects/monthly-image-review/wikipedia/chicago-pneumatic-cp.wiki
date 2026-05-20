@@ -1,0 +1,109 @@
+<!-- Wikipedia draft — Chicago Pneumatic Tool Company CP trademark
+     Status:  DRAFT — not submitted
+     Source:  USPTO Serial No. 71299042 (filed 1930-04-18)
+     Essay:   projects/monthly-image-review/essays/chicago-pneumatic-cp.md
+     Image:   To upload to Wikimedia Commons as:
+              File:Chicago Pneumatic CP trademark 1930.png
+     Enhanced image (local):
+              projects/monthly-image-review/output/apr1930-enhanced/71299042.png
+              4800×2332 px, 4× Lanczos upscale from 1200×583 TSDR source
+     Before submitting: verify Chicago Pneumatic Tool Company article does not
+     already contain a trademark section; merge accordingly if so.
+-->
+
+{{Infobox trademark
+| name          = CP (Chicago Pneumatic)
+| image         = Chicago Pneumatic CP trademark 1930.png
+| image_size    = 300px
+| caption       = CP design mark as filed with the USPTO, April 18, 1930. Design drawing by Chicago Pneumatic Tool Company.
+| owner         = Chicago Pneumatic Tool Company
+| country       = United States
+| filed         = April 18, 1930
+| registered    = 1930
+| serial        = 71299042
+| regnum        = 274,689
+| status        = Expired / Cancelled
+| goods         = Pneumatic tools, air compressors, mining equipment
+| draw_cd       = 3000 (stylized design)
+}}
+
+'''Chicago Pneumatic Tool Company''' (also known by its '''CP''' monogram mark) was one of the foremost American manufacturers of [[pneumatic tool]]s and [[air compressor]]s in the first half of the twentieth century. The company's CP monogram — a composite design mark registered with the [[United States Patent and Trademark Office]] — appeared across its product line and advertising from the interwar period onward.
+
+The mark discussed here, USPTO Serial No. 71299042, was filed on April 18, 1930, and registered as No. 274,689. It is currently expired.
+
+<!-- DOWNLOAD: The enhanced 4800×2332 px version of the mark drawing is available
+     at projects/monthly-image-review/output/apr1930-enhanced/71299042.png
+     Upload to Commons before article submission. -->
+
+{{External media
+| align  = right
+| width  = 300px
+| image1 = [https://tsdr.uspto.gov/#caseNumber=71299042&caseType=SERIAL_NO&searchType=statusSearch CP mark drawing — USPTO TSDR (Serial No. 71299042)]
+}}
+
+== Company background ==
+
+Chicago Pneumatic Tool Company had its origins in the rapid industrialization of the 1880s and 1890s, when [[compressed air]] technology was transforming construction, mining, and heavy industry. [[Pneumatic riveting]] in shipbuilding, [[rock drilling]] in railroad tunneling, and chipping and [[calking]] in boilermaking were among the early applications that created a mass market for purpose-built pneumatic tools. By 1930 the company had moved its principal offices from Chicago, Illinois, to New York City — a pattern common among major industrial enterprises whose manufacturing plants remained in the interior while administrative functions concentrated in the commercial capital.
+
+== The CP mark ==
+
+[[File:Chicago Pneumatic CP trademark 1930.png|thumb|right|300px|CP design mark as submitted with the April 1930 USPTO filing. The monogram is set within an oval cartouche encircled by the company name and the tagline "DEPEND UPON THAT NAME." Enhanced image (4×): [[#External links|download below]].]]
+
+The April 1930 filing presents a [[composite mark]]: the CP [[monogram]] rendered within an oval cartouche, encircled by the words "CHICAGO PNEUMATIC" and accompanied by the tagline "DEPEND UPON THAT NAME." The USPTO assigned it design search codes 240103, 240501, and 260128, corresponding to monogram letter arrangements and oval geometric framing elements. The draw code 3000 designates a stylized design mark — protection extends to the specific design as drawn, not to the letter forms or phrase as standalone text.
+
+A disclaimer was filed with the registration:
+
+{{blockquote|No claim is made to the word "Chicago" or the word "Pneumatic" or the phrase "Depend Upon That Name" apart from the mark shown by the drawing.|source=USPTO Trademark Disclaimer, Serial No. 71299042}}
+
+This disclaimer reflects standard USPTO practice for composite marks whose constituent words are geographically or functionally descriptive. Chicago Pneumatic could not assert exclusive rights to either its geographic name or the generic term "pneumatic" in isolation; only the combined design carried trademark protection.
+
+The tagline "DEPEND UPON THAT NAME" is characteristic of early twentieth-century [[industrial branding]], in which a reliability claim — that the name itself is a guarantee of quality — was used to convert brand familiarity into purchase confidence. Chicago Pneumatic used variants of this phrase across its trade advertising throughout the 1920s and 1930s; the 1930 filing represents its formalization as a registered trademark element.
+
+== Products ==
+
+The goods-and-services description filed with the mark provides an inventory of Chicago Pneumatic's product line as of 1930, organized here by category:
+
+; Percussive pneumatic tools
+: Pneumatic riveting, chipping, calking, and stone hammers; pneumatic yoke, jam, and shell riveters; drift-bolt drivers, rivet busters, stoper drills, sinker drills, and rock drills. These tools served shipbuilding, bridge construction, and heavy structural ironwork.
+
+; Rotary pneumatic tools
+: Air drills, wood-boring machines, pistol drills, rotary drills, corner drills, spindle drills, track drills, coal drills, and hand drills, reflecting expansion from construction into manufacturing environments.
+
+; Accessories and tooling
+: Chucks, reamers, flue cutters, angle gears, twist drills, augers, flue expanders, hose-clamp tools, pliers, drilling stands, drill tripods, and mining columns.
+
+; Prime movers and compressors
+: Steam- and power-driven [[air compressor]]s, gas and gasoline-driven air compressors, portable air compressors, fuel-oil engines, gas engines. The inclusion of compressors alongside tools reflects vertical integration — a customer who purchased a Chicago Pneumatic compressor was a captive market for Chicago Pneumatic tooling.
+
+; Material handling
+: Mine hoists, sand pumps, cranes, elevators, portable winches, bolt drivers, spike drivers, hammer drills, sand rammers, and stone dressers.
+
+; Air-conditioning apparatus for pneumatic tools
+: After coolers, reheaters, and intercoolers — reflecting the thermodynamic requirements of multi-stage compressed-air systems, in which heat generated during compression must be managed to prevent tool damage and maintain efficiency.
+
+== Industrial context ==
+
+The filing date of April 18, 1930, places this trademark registration seven months after the [[Wall Street Crash of 1929]]. The pneumatic tool sector was relatively insulated from the initial shock because infrastructure contracts and mining operations continued on multi-year cycles; demand contracted more sharply from 1932 to 1933. The registration represents a company still investing in brand protection at full industrial scale even as the [[Great Depression]] was deepening.
+
+== Image note ==
+
+The mark drawing reproduced above was retrieved from the USPTO [[Trademark Status and Document Retrieval]] (TSDR) system and represents the design as submitted with the April 1930 filing. It is a scanned reproduction of the original pen-and-ink drawing; no later revisions are incorporated. The enhanced version was processed at 4× resolution (4800×2332 pixels) using high-quality [[Lanczos resampling]] from the TSDR source image (1200×583 pixels). The source drawing is in the [[public domain]] as a USPTO filing record.
+
+== External links ==
+
+* [https://tsdr.uspto.gov/#caseNumber=71299042&caseType=SERIAL_NO&searchType=statusSearch USPTO TSDR — Serial No. 71299042] (filing record, status, and original mark drawing)
+* <!-- REPLACE with Commons URL after upload --> Enhanced mark drawing, 4800×2332 px PNG — ''upload to [[Wikimedia Commons]] as'' <code>File:Chicago Pneumatic CP trademark 1930.png</code> ''before submission''
+
+== References ==
+
+<references />
+
+=== Primary sources ===
+
+* United States Patent and Trademark Office. Trademark Serial No. 71299042. Mark: "CHICAGO PNEUMATIC CP DEPEND UPON THAT NAME." Filed: April 18, 1930. Registration No. 274,689. Owner: Chicago Pneumatic Tool Company, New York City, NY. Goods: Pneumatic tools and related apparatus. Status: Expired/Cancelled.<ref>{{cite web |url=https://tsdr.uspto.gov/#caseNumber=71299042&caseType=SERIAL_NO&searchType=statusSearch |title=TSDR Serial No. 71299042 |publisher=United States Patent and Trademark Office |access-date=2026-05-20}}</ref>
+
+[[Category:Trademarks of the United States]]
+[[Category:Pneumatic tools]]
+[[Category:Manufacturing companies based in New York City]]
+[[Category:1930 establishments in the United States]]
+[[Category:Industrial history of the United States]]
