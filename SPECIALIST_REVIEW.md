@@ -240,6 +240,34 @@ Both commands exist and both route to `build_site()`. The difference in entry po
 
 ---
 
+### P4 — Flesh out matchmaker specialist persona and add queries module *(2026-05-20 — complete)*
+
+**Deliverables confirmed:**
+
+`queries.py` (new — closes S01-MM): Read-only module over `entities.duckdb`. Exports `connect()`, `get_entity()`, `find_entity()`, `list_entities()`, `list_variants()`, `read_candidates()`, `read_confirmed()`, `read_rejected()`, `read_pipeline_state()`. Other specialists can now import entity reads from a pure-read interface rather than from `entities.py` or `link.py` (which mix reads with writes). Restores the three-surface model for matchmaker.
+
+`instructions/entities.md` (new): Adding a new entity — edit `entities.csv` and `variants.csv`, run `markery matchmaker build`, confirm with `markery matchmaker list`; how `source` values (`patent_assignee`, `trademark_owner`) map to database columns; exact-match requirement with guidance on finding the right strings; how to remove a variant (requires clean rebuild); idempotent build behavior.
+
+`instructions/rescore.md` (new — closes S02-MM): When to rescore vs regenerate — rescore after signal enrichment, regenerate to add new pairs; `--force` requirement to regenerate over enriched candidates; semantic bonus component breakdown (title_name_hit +0.20, abstract_name_hit +0.10, goods_title_overlap +0.10, goods_abstract_overlap +0.05, cap 0.25); how to check rescore state via `markery match status`.
+
+`instructions/status.md` (new — closes S02-MM): Reading `markery match status <project>` output — pipeline timestamps (generated_at, enriched_at, rescored_at), score percentiles (P50/P90), review counts (confirmed, rejected, unreviewed); `markery matchmaker status` for entity registry row counts.
+
+`instructions/generate.md` (updated — closes S03-MM): Added `--full` (generate + enrich + rescore in one step), `--force` (overwrite enriched candidates with warning), `--min-score` (default 0.10; tradeoff between coverage and review volume), `--resolve` (report uncertainty band and missing data); link to `instructions/rescore.md` for rescore vs regenerate guidance.
+
+`reference/uncertainty-band.md` (new): Band definition (0.40–0.60); how temporal-only and class-only pairs land in the band; signal enrichment components and their shift potential; when to fetch abstracts (`markery patent signals`) vs goods descriptions (`markery trademark enrich-project`); when to escalate to historian review.
+
+`reference/entities-schema.md` (new): Full CSV format for `entities.csv` (entity_id, canonical_name, entity_type, industry) and `variants.csv` (entity_id, variant_name, source); source value table; SQL patterns for finding the right variant strings in patent and trademark databases; `entities.txt` project scope file format.
+
+`README.md` updated: reference table expanded to include all new instruction and reference files.
+
+**Commit:** `1ce0d45` — "Phase 8 P4: add matchmaker queries.py and flesh out persona (entities, rescore, status, generate update, uncertainty-band, entities-schema)"
+
+**Closes:** P4 (D009 partial, S01-MM, S02-MM, S03-MM)
+
+**Status:** Complete. Closed in ROADMAP.
+
+---
+
 ### P3 — Flesh out trademark specialist persona *(2026-05-20 — complete)*
 
 **Deliverables confirmed:**
