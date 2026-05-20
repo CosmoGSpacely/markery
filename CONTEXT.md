@@ -32,6 +32,8 @@ Markery is structured as five specialist agents. Each owns a bounded domain: its
 
 **Credentials:** EPO OPS OAuth2 (`EPO_CONSUMER_KEY`, `EPO_CONSUMER_SECRET`).
 
+**Reference:** `src/markery/specialist/patent/EPO.md` — EPO OPS API reference.
+
 ---
 
 ### TRADEMARK
@@ -43,6 +45,8 @@ Markery is structured as five specialist agents. Each owns a bounded domain: its
 **Invoked:** Once at project setup (bulk build), then incrementally as the matchmaker or historian identifies marks that need enrichment.
 
 **Credentials:** USPTO API key (`USPTO_API_KEY`).
+
+**Reference:** `src/markery/specialist/trademark/TSDR.md` — USPTO TSDR API reference.
 
 ---
 
@@ -67,6 +71,8 @@ Markery is structured as five specialist agents. Each owns a bounded domain: its
 **Invoked:** During the review session (interactive), and when content drafts are needed.
 
 **Credentials:** Anthropic API (for essay drafting).
+
+**Reference:** `src/markery/specialist/historian/persona/` — Claude persona, content schemas, and session protocol.
 
 ---
 
@@ -146,14 +152,3 @@ Project-local `STATUS.md` carries the metrics and next action for that project. 
 | `research-session.md` | Runnable operations checklist (project-agnostic) |
 | `README.md` | Repository overview for new contributors |
 
----
-
-## Specialist Reference Docs
-
-Each specialist owns its API reference alongside its code:
-
-| Doc | Owned by |
-|---|---|
-| `src/markery/specialist/patent/EPO.md` | Patent specialist — EPO OPS API reference |
-| `src/markery/specialist/trademark/TSDR.md` | Trademark specialist — USPTO TSDR API reference |
-| `src/markery/specialist/historian/persona/` | Historian specialist — Claude persona and content schemas |

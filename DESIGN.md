@@ -50,7 +50,7 @@ Two additive components, max 0.80:
 
 **Temporal score (max 0.5):** Patent grant date precedes trademark filing date → positive, tapering from 0.5 at zero gap to 0.0 at 20 years. Trademark filed before patent grant → slight negative (max −0.4), which is not disqualifying — brand names often preceded specific patents. The 20-year taper is intentional: a 15-year gap is less compelling evidence than a 2-year gap, but should not score zero.
 
-**Classification score (0.3, binary):** Fires when any of the patent's CPC classes falls in the product signal set (B42F, B42D, B41J, B41L, G06C, G06K, G09F). Binary rather than graded because the CPC classifications for pre-1940 patents were applied retroactively by algorithmic mapping — fine-grained subgroup precision is not reliable enough to justify a graded signal.
+**Classification score (0.3, binary):** Fires when any of the patent's CPC classes falls in the project's product signal set. Binary rather than graded because the CPC classifications for pre-1940 patents were applied retroactively by algorithmic mapping — fine-grained subgroup precision is not reliable enough to justify a graded signal. Which classes constitute the signal set is defined by the project, not by the tool.
 
 The model scores candidate identification, not confirmation. The 0.80 ceiling is intentional: a perfect score would imply a certainty the model cannot deliver.
 
@@ -97,10 +97,28 @@ Projects do not share confirmed pairs, entities, or content. The same entity (e.
 
 ---
 
-## Agentic Design Intent
+## Agentic Architecture
 
-The specialist pattern is designed to be forward-compatible with an AI agent layer. Each specialist's queries module is a clean programmatic API: pure functions, typed inputs and outputs, no CLI dependency. A model calling `get_entities()` or `get_confirmed_matches()` gets the same result as the site builder — without going through the CLI.
+Markery is an agentic tool, not a pipeline. The specialist pattern is the structural expression of that: five bounded agents, each with its own data domain and API, coordinated by an orchestrator. An agent calling `markery patent build` or `markery match generate` is making the same call a human makes at the terminal — the CLI is the agent interface and the human interface simultaneously.
 
-The historian specialist makes this explicit: `specialist/historian/persona/` contains the Claude persona configuration that turns a model into a research collaborator. The Python code in `specialist/historian/` (the interactive reviewer) and the persona files serve the same function through different interfaces — human terminal and Claude project respectively.
+Each specialist's queries module is a clean programmatic API: pure functions, typed inputs and outputs, no CLI dependency. A model calling `get_entities()` or `get_confirmed_matches()` gets the same result as the site builder. The two interfaces — CLI for humans, queries module for agents — are kept deliberately separate so neither contaminates the other.
 
-The long-term design intent is that each specialist can be called by a hosted or local model without modification: the queries API is the model's tool interface, the CLI is the human interface, and the two are kept deliberately separate.
+The historian specialist makes the agentic design concrete: `specialist/historian/persona/` contains the Claude persona configuration that turns a model into a research collaborator with a specific scholarly voice, review protocol, and content schema. The Python review tool and the persona files serve the same role through different surfaces — the human sits at a terminal, the agent operates in a Claude project.
+
+---
+
+## Scope-Neutral Databases
+
+The three databases are shared infrastructure, not project artifacts. No project-specific data — date windows, CPC class sets, entity rosters, seed records — is baked into the database layer or the tool's source code. The databases grow as projects define new scope; they never shrink or reset between projects.
+
+The practical consequence: adding a second project to Markery requires adding that project's data files and running the appropriate build commands. It does not require modifying any source code, changing any schema, or rebuilding data that existing projects depend on. Two projects can share `patents.duckdb` without interfering with each other's fetch logs or confirmed pairs.
+
+This was not always the case. Earlier versions of Markery had `DATE_START`, `DATE_END`, `CPC_CLASSES`, `SEED_PATENTS`, and `ENTITIES`/`VARIANTS` as module-level constants in the build scripts — all specific to the information-systems project. Phase 7 (database review, 2026-05-20) moved all of this into per-project data files and made the build commands scope-neutral. The databases are now reusable across projects without code changes.
+
+---
+
+## Publishing as a Specialist Operation
+
+The publisher is a full specialist agent, not a post-processing script. This matters because publishing involves non-trivial decisions: resolving figure references against stored BLOBs, enhancing trademark images for legibility, pulling Wikipedia summaries for entity context pages, and rendering structured Markdown into HTML with the right asset paths. These are mechanical but consequential — a broken figure reference or a missing image silently degrades the published result.
+
+Making the publisher a specialist agent with its own queries module means: the build is deterministic (the same content files always produce the same site), the build is auditable (every figure reference is resolved through a single code path), and the agent can build the site as easily as a human can. The site directory is gitignored because it is always regenerable from the content files and the databases — the content files and `confirmed.jsonl` are the durable artifacts, not the rendered output.
