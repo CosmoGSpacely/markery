@@ -128,7 +128,7 @@ Review the rendered site. Return to the historian for revisions, additional cont
 | `reference/mark-drawing-codes.md` | USPTO drawing code reference |
 | `reference/status-codes.md` | USPTO status code reference |
 | `reference/image-enhancement.md` | Mark image enhancement reference |
-| `research-session.md` (repo root) | Runnable session checklist for match-review-essay projects |
+| `research-session.md` | Runnable session checklist for match-review-essay projects |
 
 ---
 

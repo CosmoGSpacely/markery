@@ -10,7 +10,7 @@ Markery projects follow one of two types. The HISTORIAN specialist owns the defi
 
 **Workflow:** The full Markery pipeline — entity registry, candidate generation, human review, essay writing, site publication.
 
-**Session workflow:** `research-session.md` at the repository root. That file is the runnable checklist for a session on a match-review-essay project.
+**Session workflow:** `research-session.md` in this directory. That file is the runnable checklist for a session on a match-review-essay project.
 
 **Specialists involved:** All five — PATENT and TRADEMARK build the corpora, MATCHMAKER generates candidates, HISTORIAN reviews and writes, PUBLISHER renders and publishes.
 

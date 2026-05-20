@@ -26,7 +26,7 @@ Project types define the workflow a project follows. Type definitions and sessio
 
 | Type | Session workflow | Example project |
 |---|---|---|
-| Match-review-essay | `research-session.md` | `information-systems` |
+| Match-review-essay | `specialist/historian/persona/research-session.md` | `information-systems` |
 | Gallery/exploration | Project `README.md` | `monthly-image-review` |
 
 ---

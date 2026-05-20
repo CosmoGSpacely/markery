@@ -222,7 +222,7 @@ python -m match information-systems
 
 | File | Contents |
 |---|---|
-| `docs/workflows/research-session.md` | Runnable operations checklist for a research session |
+| `src/markery/specialist/historian/persona/research-session.md` | Runnable operations checklist for a match-review-essay session |
 | `docs/reference/SETUP.md` | Complete setup guide — prerequisites, credentials, database verification |
 | `docs/reference/EPO.md` | EPO OPS API — auth, endpoints, CQL, response structure, rate limits, data quality |
 | `docs/reference/TSDR.md` | USPTO TSDR API — mark image retrieval, case status, date encoding |

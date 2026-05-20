@@ -133,7 +133,7 @@ Each project under `projects/<name>/` is independent and defines its own workflo
 
 **Gallery/exploration projects** (e.g. `monthly-image-review`) have a lighter structure — typically just `README.md`, `STATUS.md`, and `output/` galleries. They surface leads that may feed into match-review projects or stand alone as visual surveys.
 
-A project's `README.md` is the authority on its workflow. `research-session.md` at root documents the match-review-essay workflow specifically.
+A project's `README.md` is the authority on its workflow. The match-review-essay session workflow is documented in `src/markery/specialist/historian/persona/research-session.md`.
 
 Project-local `STATUS.md` carries the metrics and next action for that project. The root `STATUS.md` carries only a one-line summary per project.
 
@@ -149,6 +149,6 @@ Project-local `STATUS.md` carries the metrics and next action for that project. 
 | `DEFERRED.md` | Deferred tool work with reopen triggers |
 | `DESIGN.md` | Engineering rationale and architecture decisions |
 | `SETUP.md` | New-machine setup instructions |
-| `research-session.md` | Match-review-essay session workflow — owned by HISTORIAN specialist |
+| `src/markery/specialist/historian/persona/research-session.md` | Match-review-essay session workflow — owned by HISTORIAN specialist |
 | `README.md` | Repository overview for new contributors |
 
