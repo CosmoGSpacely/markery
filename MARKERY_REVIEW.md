@@ -74,3 +74,71 @@ Both files describe the specialist ownership pattern and the three-database arch
 | G07 | SETUP.md | Wrong value | Correct disk space estimate from ~100 MB to ~50 MB |
 | G08 | CONTEXT.md + DESIGN.md | Intentional | No action — overlap by design |
 | G09 | DESIGN.md | Low | Replace "Phase 7" jargon with a neutral description on next edit |
+
+---
+
+## Codebase Gap Analysis — `src/markery/` (excluding specialist/)
+
+**Scope:** `src/markery/cli.py`, `src/markery/common/`, `pyproject.toml`, `tests/` structure
+
+---
+
+### Critical — wrong or missing
+
+**G10 · `pyproject.toml`: no `anthropic` SDK dependency**
+`CONTEXT.md §Specialist Agents` lists "Anthropic API (for essay drafting)" as a Historian credential, implying Python SDK usage. The `anthropic` package does not appear in `pyproject.toml` dependencies or optional-dependencies. Clarify: if essay drafting is done through a Claude project (not Python API calls), remove the credential reference from `CONTEXT.md`. If Python SDK calls are planned, add `anthropic` to the appropriate dependency group.
+
+**G11 · `cli.py`: `markery historian`, `markery publisher`, `markery wikipedia` undocumented in README**
+All three subcommands exist in `cli.py` and are registered in `_SUBCOMMANDS`. None appear in `README.md §CLI`. The `markery patent signals` and `markery patent fetch <project> --confirmed` subforms also exist in the cli.py docstring but are absent from README. The README CLI section is materially incomplete as a reference.
+
+---
+
+### Incomplete — accurate but missing content
+
+**G12 · `common/config.py`: `Project` class has undocumented properties**
+The `Project` dataclass in `config.py` defines five properties that reference real project files not mentioned in any root documentation:
+- `.brief` → `matches/BRIEF.md` — machine-generated project brief, populated by `markery historian prepare`
+- `.objectives` → `OBJECTIVES.md` — purpose and scope unknown from docs alone
+- `.references` → `references/` — a committed directory in `information-systems/` with no documented format
+- `.pipeline_state` → `matches/pipeline_state.json` — pipeline state tracking file
+
+All four are present in `projects/information-systems/` as committed files. `CONTEXT.md` and `SETUP.md` project layout tables do not list them. Either they are project-specific artifacts that belong only in `projects/information-systems/README.md`, or they are part of the match-review-essay structure and should be added to `CONTEXT.md §Project Work Lifecycle`.
+
+**G13 · Test suite: `common/auth.py`, `common/config.py`, and `cli.py` have zero test coverage**
+These three modules are shared infrastructure used by every specialist:
+- `common/auth.py` — credential loading with `.strip()` on secrets; the leading-space handling is a known correctness constraint with no test
+- `common/config.py` — project path contracts; `Project` dataclass properties are the canonical path definitions used everywhere
+- `cli.py` — subcommand routing; unknown command handling, help output, and dispatch table are untested
+
+Tests exist for all five specialist areas (307 collected). The common layer and CLI router have none.
+
+---
+
+### Wrong value
+
+**G14 · `pyproject.toml`: `duckdb>=0.9.0` lower bound too permissive**
+DuckDB changed its Python connection API between 0.9.x and 1.0.x. The current codebase targets 1.x behavior. The lower bound `>=0.9.0` would permit installation of a version that would break at runtime. Tighten to `>=1.0.0` or pin to the tested minor version.
+
+---
+
+### Minor
+
+**G15 · `tests/__pycache__/test_score.cpython-312-pytest-9.0.3.pyc` is a ghost**
+`tests/test_score.py` no longer exists, but its compiled bytecode remains in `tests/__pycache__/`. The source was likely moved to `tests/specialist/matchmaker/test_score.py` and the cache not cleaned. Not harmful but adds noise. Remove with `find tests/__pycache__ -name 'test_score*.pyc' -delete`.
+
+**G16 · `pyproject.toml`: version `0.2.0a0` not surfaced anywhere**
+`__init__.py` exports `__version__ = "0.2.0a0"` from `pyproject.toml`. No root document references the version. Not a gap in documentation so much as an unused artifact — if version is tracked, it should appear somewhere (README header, `markery --version` flag, STATUS.md). If it is not actively maintained, it is noise.
+
+---
+
+### Summary addendum
+
+| ID | File/Module | Severity | Action |
+|---|---|---|---|
+| G10 | `pyproject.toml` + `CONTEXT.md` | Critical | Resolve Anthropic SDK: add dependency or remove credential reference |
+| G11 | `cli.py` + `README.md` | Critical | Add missing subcommands to README CLI section |
+| G12 | `common/config.py` + `CONTEXT.md` | Incomplete | Document or scope undocumented Project properties |
+| G13 | `tests/` | Incomplete | Add tests for `common/auth.py`, `common/config.py`, `cli.py` |
+| G14 | `pyproject.toml` | Wrong value | Tighten `duckdb` lower bound to `>=1.0.0` |
+| G15 | `tests/__pycache__/` | Minor | Delete ghost `test_score.pyc` |
+| G16 | `pyproject.toml` | Minor | Surface version or stop tracking it |
