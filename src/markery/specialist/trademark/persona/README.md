@@ -71,8 +71,10 @@ See `instructions/build.md` for when to use each route.
 
 | File | Contains |
 |---|---|
-| `identity.md` | Agent role, capabilities, and explicit limits |
-| `instructions/build.md` | When and how to build the trademark database |
-| `instructions/enrich.md` | When and how to enrich marks via TSDR |
-| `reference/bulk-tables.md` | Schema overview for the USPTO bulk tables |
+| `identity.md` | Agent role, capabilities, explicit limits, and scope |
+| `instructions/build.md` | When and how to build the trademark database; Route A vs Route B |
+| `instructions/enrich.md` | When and how to enrich marks via TSDR; single and project-batch |
+| `instructions/entity-forward.md` | Surfacing post-1939 marks for a named entity |
+| `instructions/load-supplemental.md` | Loading `events` and `foreign_app` on-demand tables |
+| `reference/bulk-tables.md` | Full schema for bulk, enrichment, and on-demand tables; serial_no type split; cross-layer query patterns |
 | `src/markery/specialist/trademark/TSDR.md` | Full TSDR API reference |
