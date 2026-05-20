@@ -16,6 +16,72 @@ This document defines what Markery is, how it works, and the structure of work w
 
 ---
 
+## Specialist Agents
+
+Markery is structured as five specialist agents. Each owns a bounded domain: its own database, its own external API credentials, and a defined set of operations. Cross-specialist calls route through `orchestrator.py`. No specialist imports directly from another.
+
+---
+
+### PATENT
+
+**Owns:** `patents.duckdb` — bibliographic records, CPC classifications, inventors, figures.
+
+**Role:** Acquires and maintains the patent corpus. Fetches patent records from the EPO OPS API by CPC class and year range, inserting into a shared database that grows as projects define new scope. Can also fetch individual patents by number, pull backward citation chains, and retrieve drawing figures as stored BLOBs. Resume state is tracked in `patents_fetch_log.json` alongside the database.
+
+**Invoked:** At project setup (bulk class fetch), when a specific patent needs to be added on demand, and when figures are needed for review or publication.
+
+**Credentials:** EPO OPS OAuth2 (`EPO_CONSUMER_KEY`, `EPO_CONSUMER_SECRET`).
+
+---
+
+### TRADEMARK
+
+**Owns:** `trademarks.duckdb` — USPTO bulk tables (`case_file`, `owner`, `statement`, `classification`, and companions) plus TSDR enrichment tables (`mark_images`, `extended_marks`).
+
+**Role:** Loads and maintains the trademark corpus. The bulk build imports the 2011 USPTO Trademark Case Files Dataset filtered to a caller-supplied date window; no default scope is assumed. The TSDR enrichment layer adds live API data: mark images, status, goods descriptions, and first-use dates. Enrichment is per-mark and on-demand; it extends the bulk record, not replaces it.
+
+**Invoked:** Once at project setup (bulk build), then incrementally as the matchmaker or historian identifies marks that need enrichment.
+
+**Credentials:** USPTO API key (`USPTO_API_KEY`).
+
+---
+
+### MATCHMAKER
+
+**Owns:** `entities.duckdb` — `company_entity` (canonical names) and `entity_name_variant` (how each entity appears in patent assignee fields and trademark owner fields).
+
+**Role:** Links entities to their patents and trademarks, generates scored candidate pairs, and writes `candidates.jsonl`. Scores each pair on three dimensions: date gap (trademark filed after patent grant), CPC class relevance, and semantic overlap between goods descriptions and patent text. Applies a hard exclusion for marks that are themselves company names. The entity registry is populated from per-project CSV files; the database is shared but each project scopes its queries through an `entities.txt` file.
+
+**Invoked:** After both patent and trademark databases cover the project's scope. Reads all three databases simultaneously via DuckDB ATTACH.
+
+**Credentials:** None.
+
+---
+
+### HISTORIAN
+
+**Owns:** No database. Reads `candidates.jsonl`, writes `confirmed.jsonl` and `rejected.jsonl`.
+
+**Role:** The human-facing review agent. Presents each candidate pair interactively (trademark details, patent details, date gap, score breakdown) and records the human's Y/N decision. Confirmed pairs become the authoritative factual record for the project. Also carries a defined scholar persona used for drafting research essays: the historian writes from a primary-source perspective, interprets confirmed pairs in their industrial and commercial context, and produces structured content files consumed by the publisher.
+
+**Invoked:** During the review session (interactive), and when content drafts are needed.
+
+**Credentials:** Anthropic API (for essay drafting).
+
+---
+
+### PUBLISHER
+
+**Owns:** `site/` under each project — a rendered static site, gitignored and regenerable.
+
+**Role:** Transforms confirmed pairs and historian essays into a publishable site. Resolves figure references (`[[figure:patent_no]]`) to stored BLOBs or on-disk PNGs, enhances trademark images, pulls Wikipedia summaries for entity pages, and renders Markdown content to HTML. The build is deterministic from the project's content files and confirmed data; running it again produces the same output.
+
+**Invoked:** When the project's content is ready to publish or preview.
+
+**Credentials:** None for rendering; Wikipedia API is unauthenticated.
+
+---
+
 ## Two-Track Model
 
 All work in this repository is either **tool work** (building and improving Markery) or **project work** (conducting research using Markery). Root documents describe the tool only. Each research project is self-contained in its own folder under `projects/`.
