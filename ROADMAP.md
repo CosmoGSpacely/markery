@@ -117,16 +117,16 @@ Current stubs: `README.md`, `identity.md`, `instructions/build.md`, `instruction
 
 ---
 
-### P6 — Patent bulk CSV route: research and design *(D007)*
+### ~~P6 — Patent bulk CSV route: research and design~~ *(complete)*
 
-The SETUP.md stub documents the intended behavior but no implementation exists. This action produces a design, not working code.
+~~The SETUP.md stub documents the intended behavior but no implementation exists. This action produces a design, not working code.~~
 
-**Deliverables:**
-1. Identify the most practical bulk patent data source for Markery's use case: PatentsView (tab-separated, annual releases), Google Patents Public Data (BigQuery, requires export), USPTO bulk data (XML, complex parsing). Evaluate schema fit against `patents.duckdb` tables.
-2. Write `src/markery/specialist/patent/BULK_CSV.md` documenting the chosen source, download process, schema mapping, and the planned `markery patent bulk-import` command signature.
-3. Add a DEFERRED entry for the implementation once the design is settled.
+~~**Deliverables:**~~
+~~1. Identify the most practical bulk patent data source for Markery's use case: PatentsView (tab-separated, annual releases), Google Patents Public Data (BigQuery, requires export), USPTO bulk data (XML, complex parsing). Evaluate schema fit against `patents.duckdb` tables.~~
+~~2. Write `src/markery/specialist/patent/BULK_CSV.md` documenting the chosen source, download process, schema mapping, and the planned `markery patent bulk-import` command signature.~~
+~~3. Add a DEFERRED entry for the implementation once the design is settled.~~
 
-**Closes:** D007 (design phase); implementation remains deferred until design is approved.
+~~**Closes:** D007 (design phase); implementation remains deferred until design is approved.~~
 
 ---
 
