@@ -1,6 +1,18 @@
 # Markery — Project Constitution
 
-This document defines the structure of the Markery repository and the lifecycle of work within it. It contains no current state — for that, see `STATUS.md` and `ROADMAP.md`.
+This document defines what Markery is, how it works, and the structure of work within it.
+
+---
+
+## What Markery Is
+
+**Markery is a tool that builds research projects using an agentic design pattern.** It is not a standalone application — it is a command-line toolkit that agents and humans invoke together. Work proceeds through a defined sequence of specialist operations, each callable independently, with the agent deciding what to run and when.
+
+**Markery agents curate general-purpose patent and trademark databases that grow as projects need them.** The core databases (`patents.duckdb`, `trademarks.duckdb`, `entities.duckdb`) are not project-specific. They are shared infrastructure: a USPTO trademark bulk load, EPO patent records fetched by CPC class and year range, and a registry of named entities. Each project defines its own scope — which classes, which date windows, which entities — and the databases expand to cover that scope. Nothing project-specific is baked into the databases or the tool's source code.
+
+**Markery projects are self-contained bodies of work that humans and agents build in collaboration.** A project defines a research question, a set of entities to track, and a scope over the shared databases. Within that scope, the agent generates candidate patent-trademark pairs, and the human reviews and confirms them. The confirmed pairs become the factual record that the project's published content rests on. Projects live under `projects/<name>/` and are entirely independent of each other.
+
+**Markery agents organize the data and prepare results for publishing.** Once pairs are confirmed, the agent drafts research essays from a historian persona, resolves figure references, and renders the content as a static site. The human edits and approves. The agent builds and the historian writes; the human decides what is true and what ships.
 
 ---
 
@@ -59,7 +71,7 @@ Project-local `STATUS.md` carries the metrics and next action for that project. 
 
 | File | What it contains |
 |---|---|
-| `CONTEXT.md` | This document — structural rules, no current state |
+| `CONTEXT.md` | This document — what Markery is and structural rules |
 | `ROADMAP.md` | Active and upcoming tool development phases |
 | `STATUS.md` | Tool infrastructure ledger + project summary table |
 | `DEFERRED.md` | Deferred tool work with reopen triggers |
