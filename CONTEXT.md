@@ -149,6 +149,6 @@ Project-local `STATUS.md` carries the metrics and next action for that project. 
 | `DEFERRED.md` | Deferred tool work with reopen triggers |
 | `DESIGN.md` | Engineering rationale and architecture decisions |
 | `SETUP.md` | New-machine setup instructions |
-| `research-session.md` | Runnable operations checklist (project-agnostic) |
+| `research-session.md` | Match-review-essay session workflow — owned by HISTORIAN specialist |
 | `README.md` | Repository overview for new contributors |
 

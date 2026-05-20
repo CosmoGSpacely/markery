@@ -122,11 +122,13 @@ Review the rendered site. Return to the historian for revisions, additional cont
 | `content-schemas/project-landing.md` | Schema for project landing page |
 | `examples.md` | Example research interactions |
 | `rules.md` | Behavioral rules (research + site content) |
+| `reference/project-types.md` | Project type definitions, workflows, and how to choose — owned by HISTORIAN |
 | `reference/historical-context.md` | Period context for 1900–1939 American commerce |
 | `reference/markery-database.md` | Database schema reference |
 | `reference/mark-drawing-codes.md` | USPTO drawing code reference |
 | `reference/status-codes.md` | USPTO status code reference |
 | `reference/image-enhancement.md` | Mark image enhancement reference |
+| `research-session.md` (repo root) | Runnable session checklist for match-review-essay projects |
 
 ---
 
