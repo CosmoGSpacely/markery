@@ -11,6 +11,10 @@ import duckdb
 
 from markery.common.config import DB
 
+# serial_no is BIGINT in bulk tables (as delivered by the USPTO CSV source)
+# and VARCHAR in extended_marks and mark_images (as returned by the TSDR API).
+# Queries joining across the two must cast: CAST(cf.serial_no AS VARCHAR).
+
 
 def connect() -> duckdb.DuckDBPyConnection:
     """Open a read-only connection to trademarks.duckdb."""

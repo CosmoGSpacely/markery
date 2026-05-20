@@ -377,7 +377,3 @@ Two tables, same as today. The difference is that every row comes from a project
 | M6 | patents | Remove `fetch_log` from DDL; write build log as JSON alongside the DB | Research DB contains only research data |
 | M7 | entities | Move `ENTITIES`/`VARIANTS` to per-project CSV files | `build()` reads from project data, not source code |
 | M8 | entities | Remove or narrow `notes` column | Long-form content moves to project content directory |
-
----
-
-**Status: Complete — 2026-05-20.** All M1–M8 implemented and committed (c9319e6). R4 (`serial_no` type-split comment) added to `trademark/build.py` and `trademark/queries.py`. Archived to `archive/DATABASE_REVIEW-2026-05-20.md`.

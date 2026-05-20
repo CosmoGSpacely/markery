@@ -16,6 +16,10 @@ import duckdb
 
 from markery.common.config import DB, ROOT
 
+# serial_no is BIGINT in bulk tables (as delivered by the USPTO CSV source)
+# and VARCHAR in extended_marks and mark_images (as returned by the TSDR API).
+# Queries joining across the two must cast: CAST(cf.serial_no AS VARCHAR).
+
 # Tables loaded from CSV companion files (joined to case_file's serial_no set)
 _COMPANION_TABLES = [
     "owner",
