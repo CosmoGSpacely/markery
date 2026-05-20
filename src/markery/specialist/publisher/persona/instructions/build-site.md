@@ -36,3 +36,16 @@ The site builder renders one HTML page per content file, plus index pages and as
 ## After the build
 
 Open `projects/<project>/site/index.html` in a browser to review. Return to the historian for any content revisions, then re-run the build.
+
+---
+
+## `markery site build` vs `markery publisher build`
+
+Both commands call the same function (`build_site()` in `publisher/build.py`) with identical arguments. They are fully equivalent:
+
+```bash
+markery site build <project>        # preferred — shorter, more natural
+markery publisher build <project>   # also valid
+```
+
+Use `markery site build` — it is the canonical form documented in the Historian persona and research-session workflow. `markery publisher build` exists as the specialist-namespaced entry point but there is no behavioral difference.

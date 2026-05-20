@@ -102,18 +102,18 @@ Current stubs: `README.md`, `identity.md`, `instructions/build.md`, `instruction
 
 ---
 
-### P5 — Flesh out publisher specialist persona *(D009 partial)*
+### ~~P5 — Flesh out publisher specialist persona~~ *(complete)*
 
-Current stubs: `README.md`, `identity.md`, `instructions/build-site.md`, `reference/content-pipeline.md`.
+~~Current stubs: `README.md`, `identity.md`, `instructions/build-site.md`, `reference/content-pipeline.md`.~~
 
-**New instruction cards:**
-- `instructions/enhance.md` — mark image enhancement workflow; when to enhance vs use raw TSDR images; batch vs single-mark enhancement; where enhanced images are stored and how the site builder picks them up
-- `instructions/wikipedia.md` — Wikipedia drafting workflow; what content qualifies; neutral point of view requirements; how to use `markery wikipedia draft`; review before submission
+~~**New instruction cards:**~~
+~~- `instructions/enhance.md` — mark image enhancement workflow; when to enhance vs use raw TSDR images; batch vs single-mark enhancement; where enhanced images are stored and how the site builder picks them up~~
+~~- `instructions/wikipedia.md` — Wikipedia drafting workflow; what content qualifies; neutral point of view requirements; how to use `markery wikipedia draft`; review before submission~~
 
-**Reference expansion:**
-- Expand `reference/content-pipeline.md` to cover the figure resolution fallback chain (DB BLOB → on-disk PNG → placeholder) and how to diagnose missing figures
+~~**Reference expansion:**~~
+~~- Expand `reference/content-pipeline.md` to cover the figure resolution fallback chain (DB BLOB → on-disk PNG → placeholder) and how to diagnose missing figures~~
 
-**Document `publisher build` vs `site build` aliasing** *(S03-PB)*: `markery publisher build <project>` and `markery site build <project>` both call `build_site()` through different entry points. Neither `build-site.md` nor any root doc explains that these are equivalent or which to prefer. Add a note to `instructions/build-site.md` clarifying the aliasing.
+~~**Document `publisher build` vs `site build` aliasing** *(S03-PB)*: `markery publisher build <project>` and `markery site build <project>` both call `build_site()` through different entry points. Neither `build-site.md` nor any root doc explains that these are equivalent or which to prefer. Add a note to `instructions/build-site.md` clarifying the aliasing.~~
 
 ---
 

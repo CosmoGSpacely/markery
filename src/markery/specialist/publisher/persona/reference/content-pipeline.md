@@ -29,12 +29,30 @@ Content files may include figure references in the form:
 [[figure:US1630977A]]
 ```
 
-The site builder resolves these references at render time:
-1. Check `patents.duckdb` for a stored BLOB (`patent_figures` table)
-2. Fall back to `projects/<project>/output/<patent_no>.png` on disk
-3. If neither exists, the reference renders as a placeholder
+The site builder resolves these references at build time using a `figure_index` built from `patent_figures` BLOBs in `patents.duckdb`. The fallback chain:
 
-Fetch figures in advance: `markery patent fetch <project> --confirmed`
+1. **`patents.duckdb` BLOB** (`patent_figures` table) — the build reads the BLOB, writes it to `site/images/patents/<patent_no>.png`, and adds the patent to the `figure_index`. The `[[figure:]]` reference renders as a `<figure class="patent-figure">` element with a caption.
+2. **No figure available** — the patent is not in the `figure_index`. The `[[figure:]]` tag renders as nothing. The surrounding prose still renders; only the figure element is absent.
+
+There is no silent fallback to an on-disk PNG for inline `[[figure:]]` references — if the BLOB is not in `patents.duckdb`, the figure does not appear.
+
+**Check figure availability before building:**
+```bash
+markery historian prepare <project>
+```
+The `figures_available` field in `BRIEF.md` reports how many confirmed patents have stored figures.
+
+**Fetch missing figures:**
+```bash
+markery patent fetch <project> --confirmed
+```
+
+**Diagnosing a missing figure in a rendered essay:**
+1. Check `BRIEF.md` — is `figures_available` less than the confirmed patent count?
+2. Query `patents.duckdb`: `SELECT patent_no FROM patent_figures WHERE patent_no = 'US1630977A'`
+3. If absent, run `markery patent fetch <project> --confirmed` and rebuild the site.
+
+**If a figure is permanently unavailable** (pre-1920 patents often lack EPO figure data), use language like "No figure is available from EPO records for this patent" in the essay body and omit the `[[figure:]]` tag.
 
 ---
 

@@ -240,6 +240,12 @@ Both commands exist and both route to `build_site()`. The difference in entry po
 
 ---
 
+### Test harness run *(2026-05-20 — after P4)*
+
+`307 passed in 15.24s` — full suite green after P4 changes (queries.py, generate.md, README.md, ROADMAP.md, DEFERRED.md). No regressions.
+
+---
+
 ### P4 — Flesh out matchmaker specialist persona and add queries module *(2026-05-20 — complete)*
 
 **Deliverables confirmed:**

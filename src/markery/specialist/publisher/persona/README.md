@@ -77,6 +77,8 @@ Figure references (`[[figure:patent_no]]`) in content files are resolved to stor
 
 | File | Contains |
 |---|---|
-| `identity.md` | Agent role, capabilities, and explicit limits |
-| `instructions/build-site.md` | When and how to build the site |
-| `reference/content-pipeline.md` | Content file types and the rendering pipeline |
+| `identity.md` | Agent role, capabilities, explicit limits, and scope |
+| `instructions/build-site.md` | When and how to build the site; `markery site build` vs `markery publisher build` aliasing |
+| `instructions/enhance.md` | Mark image enhancement; single and batch; building image galleries |
+| `instructions/wikipedia.md` | Wikipedia drafting workflow; draft → review → submit; content policy requirements |
+| `reference/content-pipeline.md` | Content file types, rendering pipeline, figure fallback chain, mark image resolution |
