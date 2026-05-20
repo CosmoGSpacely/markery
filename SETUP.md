@@ -9,7 +9,7 @@ Complete instructions for setting up Markery on a new machine.
 - **Python 3.11 or later** (`python --version`)
 - **Git**
 - API credentials for the data sources you plan to use (see below)
-- ~100 MB disk space for the committed databases; ~4 GB additional if rebuilding the trademark bulk tables from the USPTO CSV download
+- ~50 MB disk space for the committed databases; ~4 GB additional if rebuilding the trademark bulk tables from the USPTO CSV download
 
 The three `.duckdb` files are committed to the repository and ready to use. You do not need to rebuild them to start working. Rebuilding from scratch requires the relevant credentials and, for the trademark bulk route, the raw USPTO CSV files (not committed).
 

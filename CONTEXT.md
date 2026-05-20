@@ -70,7 +70,7 @@ Markery is structured as five specialist agents. Each owns a bounded domain: its
 
 **Invoked:** During the review session (interactive), and when content drafts are needed.
 
-**Credentials:** Anthropic API (for essay drafting).
+**Credentials:** None. Essay drafting is performed through a Claude project using the Historian persona, not via direct API calls.
 
 **Reference:** `src/markery/specialist/historian/persona/` — Claude persona, content schemas, and session protocol.
 
@@ -125,9 +125,17 @@ Each project under `projects/<name>/` is independent and defines its own workflo
 |---|---|
 | `RESEARCH-AGENDA.md` | Candidate subjects, methodology, key references |
 | `RESEARCH.md` | Scholarly framework |
+| `OBJECTIVES.md` | Project objectives — goals and scope statement |
+| `BRIEF.md` | Generated project state summary — produced by `markery historian prepare` |
 | `entities.txt` | Entity IDs scoped to this project |
+| `entities.csv` | Entity definitions (loaded into `entities.duckdb` by `markery matchmaker build`) |
+| `variants.csv` | Entity name variant definitions (same build command) |
+| `seed_patents.json` | Manually seeded patent numbers (optional; loaded via `--seed-only`) |
 | `matches/candidates.jsonl` | Generated — never edited |
 | `matches/confirmed.jsonl` | Hand-curated confirmed pairs |
+| `matches/rejected.jsonl` | Historian-rejected pairs — excluded from future candidate generation |
+| `matches/pipeline_state.json` | Match pipeline timestamps and score percentiles |
+| `references/` | Primary source reference documents (optional) |
 | `content/` | Research essays and narrative pages |
 | `site/` | Built static site — gitignored, regenerable |
 
@@ -144,6 +152,7 @@ Project-local `STATUS.md` carries the metrics and next action for that project. 
 | File | What it contains |
 |---|---|
 | `CONTEXT.md` | This document — what Markery is and structural rules |
+| `CLAUDE.md` | Session contract — work classification, routing rules, specialist boundary enforcement |
 | `ROADMAP.md` | Active and upcoming tool development phases |
 | `STATUS.md` | Tool infrastructure ledger + project summary table |
 | `DEFERRED.md` | Deferred tool work with reopen triggers |

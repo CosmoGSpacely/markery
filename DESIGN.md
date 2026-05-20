@@ -1,6 +1,6 @@
 # Design Decisions
 
-Engineering rationale for the Markery architecture. The research rationale is in `RESEARCH.md`; the scholarly argument for studying this period and subject is there, not here. This document covers the technical choices and the tradeoffs made consciously.
+Engineering rationale for the Markery architecture. This document covers the technical choices and the tradeoffs made consciously.
 
 ---
 
@@ -75,7 +75,7 @@ The codebase is organized into five specialists under `src/markery/specialist/`.
 | `patent/` | `data/patents.duckdb` | `markery patent` |
 | `trademark/` | `data/trademarks.duckdb` | `markery trademark` |
 | `matchmaker/` | `data/entities.duckdb` | `markery match / matchmaker` |
-| `historian/` | `confirmed.jsonl`, interactive review | `markery review / status` |
+| `historian/` | `confirmed.jsonl`, `rejected.jsonl`, interactive review | `markery review / status` |
 | `publisher/` | Site output, image enhancement | `markery site / enhance / publisher` |
 
 A specialist exposes three layers: a **queries module** (pure DB reads, no side effects), a **build/pipeline module** (writes or transforms), and a **CLI module** (entry point). Cross-specialist reads use DuckDB `ATTACH` where a join cannot be expressed through individual specialist APIs without multiple round trips — this is the only permitted cross-specialist coupling.
@@ -110,6 +110,8 @@ Each specialist exposes three surfaces:
 The three surfaces serve different callers but describe the same agent. This is why the persona format is uniform across all five specialists — `README.md`, `identity.md`, `instructions/`, `reference/` — even for purely mechanical acquisition agents like PATENT and TRADEMARK. A data-acquisition agent still has a defined scope (what classes, what years, what rate limits), still has explicit limits (what it will not do), and still benefits from instruction cards for its key operations.
 
 The `identity.md` file in each persona is particularly important: it states what the agent does *not* do as explicitly as what it does. These limits prevent a model operating as the Patent specialist from making research judgments it is not equipped to make, and prevent the Historian from attempting database operations that belong to another specialist.
+
+The session-level enforcement of these boundaries is handled by two mechanisms: `CLAUDE.md` at the repository root defines the work classification tiers (Markery, Specialist, Project), routing rules to `ROADMAP.md` and `DEFERRED.md`, and the review file lifecycle; and the `## Scope` section in each specialist's `identity.md` enumerates owned reads, owned writes, and forbidden paths. Together these make the agentic contract explicit enough to route new work automatically and prevent cross-specialist writes without human intervention.
 
 ---
 

@@ -81,11 +81,19 @@ markery matchmaker list
 # Match pipeline
 markery match <project>                          # generate candidates
 markery match <project> --full                   # generate + signals + rescore
+markery match rescore <project>                  # rescore after signal enrichment
 markery review <project>                         # interactive review (Y / N / Q)
+
+# Historian
+markery historian prepare <project>              # generate BRIEF.md project state
+markery patent signals <project>                 # enrich candidates with text signals
+markery patent fetch <project> --confirmed       # fetch figures for confirmed pairs
 
 # Publish
 markery site build <project>
+markery publisher build <project>                # alias for site build
 markery enhance enhance <serial_no> --out-dir projects/<project>/output/<slug>
+markery wikipedia draft <project> <slug>         # generate Wikipedia wikitext draft
 
 # Diagnostics
 markery status

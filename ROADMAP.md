@@ -130,32 +130,32 @@ Current stubs: `README.md`, `identity.md`, `instructions/build.md`, `instruction
 
 ---
 
-### P7 — Root documentation and codebase accuracy fixes *(MARKERY_REVIEW G02–G07, G10–G12, G14–G15)*
+### ~~P7 — Root documentation and codebase accuracy fixes~~ *(complete)*
 
-Quick-fix pass on root docs and non-specialist code identified in `MARKERY_REVIEW.md`. All items are small; the pass should complete in a single session.
+~~Quick-fix pass on root docs and non-specialist code identified in `MARKERY_REVIEW.md`. All items are small; the pass should complete in a single session.~~
 
-**`CONTEXT.md`:**
-- Add `CLAUDE.md` row to Root File Responsibilities table *(G03)*
-- Add `entities.csv`, `variants.csv`, `seed_patents.json`, `matches/rejected.jsonl` to match-review-essay project structure table *(G04)*
-- Add `BRIEF.md`, `OBJECTIVES.md`, `references/` to match-review-essay project structure table — these are committed project files defined in `config.py` *(G12)*
-- Remove "Anthropic API (for essay drafting)" from Historian credentials — essay drafting is done through a Claude project persona, not Python SDK calls *(G10)*
+~~**`CONTEXT.md`:**~~
+~~- Add `CLAUDE.md` row to Root File Responsibilities table *(G03)*~~
+~~- Add `entities.csv`, `variants.csv`, `seed_patents.json`, `matches/rejected.jsonl` to match-review-essay project structure table *(G04)*~~
+~~- Add `BRIEF.md`, `OBJECTIVES.md`, `references/` to match-review-essay project structure table — these are committed project files defined in `config.py` *(G12)*~~
+~~- Remove "Anthropic API (for essay drafting)" from Historian credentials — essay drafting is done through a Claude project persona, not Python SDK calls *(G10)*~~
 
-**`DESIGN.md`:**
-- Remove or rewrite opening sentence that references a root-level `RESEARCH.md` — no such file exists at root; `RESEARCH.md` is a project artifact *(G02)*
-- Add `rejected.jsonl` to Historian row in Specialist Ownership Pattern table *(G05)*
-- Add a note in the Agentic Architecture section on `CLAUDE.md` as the session-level enforcement contract and `## Scope` sections in `identity.md` as the per-specialist boundary *(G06)*
+~~**`DESIGN.md`:**~~
+~~- Remove or rewrite opening sentence that references a root-level `RESEARCH.md` — no such file exists at root; `RESEARCH.md` is a project artifact *(G02)*~~
+~~- Add `rejected.jsonl` to Historian row in Specialist Ownership Pattern table *(G05)*~~
+~~- Add a note in the Agentic Architecture section on `CLAUDE.md` as the session-level enforcement contract and `## Scope` sections in `identity.md` as the per-specialist boundary *(G06)*~~
 
-**`SETUP.md`:**
-- Correct disk space estimate from ~100 MB to ~50 MB *(G07)*
+~~**`SETUP.md`:**~~
+~~- Correct disk space estimate from ~100 MB to ~50 MB *(G07)*~~
 
-**`README.md`:**
-- Add missing subcommands to CLI section: `markery historian`, `markery publisher`, `markery wikipedia`, `markery patent signals`, `markery patent fetch <project> --confirmed` *(G11)*
+~~**`README.md`:**~~
+~~- Add missing subcommands to CLI section: `markery historian`, `markery publisher`, `markery wikipedia`, `markery patent signals`, `markery patent fetch <project> --confirmed` *(G11)*~~
 
-**`pyproject.toml`:**
-- Tighten `duckdb` lower bound from `>=0.9.0` to `>=1.0.0` *(G14)*
+~~**`pyproject.toml`:**~~
+~~- Tighten `duckdb` lower bound from `>=0.9.0` to `>=1.0.0` *(G14)*~~
 
-**`tests/__pycache__/`:**
-- Delete ghost `test_score.cpython-312-pytest-9.0.3.pyc` *(G15)*
+~~**`tests/__pycache__/`:**~~
+~~- Delete ghost `test_score.cpython-312-pytest-9.0.3.pyc` *(G15)*~~
 
 ---
 
