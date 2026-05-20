@@ -33,7 +33,13 @@ A single task may touch multiple tiers. Classify each change independently.
 
 Every DEFERRED entry requires: a unique ID (`Dnnn`), a one-line description, and an explicit reopen trigger. No entry without a trigger.
 
-When a ROADMAP phase completes, archive it to `archive/ROADMAP-<date>.md` and remove it from `ROADMAP.md`.
+**ROADMAP phase completion format:**
+- Append `— CLOSED` to the phase heading: `### P3 — Description — CLOSED`
+- Append `— PASSED` to the phase gate line when all criteria are met
+- Do not use strikethrough markup (`~~`) in ROADMAP — it obscures content for future reference
+- Body text is preserved as written; only the heading status tag changes
+
+When a full ROADMAP is complete, archive it to `archive/ROADMAP-<date>.md` and remove it from `ROADMAP.md`.
 
 ---
 
