@@ -80,6 +80,11 @@ The build is idempotent — re-running adds new rows and skips existing ones.
 
 | File | Contains |
 |---|---|
-| `identity.md` | Agent role, capabilities, and explicit limits |
-| `instructions/generate.md` | When and how to generate candidates |
+| `identity.md` | Agent role, capabilities, explicit limits, and scope |
+| `instructions/generate.md` | When and how to generate candidates; --full, --force, --min-score, --resolve flags |
+| `instructions/entities.md` | Adding entities and name variants; editing entities.csv and variants.csv; source values |
+| `instructions/rescore.md` | When to rescore vs regenerate; signal bonus components; pipeline state tracking |
+| `instructions/status.md` | Reading match status output; pipeline_state.json fields; review progress |
 | `reference/scoring.md` | Scoring formula and component breakdown |
+| `reference/uncertainty-band.md` | Uncertainty band definition; signal enrichment; when to escalate to historian review |
+| `reference/entities-schema.md` | Full CSV format for entities.csv and variants.csv; source values; entities.txt scope file |

@@ -83,22 +83,22 @@ Current stubs: `README.md`, `identity.md`, `instructions/build.md`, `instruction
 
 ---
 
-### P4 — Flesh out matchmaker specialist persona and add queries module *(D009 partial, S01-MM, S02-MM, S03-MM)*
+### ~~P4 — Flesh out matchmaker specialist persona and add queries module~~ *(complete)*
 
-Current stubs: `README.md`, `identity.md`, `instructions/generate.md`, `reference/scoring.md`.
+~~Current stubs: `README.md`, `identity.md`, `instructions/generate.md`, `reference/scoring.md`.~~
 
-**Add `queries.py` module** *(S01-MM — breaks three-surface model)*: Matchmaker is the only specialist without a `queries.py`. Database reads for entity lookup and candidate retrieval are embedded in `entities.py` and `link.py` alongside write operations. Extract the read-only functions into a new `queries.py`: entity lookup by ID and name variant, candidate list retrieval, pipeline state reads. This gives other specialists a stable pure-read interface to the entity registry without importing from write modules.
+~~**Add `queries.py` module** *(S01-MM — breaks three-surface model)*: Matchmaker is the only specialist without a `queries.py`. Database reads for entity lookup and candidate retrieval are embedded in `entities.py` and `link.py` alongside write operations. Extract the read-only functions into a new `queries.py`: entity lookup by ID and name variant, candidate list retrieval, pipeline state reads. This gives other specialists a stable pure-read interface to the entity registry without importing from write modules.~~
 
-**New instruction cards:**
-- `instructions/entities.md` — adding a new entity to the registry; editing `entities.csv` and `variants.csv`; how source values (`patent_assignee`, `trademark_owner`) affect matching; idempotent build
-- `instructions/rescore.md` — when to run `markery match rescore` vs full regeneration; what signal enrichment does to the score; how pipeline_state.json tracks enrichment state *(S02-MM)*
-- `instructions/status.md` — reading `markery match status` output; what `pipeline_state.json` fields mean; how to interpret enriched_at and rescored_at timestamps *(S02-MM)*
+~~**New instruction cards:**~~
+~~- `instructions/entities.md` — adding a new entity to the registry; editing `entities.csv` and `variants.csv`; how source values (`patent_assignee`, `trademark_owner`) affect matching; idempotent build~~
+~~- `instructions/rescore.md` — when to run `markery match rescore` vs full regeneration; what signal enrichment does to the score; how pipeline_state.json tracks enrichment state *(S02-MM)*~~
+~~- `instructions/status.md` — reading `markery match status` output; what `pipeline_state.json` fields mean; how to interpret enriched_at and rescored_at timestamps *(S02-MM)*~~
 
-**Update `instructions/generate.md`** *(S03-MM)*: Current card covers the base invocation only. Add: `--full` flag (generate + signal enrichment in one step), `--force` flag (overwrite enriched candidates), and minimum-score threshold behavior.
+~~**Update `instructions/generate.md`** *(S03-MM)*: Current card covers the base invocation only. Add: `--full` flag (generate + signal enrichment in one step), `--force` flag (overwrite enriched candidates), and minimum-score threshold behavior.~~
 
-**New reference docs:**
-- `reference/uncertainty-band.md` — what the 0.40–0.60 uncertainty band means; how signal enrichment narrows it; when to fetch abstracts vs goods descriptions; when to escalate to historian review
-- `reference/entities-schema.md` — full CSV format for `entities.csv` and `variants.csv`; column definitions; how `source` values map to database fields; example rows
+~~**New reference docs:**~~
+~~- `reference/uncertainty-band.md` — what the 0.40–0.60 uncertainty band means; how signal enrichment narrows it; when to fetch abstracts vs goods descriptions; when to escalate to historian review~~
+~~- `reference/entities-schema.md` — full CSV format for `entities.csv` and `variants.csv`; column definitions; how `source` values map to database fields; example rows~~
 
 ---
 
