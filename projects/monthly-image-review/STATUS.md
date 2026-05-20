@@ -1,6 +1,6 @@
 # Monthly Image Review — Project Status
 
-**Last updated:** 2026-05-18
+**Last updated:** 2026-05-20
 
 ---
 
@@ -8,6 +8,7 @@
 
 | Month | Design marks queried | Gallery |
 |---|---|---|
+| May 1930 | 39 | `output/may1930/gallery.html` |
 | June 1930 | 7 | `output/june1930/gallery.html` |
 
 ---

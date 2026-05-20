@@ -16,7 +16,6 @@ from pathlib import Path
 import duckdb
 
 from .gallery import build_gallery
-from .pipeline import process_mark
 
 
 def _result_line(result) -> str:
@@ -25,6 +24,7 @@ def _result_line(result) -> str:
 
 
 def cmd_enhance(args) -> None:
+    from .pipeline import process_mark
     result = process_mark(
         args.serial_no,
         input_path=Path(args.input_path) if args.input_path else None,
@@ -36,6 +36,7 @@ def cmd_enhance(args) -> None:
 
 
 def cmd_batch(args) -> None:
+    from .pipeline import process_mark
     conn = duckdb.connect(args.db, read_only=True)
     rows = conn.execute(f"""
         SELECT
