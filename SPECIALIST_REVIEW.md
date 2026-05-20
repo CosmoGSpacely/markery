@@ -240,6 +240,28 @@ Both commands exist and both route to `build_site()`. The difference in entry po
 
 ---
 
+### P5 — Flesh out publisher specialist persona *(2026-05-20 — complete)*
+
+**Deliverables confirmed:**
+
+`instructions/enhance.md` (new): `markery enhance enhance <serial_no>` (single) and `markery enhance batch "<where>"` (batch); when to enhance vs use raw TSDR images; `--force` flag; gallery building from enhanced PNGs or raw DB images; how the site builder picks up enhanced images (must be in `site/images/marks/`); GPU/CPU requirements and model weight download.
+
+`instructions/wikipedia.md` (new): Three-step workflow — `markery wikipedia draft <project> <slug>` (generates from match essay) → review and edit `<slug>.wiki` → `markery wikipedia submit <project> <slug>` (shows diff, prompts before POST); `--title` and `--summary` flags; Wikipedia content policy requirements (no original research, NPOV, verifiability, notability); when not to draft (content that cannot meet policy standards).
+
+`reference/content-pipeline.md` expanded: Figure fallback chain rewritten with technical accuracy — `[[figure:patent_no]]` resolves via `figure_index` built from `patent_figures` BLOBs at build time; if BLOB absent, the `[[figure:]]` tag renders as nothing (no silent on-disk fallback for inline references); diagnostic steps for missing figures; language guidance for permanently unavailable figures.
+
+`instructions/build-site.md` updated (S03-PB): Added section documenting that `markery site build` and `markery publisher build` are fully equivalent (both call `build_site()` in `publisher/build.py`); canonical form is `markery site build`.
+
+`README.md` updated: reference table expanded to include all new instruction and reference files.
+
+**Commit:** `e97bc27` — "Phase 8 P5: flesh out publisher specialist persona (enhance, wikipedia, content-pipeline expansion, site-build aliasing)"
+
+**Closes:** P5 (D009 complete — all four specialists done, S03-PB)
+
+**Status:** Complete. Closed in ROADMAP.
+
+---
+
 ### Test harness run *(2026-05-20 — after P4)*
 
 `307 passed in 15.24s` — full suite green after P4 changes (queries.py, generate.md, README.md, ROADMAP.md, DEFERRED.md). No regressions.
