@@ -240,6 +240,30 @@ Both commands exist and both route to `build_site()`. The difference in entry po
 
 ---
 
+### P2 — Flesh out patent specialist persona *(2026-05-20 — complete)*
+
+**Deliverables confirmed:**
+
+`instructions/pull.md` (new): `markery patent pull <patent_no>` — when to use vs bulk build, upsert behavior, figures not included, relationship to citation chain expansion, post-pull candidate regeneration.
+
+`instructions/figures.md` (new): Both figure commands covered — `markery patent figures <patent_no>` (single) and `markery patent fetch <project> --confirmed` (batch); check BRIEF.md first; `patent_figures` table schema; post-fetch prepare + site rebuild; no-figure fallback language for essays.
+
+`instructions/citations.md` (new): `markery patent citations <patent_no>` — confirm → pull → cite → match pattern; one-level backward expansion; pre-1940 coverage caveats; cross-entity citation filtering.
+
+`reference/cpc-classes.md` (new): CPC code structure and how to read it; 4-character subclass as the `--classes` argument; all seven classes used in the information-systems project with descriptions; how to identify classes for a new subject; pre-1940 retroactive classification caveats and why the scoring model uses binary class signals.
+
+`README.md` updated: reference table expanded to include all four new files.
+
+**S02-P (migrate-figures) resolved:** CLI docstring and parser already label the command "One-time migration: disk PNGs → BLOB storage". Migration confirmed complete for the information-systems project. Added D016 (remove `migrate-figures` from patent CLI) and D017 (instruction cards for `signals`, `fetch`, `verify-credentials`) to DEFERRED.
+
+**Commit:** `c09c9f3` — "Phase 8 P2: flesh out patent specialist persona (pull, figures, citations, cpc-classes); add D016-D017"
+
+**Closes:** P2 (D009 partial), S02-P
+
+**Status:** Complete. Closed in ROADMAP.
+
+---
+
 ### P1 — Fix historian persona stale content and session workflow *(2026-05-20 — complete)*
 
 **Deliverables confirmed:**
