@@ -24,7 +24,7 @@ Added `## Scope` section to each of the five specialist `identity.md` files. Eac
 
 ---
 
-### P1 — Fix historian persona stale content and session workflow *(D008, S01-HI, S03-HI)*
+### ~~P1 — Fix historian persona stale content and session workflow~~ *(complete)*
 
 The historian persona and session workflow contain stale content from the Phase 7 schema migration and a subsequent CLI rename. Fix all classes before the historian is used in a Claude project.
 
@@ -54,7 +54,7 @@ All three appear in prose sections and the quick-reference table (lines 97, 171,
 
 ---
 
-### P2 — Flesh out patent specialist persona *(D009 partial)*
+### ~~P2 — Flesh out patent specialist persona~~ *(complete)*
 
 Current stubs: `README.md`, `identity.md`, `instructions/build.md`, `reference/epo-ops.md`.
 
@@ -70,7 +70,7 @@ Current stubs: `README.md`, `identity.md`, `instructions/build.md`, `reference/e
 
 ---
 
-### P3 — Flesh out trademark specialist persona *(D009 partial)*
+### ~~P3 — Flesh out trademark specialist persona~~ *(complete)*
 
 Current stubs: `README.md`, `identity.md`, `instructions/build.md`, `instructions/enrich.md`, `reference/bulk-tables.md`.
 

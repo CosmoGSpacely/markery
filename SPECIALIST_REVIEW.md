@@ -240,6 +240,30 @@ Both commands exist and both route to `build_site()`. The difference in entry po
 
 ---
 
+### P7 — Root documentation and codebase accuracy fixes *(2026-05-20 — complete)*
+
+**Deliverables confirmed:**
+
+`CONTEXT.md` (G03): `CLAUDE.md` row added to Root File Responsibilities table. (G04/G12): Match-review-essay project structure table expanded — added `OBJECTIVES.md`, `BRIEF.md`, `entities.csv`, `variants.csv`, `seed_patents.json`, `matches/rejected.jsonl`, `matches/pipeline_state.json`, `references/`. (G10): Historian credentials corrected — removed "Anthropic API (for essay drafting)"; essay drafting is done through a Claude project, not direct SDK calls.
+
+`DESIGN.md` (G02): Opening sentence removed reference to root-level `RESEARCH.md` (doesn't exist at root; it's a project artifact). (G05): `rejected.jsonl` added to Historian row in Specialist Ownership Pattern table. (G06): Agentic Architecture section expanded with paragraph on `CLAUDE.md` + `## Scope` sections as the session-level boundary enforcement mechanism.
+
+`SETUP.md` (G07): Disk space corrected from ~100 MB to ~50 MB.
+
+`README.md` (G11): CLI section expanded with missing subcommands — `markery match rescore`, `markery historian prepare`, `markery patent signals`, `markery patent fetch --confirmed`, `markery publisher build`, `markery wikipedia draft`.
+
+`pyproject.toml` (G14): `duckdb>=0.9.0` → `duckdb>=1.0.0`.
+
+`tests/__pycache__/` (G15): Deleted ghost `test_score.cpython-312-pytest-9.0.3.pyc`.
+
+**Commit:** `ee8aca0` — "Phase 8 P7: root doc and codebase accuracy fixes (G02-G07, G10-G12, G14-G15)"
+
+**Closes:** P7 (G02, G03, G04, G05, G06, G07, G10, G11, G12, G14, G15)
+
+**Status:** Complete. Closed in ROADMAP.
+
+---
+
 ### P6 — Patent bulk CSV route: research and design *(2026-05-20 — complete)*
 
 **Deliverables confirmed:**
