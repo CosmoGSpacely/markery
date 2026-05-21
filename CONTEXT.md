@@ -14,6 +14,10 @@ This document defines what Markery is, how it works, and the structure of work w
 
 **Markery agents organize the data and prepare results for publishing.** Once pairs are confirmed, the agent drafts research essays from a historian persona, resolves figure references, and renders the content as a static site. The human edits and approves. The agent builds and the historian writes; the human decides what is true and what ships.
 
+**Markery is designed to do as much work deterministically in code as possible, reserving model work for tasks that genuinely require judgment.** Pre-generated structured inputs (candidate cards, essay scaffolds), code-side validation, and rule-based disposition reduce per-session token consumption and make portions of the workflow viable for cheaper cloud models or local models with limited context windows.
+
+**Markery workflow design classifies tasks by whether correctness is code-verifiable or requires judgment.** Tasks whose outputs can be fully specified and checked by code — candidate review decisions, factual essay sections, entity variant suggestions — are model-agnostic by construction: any model that follows instructions produces correct output when all necessary facts are supplied as structured inputs. Tasks requiring interpretive judgment — narrative quality, historical significance, Wikipedia policy compliance — are model-sensitive and warrant the best available model. The design direction is to move tasks toward model-agnosticism by supplying all knowledge as structured input, constraining output schemas, and pipelining complex work into validated stages.
+
 ---
 
 ## Specialist Agents
