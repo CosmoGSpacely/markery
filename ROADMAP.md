@@ -224,3 +224,166 @@ P3 PASSED when: `SETUP.md` accurately describes the three dependency tiers and a
 P4 PASSED when: Stage 4b (Chicago Pneumatic external link) is live on English Wikipedia and unreverted after 48 hours.
 
 Phase PASSED when P1, P2, P3, and P4 all pass.
+
+---
+
+## Phase 10 — Common Layer: Project Types
+
+**Opened:** 2026-05-21  
+**Scope:** Add project type as a first-class concept in the common layer. Prerequisite for Phase 11 token-reduction tools and for type-aware orchestrator routing. Full design in `archive/COMMON-REVIEW-2026-05-21.md`.
+
+---
+
+### P1 — `common/project.py`: foundation module
+
+1. Create `src/markery/common/project.py`
+2. Define `ProjectType` enum: `MATCH_REVIEW_ESSAY`, `GALLERY_EXPLORATION`
+3. Move `Project` dataclass from `config.py` to `project.py`; update `config.py` to remove it; update all import sites
+4. Refactor `Project` path properties — match-review-essay-specific paths (`candidates`, `confirmed`, `rejected`, `pipeline_state`, `entities_file`, `objectives`, `brief`) protected by type check or moved to a typed subclass; `root` and `exists()` remain universal
+5. Add `load_project(path: Path) -> Project` — reads `project.json` from project root, returns typed `Project`; raises with a clear message directing user to `markery project adopt` if `project.json` is absent
+6. Add `detect_project_type(path: Path) -> ProjectType | None` — heuristic: presence of `entities.txt` or `confirmed.jsonl` → `MATCH_REVIEW_ESSAY`; presence of `essays/` or `output/` without match pipeline files → `GALLERY_EXPLORATION`; ambiguous → `None`
+7. Update `common/__init__.py` to export `Project`, `ProjectType`, `load_project`
+
+---
+
+### P2 — Write `project.json` for existing projects
+
+1. Write `projects/information-systems/project.json`: `{"type": "match-review-essay"}`
+2. Write `projects/monthly-image-review/project.json`: `{"type": "gallery-exploration"}`
+3. Verify `load_project()` returns the correct type for both
+
+---
+
+### P3 — `markery project init`
+
+1. Add `project` to `_SUBCOMMANDS` in `cli.py`; add `cmd_project()` dispatch function
+2. Implement `init` subcommand: prompt for project name if not given; prompt for type from a numbered list; scaffold directory per type's structure definition in `project.py`; write `project.json`, starter `README.md`, and `STATUS.md`
+3. Structure definitions per type live in `project.py` — the single source of truth for what each type requires
+
+---
+
+### P4 — `markery project adopt`
+
+1. Implement `adopt` subcommand
+2. Flow: run `detect_project_type()`; display the inference with the signals found; prompt confirm or select from type list; write `project.json`
+3. Handle `None` inference (ambiguous directory): present all type options without a pre-selected default
+
+---
+
+### P5 — Orchestrator type awareness
+
+Note: implementation touches `specialist/orchestrator.py`, not the common layer, but is driven by this phase.
+
+1. Add `project_type(path: Path) -> ProjectType` to `orchestrator.py` — delegates to `load_project()`
+2. Update `enrich_signal_fields` to validate project type before dispatching; raise `TypeError` with a clear message if project is not `MATCH_REVIEW_ESSAY`
+3. Add `Project` type annotations throughout `orchestrator.py` where applicable
+
+---
+
+### Phase Gate
+
+P1 PASSED when: `from markery.common import Project, ProjectType, load_project` works; `load_project(Path("projects/information-systems"))` returns a `MATCH_REVIEW_ESSAY` project; `load_project(Path("projects/monthly-image-review"))` returns a `GALLERY_EXPLORATION` project.
+
+P2 PASSED when: both existing projects have `project.json` committed and `load_project()` resolves both correctly.
+
+P3 PASSED when: `markery project init test-project` creates a new directory with correct type-specific structure and `project.json`.
+
+P4 PASSED when: `markery project adopt` (run on a project without `project.json`) infers the correct type, shows the signals found, prompts for confirmation, and writes `project.json`.
+
+P5 PASSED when: `enrich_signal_fields` raises a typed error when passed a `GALLERY_EXPLORATION` project.
+
+Phase PASSED when P1–P5 all pass.
+
+---
+
+## Phase 11 — Specialist Tools: Token Reduction and Model Accessibility
+
+**Opened:** 2026-05-21  
+**Dependency:** Phase 10 must be complete — all tools that accept a project argument require `load_project()` and type validation.  
+**Scope:** Seven new specialist-owned CLI tools that shift project work from LLM token consumption toward deterministic code, and reduce context burden enough to make cheaper or local models viable for portions of the workflow. Full specifications in `archive/SPECIALIST-REVIEW-2026-05-21.md`. Implementation order follows dependency chain: auto-disposition → preflight → suggest-variants → card → digest → scaffold → validate.
+
+---
+
+### P1 — `markery match auto-disposition` (MATCHMAKER)
+
+Applies deterministic rejection rules to candidates below a configurable score threshold. Writes rejection records to `rejected.jsonl` with `auto_rejected: true` flag. `--dry-run` reports without writing. Eliminates model review for below-floor candidates — typically 30–50% of the queue.
+
+1. Add `cmd_auto_disposition()` to matchmaker CLI
+2. Implement rejection rules: score threshold, date gap ceiling, class mismatch, company-name-mark flag
+3. Read threshold and ceiling from `matches/auto_disposition.json` if present; fall back to CLI flags; default threshold 0.25
+4. `--dry-run` output: table of candidates that would be rejected with reason strings
+5. Verify: `markery match auto-disposition information-systems --dry-run` shows expected rejections without writing
+
+---
+
+### P2 — `markery match preflight` (MATCHMAKER)
+
+Pre-runs all available enrichment for a project before any model session. Fetches signals for candidates above min-score; TSDR for uncertainty-band candidates lacking goods descriptions; figures for confirmed pairs lacking images. Writes `matches/preflight.json` recording what was fetched and skipped.
+
+1. Add `cmd_preflight()` to matchmaker CLI
+2. Sequence: signals enrichment → TSDR enrichment → figure fetch; each step reads DB state to determine what is missing
+3. `preflight.json` format: per-step counts (fetched, skipped, quota-hit, already-present), timestamp
+4. Verify: running preflight on a fully-enriched project produces an all-zero report with no errors
+
+---
+
+### P3 — `markery matchmaker suggest-variants` (MATCHMAKER)
+
+Fuzzy-matches a canonical entity name against `assignee_name` in `patents.duckdb` and `own_name` in `trademarks.duckdb`. Returns ranked candidate variant strings with occurrence counts and source. Uses token overlap, edit distance, and common abbreviation expansion (Inc./Incorporated/Corp./Company/Co.).
+
+1. Add `cmd_suggest_variants()` to matchmaker CLI
+2. Implement matching: token overlap score + edit distance + abbreviation normalization
+3. Output: ranked table showing patent variants and trademark variants separately with occurrence counts
+4. Verify: `markery matchmaker suggest-variants "Remington Rand"` returns known variants in ranked order
+
+---
+
+### P4 — `markery historian card` (HISTORIAN)
+
+Generates a compact (~250 token) fixed-format candidate summary block for a single slug from DB records — no model required. Structured fields optimized for model input: mark, goods, entity, patent, date gap, score, signals, essay/figure status. Written to stdout or `matches/cards/<slug>.md`.
+
+1. Add `cmd_card()` to historian CLI
+2. Implement field extraction from `trademarks.duckdb`, `patents.duckdb`, `entities.duckdb`, `candidates.jsonl`
+3. Goods description truncated to first 100 chars + additional class count; no prose anywhere in the card
+4. Verify: `markery historian card soundex-us1261167a` produces a parseable card matching DB records
+
+---
+
+### P5 — `markery historian digest` (HISTORIAN)
+
+Produces a compact (~800–1,200 token) model-optimized project state summary. Dense structured blocks, no prose. Includes: confirmed/rejected/unreviewed counts, essay status by slug, next-review candidates ordered by score, enrichment status, preflight timestamp, available cards and scaffolds.
+
+1. Add `cmd_digest()` to historian CLI
+2. Implement state aggregation from `confirmed.jsonl`, `rejected.jsonl`, `candidates.jsonl`, `matches/` directory
+3. Verify: `markery historian digest information-systems` fits within 1,200 tokens (measure with `tiktoken` or equivalent)
+
+---
+
+### P6 — `markery historian scaffold` (HISTORIAN)
+
+Generates a structured essay skeleton for a confirmed pair. Factual sections pre-filled from DB records (frontmatter, primary sources, filing record, patent summary); interpretive sections left as titled prompt stubs. Written to `essays/<slug>.md`. Full field list in `archive/SPECIALIST-REVIEW-2026-05-21.md §scaffold`.
+
+1. Add `cmd_scaffold()` to historian CLI
+2. Factual section generation is pure DB read — no model. Prompt stubs are titled headings only
+3. Verify: `markery historian scaffold soundex-us1261167a` produces a file with correct serial numbers, dates, and goods description pulled from DB; all factual fields match `trademarks.duckdb`
+
+---
+
+### P7 — `markery historian validate` (HISTORIAN)
+
+Validates a completed essay against the DB. Checks: serial numbers resolve against `case_file`; patent numbers resolve against `patents`; dates and registration numbers match DB records; goods description excerpts match `statement` within edit-distance threshold; entity name matches a known variant; no cross-pair contamination. Structured report; exit code 1 on any failure.
+
+1. Add `cmd_validate()` to historian CLI
+2. Implement each check as a named function; collect results into a structured report
+3. Report: one line per check, PASS/FAIL, discrepancy detail on failure
+4. Verify: validate on a known-good essay returns all-PASS; a deliberate serial number error is caught
+
+---
+
+### Phase Gate
+
+P1 PASSED when: `markery match auto-disposition information-systems --dry-run` correctly identifies below-floor candidates; `--reject-below` writes to `rejected.jsonl` with `auto_rejected: true`.
+
+P7 PASSED when: `markery historian validate` catches a deliberate date error injected into a test essay.
+
+Phase PASSED when P1–P7 all pass and at least one end-to-end cheap-model workflow has been demonstrated: digest + cards loaded into a small-context session, candidate review decisions written, validate run on the resulting essay without errors.
