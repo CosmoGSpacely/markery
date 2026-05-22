@@ -19,7 +19,7 @@ from markery.specialist.publisher.render import (
     render_timeline_page,
     render_search_page,
 )
-from markery.common.config import Project
+from markery.common.project import Project
 
 
 # ---------------------------------------------------------------------------

@@ -17,15 +17,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-
-def read_state(path: Path) -> dict:
-    """Return current pipeline state. Empty dict if the file does not exist."""
-    if not path.exists():
-        return {}
-    try:
-        return json.loads(path.read_text())
-    except (json.JSONDecodeError, OSError):
-        return {}
+from markery.specialist.matchmaker.queries import read_pipeline_state as read_state
 
 
 def _write(path: Path, state: dict) -> None:

@@ -8,7 +8,6 @@ Subcommands:
   figures           Fetch figure for a single patent number
   verify-credentials  Check EPO OPS token
   signals           Enrich candidates.jsonl with text signals
-  migrate-figures   One-time migration: disk PNGs → BLOB storage
 """
 
 from __future__ import annotations
@@ -17,7 +16,7 @@ import argparse
 import sys
 
 from markery.common.config import DB
-from markery.common.project import Project
+from markery.common.project import Project, require_project, validate_patent_no
 
 
 # ---------------------------------------------------------------------------
@@ -41,12 +40,8 @@ def cmd_fetch(args: argparse.Namespace) -> None:
     from markery.specialist.patent.figures import fetch_and_store
     from markery.specialist.patent.epo_client import EPOClient
     from markery.common.auth import load_epo_credentials
-    from markery.common.project import Project
 
-    project = Project(args.project)
-    if not project.exists():
-        print(f"Project not found: {project.root}")
-        sys.exit(1)
+    project = require_project(args.project)
 
     if args.patent:
         patent_nos = args.patent
@@ -99,15 +94,16 @@ def cmd_figures(args: argparse.Namespace) -> None:
     from markery.specialist.patent.epo_client import EPOClient
     from markery.common.auth import load_epo_credentials
 
+    patent_no = validate_patent_no(args.patent_no)
     key, secret = load_epo_credentials()
     client = EPOClient(key, secret)
     conn   = open_db()
-    ok = fetch_and_store(args.patent_no, client, conn)
+    ok = fetch_and_store(patent_no, client, conn)
     conn.close()
     if ok:
-        print(f"{args.patent_no}: figure stored.")
+        print(f"{patent_no}: figure stored.")
     else:
-        print(f"{args.patent_no}: skipped (already stored or no figure available).")
+        print(f"{patent_no}: skipped (already stored or no figure available).")
 
 
 def cmd_verify_credentials(args: argparse.Namespace) -> None:
@@ -126,10 +122,7 @@ def cmd_signals(args: argparse.Namespace) -> None:
     from markery.specialist.patent.signals import enrich_candidates
     from markery.specialist.matchmaker.pipeline import mark_enriched
 
-    project = Project(args.project)
-    if not project.exists():
-        print(f"Project not found: {project.root}")
-        sys.exit(1)
+    project = require_project(args.project)
 
     candidates_path = project.candidates
     print(f"Enriching {candidates_path} ...")
@@ -144,15 +137,16 @@ def cmd_pull(args: argparse.Namespace) -> None:
     from markery.specialist.patent.epo_client import EPOClient
     from markery.common.auth import load_epo_credentials
 
+    patent_no = validate_patent_no(args.patent_no)
     key, secret = load_epo_credentials()
     client = EPOClient(key, secret)
     conn   = open_db()
-    ok = fetch_patent_record(args.patent_no, client, conn)
+    ok = fetch_patent_record(patent_no, client, conn)
     conn.close()
     if ok:
-        print(f"{args.patent_no}: stored.")
+        print(f"{patent_no}: stored.")
     else:
-        print(f"{args.patent_no}: not found on EPO.")
+        print(f"{patent_no}: not found on EPO.")
 
 
 def cmd_citations(args: argparse.Namespace) -> None:
@@ -161,23 +155,14 @@ def cmd_citations(args: argparse.Namespace) -> None:
     from markery.specialist.patent.epo_client import EPOClient
     from markery.common.auth import load_epo_credentials
 
+    patent_no = validate_patent_no(args.patent_no)
     key, secret = load_epo_credentials()
     client = EPOClient(key, secret)
     conn   = open_db()
-    print(f"Fetching citations for {args.patent_no} ...")
-    n = fetch_citation_chain(args.patent_no, client, conn)
+    print(f"Fetching citations for {patent_no} ...")
+    n = fetch_citation_chain(patent_no, client, conn)
     conn.close()
     print(f"{n} new patent(s) added.")
-
-
-def cmd_migrate_figures(args: argparse.Namespace) -> None:
-    from markery.specialist.patent.build import open_db
-    from markery.specialist.patent.figures import migrate_path_figures
-
-    conn = open_db()
-    n    = migrate_path_figures(args.project, conn)
-    conn.close()
-    print(f"Migrated {n} figure(s) to BLOB storage.")
 
 
 # ---------------------------------------------------------------------------
@@ -238,11 +223,6 @@ def main() -> None:
                             help="Fetch backward citations for a patent; pull any new ones")
     p_cit.add_argument("patent_no", metavar="PATENT_NO")
 
-    # migrate-figures
-    p_mig = sub.add_parser("migrate-figures",
-                            help="Migrate on-disk PNGs to BLOB storage (one-time)")
-    p_mig.add_argument("project", nargs="?", default="information-systems")
-
     args = ap.parse_args()
     {
         "build":               cmd_build,
@@ -252,5 +232,4 @@ def main() -> None:
         "citations":           cmd_citations,
         "verify-credentials":  cmd_verify_credentials,
         "signals":             cmd_signals,
-        "migrate-figures":     cmd_migrate_figures,
     }[args.cmd](args)

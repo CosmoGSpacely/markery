@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 from markery.common.config import DB
-from markery.common.project import Project
+from markery.common.project import Project, require_project
 
 
 def _parse_slug(slug: str) -> tuple[str, str]:
@@ -31,7 +31,7 @@ def _slug_matches_trademark(slug: str, trademark: str) -> bool:
 def cmd_card(args: argparse.Namespace) -> None:
     import duckdb
 
-    proj     = Project(args.project)
+    proj     = require_project(args.project)
     tm_slug, pat_no = _parse_slug(args.slug)
 
     if not proj.candidates.exists():
@@ -159,10 +159,7 @@ def cmd_digest(args: argparse.Namespace) -> None:
     import json as _json
     from datetime import datetime
 
-    proj = Project(args.project)
-    if not proj.exists():
-        print(f"Project not found: {proj.root}", file=sys.stderr)
-        sys.exit(1)
+    proj = require_project(args.project)
 
     lines: list[str] = [f"## DIGEST: {args.project}  [{datetime.utcnow().strftime('%Y-%m-%dT%H:%M')}Z]", ""]
 
@@ -247,7 +244,7 @@ def cmd_digest(args: argparse.Namespace) -> None:
 def cmd_scaffold(args: argparse.Namespace) -> None:
     import duckdb
 
-    proj = Project(args.project)
+    proj = require_project(args.project)
     tm_slug, pat_no = _parse_slug(args.slug)
 
     # Find in confirmed
@@ -379,7 +376,7 @@ def cmd_validate(args: argparse.Namespace) -> None:
     import duckdb
     import re as _re
 
-    proj = Project(args.project)
+    proj = require_project(args.project)
     essay_path = Path(args.essay) if args.essay else proj.root / "content" / f"{args.slug}.md"
 
     if not essay_path.exists():

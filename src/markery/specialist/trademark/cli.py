@@ -15,6 +15,8 @@ from __future__ import annotations
 import argparse
 import sys
 
+from markery.common.project import require_project, validate_serial_no
+
 
 # ---------------------------------------------------------------------------
 # Subcommand handlers
@@ -43,14 +45,15 @@ def cmd_enrich(args: argparse.Namespace) -> None:
     from markery.specialist.trademark.tsdr_client import TSDRClient
     from markery.common.auth import load_tsdr_key
 
+    serial_no = validate_serial_no(args.serial_no)
     client = TSDRClient(load_tsdr_key())
     conn   = open_db()
 
-    img_ok = store_mark_image(args.serial_no, client, conn, force=args.force)
-    sts_ok = store_case_status(args.serial_no, client, conn, force=args.force)
+    img_ok = store_mark_image(serial_no, client, conn, force=args.force)
+    sts_ok = store_case_status(serial_no, client, conn, force=args.force)
     conn.close()
 
-    print(f"{args.serial_no}: image={'stored' if img_ok else 'skipped'}  "
+    print(f"{serial_no}: image={'stored' if img_ok else 'skipped'}  "
           f"status={'stored' if sts_ok else 'skipped'}")
 
 
@@ -59,12 +62,7 @@ def cmd_enrich_project(args: argparse.Namespace) -> None:
     from markery.specialist.trademark.enrich import enrich_project
     from markery.specialist.trademark.tsdr_client import TSDRClient
     from markery.common.auth import load_tsdr_key
-    from markery.common.project import Project
-
-    proj = Project(args.project)
-    if not proj.exists():
-        print(f"Project not found: {proj.root}")
-        sys.exit(1)
+    proj = require_project(args.project)
 
     client = TSDRClient(load_tsdr_key())
     conn   = open_db()
@@ -108,14 +106,15 @@ def cmd_fetch(args: argparse.Namespace) -> None:
     from markery.specialist.trademark.tsdr_client import TSDRClient
     from markery.common.auth import load_tsdr_key
 
+    serial_no = validate_serial_no(args.serial_no)
     client = TSDRClient(load_tsdr_key())
     conn   = open_db()
-    ok = fetch_mark_record(args.serial_no, client, conn, force=args.force)
+    ok = fetch_mark_record(serial_no, client, conn, force=args.force)
     conn.close()
     if ok:
-        print(f"{args.serial_no}: stored in extended_marks.")
+        print(f"{serial_no}: stored in extended_marks.")
     else:
-        print(f"{args.serial_no}: not found on TSDR (or already stored; use --force to re-fetch).")
+        print(f"{serial_no}: not found on TSDR (or already stored; use --force to re-fetch).")
 
 
 def cmd_entity_forward(args: argparse.Namespace) -> None:

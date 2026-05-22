@@ -181,7 +181,7 @@ def test_count_unreviewed_basic(tmp_path: Path):
     _write_jsonl(proj_dir / "matches" / "confirmed.jsonl", _CONFIRMED)
 
     with _patch_root(tmp_path):
-        from markery.common.config import Project
+        from markery.common.project import Project
         proj = Project("test-proj")
         n = count_unreviewed(proj, min_score=0.5)
 
@@ -197,7 +197,7 @@ def test_count_unreviewed_excludes_confirmed(tmp_path: Path):
     _write_jsonl(proj_dir / "matches" / "confirmed.jsonl", _CONFIRMED)
 
     with _patch_root(tmp_path):
-        from markery.common.config import Project
+        from markery.common.project import Project
         proj = Project("test-proj")
         n = count_unreviewed(proj, min_score=0.5)
 
@@ -211,7 +211,7 @@ def test_count_unreviewed_excludes_below_min_score(tmp_path: Path):
     ])
 
     with _patch_root(tmp_path):
-        from markery.common.config import Project
+        from markery.common.project import Project
         proj = Project("test-proj")
         n = count_unreviewed(proj, min_score=0.5)
 
@@ -227,7 +227,7 @@ def test_count_unreviewed_excludes_rejected(tmp_path: Path):
     ])
 
     with _patch_root(tmp_path):
-        from markery.common.config import Project
+        from markery.common.project import Project
         proj = Project("test-proj")
         n = count_unreviewed(proj, min_score=0.5)
 
@@ -238,7 +238,7 @@ def test_count_unreviewed_empty_candidates(tmp_path: Path):
     _make_project(tmp_path)
 
     with _patch_root(tmp_path):
-        from markery.common.config import Project
+        from markery.common.project import Project
         proj = Project("test-proj")
         n = count_unreviewed(proj)
 
@@ -259,7 +259,7 @@ def test_top_candidates_sorted_by_score_descending(tmp_path: Path):
     _write_jsonl(proj_dir / "matches" / "candidates.jsonl", cands)
 
     with _patch_root(tmp_path):
-        from markery.common.config import Project
+        from markery.common.project import Project
         proj = Project("test-proj")
         top = top_candidates(proj, min_score=0.5, n=3)
 

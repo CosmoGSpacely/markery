@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 from markery.common.config import DB
-from markery.common.project import Project
+from markery.common.project import Project, require_project
 
 
 # ---------------------------------------------------------------------------
@@ -85,7 +85,7 @@ def _run_status(rest: list[str]) -> None:
     from markery.specialist.matchmaker.pipeline import read_state
     from markery.specialist.matchmaker.link import read_confirmed, read_rejected
 
-    proj  = Project(args.project)
+    proj  = require_project(args.project)
     state = read_state(proj.pipeline_state)
 
     confirmed = read_confirmed(proj.confirmed)
@@ -127,10 +127,7 @@ def _run_rescore(rest: list[str]) -> None:
     from markery.specialist.matchmaker.link import rescore_candidates
     from markery.specialist.matchmaker.pipeline import mark_rescored
 
-    proj = Project(args.project)
-    if not proj.exists():
-        print(f"Project not found: {proj.root}")
-        sys.exit(1)
+    proj = require_project(args.project)
     if not proj.candidates.exists():
         print(f"No candidates file. Run 'markery match {args.project}' first.")
         sys.exit(1)
@@ -267,10 +264,7 @@ def _run_auto_disposition(rest: list[str]) -> None:
                         help="Report what would be rejected without writing")
     args = parser.parse_args(rest)
 
-    proj = Project(args.project)
-    if not proj.exists():
-        print(f"Project not found: {proj.root}", file=sys.stderr)
-        sys.exit(1)
+    proj = require_project(args.project)
     if not proj.candidates.exists():
         print(f"No candidates.jsonl found. Run 'markery match {args.project}' first.", file=sys.stderr)
         sys.exit(1)
@@ -369,10 +363,7 @@ def _run_preflight(rest: list[str]) -> None:
     parser.add_argument("--tsdr-band-high", type=float, default=0.60)
     args = parser.parse_args(rest)
 
-    proj = Project(args.project)
-    if not proj.exists():
-        print(f"Project not found: {proj.root}", file=sys.stderr)
-        sys.exit(1)
+    proj = require_project(args.project)
 
     report: dict = {
         "timestamp": datetime.now(timezone.utc).isoformat(),

@@ -9,11 +9,47 @@ detect_project_type(path)  — heuristic inference when project.json is absent
 from __future__ import annotations
 
 import json
+import re
+import sys
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
 from markery.common.config import ROOT
+
+_PATENT_RE  = re.compile(r'^[A-Z]{2}\d+[A-Z]\d*$', re.IGNORECASE)
+_SERIAL_RE  = re.compile(r'^\d{5,9}$')
+
+
+def validate_patent_no(patent_no: str) -> str:
+    """Return the uppercased patent_no, or exit with an error if malformed.
+
+    Expected format: country-code (2 letters) + digits + kind code (letter[s]).
+    Examples: US1261167A, EP0123456B1.
+    """
+    if not _PATENT_RE.match(patent_no):
+        print(
+            f"Invalid patent number '{patent_no}'. "
+            "Expected format: <CC><digits><kind>, e.g. US1261167A.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return patent_no.upper()
+
+
+def validate_serial_no(serial_no: str) -> str:
+    """Return the serial_no as-is, or exit with an error if malformed.
+
+    USPTO trademark serial numbers are 7–9 digits.
+    """
+    if not _SERIAL_RE.match(serial_no.strip()):
+        print(
+            f"Invalid serial number '{serial_no}'. "
+            "Expected 5–9 digits (USPTO trademark serial number).",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return serial_no.strip()
 
 
 class ProjectType(str, Enum):
@@ -188,6 +224,32 @@ def scaffold_project(root: Path, project_type: ProjectType) -> list[Path]:
            json.dumps({"type": project_type.value}, indent=2) + "\n")
 
     return created
+
+
+def require_project(name: str) -> Project:
+    """Return a typed Project for name, or exit with a clear error.
+
+    Checks that the project directory exists and contains project.json.
+    Call this at CLI entry points before any DB or file access.
+    """
+    import sys
+    proj = Project(name=name)
+    if not proj.root.is_dir():
+        print(
+            f"Project '{name}' not found at {proj.root}.\n"
+            f"Run 'markery project init {name}' to create it, or check the name.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    pjson = proj.root / "project.json"
+    if not pjson.exists():
+        print(
+            f"Project '{name}' has no project.json at {pjson}.\n"
+            f"Run 'markery project adopt {name}' to declare the project type.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return load_project(proj.root)
 
 
 def detect_project_type(path: Path) -> ProjectType | None:

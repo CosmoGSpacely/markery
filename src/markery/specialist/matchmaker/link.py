@@ -18,6 +18,7 @@ import duckdb
 
 from markery.common.config import DB
 from markery.common.project import Project
+from markery.specialist.matchmaker.queries import read_confirmed, read_rejected
 from markery.specialist.matchmaker.score import (
     is_company_name_mark, total_score,
     date_score, class_score, semantic_score, SEMANTIC_CAP,
@@ -174,26 +175,6 @@ def write_candidates(candidates: list[dict], path: Path) -> None:
         for c in candidates:
             f.write(json.dumps(c) + "\n")
     print(f"  {len(candidates):,} candidates → {path}")
-
-
-def read_confirmed(path: Path) -> list[dict]:
-    """Load a confirmed.jsonl file. Returns [] if the file does not exist."""
-    if not path.exists():
-        return []
-    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
-
-
-def read_rejected(path: Path) -> set[tuple]:
-    """Load rejected.jsonl as a set of (patent_no, trademark_serial) tuples."""
-    if not path.exists():
-        return set()
-    pairs: set[tuple] = set()
-    for line in path.read_text().splitlines():
-        if not line.strip():
-            continue
-        row = json.loads(line)
-        pairs.add((row["patent_no"], str(row["trademark_serial"])))
-    return pairs
 
 
 # ---------------------------------------------------------------------------

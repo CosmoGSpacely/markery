@@ -15,7 +15,7 @@ from markery.specialist.trademark.enrich import (
     enrich_project,
     _collect_serial_nos,
 )
-from markery.common.config import Project
+from markery.common.project import Project
 
 
 _PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
