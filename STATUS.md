@@ -32,7 +32,7 @@
 | P1 — vtracer install + Lanczos fallback in `upscale.py` | ✅ PASSED 2026-05-22 |
 | P2 — `markery wikipedia from-essay` subcommand | ✅ PASSED 2026-05-22 |
 | P3 — Dependency tier documentation in `SETUP.md` | ✅ PASSED 2026-05-22 |
-| P4 — Wikipedia live edit test (sandbox → Chicago Pneumatic external link) | Blocked: Wikipedia account not yet created |
+| P4 — Wikipedia live edit test (sandbox → Chicago Pneumatic external link) | Stage 4a ✅ (rev 1355562394) · Stage 4b ✅ live (rev 1355562959) · awaiting 48h revert check |
 
 ---
 
