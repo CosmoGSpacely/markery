@@ -463,3 +463,83 @@ P4 PASSED when: all seven Phase 11 commands have at least one passing test each.
 P5 PASSED when: CI workflow is green on a clean push and the badge is visible in README.
 
 Phase PASSED when P1–P5 all pass and CI is green.
+
+---
+
+## Phase 13 — Public Readiness: Documentation and v0.3.0
+
+**Opened:** TBD  
+**Trigger:** Phase 12 complete — CI must be green before tagging a public release.  
+**Scope:** Make Markery usable by someone who discovers the repository for the first time, with no insider knowledge and no pre-existing project data. Culminates in a tagged v0.3.0 release.
+
+**Goal state:** A researcher clones the repo, follows SETUP.md, and can run `markery project init` to start a new project — without asking for help and without reading any source code.
+
+---
+
+### P1 — Codebase and documentation audit
+
+Conduct a structured audit using a PUBLIC-READINESS-REVIEW.md at repo root (archive when complete per the REVIEW file convention).
+
+1. Walk every module for hardcoded assumptions: absolute paths, project-specific serial numbers or patent numbers, insider variable names, undocumented constants. Record each finding.
+2. Walk every root document (`README.md`, `SETUP.md`, `CONTEXT.md`, `DESIGN.md`, `CLAUDE.md`) for: jargon with no definition, references to internal phase labels or session notes, prerequisites that are assumed but not stated, instructions that have drifted from current command names or flags.
+3. Verify `markery --help` and each subcommand `--help` accurately describes current behavior.
+4. Produce a gap list: items resolved inline (small fixes), items promoted to DEFERRED (larger scope), items that block the public release.
+
+---
+
+### P2 — Public repo hygiene
+
+1. Confirm `.gitignore` is comprehensive — no credential files, no large binaries, no user-specific paths that could be committed accidentally.
+2. Verify the three committed `.duckdb` files are appropriate to share: no personal data, no private API responses beyond what the USPTO and EPO publicly provide, size is reasonable (~25–50 MB total).
+3. Add `LICENSE` file if absent. Determine and record the intended license.
+4. Review git history for any accidentally committed secrets (`.env` contents, API keys). If found, scrub with `git filter-repo` before proceeding.
+5. Check that `CONTRIBUTING.md` or equivalent guidance exists for anyone who wants to submit a patch.
+
+---
+
+### P3 — SETUP.md: verified fresh-machine install
+
+Rewrite SETUP.md so that the steps are executable in sequence by someone who has never seen the repo.
+
+1. Prerequisites section: Python version requirement, system packages if any, Git LFS if needed for the `.duckdb` files.
+2. Install section: clone → venv → `pip install -e "."` → verify with `markery --version`.
+3. Credential setup: one section per API (EPO OPS, USPTO / TSDR, Wikipedia). For each: where to register, what keys to obtain, exact `.env` variable names, verification command (`markery patent verify-credentials`, `markery trademark verify-credentials`, `markery wikipedia verify-credentials`).
+4. First-run section: `markery project init` to scaffold a project, `markery status` to confirm DB access, pointer to project-type-specific workflow docs.
+5. Verify: perform a clean install in a fresh venv following only the written steps. Fix any step that fails or requires unlisted knowledge before marking passed.
+
+---
+
+### P4 — README overhaul
+
+Rewrite `README.md` to lead with purpose, not structure.
+
+1. Opening paragraph: what Markery is, what research problem it solves, what kind of output it produces. No implementation detail in the first screen.
+2. Quickstart: three to five commands that produce visible output (e.g., `markery project init`, `markery status`, `markery enhance gallery`).
+3. "How it works" section: brief description of the five specialists and the project model — enough for a stranger to understand the architecture before reading DESIGN.md.
+4. Links section: SETUP.md (installation), CONTEXT.md (background and goals), DESIGN.md (engineering rationale), CONTRIBUTING.md.
+5. CI badge (from Phase 12 P5).
+
+---
+
+### P5 — Tag v0.3.0
+
+1. Bump version in `pyproject.toml` and `src/markery/__init__.py` from `0.2.1a0` to `0.3.0`.
+2. Confirm CI is green on the current HEAD.
+3. Tag: `git tag -a v0.3.0 -m "v0.3.0 — public readiness release"`.
+4. Push tag: `git push origin v0.3.0`.
+
+---
+
+### Phase Gate
+
+P1 PASSED when: audit is complete, gap list documented in PUBLIC-READINESS-REVIEW.md, all blocking gaps resolved or explicitly deferred with triggers.
+
+P2 PASSED when: LICENSE file present, git history clean of secrets, `.duckdb` files verified appropriate to share.
+
+P3 PASSED when: a clean venv install following only the written SETUP.md steps produces a working `markery --version` and `markery status` without any unlisted prerequisite.
+
+P4 PASSED when: README leads with purpose, quickstart is verified to work, reviewed and approved before tagging.
+
+P5 PASSED when: `git tag v0.3.0` is pushed, CI is green on the tagged commit.
+
+Phase PASSED when P1–P5 all pass and v0.3.0 is pushed.
