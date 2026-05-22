@@ -353,6 +353,146 @@ def _run_auto_disposition(rest: list[str]) -> None:
     print(f"Written to {proj.rejected.relative_to(proj.root.parent.parent)}")
 
 
+def _run_preflight(rest: list[str]) -> None:
+    """Entry point for `markery match preflight <project>`."""
+    import json
+    from datetime import datetime, timezone
+
+    parser = argparse.ArgumentParser(
+        prog="markery match preflight",
+        description="Pre-fetch all available enrichment before a model review session",
+    )
+    parser.add_argument("project", help="Project name under projects/")
+    parser.add_argument("--min-score", type=float, default=0.40,
+                        help="Minimum candidate score for signals enrichment (default: 0.40)")
+    parser.add_argument("--tsdr-band-low",  type=float, default=0.40)
+    parser.add_argument("--tsdr-band-high", type=float, default=0.60)
+    args = parser.parse_args(rest)
+
+    proj = Project(args.project)
+    if not proj.exists():
+        print(f"Project not found: {proj.root}", file=sys.stderr)
+        sys.exit(1)
+
+    report: dict = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "signals":   {"fetched": 0, "already_present": 0, "skipped": 0},
+        "tsdr":      {"fetched": 0, "already_present": 0, "skipped": 0, "quota_hit": 0},
+        "images":    {"fetched": 0, "already_present": 0, "skipped": 0},
+    }
+
+    # ── Step 1: signals enrichment ────────────────────────────────────────────
+    print("Step 1/3  Signals enrichment ...")
+    if not proj.candidates.exists():
+        print("  candidates.jsonl not found — skipping")
+        report["signals"]["skipped"] = -1  # sentinel: no candidates file
+    else:
+        candidates = [json.loads(l) for l in proj.candidates.read_text().splitlines() if l.strip()]
+        above_min  = [c for c in candidates if c.get("score", 0) >= args.min_score]
+        already    = sum(1 for c in above_min if "title_name_hit" in c)
+        needs      = len(above_min) - already
+        report["signals"]["already_present"] = already
+        if needs == 0:
+            print(f"  {already} candidate(s) above {args.min_score} already enriched — nothing to do")
+        else:
+            print(f"  {needs} candidate(s) above {args.min_score} need signal enrichment ...")
+            from markery.specialist.orchestrator import enrich_signal_fields
+            n = enrich_signal_fields(proj.candidates)
+            report["signals"]["fetched"] = n
+            print(f"  {n} candidate(s) enriched")
+
+    # ── Step 2: TSDR enrichment for uncertainty-band candidates ───────────────
+    print(f"Step 2/3  TSDR enrichment (uncertainty band [{args.tsdr_band_low}, {args.tsdr_band_high}]) ...")
+    if not proj.candidates.exists():
+        report["tsdr"]["skipped"] = -1
+    else:
+        import duckdb as _duckdb
+        from markery.common.config import DB
+        candidates = [json.loads(l) for l in proj.candidates.read_text().splitlines() if l.strip()]
+        band = [
+            c for c in candidates
+            if args.tsdr_band_low <= c.get("score", 0) < args.tsdr_band_high
+        ]
+        band_serials = list({str(c["trademark_serial"]) for c in band})
+        if not band_serials:
+            print("  No candidates in uncertainty band — skipping")
+        else:
+            conn_tm = _duckdb.connect(str(DB["trademarks"]), read_only=True)
+            in_ext  = {
+                str(r[0]) for r in conn_tm.execute(
+                    f"SELECT serial_no FROM extended_marks WHERE serial_no IN ({','.join(band_serials)})"
+                ).fetchall()
+            }
+            conn_tm.close()
+            missing = [s for s in band_serials if s not in in_ext]
+            report["tsdr"]["already_present"] = len(in_ext)
+            print(f"  {len(in_ext)} already in extended_marks, {len(missing)} to fetch")
+            from markery.specialist.orchestrator import fetch_trademark
+            for sno in missing:
+                try:
+                    stored = fetch_trademark(sno)
+                    if stored:
+                        report["tsdr"]["fetched"] += 1
+                    else:
+                        report["tsdr"]["skipped"] += 1
+                except Exception as exc:
+                    msg = str(exc).lower()
+                    if "quota" in msg or "429" in msg or "403" in msg:
+                        report["tsdr"]["quota_hit"] += 1
+                        print(f"  Quota hit on {sno} — stopping TSDR step")
+                        break
+                    report["tsdr"]["skipped"] += 1
+            print(f"  TSDR: {report['tsdr']['fetched']} fetched, "
+                  f"{report['tsdr']['skipped']} skipped, "
+                  f"{report['tsdr']['quota_hit']} quota hits")
+
+    # ── Step 3: mark images for confirmed pairs ───────────────────────────────
+    print("Step 3/3  Mark images for confirmed pairs ...")
+    if not proj.confirmed.exists():
+        print("  confirmed.jsonl not found — skipping")
+        report["images"]["skipped"] = -1
+    else:
+        import duckdb as _duckdb
+        from markery.common.config import DB
+        confirmed = [json.loads(l) for l in proj.confirmed.read_text().splitlines() if l.strip()]
+        serials   = list({str(c["trademark_serial"]) for c in confirmed})
+        if not serials:
+            print("  No confirmed pairs — skipping")
+        else:
+            conn_tm = _duckdb.connect(str(DB["trademarks"]), read_only=True)
+            in_img  = {
+                str(r[0]) for r in conn_tm.execute(
+                    f"SELECT DISTINCT serial_no FROM mark_images WHERE serial_no IN ({','.join(serials)})"
+                ).fetchall()
+            }
+            conn_tm.close()
+            missing = [s for s in serials if s not in in_img]
+            report["images"]["already_present"] = len(in_img)
+            print(f"  {len(in_img)} image(s) present, {len(missing)} to fetch")
+            from markery.specialist.orchestrator import fetch_trademark
+            for sno in missing:
+                try:
+                    stored = fetch_trademark(sno)
+                    if stored:
+                        report["images"]["fetched"] += 1
+                    else:
+                        report["images"]["skipped"] += 1
+                except Exception as exc:
+                    msg = str(exc).lower()
+                    if "quota" in msg or "429" in msg or "403" in msg:
+                        report["images"]["quota_hit"] = report["images"].get("quota_hit", 0) + 1
+                        print(f"  Quota hit on {sno} — stopping images step")
+                        break
+                    report["images"]["skipped"] += 1
+            print(f"  Images: {report['images']['fetched']} fetched, "
+                  f"{report['images']['skipped']} skipped")
+
+    # ── Write preflight.json ──────────────────────────────────────────────────
+    preflight_path = proj.root / "matches" / "preflight.json"
+    preflight_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    print(f"\nPreflight complete. Report written → {preflight_path.relative_to(proj.root.parent.parent)}")
+
+
 def match_main() -> None:
     """Entry point for `markery match`."""
     # Dispatch `rescore` subcommand before the main parser sees it.
@@ -365,6 +505,9 @@ def match_main() -> None:
         return
     if rest and rest[0] == "auto-disposition":
         _run_auto_disposition(rest[1:])
+        return
+    if rest and rest[0] == "preflight":
+        _run_preflight(rest[1:])
         return
 
     parser = argparse.ArgumentParser(
