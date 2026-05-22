@@ -67,6 +67,47 @@ def markdown_to_wikitext(text: str) -> str:
     return "\n".join(lines)
 
 
+def build_standalone_wikitext(
+    essay_text: str,
+    title: str = "",
+    serial: str = "",
+    categories: list[str] | None = None,
+) -> str:
+    """Build wikitext from a standalone essay without a confirmed patent pair.
+
+    Works for any research context — no confirmed.jsonl or project directory
+    required. Appends a TSDR sources section when serial is provided, and
+    category tags from the categories list.
+    """
+    body = markdown_to_wikitext(essay_text)
+
+    sources_section = ""
+    if serial:
+        tsdr_url = (
+            f"https://tsdr.uspto.gov/#caseNumber={serial}"
+            "&caseType=SERIAL_NO&searchType=statusSearch"
+        )
+        sources_section = (
+            "\n\n== Sources ==\n"
+            "<references />\n"
+            "\n"
+            "=== Primary sources ===\n"
+            f"* [{tsdr_url} USPTO TSDR — Trademark Serial No. {serial}]\n"
+        )
+
+    all_categories: list[str] = []
+    if serial:
+        all_categories.append("Trademarks of the United States")
+    if categories:
+        all_categories.extend(categories)
+
+    cat_block = ""
+    if all_categories:
+        cat_block = "\n" + "".join(f"[[Category:{c}]]\n" for c in all_categories)
+
+    return body + sources_section + cat_block
+
+
 def build_draft_wikitext(
     essay_text: str,
     trademark: str,

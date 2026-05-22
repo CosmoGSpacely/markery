@@ -68,6 +68,33 @@ def cmd_draft(project: str, slug: str) -> None:
     print(f"  markery wikipedia submit {project} {slug}")
 
 
+def cmd_from_essay(
+    essay_path: Path,
+    out_path: Path,
+    title: str,
+    serial: str,
+    categories: list[str],
+) -> None:
+    """Generate wikitext from any essay file without a confirmed match record."""
+    from markery.specialist.publisher.wikipedia.wikitext import build_standalone_wikitext
+
+    if not essay_path.exists():
+        print(f"Essay not found: {essay_path}", file=sys.stderr)
+        sys.exit(1)
+
+    wikitext = build_standalone_wikitext(
+        essay_text=essay_path.read_text(encoding="utf-8"),
+        title=title,
+        serial=serial,
+        categories=categories,
+    )
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(wikitext, encoding="utf-8")
+    print(f"Draft written → {out_path}")
+    print("Review and edit the draft before submitting.")
+
+
 def cmd_submit(project: str, slug: str, page_title: str | None, summary: str) -> None:
     """Show diff against current Wikipedia article and prompt before submitting."""
     from markery.specialist.publisher.wikipedia.api import WikipediaClient
@@ -143,9 +170,22 @@ def wikipedia_main() -> None:
                         default="Add primary source citations from USPTO filing record",
                         help="Edit summary")
 
+    fe = sub.add_parser("from-essay", help="Generate wikitext from any essay file")
+    fe.add_argument("essay_path", type=Path, help="Path to markdown essay file")
+    fe.add_argument("--out", required=True, metavar="PATH", type=Path,
+                    help="Output wikitext file path")
+    fe.add_argument("--title", default="", metavar="TITLE",
+                    help="Article title (informational)")
+    fe.add_argument("--serial", default="", metavar="SERIAL",
+                    help="USPTO trademark serial number — adds TSDR sources section")
+    fe.add_argument("--category", dest="categories", action="append", default=[],
+                    metavar="CAT", help="Wikipedia category tag (repeatable)")
+
     args = parser.parse_args()
 
     if args.action == "draft":
         cmd_draft(args.project, args.slug)
     elif args.action == "submit":
         cmd_submit(args.project, args.slug, args.title, args.summary)
+    elif args.action == "from-essay":
+        cmd_from_essay(args.essay_path, args.out, args.title, args.serial, args.categories)
