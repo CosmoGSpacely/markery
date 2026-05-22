@@ -121,7 +121,7 @@ The three databases are shared infrastructure, not project artifacts. No project
 
 The practical consequence: adding a second project to Markery requires adding that project's data files and running the appropriate build commands. It does not require modifying any source code, changing any schema, or rebuilding data that existing projects depend on. Two projects can share `patents.duckdb` without interfering with each other's fetch logs or confirmed pairs.
 
-This was not always the case. Earlier versions of Markery had `DATE_START`, `DATE_END`, `CPC_CLASSES`, `SEED_PATENTS`, and `ENTITIES`/`VARIANTS` as module-level constants in the build scripts — all specific to the information-systems project. Phase 7 (database review, 2026-05-20) moved all of this into per-project data files and made the build commands scope-neutral. The databases are now reusable across projects without code changes.
+This was not always the case. Earlier versions of Markery had `DATE_START`, `DATE_END`, `CPC_CLASSES`, `SEED_PATENTS`, and `ENTITIES`/`VARIANTS` as module-level constants in the build scripts — all specific to the information-systems project. A database review pass moved all of this into per-project data files and made the build commands scope-neutral. The databases are now reusable across projects without code changes.
 
 ---
 

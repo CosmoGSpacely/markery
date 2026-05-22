@@ -143,6 +143,11 @@ def main() -> None:
         _print_help()
         return
 
+    if sys.argv[1] in ("-V", "--version"):
+        from markery import __version__
+        print(f"markery {__version__}")
+        return
+
     cmd  = sys.argv[1]
     rest = sys.argv[2:]
 
