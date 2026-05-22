@@ -394,18 +394,20 @@ Phase PASSED when P1–P7 all pass and at least one end-to-end cheap-model workf
 
 **Opened:** 2026-05-22  
 **Trigger:** Phase 11 complete. Do not begin this phase while the architecture from Phases 10–11 is still settling — hardening code that is about to change produces wasted work.  
-**Scope:** Harden existing CLI boundaries, close test coverage gaps across the full codebase (including all Phase 11 additions), and re-enable CI. Absorbs D012 (CI workflow) and D013 (test coverage gaps) from DEFERRED.
+**Scope:** Harden existing CLI boundaries, close test coverage gaps across the full codebase (including all Phase 11 additions), re-enable CI, and complete a persona instruction card pass. Absorbs D012 (CI workflow), D013 (test coverage gaps), D016 (remove stale migrate-figures command), D017 (patent persona cards), D018 (trademark persona cards), and D019 (deduplicate matchmaker read functions) from DEFERRED.
 
 ---
 
-### P1 — Hardening: CLI input validation and error messages
+### P1 — Hardening: CLI cleanup, input validation, and error messages
 
-Target: system boundaries where bad input currently causes unhelpful failures deep in the stack.
+Target: system boundaries where bad input causes unhelpful failures, plus two small code-quality items (D016, D019) whose triggers have now fired.
 
 1. Project name validation in all commands that accept `<project>` — clear error if the directory does not exist or `project.json` is absent (with hint to run `markery project adopt`)
 2. Serial number and patent number format validation at CLI entry points — reject obviously malformed values before any DB or API call
 3. Missing DB error messages — if `patents.duckdb`, `trademarks.duckdb`, or `entities.duckdb` are absent, surface the specific setup step required rather than a DuckDB IO error
 4. Orchestrator type guard coverage — verify all cross-specialist functions added in Phase 10 P5 have type validation; add any that were missed
+5. Remove `migrate-figures` from patent CLI (D016) — confirm no projects have on-disk PNGs remaining; remove `cmd_migrate_figures`, its argparse entry, and its dispatch table entry from `patent/cli.py`
+6. Deduplicate matchmaker read functions (D019) — make `link.py` and `pipeline.py` import `read_confirmed`, `read_rejected`, and `read_state` from `queries.py` instead of defining them locally
 
 ---
 
@@ -454,6 +456,23 @@ Recreate CI infrastructure deleted in Phase 7 (D012).
 
 ---
 
+### P6 — Persona instruction cards (D017, D018)
+
+Complete the instruction card pass deferred after Phase 8. Cards are short markdown files in each specialist's `persona/instructions/` directory that document one command each — purpose, inputs, outputs, failure modes.
+
+**Patent specialist (D017):** Three commands currently undocumented:
+1. `signals` — text signal enrichment for a project's candidates; inputs: project name; outputs: enriched candidate count; key failure: candidates.jsonl not yet generated
+2. `fetch` — batch patent figure fetch for all confirmed pairs in a project; inputs: project name; outputs: figure count stored; key failure: EPO quota hit mid-batch
+3. `verify-credentials` — EPO OPS OAuth2 token test; inputs: none; outputs: success/failure with token endpoint response
+
+**Trademark specialist (D018):** Four commands currently undocumented:
+1. `enrich-project` — batch TSDR fetch for all marks in a project's confirmed or candidates list; distinct from `enrich` (single serial) — document the distinction explicitly to prevent confusion
+2. `fetch` — TSDR-only fetch into `extended_marks` without image download; distinct from `enrich` which fetches both
+3. `status` — row counts for all trademark tables; inputs: none; outputs: table of counts
+4. `verify-credentials` — USPTO API key test; inputs: none; outputs: success/failure
+
+---
+
 ### Phase Gate
 
 P2 PASSED when: `pytest tests/` covers common layer and orchestrator with no failures.
@@ -462,7 +481,9 @@ P4 PASSED when: all seven Phase 11 commands have at least one passing test each.
 
 P5 PASSED when: CI workflow is green on a clean push and the badge is visible in README.
 
-Phase PASSED when P1–P5 all pass and CI is green.
+P6 PASSED when: all seven instruction cards exist and accurately describe current command behavior.
+
+Phase PASSED when P1–P6 all pass and CI is green.
 
 ---
 
@@ -470,7 +491,7 @@ Phase PASSED when P1–P5 all pass and CI is green.
 
 **Opened:** TBD  
 **Trigger:** Phase 12 complete — CI must be green before tagging a public release.  
-**Scope:** Make Markery usable by someone who discovers the repository for the first time, with no insider knowledge and no pre-existing project data. Culminates in a tagged v0.3.0 release.
+**Scope:** Make Markery usable by someone who discovers the repository for the first time, with no insider knowledge and no pre-existing project data. Culminates in a tagged v0.3.0 release. Absorbs D011 (GitHub Pages deployment) and D022 (Built with Markery footer) from DEFERRED.
 
 **Goal state:** A researcher clones the repo, follows SETUP.md, and can run `markery project init` to start a new project — without asking for help and without reading any source code.
 
@@ -487,7 +508,18 @@ Conduct a structured audit using a PUBLIC-READINESS-REVIEW.md at repo root (arch
 
 ---
 
-### P2 — Public repo hygiene
+### P2 — Publisher output: footer and GitHub Pages (D022, D011)
+
+Complete publisher output before the site goes public. Both items are natural to do together — the footer appears in every built page, and GitHub Pages is how the site is deployed.
+
+1. Add "Built with Markery" footer to publisher-generated HTML (D022) — add a footer block to the Jinja template in `publisher/render.py`; footer text: "Built with [Markery](https://github.com/CosmoGSpacely/markery)"; make repo URL configurable via a `site_config` parameter so projects can override it
+2. Verify footer appears correctly: run `markery site build information-systems`, inspect output HTML
+3. Re-enable GitHub Pages deployment (D011) — diagnose the original `pages.yml` failure, recreate `.github/workflows/pages.yml` deploying the built site on push to main, verify Pages is enabled in repository settings
+4. Confirm a full site build followed by a Pages deploy produces a live URL with the footer visible
+
+---
+
+### P3 — Public repo hygiene
 
 1. Confirm `.gitignore` is comprehensive — no credential files, no large binaries, no user-specific paths that could be committed accidentally.
 2. Verify the three committed `.duckdb` files are appropriate to share: no personal data, no private API responses beyond what the USPTO and EPO publicly provide, size is reasonable (~25–50 MB total).
@@ -497,7 +529,7 @@ Conduct a structured audit using a PUBLIC-READINESS-REVIEW.md at repo root (arch
 
 ---
 
-### P3 — SETUP.md: verified fresh-machine install
+### P4 — SETUP.md: verified fresh-machine install
 
 Rewrite SETUP.md so that the steps are executable in sequence by someone who has never seen the repo.
 
@@ -509,7 +541,7 @@ Rewrite SETUP.md so that the steps are executable in sequence by someone who has
 
 ---
 
-### P4 — README overhaul
+### P5 — README overhaul
 
 Rewrite `README.md` to lead with purpose, not structure.
 
@@ -521,7 +553,7 @@ Rewrite `README.md` to lead with purpose, not structure.
 
 ---
 
-### P5 — Tag v0.3.0
+### P6 — Tag v0.3.0
 
 1. Bump version in `pyproject.toml` and `src/markery/__init__.py` from `0.2.1a0` to `0.3.0`.
 2. Confirm CI is green on the current HEAD.
@@ -534,12 +566,14 @@ Rewrite `README.md` to lead with purpose, not structure.
 
 P1 PASSED when: audit is complete, gap list documented in PUBLIC-READINESS-REVIEW.md, all blocking gaps resolved or explicitly deferred with triggers.
 
-P2 PASSED when: LICENSE file present, git history clean of secrets, `.duckdb` files verified appropriate to share.
+P2 PASSED when: footer visible in a built site and GitHub Pages deployment is live.
 
-P3 PASSED when: a clean venv install following only the written SETUP.md steps produces a working `markery --version` and `markery status` without any unlisted prerequisite.
+P3 PASSED when: LICENSE file present, git history clean of secrets, `.duckdb` files verified appropriate to share.
 
-P4 PASSED when: README leads with purpose, quickstart is verified to work, reviewed and approved before tagging.
+P4 PASSED when: a clean venv install following only the written SETUP.md steps produces a working `markery --version` and `markery status` without any unlisted prerequisite.
 
-P5 PASSED when: `git tag v0.3.0` is pushed, CI is green on the tagged commit.
+P5 PASSED when: README leads with purpose, quickstart is verified to work, reviewed and approved before tagging.
 
-Phase PASSED when P1–P5 all pass and v0.3.0 is pushed.
+P6 PASSED when: `git tag v0.3.0` is pushed, CI is green on the tagged commit.
+
+Phase PASSED when P1–P6 all pass and v0.3.0 is pushed.
