@@ -140,7 +140,7 @@ Trade-off: still requires the essay to live inside a known project directory. Do
 6. Verify `markery enhance batch "..."` runs end-to-end.
 7. Verify `markery enhance gallery` still works (no regression).
 
-**P2 — Wikipedia: add `from-essay` subcommand**
+**P2 — Wikipedia: add `from-essay` subcommand — CLOSED**
 
 1. Add `cmd_from_essay()` to `wikipedia/cli.py`. Signature: `markery wikipedia from-essay <essay_path> --out <out_path> [--title <title>] [--serial <serial>] [--category <cat>]...`
 2. Build a `build_standalone_wikitext()` function in `wikitext.py`. Calls `markdown_to_wikitext()` on the essay body, then appends:
@@ -217,7 +217,7 @@ After Stages 4a–4c complete, identify the next target. Remington Rand or the S
 
 P1 PASSED when: `markery enhance enhance <serial>` runs to completion without error in an environment with only `pip install -e ".[enhance]"` (no manual realesrgan install), and `model_used` reports `"lanczos-fallback"`. — PASSED 2026-05-22
 
-P2 PASSED when: `markery wikipedia from-essay <essay_path> --serial <serial>` produces valid wikitext without requiring `confirmed.jsonl` to exist, for any project or no project.
+P2 PASSED when: `markery wikipedia from-essay <essay_path> --serial <serial>` produces valid wikitext without requiring `confirmed.jsonl` to exist, for any project or no project. — PASSED 2026-05-22
 
 P3 PASSED when: `SETUP.md` accurately describes the three dependency tiers and a new contributor can reach each tier by following the documented steps.
 
