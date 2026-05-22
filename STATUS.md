@@ -9,7 +9,7 @@
 | Component | Status | Notes |
 |---|---|---|
 | `trademarks.duckdb` — 25,473 case files, 1900–1939 | ✅ | `mark_images` (226 rows), `extended_marks` (139 rows) |
-| `patents.duckdb` — 30,750 patents (B42F, B42D, B41J, B41L, G06C, G06K; G09F partial 1900–1909) | ✅ | G09F 1910–1939 pending — see D001 in DEFERRED.md |
+| `patents.duckdb` — 40,029 patents (B42F, B42D, B41J, B41L, G06C, G06K, G09F complete 1900–1939) | ✅ | |
 | `entities.duckdb` — 5 entities, 32 variants | ✅ | |
 | `specialist/patent/` — EPO OPS fetch, figures, signals | ✅ | `markery patent build/fetch/figures/signals` |
 | `specialist/trademark/` — USPTO TSDR client, DB build | ✅ | `markery trademark` |
@@ -51,7 +51,7 @@ Project types define the workflow a project follows. Type definitions and sessio
 
 | Project | Type | Next action |
 |---|---|---|
-| `information-systems` | Match-review-essay | Fetch G09F 1910–1939 (D001); add Smead entity (D010) |
+| `information-systems` | Match-review-essay | Resume candidate review |
 | `monthly-image-review` | Gallery/exploration | Run July–December 1930 months; Chicago Pneumatic Wikipedia article pending Phase 9 P4 |
 
 See each project's `STATUS.md` for detail.

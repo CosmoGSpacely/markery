@@ -270,7 +270,7 @@ Phase PASSED when P1, P2, P3, and P4 all pass.
 
 ---
 
-### P5 — Orchestrator type awareness
+### P5 — Orchestrator type awareness — CLOSED
 
 Note: implementation touches `specialist/orchestrator.py`, not the common layer, but is driven by this phase.
 
