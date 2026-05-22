@@ -194,7 +194,7 @@ def main() -> None:
     # enrich-project
     p_ep = sub.add_parser("enrich-project",
                            help="Enrich all marks in a project")
-    p_ep.add_argument("project", nargs="?", default="information-systems")
+    p_ep.add_argument("project", nargs="?", default=None)
     p_ep.add_argument("--source", choices=["confirmed", "candidates"],
                       default="confirmed",
                       help="Source file to read serial numbers from (default: confirmed)")

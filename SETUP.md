@@ -74,19 +74,53 @@ Verify:
 markery trademark verify-credentials
 ```
 
+### Wikipedia API (optional)
+
+Required only if you plan to submit Wikipedia drafts or external links. This is an optional workflow; skip this section if you are only using Markery for local research.
+
+1. Create a Wikipedia account at **https://en.wikipedia.org**
+2. Go to **Special:BotPasswords** (`https://en.wikipedia.org/wiki/Special:BotPasswords`)
+3. Create a bot password with `Edit existing pages` permission
+4. Add to `.env`:
+
+```
+WIKIPEDIA_USERNAME=YourUsername@BotName
+WIKIPEDIA_PASSWORD=your_bot_password_here
+```
+
+Verify:
+```bash
+markery wikipedia verify-credentials
+```
+
 ---
 
 ## 3. Verify the committed databases
 
 ```bash
-markery status
+markery --version    # confirms install is working
+markery status       # prints row counts for all three databases
 ```
 
-This prints row counts for all three databases and a one-line summary for each project. Use it any time to confirm the databases are intact and the venv is correctly set up.
+`markery status` prints row counts for all three databases and a one-line summary for each project. Use it any time to confirm the databases are intact and the venv is correctly set up.
 
 ---
 
-## 4. Set up the entity registry
+## 4. Start a new project (optional)
+
+If you want to create a new research project rather than working with the committed `information-systems` project:
+
+```bash
+markery project init <your-project-name>
+```
+
+This scaffolds a project directory under `projects/<your-project-name>/` with the correct structure for a match-review-essay project (the default type). Then follow sections 5–8 to populate the databases and run the match pipeline for your project's scope.
+
+If you want to work with the existing `information-systems` project, skip this step.
+
+---
+
+## 5. Set up the entity registry
 
 Entities are defined per project in `projects/<project>/entities.csv` and `projects/<project>/variants.csv`. Load them into `entities.duckdb`:
 
@@ -102,7 +136,7 @@ markery matchmaker list
 
 ---
 
-## 5. Build the trademark database
+## 6. Build the trademark database
 
 Two routes depending on what you have available.
 
@@ -153,7 +187,7 @@ With this route, `extended_marks` is the primary trademark table. Candidate gene
 
 ---
 
-## 6. Build the patent database
+## 7. Build the patent database
 
 ### Route A: EPO OPS API (current)
 
@@ -189,7 +223,7 @@ A future route will support bulk import from sources such as PatentsView or Goog
 
 ---
 
-## 7. Run the match pipeline
+## 8. Run the match pipeline
 
 Generate patent-trademark candidate pairs for a project:
 
@@ -213,7 +247,7 @@ markery match status <project>
 
 ---
 
-## 8. Review and publish
+## 9. Review and publish
 
 Interactive candidate review:
 

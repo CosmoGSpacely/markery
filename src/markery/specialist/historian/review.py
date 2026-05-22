@@ -248,7 +248,7 @@ def display(cand: dict, tm: dict, pat: dict, idx: int, total: int,
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Review patent-trademark candidate pairs")
-    ap.add_argument("project",      nargs="?", default="information-systems")
+    ap.add_argument("project",      nargs="?", default=None)
     ap.add_argument("--min-score",  type=float, default=0.5)
     ap.add_argument("--mark",       help="Filter to a specific trademark name (case-insensitive)")
     args = ap.parse_args()

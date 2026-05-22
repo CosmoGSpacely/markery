@@ -193,7 +193,7 @@ def main() -> None:
 
     # fetch
     p_fetch = sub.add_parser("fetch", help="Fetch figures for patents in a project")
-    p_fetch.add_argument("project", nargs="?", default="information-systems")
+    p_fetch.add_argument("project", nargs="?", default=None)
     p_fetch.add_argument("--patent", nargs="+", metavar="PATENT_NO",
                          help="Specific patent number(s)")
     p_fetch.add_argument("--confirmed", action="store_true",
@@ -210,7 +210,7 @@ def main() -> None:
 
     # signals
     p_sig = sub.add_parser("signals", help="Enrich candidates.jsonl with text signals")
-    p_sig.add_argument("project", nargs="?", default="information-systems")
+    p_sig.add_argument("project", nargs="?", default=None)
 
     # pull
     p_pull = sub.add_parser("pull",

@@ -2,24 +2,21 @@
 markery — unified CLI for the Markery research tool.
 
 Usage:
-  markery match information-systems
+  markery match <project>
   markery match --list-entities
-  markery review information-systems --min-score 0.65
-  markery review --mark VI-DEX
+  markery review <project> --min-score 0.65
   markery status
-  markery enhance enhance 71235764 --out-dir projects/information-systems/output/vi-dex
-  markery enhance batch "cf.serial_no IN ('71235764')" --out-dir projects/.../output/batch
-  markery enhance gallery projects/.../output/vi-dex --title "VI-DEX, Wilson Jones 1927"
-  markery patent build --seed-only
+  markery enhance enhance <serial_no> --out-dir projects/<project>/output/<slug>
+  markery enhance batch "<sql_where>" --out-dir projects/<project>/output/batch
+  markery enhance gallery projects/<project>/output/<slug> --title "<title>"
+  markery patent build --classes B42F --year-start 1900 --year-end 1939
   markery patent build --resume
-  markery patent fetch information-systems --confirmed
-  markery patent figures US1261167A
+  markery patent fetch <project> --confirmed
+  markery patent figures <patent_no>
   markery patent verify-credentials
-  markery patent signals information-systems
-  markery patent migrate-figures information-systems
-  markery site build information-systems
-  markery site build information-systems --out projects/information-systems/site
-  markery publisher build information-systems
+  markery patent signals <project>
+  markery site build <project>
+  markery publisher build <project>
 """
 
 from __future__ import annotations

@@ -355,6 +355,14 @@ a:hover { color: #8b5e3c; }
 .patent-figure { margin: 24px 0; text-align: center; }
 .patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
 .patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+
+/* ── Site footer ── */
+.site-footer {
+  margin-top: 48px; padding: 20px 24px; border-top: 1px solid #ddd;
+  font-size: .78em; color: #888; text-align: center;
+}
+.site-footer a { color: #8b5e3c; text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
 """
 
 # ---------------------------------------------------------------------------
@@ -400,12 +408,16 @@ def _img_src(
     return f"data:image/png;base64,{b64}" if b64 else None
 
 
+_MARKERY_REPO = "https://github.com/CosmoGSpacely/markery"
+
+
 def _page(
     title: str,
     body: str,
     nav_links: dict[str, str],
     depth: int = 0,
     og: dict | None = None,
+    site_repo: str | None = None,
 ) -> str:
     prefix = "../" * depth
     nav = "".join(
@@ -420,6 +432,12 @@ def _page(
             f'<meta property="og:url"         content="{_esc(og.get("url", ""))}">\n'
             f'<meta property="og:type"        content="article">\n'
         )
+    repo = site_repo or _MARKERY_REPO
+    footer = (
+        f'\n<footer class="site-footer">'
+        f'Built with <a href="{_esc(repo)}">Markery</a>'
+        f'</footer>\n'
+    )
     return (
         '<!DOCTYPE html>\n<html lang="en">\n<head>\n'
         '<meta charset="utf-8">\n'
@@ -435,7 +453,8 @@ def _page(
         f'<input type="search" name="q" placeholder="Search…" aria-label="Search"></form>'
         '</header>\n'
         + body
-        + '\n</body>\n</html>\n'
+        + footer
+        + '</body>\n</html>\n'
     )
 
 

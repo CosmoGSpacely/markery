@@ -226,13 +226,16 @@ def scaffold_project(root: Path, project_type: ProjectType) -> list[Path]:
     return created
 
 
-def require_project(name: str) -> Project:
+def require_project(name: str | None) -> Project:
     """Return a typed Project for name, or exit with a clear error.
 
     Checks that the project directory exists and contains project.json.
     Call this at CLI entry points before any DB or file access.
     """
     import sys
+    if not name:
+        print("Project name required. Usage: markery <command> <project>", file=sys.stderr)
+        sys.exit(1)
     proj = Project(name=name)
     if not proj.root.is_dir():
         print(

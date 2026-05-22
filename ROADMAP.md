@@ -491,9 +491,9 @@ Phase PASSED when P1–P6 all pass and CI is green. — PASSED 2026-05-22
 
 ---
 
-## Phase 13 — Public Readiness: Documentation and v0.3.0
+## Phase 13 — Public Readiness: Documentation and v0.3.0 — CLOSED
 
-**Opened:** TBD  
+**Opened:** 2026-05-22  
 **Trigger:** Phase 12 complete — CI must be green before tagging a public release.  
 **Scope:** Make Markery usable by someone who discovers the repository for the first time, with no insider knowledge and no pre-existing project data. Culminates in a tagged v0.3.0 release. Absorbs D011 (GitHub Pages deployment) and D022 (Built with Markery footer) from DEFERRED.
 
@@ -568,19 +568,19 @@ Rewrite `README.md` to lead with purpose, not structure.
 
 ### Phase Gate
 
-P1 PASSED when: audit is complete, gap list documented in PUBLIC-READINESS-REVIEW.md, all blocking gaps resolved or explicitly deferred with triggers.
+P1 PASSED when: audit is complete, gap list documented in PUBLIC-READINESS-REVIEW.md, all blocking gaps resolved or explicitly deferred with triggers. — PASSED 2026-05-22
 
-P2 PASSED when: footer visible in a built site and GitHub Pages deployment is live.
+P2 PASSED when: footer visible in a built site and GitHub Pages deployment is live. — PASSED 2026-05-22
 
-P3 PASSED when: LICENSE file present, git history clean of secrets, `.duckdb` files verified appropriate to share.
+P3 PASSED when: LICENSE file present, git history clean of secrets, `.duckdb` files verified appropriate to share. — PASSED 2026-05-22
 
-P4 PASSED when: a clean venv install following only the written SETUP.md steps produces a working `markery --version` and `markery status` without any unlisted prerequisite.
+P4 PASSED when: a clean venv install following only the written SETUP.md steps produces a working `markery --version` and `markery status` without any unlisted prerequisite. — PASSED 2026-05-22
 
-P5 PASSED when: README leads with purpose, quickstart is verified to work, reviewed and approved before tagging.
+P5 PASSED when: README leads with purpose, quickstart is verified to work, reviewed and approved before tagging. — PASSED 2026-05-22
 
-P6 PASSED when: `git tag v0.3.0` is pushed, CI is green on the tagged commit.
+P6 PASSED when: `git tag v0.3.0` is pushed, CI is green on the tagged commit. — PASSED 2026-05-22
 
-Phase PASSED when P1–P6 all pass and v0.3.0 is pushed.
+Phase PASSED when P1–P6 all pass and v0.3.0 is pushed. — PASSED 2026-05-22
 
 ---
 

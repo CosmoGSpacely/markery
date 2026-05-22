@@ -2,51 +2,95 @@
 
 [![CI](https://github.com/CosmoGSpacely/markery/actions/workflows/ci.yml/badge.svg)](https://github.com/CosmoGSpacely/markery/actions/workflows/ci.yml)
 
-Markery is a research platform for historical patent and trademark scholarship, built on an **agentic design pattern**. Five specialist agents — each owning a bounded data domain, a Python CLI, and a Claude persona — coordinate to acquire source data, generate candidate correspondences, support human review, and publish research findings.
+Markery is a command-line research tool for historical patent and trademark scholarship. It finds correspondences between US patents and USPTO trademark registrations — the moment when an invention became a product — and builds a documented, human-reviewed record of those pairings. The output is a static research site with sourced essays, figures, and timelines.
 
-The platform is designed for **responsive live retrieval**, not static database loading. Patent records are fetched from the EPO Open Patent Services API as projects define new scope. Trademark records are enriched from the USPTO TSDR API on demand. The shared databases grow with each research question; no data is pre-loaded for any specific project. A second project with different scope runs the appropriate build commands and gets exactly the data it needs.
-
-The current research project — `information-systems` — documents the pre-computer information systems industry: filing appliances, card-index equipment, visible record systems, tabulating machines, and the phonetic coding schemes that American businesses used to organize knowledge before the digital era. These technologies were patented and trademarked at scale by major manufacturers and are almost entirely absent from the standard history of information technology.
+The current research project documents the pre-computer information systems industry: filing appliances, card-index equipment, visible record systems, tabulating machines, and the phonetic coding schemes American businesses used to organize knowledge before the digital era. These technologies were patented and trademarked at scale and are almost entirely absent from the standard history of information technology.
 
 ---
 
-## Architecture
+## Quickstart
 
-Five specialist agents live under `src/markery/specialist/`. Each specialist owns one data domain and exposes three surfaces: a **Python CLI** for human operators, a **queries module** as a typed programmatic API for other agents, and a **Claude persona** (`persona/`) for use in Claude projects.
+```bash
+git clone https://github.com/CosmoGSpacely/markery.git
+cd markery
+python -m venv .venv && source .venv/bin/activate
+pip install -e "."
+markery --version        # confirm install
+markery status           # inspect committed databases
+markery project init my-project   # scaffold a new research project
+```
+
+The three databases (`patents.duckdb`, `trademarks.duckdb`, `entities.duckdb`) are committed to the repository. No rebuild is required to start working with the existing `information-systems` project.
+
+Full setup, credential configuration, and rebuild instructions: [**SETUP.md**](SETUP.md)
+
+---
+
+## How it works
+
+Markery is structured as five specialist agents, each owning one data domain:
 
 | Specialist | Owns | Role |
 |---|---|---|
-| PATENT | `data/patents.duckdb` | Fetches patent records from EPO OPS by CPC class and year range; manages resume state |
-| TRADEMARK | `data/trademarks.duckdb` | Loads USPTO bulk trademark data; enriches individual marks via TSDR API |
-| MATCHMAKER | `data/entities.duckdb` | Manages the canonical entity registry; generates and scores patent-trademark candidates |
-| HISTORIAN | `confirmed.jsonl` per project | Human-facing review; drafts research essays from a defined scholar persona |
-| PUBLISHER | `site/` per project | Renders confirmed pairs and historian essays into a static research site |
+| PATENT | `data/patents.duckdb` | Fetches patent records from EPO OPS by CPC class and year range |
+| TRADEMARK | `data/trademarks.duckdb` | Loads USPTO bulk data; enriches marks via the TSDR API |
+| MATCHMAKER | `data/entities.duckdb` | Manages the entity registry; scores patent-trademark candidate pairs |
+| HISTORIAN | `confirmed.jsonl` per project | Guides human review; scaffolds and validates research essays |
+| PUBLISHER | `site/` per project | Renders confirmed pairs and essays into a static research site |
 
-Cross-specialist calls route through `src/markery/specialist/orchestrator.py`. No specialist imports directly from another. The unified CLI entry point is `markery`.
+**Candidate generation** — The MATCHMAKER scores every patent-trademark pair for each entity in a project: how closely the trademark filing follows the patent grant date (max 0.5), whether the CPC class falls in the product signal set (0.3 binary). Maximum score: 0.80. The ceiling is intentional — a 1.0 would claim a certainty no automated process can deliver.
 
----
+**Human confirmation** — A high score identifies a pair worth examining; it does not confirm a historical correspondence. Confirmation is a human act. The HISTORIAN presents each candidate and records the human's decision. `confirmed.jsonl` is curated by hand. `candidates.jsonl` is generated automatically and never edited.
 
-## Why agentic, why live retrieval
+**Publishing** — Once pairs are confirmed, the HISTORIAN scaffolds research essays from a defined scholar persona; the PUBLISHER renders them as a static site with mark images, patent figures, timelines, and cross-linked entity pages.
 
-A conventional approach would be: download all relevant data, load it into a database, query the database. Markery takes a different position on two dimensions.
-
-**Scope neutrality.** The databases hold no project-specific defaults — no hardcoded date windows, CPC class sets, entity rosters, or seed records. A project defines its own scope through data files and CLI arguments; the tool provides the mechanism. Two projects can share the same databases and add to them independently without interfering with each other.
-
-**Live retrieval.** The patent corpus grows by `markery patent build` command as projects expand their CPC class coverage. The trademark corpus gains per-mark enrichment — images, goods descriptions, first-use dates — as candidates are reviewed. Figures are fetched and stored when the historian needs them. This is not a snapshot; it is a growing, queryable record that responds to research questions.
-
-The practical consequence: the `information-systems` project expanded from two CPC classes (filing appliances, forms) to seven classes covering typewriters, duplicating machines, calculators, punched-card systems, and display devices — each expansion was a single `markery patent build` command, not a code change.
+Cross-specialist calls route through `orchestrator.py`. No specialist imports directly from another.
 
 ---
 
-## The confirmation model
+## CLI reference
 
-The MATCHMAKER scores every patent-trademark pair for each project entity on two dimensions: how closely the trademark filing follows the patent grant date (max 0.5), and whether the patent's CPC class falls in the project's product signal set (0.3 binary). Maximum score: 0.80. The ceiling is intentional — a score of 1.0 would claim a certainty the model cannot deliver.
+```bash
+# Start a project
+markery project init <project>
+markery status
 
-A high score identifies a candidate worth examining. It does not confirm a historical correspondence.
+# Patent corpus
+markery patent build --classes B42F B42D --year-start 1900 --year-end 1939
+markery patent build --resume              # resume after quota interruption
+markery patent pull <patent_no>            # fetch a single patent on demand
+markery patent verify-credentials
 
-Confirmation is a human act. The HISTORIAN presents each candidate interactively — mark details, patent details, date gap, text-signal overlap — and records the human's Y/N decision. A confirmed pair carries a defensible historical argument, not just a score. `confirmed.jsonl` is curated by hand and is what research essays and the published site are built from. `candidates.jsonl` is generated automatically and never edited.
+# Trademark corpus
+markery trademark build --csv-dir csv/ --date-start 1900-01-01 --date-end 1939-12-31
+markery trademark fetch <serial_no>
+markery trademark enrich-project <project> --source confirmed
+markery trademark verify-credentials
 
-The error asymmetry drives this design: a false positive in `confirmed.jsonl` corrupts the scholarly record; a false negative is simply an unrecognized pair. Human review before confirmation is the appropriate epistemic standard for a tool making historical claims.
+# Entity registry
+markery matchmaker build --data-dir projects/<project>
+markery matchmaker list
+
+# Match pipeline
+markery match <project>                    # generate candidates
+markery match <project> --full             # generate + signals + rescore
+markery review <project>                   # interactive review (Y / N / Q)
+
+# Historian tools
+markery historian prepare <project>        # generate session brief
+markery historian card <project> <slug>    # compact candidate card (~250 tokens)
+markery historian scaffold <project> <slug>  # generate essay skeleton
+markery historian validate <project> <slug>  # validate essay against DB
+
+# Publish
+markery site build <project>
+markery enhance enhance <serial_no> --out-dir projects/<project>/output/<slug>
+markery wikipedia draft <project> <slug>
+
+# Diagnostics
+markery status
+markery <subcommand> --help
+```
 
 ---
 
@@ -54,81 +98,19 @@ The error asymmetry drives this design: a false positive in `confirmed.jsonl` co
 
 | Database | Contents |
 |---|---|
-| `trademarks.duckdb` | 25,473 case files, 1900–1939 (USPTO bulk) · 96 mark images · 18 enriched records (TSDR) |
-| `patents.duckdb` | ~30,500 US patents across B42F, B42D, B41J, B41L, G06C, G06K; G09F 1910–1939 in progress |
+| `trademarks.duckdb` | 25,473 case files, 1900–1939 (USPTO bulk) · 96 mark images · 18 enriched records |
+| `patents.duckdb` | ~40,000 US patents across B42F, B42D, B41J, B41L, G06C, G06K, G09F (1900–1939) |
 | `entities.duckdb` | 5 entities, 32 name variants (information-systems project) |
 
-All three database files are committed to the repository. No rebuild is needed to start working.
-
 ---
 
-## CLI
-
-```bash
-# Patent corpus
-markery patent build --classes B42F B42D --year-start 1900 --year-end 1939
-markery patent build --resume                    # continue after quota interruption
-markery patent pull US1261167A                   # on-demand single patent
-markery patent verify-credentials
-
-# Trademark corpus
-markery trademark build --csv-dir csv/ --date-start 1900-01-01 --date-end 1939-12-31
-markery trademark fetch <serial_no>              # TSDR fetch into extended_marks
-markery trademark enrich-project <project> --source confirmed
-
-# Entity registry
-markery matchmaker build --data-dir projects/<project>
-markery matchmaker list
-
-# Match pipeline
-markery match <project>                          # generate candidates
-markery match <project> --full                   # generate + signals + rescore
-markery match rescore <project>                  # rescore after signal enrichment
-markery review <project>                         # interactive review (Y / N / Q)
-
-# Historian
-markery historian prepare <project>              # generate BRIEF.md project state
-markery patent signals <project>                 # enrich candidates with text signals
-markery patent fetch <project> --confirmed       # fetch figures for confirmed pairs
-
-# Publish
-markery site build <project>
-markery publisher build <project>                # alias for site build
-markery enhance enhance <serial_no> --out-dir projects/<project>/output/<slug>
-markery wikipedia draft <project> <slug>         # generate Wikipedia wikitext draft
-
-# Diagnostics
-markery status
-```
-
-Full options: `markery <subcommand> --help`
-
----
-
-## Setup
-
-Full guide: [`SETUP.md`](SETUP.md)
-
-```bash
-git clone <repository-url>
-cd markery
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-# Add EPO_CONSUMER_KEY, EPO_CONSUMER_SECRET, USPTO_API_KEY to .env
-markery status    # verify committed databases are intact
-```
-
----
-
-## Reference
+## Links
 
 | | |
 |---|---|
-| [`SETUP.md`](SETUP.md) | Setup guide — credentials, database verification, rebuild routes |
-| [`CONTEXT.md`](CONTEXT.md) | What Markery is, specialist agents, project structure |
-| [`DESIGN.md`](DESIGN.md) | Engineering rationale — DuckDB, agentic architecture, scoring, scope neutrality |
-| [`ROADMAP.md`](ROADMAP.md) | Active development |
-| [`DEFERRED.md`](DEFERRED.md) | Known deferred work with reopen triggers |
-| [`src/markery/specialist/patent/EPO.md`](src/markery/specialist/patent/EPO.md) | EPO OPS API reference |
-| [`src/markery/specialist/trademark/TSDR.md`](src/markery/specialist/trademark/TSDR.md) | USPTO TSDR API reference |
-| [`src/markery/specialist/historian/persona/`](src/markery/specialist/historian/persona/) | HISTORIAN persona — scholar identity, content schemas, session workflow |
+| [SETUP.md](SETUP.md) | Installation, credentials, database rebuild |
+| [CONTEXT.md](CONTEXT.md) | Project constitution — specialists, project model, workflow |
+| [DESIGN.md](DESIGN.md) | Engineering rationale — DuckDB, scoring, scope neutrality |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+| [ROADMAP.md](ROADMAP.md) | Active development phases |
+| [DEFERRED.md](DEFERRED.md) | Known deferred work with reopen triggers |
