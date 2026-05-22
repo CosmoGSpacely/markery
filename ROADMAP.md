@@ -387,3 +387,79 @@ P1 PASSED when: `markery match auto-disposition information-systems --dry-run` c
 P7 PASSED when: `markery historian validate` catches a deliberate date error injected into a test essay.
 
 Phase PASSED when P1–P7 all pass and at least one end-to-end cheap-model workflow has been demonstrated: digest + cards loaded into a small-context session, candidate review decisions written, validate run on the resulting essay without errors.
+
+---
+
+## Phase 12 — Hardening and Test Coverage
+
+**Opened:** 2026-05-22  
+**Trigger:** Phase 11 complete. Do not begin this phase while the architecture from Phases 10–11 is still settling — hardening code that is about to change produces wasted work.  
+**Scope:** Harden existing CLI boundaries, close test coverage gaps across the full codebase (including all Phase 11 additions), and re-enable CI. Absorbs D012 (CI workflow) and D013 (test coverage gaps) from DEFERRED.
+
+---
+
+### P1 — Hardening: CLI input validation and error messages
+
+Target: system boundaries where bad input currently causes unhelpful failures deep in the stack.
+
+1. Project name validation in all commands that accept `<project>` — clear error if the directory does not exist or `project.json` is absent (with hint to run `markery project adopt`)
+2. Serial number and patent number format validation at CLI entry points — reject obviously malformed values before any DB or API call
+3. Missing DB error messages — if `patents.duckdb`, `trademarks.duckdb`, or `entities.duckdb` are absent, surface the specific setup step required rather than a DuckDB IO error
+4. Orchestrator type guard coverage — verify all cross-specialist functions added in Phase 10 P5 have type validation; add any that were missed
+
+---
+
+### P2 — Test coverage: common layer and orchestrator
+
+1. `common/auth.py` — credential loading, missing env var error paths
+2. `common/project.py` — `load_project()` (valid, missing `project.json`, wrong type value), `detect_project_type()` (each signal combination), `Project` path properties per type
+3. `common/config.py` — ROOT detection, DB path construction
+4. `cli.py` — subcommand dispatch, unknown subcommand error path
+5. `orchestrator.py` — all five existing functions plus `project_type()` added in Phase 10; type guard error paths
+
+---
+
+### P3 — Test coverage: build modules
+
+Currently untested (from D013): the most operationally consequential module in each specialist.
+
+1. `patent/build.py` — DB schema creation, record upsert, resume state
+2. `patent/signals.py` — signal field enrichment against a test candidate set
+3. `trademark/build.py` — bulk load, TSDR enrichment upsert
+4. `publisher/build.py` — site build from a minimal test project fixture
+
+---
+
+### P4 — Test coverage: Phase 11 tools
+
+All seven commands added in Phase 11 are untested at phase-open time.
+
+1. `auto-disposition` — threshold logic, reason string generation, dry-run vs write behavior
+2. `preflight` — per-step enrichment gating, `preflight.json` output format
+3. `suggest-variants` — matching logic against known variant fixtures
+4. `card` — field extraction, goods truncation, output format
+5. `digest` — state aggregation, token budget (measure against 1,200 token ceiling)
+6. `scaffold` — factual section population, prompt stub format, no-model requirement
+7. `validate` — each check type; deliberate error injection for every check
+
+---
+
+### P5 — CI: re-enable workflow and badge
+
+Recreate CI infrastructure deleted in Phase 7 (D012).
+
+1. Recreate `.github/workflows/ci.yml` running `pytest` on push and PR
+2. Verify CI passes on a clean checkout with the venv activated
+3. Add CI badge back to `README.md`: `[![CI](https://github.com/<owner>/markery/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/markery/actions/workflows/ci.yml)`
+
+---
+
+### Phase Gate
+
+P2 PASSED when: `pytest tests/` covers common layer and orchestrator with no failures.
+
+P4 PASSED when: all seven Phase 11 commands have at least one passing test each.
+
+P5 PASSED when: CI workflow is green on a clean push and the badge is visible in README.
+
+Phase PASSED when P1–P5 all pass and CI is green.
