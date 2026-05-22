@@ -150,7 +150,7 @@ Trade-off: still requires the essay to live inside a known project directory. Do
 4. Test: `markery wikipedia from-essay projects/monthly-image-review/essays/chicago-pneumatic-cp.md --out projects/monthly-image-review/wikipedia/chicago-pneumatic-cp.wiki --serial 71299042 --title "Chicago Pneumatic Tool Company" --category "Pneumatic tools" --category "Manufacturing companies based in New York City"`
 5. Verify output matches expected wikitext structure.
 
-**P3 — Update pyproject.toml dependency documentation**
+**P3 — Update pyproject.toml dependency documentation — CLOSED**
 
 Clarify the three-tier install in pyproject.toml comments and SETUP.md:
 - Base: gallery works, no optional extras needed
@@ -219,7 +219,7 @@ P1 PASSED when: `markery enhance enhance <serial>` runs to completion without er
 
 P2 PASSED when: `markery wikipedia from-essay <essay_path> --serial <serial>` produces valid wikitext without requiring `confirmed.jsonl` to exist, for any project or no project. — PASSED 2026-05-22
 
-P3 PASSED when: `SETUP.md` accurately describes the three dependency tiers and a new contributor can reach each tier by following the documented steps.
+P3 PASSED when: `SETUP.md` accurately describes the three dependency tiers and a new contributor can reach each tier by following the documented steps. — PASSED 2026-05-22
 
 P4 PASSED when: Stage 4b (Chicago Pneumatic external link) is live on English Wikipedia and unreverted after 48 hours.
 
