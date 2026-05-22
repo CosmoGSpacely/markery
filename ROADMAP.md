@@ -577,3 +577,63 @@ P5 PASSED when: README leads with purpose, quickstart is verified to work, revie
 P6 PASSED when: `git tag v0.3.0` is pushed, CI is green on the tagged commit.
 
 Phase PASSED when P1–P6 all pass and v0.3.0 is pushed.
+
+---
+
+## Post-v0.3.0 Horizon
+
+The following phases are sketched at summary resolution. They are not sequenced or gated yet — they exist so the direction is visible. Promote to full phase entries when Phase 13 is in progress.
+
+---
+
+### Phase 14 — Efficiency Baseline: Token and Model Benchmarking
+
+**Goal:** Measure Markery's current token consumption and model sensitivity across real workflows, then improve both. This phase closes the gap between DESIGN.md's model-agnosticism principle and the reality of how sessions are run in practice.
+
+**What it covers:**
+- Define a benchmark suite: a fixed set of representative historian sessions (one card, one digest, one scaffold, one validate) run against two models — a capable paid model and a capable free-tier or open model
+- Instrument token counts at each specialist boundary: prompt size in, completion size out, total per command
+- Identify the top three token-cost hotspots (likely: persona system prompts, large candidates.jsonl payloads, full DB dumps passed in context)
+- Apply targeted reductions: structure-aware truncation for large payloads, lazy-load patterns for context fields not needed in every call, sliding window strategies for long pipelines
+- Re-run benchmark after each reduction and record the delta
+- Define MVO (minimum viable output) contracts per command formally enough to be testable: a command passes the MVO test if its output is checkable by code without human inspection
+
+**Free-model target:** By end of this phase, the gallery-exploration and card/digest historian workflows should be completable end-to-end on a free cloud model (Gemini Flash, Mistral free tier, or equivalent) without exceeding that model's context window or producing hallucinated structured data. Match-review-essay workflows (which require sustained judgment) may remain paid-model-preferred.
+
+**Closes:** D021 reopen path (the model-agnosticism section in DESIGN.md commits to this direction; Phase 14 is where it is measured and acted on).
+
+---
+
+### Phase 15 — LIBRARIAN Specialist: Cross-Project Reference Retrieval
+
+**Goal:** Build the sixth specialist when the two blocking conditions in D020 are met. Do not begin this phase until both are confirmed true.
+
+**Blocking conditions (from D020):**
+1. `references/` format is proven across at least two projects with curated, annotated excerpts
+2. The historian has demonstrated a concrete need for cross-project retrieval that a single project's `references/` cannot satisfy
+
+**What it covers:**
+- Establish `library/works/<author-title-slug>/` structure at repo root: `metadata.json` (bibliographic record), `excerpts.md` (annotated passages), `index.md` (chapter/section map)
+- Implement `markery library ingest <work-slug>` to add a work to the library corpus
+- Implement two-tier retrieval: keyword search across all `excerpts.md` files (immediate, no dependencies), then semantic search over vector embeddings (DuckDB vector extension or LanceDB, with embedding step at ingest)
+- Historian interface: `search_library(query) -> list[Excerpt]`, callable from any research session regardless of which project is active
+- Persona and instruction cards per the Phase 12 P6 pattern
+
+**Closes D020.**
+
+---
+
+### Phase 16 — PatentsView Bulk Import (D007)
+
+**Goal:** Add an alternative patent acquisition path for projects with 1976+ scope where EPO OPS quota is a bottleneck or CPC class coverage gaps exist.
+
+**What it covers:**
+- Implement `markery patent bulk-import --tsv-dir <path> --year-start <YEAR> --year-end <YEAR> --classes <CPC> [...]`
+- Read from PatentsView `.tsv.gz` bulk files using DuckDB `read_csv()` with `delim='\t'` and predicate pushdown for year and class filters
+- Construct `patent_no` as `US{number}{kind}` to match existing schema
+- Insert-if-not-exists semantics (idempotent against current schema)
+- Specialist instruction card and verify step
+
+**Trigger:** A project with 1976+ scope opens where EPO OPS quota is a genuine bottleneck, or where PatentsView's coverage of assignee names and abstracts is needed. Full design in `specialist/patent/BULK_CSV.md`.
+
+**Closes D007.**
