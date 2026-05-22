@@ -13,7 +13,8 @@ importing this module does not pull in every specialist's dependencies.
 
 Current operations
 ------------------
-enrich_signal_fields      patent specialist   → add text signals to candidates.jsonl
+project_type              common              → return the declared ProjectType for a project root
+enrich_signal_fields      patent specialist   → add text signals to candidates.jsonl (MATCH_REVIEW_ESSAY only)
 fetch_patent              patent specialist   → fetch one patent from EPO; upsert patents.duckdb
 fetch_patent_citations    patent specialist   → fetch backward citations; pull new patents from EPO
 fetch_trademark           trademark specialist → fetch one mark from TSDR; upsert extended_marks
@@ -23,6 +24,16 @@ entity_forward_report     matchmaker (cross)  → list post-1939 extended marks 
 from __future__ import annotations
 
 from pathlib import Path
+
+
+def project_type(path: Path):
+    """Return the declared ProjectType for the project at path.
+
+    Delegates to load_project(). Raises FileNotFoundError if project.json is
+    absent — run 'markery project adopt <name>' to declare the project type.
+    """
+    from markery.common.project import load_project
+    return load_project(path).type
 
 
 def fetch_patent(patent_no: str) -> bool:
@@ -96,7 +107,19 @@ def enrich_signal_fields(candidates_path: Path) -> int:
     goods_abstract_overlap to each candidate row by reading patents.duckdb
     and trademarks.duckdb through the patent specialist's published API.
 
+    Requires a MATCH_REVIEW_ESSAY project. Raises TypeError if the project
+    type is set and differs. Raises FileNotFoundError if project.json is absent.
+
     Returns the count of candidates enriched.
     """
+    from markery.common.project import ProjectType, load_project
+    project_root = candidates_path.parent.parent
+    proj = load_project(project_root)
+    if proj.type != ProjectType.MATCH_REVIEW_ESSAY:
+        raise TypeError(
+            f"enrich_signal_fields requires a match-review-essay project; "
+            f"'{project_root.name}' declares type '{proj.type.value}'. "
+            f"Check {project_root / 'project.json'}."
+        )
     from markery.specialist.patent.signals import enrich_candidates
     return enrich_candidates(candidates_path)

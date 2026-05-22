@@ -246,7 +246,7 @@ Phase PASSED when P1, P2, P3, and P4 all pass.
 
 ---
 
-### P2 — Write `project.json` for existing projects
+### P2 — Write `project.json` for existing projects — CLOSED
 
 1. Write `projects/information-systems/project.json`: `{"type": "match-review-essay"}`
 2. Write `projects/monthly-image-review/project.json`: `{"type": "gallery-exploration"}`
@@ -254,7 +254,7 @@ Phase PASSED when P1, P2, P3, and P4 all pass.
 
 ---
 
-### P3 — `markery project init`
+### P3 — `markery project init` — CLOSED
 
 1. Add `project` to `_SUBCOMMANDS` in `cli.py`; add `cmd_project()` dispatch function
 2. Implement `init` subcommand: prompt for project name if not given; prompt for type from a numbered list; scaffold directory per type's structure definition in `project.py`; write `project.json`, starter `README.md`, and `STATUS.md`
@@ -262,7 +262,7 @@ Phase PASSED when P1, P2, P3, and P4 all pass.
 
 ---
 
-### P4 — `markery project adopt`
+### P4 — `markery project adopt` — CLOSED
 
 1. Implement `adopt` subcommand
 2. Flow: run `detect_project_type()`; display the inference with the signals found; prompt confirm or select from type list; write `project.json`
@@ -284,11 +284,11 @@ Note: implementation touches `specialist/orchestrator.py`, not the common layer,
 
 P1 PASSED when: `from markery.common import Project, ProjectType, load_project` works; `load_project(Path("projects/information-systems"))` returns a `MATCH_REVIEW_ESSAY` project; `load_project(Path("projects/monthly-image-review"))` returns a `GALLERY_EXPLORATION` project. — PASSED 2026-05-22
 
-P2 PASSED when: both existing projects have `project.json` committed and `load_project()` resolves both correctly.
+P2 PASSED when: both existing projects have `project.json` committed and `load_project()` resolves both correctly. — PASSED 2026-05-22
 
-P3 PASSED when: `markery project init test-project` creates a new directory with correct type-specific structure and `project.json`.
+P3 PASSED when: `markery project init test-project` creates a new directory with correct type-specific structure and `project.json`. — PASSED 2026-05-22
 
-P4 PASSED when: `markery project adopt` (run on a project without `project.json`) infers the correct type, shows the signals found, prompts for confirmation, and writes `project.json`.
+P4 PASSED when: `markery project adopt` (run on a project without `project.json`) infers the correct type, shows the signals found, prompts for confirmation, and writes `project.json`. — PASSED 2026-05-22
 
 P5 PASSED when: `enrich_signal_fields` raises a typed error when passed a `GALLERY_EXPLORATION` project.
 
