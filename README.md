@@ -1,5 +1,7 @@
 # Markery
 
+[![CI](https://github.com/CosmoGSpacely/markery/actions/workflows/ci.yml/badge.svg)](https://github.com/CosmoGSpacely/markery/actions/workflows/ci.yml)
+
 Markery is a research platform for historical patent and trademark scholarship, built on an **agentic design pattern**. Five specialist agents — each owning a bounded data domain, a Python CLI, and a Claude persona — coordinate to acquire source data, generate candidate correspondences, support human review, and publish research findings.
 
 The platform is designed for **responsive live retrieval**, not static database loading. Patent records are fetched from the EPO Open Patent Services API as projects define new scope. Trademark records are enriched from the USPTO TSDR API on demand. The shared databases grow with each research question; no data is pre-loaded for any specific project. A second project with different scope runs the appropriate build commands and gets exactly the data it needs.

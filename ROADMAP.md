@@ -390,7 +390,7 @@ Phase PASSED when P1–P7 all pass and at least one end-to-end cheap-model workf
 
 ---
 
-## Phase 12 — Hardening and Test Coverage
+## Phase 12 — Hardening and Test Coverage — CLOSED
 
 **Opened:** 2026-05-22  
 **Trigger:** Phase 11 complete. Do not begin this phase while the architecture from Phases 10–11 is still settling — hardening code that is about to change produces wasted work.  
@@ -475,15 +475,19 @@ Complete the instruction card pass deferred after Phase 8. Cards are short markd
 
 ### Phase Gate
 
-P2 PASSED when: `pytest tests/` covers common layer and orchestrator with no failures.
+P1 PASSED when: CLI boundary guards, input validators, missing-DB messages, and deduplication items D016/D019 are complete. — PASSED 2026-05-22
 
-P4 PASSED when: all seven Phase 11 commands have at least one passing test each.
+P2 PASSED when: `pytest tests/` covers common layer and orchestrator with no failures. — PASSED 2026-05-22
 
-P5 PASSED when: CI workflow is green on a clean push and the badge is visible in README.
+P3 PASSED when: build modules for patent, trademark, and publisher have test coverage with no failures. — PASSED 2026-05-22
 
-P6 PASSED when: all seven instruction cards exist and accurately describe current command behavior.
+P4 PASSED when: all seven Phase 11 commands have at least one passing test each. — PASSED 2026-05-22
 
-Phase PASSED when P1–P6 all pass and CI is green.
+P5 PASSED when: CI workflow is green on a clean push and the badge is visible in README. — PASSED 2026-05-22
+
+P6 PASSED when: all seven instruction cards exist and accurately describe current command behavior. — PASSED 2026-05-22
+
+Phase PASSED when P1–P6 all pass and CI is green. — PASSED 2026-05-22
 
 ---
 
