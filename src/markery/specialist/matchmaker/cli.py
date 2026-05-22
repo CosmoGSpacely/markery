@@ -249,6 +249,110 @@ def _run_entity(name: str, min_score: float) -> None:
     write_candidates(candidates, out)
 
 
+def _run_auto_disposition(rest: list[str]) -> None:
+    """Entry point for `markery match auto-disposition <project>`."""
+    import json
+    from datetime import date
+
+    parser = argparse.ArgumentParser(
+        prog="markery match auto-disposition",
+        description="Deterministically reject below-floor candidates without model review",
+    )
+    parser.add_argument("project", help="Project name under projects/")
+    parser.add_argument("--reject-below", type=float, default=None,
+                        help="Reject candidates with score below this threshold")
+    parser.add_argument("--max-gap-years", type=float, default=None,
+                        help="Reject candidates where trademark filing exceeds this many years after patent grant")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Report what would be rejected without writing")
+    args = parser.parse_args(rest)
+
+    proj = Project(args.project)
+    if not proj.exists():
+        print(f"Project not found: {proj.root}", file=sys.stderr)
+        sys.exit(1)
+    if not proj.candidates.exists():
+        print(f"No candidates.jsonl found. Run 'markery match {args.project}' first.", file=sys.stderr)
+        sys.exit(1)
+
+    # Load config from auto_disposition.json, then apply CLI overrides
+    config_path = proj.root / "matches" / "auto_disposition.json"
+    config: dict = {}
+    if config_path.exists():
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+
+    reject_below  = args.reject_below  if args.reject_below  is not None else config.get("reject_below",  0.25)
+    max_gap_years = args.max_gap_years if args.max_gap_years is not None else config.get("max_gap_years", 20.0)
+
+    # Load existing rejections to skip already-rejected pairs
+    from markery.specialist.matchmaker.link import read_rejected
+    already_rejected: set[tuple] = read_rejected(proj.rejected) if proj.rejected.exists() else set()
+
+    from markery.specialist.matchmaker.score import is_company_name_mark
+    from markery.specialist.matchmaker.score import PRODUCT_CLASSES
+
+    candidates = [json.loads(l) for l in proj.candidates.read_text().splitlines() if l.strip()]
+
+    to_reject: list[tuple[dict, list[str]]] = []
+    for c in candidates:
+        key = (c["patent_no"], str(c["trademark_serial"]))
+        if key in already_rejected:
+            continue
+        reasons: list[str] = []
+        if c["score"] < reject_below:
+            reasons.append(f"score {c['score']:.3f} < threshold {reject_below:.2f}")
+        if not reasons:  # only check further rules if score passes
+            grant_str  = c.get("patent_grant_dt", "")
+            filing_str = c.get("tm_filing_dt", "")
+            if grant_str and filing_str:
+                try:
+                    grant_dt  = date.fromisoformat(grant_str)
+                    filing_dt = date.fromisoformat(filing_str)
+                    gap_years = (filing_dt - grant_dt).days / 365.25
+                    if gap_years > max_gap_years:
+                        reasons.append(f"date gap {gap_years:.1f}y > ceiling {max_gap_years:.0f}y")
+                except ValueError:
+                    pass
+            if not any(cls in PRODUCT_CLASSES for cls in c.get("cpc_classes", [])):
+                reasons.append("no CPC class in product signal set")
+            if is_company_name_mark(c.get("entity", ""), c.get("trademark", "")):
+                reasons.append("mark is company name")
+        if reasons:
+            to_reject.append((c, reasons))
+
+    if not to_reject:
+        print(f"No candidates meet auto-disposition criteria (threshold {reject_below:.2f}, gap ceiling {max_gap_years:.0f}y).")
+        return
+
+    # Report
+    print(f"{'Slug':<44}  {'Score':>6}  Reasons")
+    print("-" * 80)
+    for c, reasons in to_reject:
+        slug = f"{c['trademark'][:20]}/{c['patent_no']}"
+        print(f"  {slug:<42}  {c['score']:>6.3f}  {'; '.join(reasons)}")
+    print(f"\n{len(to_reject)} candidate(s) would be rejected"
+          + (" (dry run — nothing written)" if args.dry_run else "."))
+
+    if args.dry_run:
+        return
+
+    # Write rejection records
+    from markery.specialist.historian.review import write_rejected
+    proj.rejected.parent.mkdir(parents=True, exist_ok=True)
+    for c, reasons in to_reject:
+        write_rejected(proj.rejected, {
+            "patent_no":         c["patent_no"],
+            "trademark_serial":  c["trademark_serial"],
+            "trademark":         c["trademark"],
+            "entity_id":         c["entity_id"],
+            "entity":            c["entity"],
+            "rejection_note":    "",
+            "auto_rejected":     True,
+            "rejection_reasons": reasons,
+        })
+    print(f"Written to {proj.rejected.relative_to(proj.root.parent.parent)}")
+
+
 def match_main() -> None:
     """Entry point for `markery match`."""
     # Dispatch `rescore` subcommand before the main parser sees it.
@@ -258,6 +362,9 @@ def match_main() -> None:
         return
     if rest and rest[0] == "rescore":
         _run_rescore(rest[1:])
+        return
+    if rest and rest[0] == "auto-disposition":
+        _run_auto_disposition(rest[1:])
         return
 
     parser = argparse.ArgumentParser(
