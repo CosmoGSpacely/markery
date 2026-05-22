@@ -68,6 +68,94 @@ def cmd_draft(project: str, slug: str) -> None:
     print(f"  markery wikipedia submit {project} {slug}")
 
 
+def cmd_verify_credentials() -> None:
+    """Authenticate with Wikipedia and report success or failure."""
+    from markery.specialist.publisher.wikipedia.api import WikipediaClient
+    client = WikipediaClient()
+    try:
+        client.login()
+        print(f"Authenticated as: {client._username}")
+    except RuntimeError as e:
+        print(f"Authentication failed: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def cmd_add_external_link(
+    page_title: str,
+    url: str,
+    label: str,
+    summary: str,
+) -> None:
+    """Append one external link to a page's External links section."""
+    from markery.specialist.publisher.wikipedia.api import WikipediaClient
+
+    client = WikipediaClient()
+    current = client.get_page(page_title)
+    if current is None:
+        print(f"Page '{page_title}' not found on Wikipedia.", file=sys.stderr)
+        sys.exit(1)
+
+    if url in current:
+        print(f"URL already present in '{page_title}'. No edit needed.")
+        return
+
+    lines = current.splitlines(keepends=True)
+    ext_links_idx = next(
+        (i for i, ln in enumerate(lines) if ln.strip() == "== External links =="),
+        None,
+    )
+    if ext_links_idx is None:
+        print(
+            f"No '== External links ==' section found in '{page_title}'.\n"
+            "Add the section manually before using this command.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    # Insert just before the next top-level section, navbox template, category block, or EOF
+    insert_idx = len(lines)
+    for i in range(ext_links_idx + 1, len(lines)):
+        ln = lines[i]
+        if (
+            (ln.startswith("==") and not ln.startswith("==="))
+            or ln.startswith("[[Category:")
+            or ln.startswith("{{")
+        ):
+            insert_idx = i
+            break
+
+    new_line_text = f"* [{url} {label}]\n"
+    # Ensure the preceding line ends with a newline so the link starts on its own line
+    if insert_idx > 0 and lines[insert_idx - 1].rstrip("\n") and not lines[insert_idx - 1].endswith("\n"):
+        new_lines = lines[:insert_idx] + ["\n", new_line_text] + lines[insert_idx:]
+    else:
+        new_lines = lines[:insert_idx] + [new_line_text] + lines[insert_idx:]
+    new_text = "".join(new_lines)
+
+    diff_lines = list(difflib.unified_diff(
+        current.splitlines(keepends=True),
+        new_text.splitlines(keepends=True),
+        fromfile=f"{page_title} (current)",
+        tofile=f"{page_title} (proposed)",
+        lineterm="",
+    ))
+    print("".join(diff_lines))
+    print(f"\nPage:    https://en.wikipedia.org/wiki/{page_title.replace(' ', '_')}")
+    print(f"Summary: {summary}")
+    answer = input("\nSubmit to Wikipedia? [y/N] ").strip().lower()
+    if answer != "y":
+        print("Aborted.")
+        return
+
+    result = client.edit_page(page_title, new_text, summary)
+    if result.get("edit", {}).get("result") == "Success":
+        print(f"Submitted. Revision: {result['edit'].get('newrevid')}")
+        print(f"View: https://en.wikipedia.org/wiki/{page_title.replace(' ', '_')}")
+    else:
+        print(f"Unexpected API response: {result}", file=sys.stderr)
+        sys.exit(1)
+
+
 def cmd_from_essay(
     essay_path: Path,
     out_path: Path,
@@ -181,6 +269,17 @@ def wikipedia_main() -> None:
     fe.add_argument("--category", dest="categories", action="append", default=[],
                     metavar="CAT", help="Wikipedia category tag (repeatable)")
 
+    sub.add_parser("verify-credentials", help="Test Wikipedia authentication")
+
+    ael = sub.add_parser("add-external-link",
+                         help="Append one link to the External links section")
+    ael.add_argument("page_title", help="Wikipedia article title")
+    ael.add_argument("url",        help="URL to add")
+    ael.add_argument("label",      help="Link label text")
+    ael.add_argument("--summary", metavar="MSG",
+                     default="Add external link",
+                     help="Edit summary")
+
     args = parser.parse_args()
 
     if args.action == "draft":
@@ -189,3 +288,7 @@ def wikipedia_main() -> None:
         cmd_submit(args.project, args.slug, args.title, args.summary)
     elif args.action == "from-essay":
         cmd_from_essay(args.essay_path, args.out, args.title, args.serial, args.categories)
+    elif args.action == "verify-credentials":
+        cmd_verify_credentials()
+    elif args.action == "add-external-link":
+        cmd_add_external_link(args.page_title, args.url, args.label, args.summary)
