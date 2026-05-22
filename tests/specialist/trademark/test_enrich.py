@@ -15,10 +15,21 @@ from markery.specialist.trademark.enrich import (
     enrich_project,
     _collect_serial_nos,
 )
+from contextlib import contextmanager
+from unittest.mock import patch as _patch
+
 from markery.common.project import Project
 
 
 _PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
+
+
+@contextmanager
+def _patch_root(tmp_path: Path):
+    """Patch ROOT in both config and project modules so Project.root resolves correctly."""
+    with _patch("markery.common.config.ROOT", tmp_path), \
+         _patch("markery.common.project.ROOT", tmp_path):
+        yield
 
 
 def _in_memory_db():
@@ -190,14 +201,9 @@ def test_collect_serial_nos_from_confirmed(tmp_path: Path):
         json.dumps({"patent_no": "US789A", "trademark_serial": "71111111"}) + "\n"
     )
 
-    import markery.common.config as cfg_mod
-    original_root = cfg_mod.ROOT
-    cfg_mod.ROOT = tmp_path
-    try:
+    with _patch_root(tmp_path):
         proj = Project("test-proj")
         serial_nos = _collect_serial_nos(proj, "confirmed", 0.0)
-    finally:
-        cfg_mod.ROOT = original_root
 
     # Deduplicated, order preserved
     assert serial_nos == ["71111111", "71222222"]
@@ -211,14 +217,9 @@ def test_collect_serial_nos_filters_by_min_score(tmp_path: Path):
         json.dumps({"trademark_serial": "71222222", "score": 0.50}) + "\n"
     )
 
-    import markery.common.config as cfg_mod
-    original_root = cfg_mod.ROOT
-    cfg_mod.ROOT = tmp_path
-    try:
+    with _patch_root(tmp_path):
         proj = Project("test-proj")
         serial_nos = _collect_serial_nos(proj, "candidates", 0.70)
-    finally:
-        cfg_mod.ROOT = original_root
 
     assert serial_nos == ["71111111"]
     assert "71222222" not in serial_nos
@@ -241,14 +242,9 @@ def test_enrich_project_stores_marks(tmp_path: Path):
 
     conn = _in_memory_db()
 
-    import markery.common.config as cfg_mod
-    original_root = cfg_mod.ROOT
-    cfg_mod.ROOT = tmp_path
-    try:
+    with _patch_root(tmp_path):
         result = enrich_project("test-proj", client, conn)
-    finally:
-        cfg_mod.ROOT = original_root
+    conn.close()
 
     assert result["images"] == 1
     assert result["status"] == 1
-    conn.close()

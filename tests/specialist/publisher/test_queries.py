@@ -74,10 +74,16 @@ def _make_project(tmp_path: Path, project: str = "test-proj") -> Path:
     return proj_dir
 
 
+from contextlib import contextmanager
+
+@contextmanager
 def _patch_root(tmp_path: Path):
-    """Return a context manager that patches ROOT to tmp_path."""
+    """Patch ROOT in both config and project modules so Project.root resolves correctly."""
     import markery.common.config as cfg_mod
-    return patch.object(cfg_mod, "ROOT", tmp_path)
+    import markery.common.project as proj_mod
+    with patch.object(cfg_mod, "ROOT", tmp_path), \
+         patch.object(proj_mod, "ROOT", tmp_path):
+        yield
 
 
 # ---------------------------------------------------------------------------

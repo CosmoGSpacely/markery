@@ -19,7 +19,19 @@ from markery.specialist.publisher.render import (
     render_timeline_page,
     render_search_page,
 )
+from contextlib import contextmanager
+
 from markery.common.project import Project
+import markery.common.config as _cfg_mod
+import markery.common.project as _proj_mod
+
+
+@contextmanager
+def _patch_root(tmp_path: Path):
+    """Patch ROOT in both config and project modules."""
+    with patch.object(_cfg_mod, "ROOT", tmp_path), \
+         patch.object(_proj_mod, "ROOT", tmp_path):
+        yield
 
 
 # ---------------------------------------------------------------------------
@@ -102,20 +114,18 @@ def test_render_markdown_crosslink_does_not_affect_code_blocks():
 # ---------------------------------------------------------------------------
 
 def test_parse_site_mode_reads_from_objectives(tmp_path):
-    import markery.common.config as cfg
     proj_dir = tmp_path / "projects" / "test"
     proj_dir.mkdir(parents=True)
     (proj_dir / "OBJECTIVES.md").write_text("---\nsite_mode: metrics\n---\n")
-    with patch.object(cfg, "ROOT", tmp_path):
+    with _patch_root(tmp_path):
         proj = Project("test")
         assert _parse_site_mode(proj) == "metrics"
 
 
 def test_parse_site_mode_default_when_missing(tmp_path):
-    import markery.common.config as cfg
     proj_dir = tmp_path / "projects" / "test"
     proj_dir.mkdir(parents=True)
-    with patch.object(cfg, "ROOT", tmp_path):
+    with _patch_root(tmp_path):
         proj = Project("test")
         assert _parse_site_mode(proj) == "narrative"
 
@@ -203,7 +213,6 @@ def _make_proj(tmp_path, name="test"):
 
 
 def test_render_thematic_essay_creates_file(tmp_path):
-    import markery.common.config as cfg
     _make_proj(tmp_path)
     (tmp_path / "projects" / "test" / "content" / "theme-card-index.md").write_text(
         "# The Card Index\n\nA thematic essay about card indexes."
@@ -211,7 +220,7 @@ def test_render_thematic_essay_creates_file(tmp_path):
     out = tmp_path / "site"
     out.mkdir(exist_ok=True)
     (out / "themes").mkdir(exist_ok=True)
-    with patch.object(cfg, "ROOT", tmp_path):
+    with _patch_root(tmp_path):
         from markery.specialist.publisher.queries import get_mark_image_b64, get_patent_figure_b64
         path = render_thematic_essay("test", "card-index", out, entities=[])
     assert path.exists()
@@ -222,12 +231,11 @@ def test_render_thematic_essay_creates_file(tmp_path):
 
 
 def test_render_thematic_essay_placeholder_when_no_file(tmp_path):
-    import markery.common.config as cfg
     _make_proj(tmp_path)
     out = tmp_path / "site"
     out.mkdir(exist_ok=True)
     (out / "themes").mkdir(exist_ok=True)
-    with patch.object(cfg, "ROOT", tmp_path):
+    with _patch_root(tmp_path):
         path = render_thematic_essay("test", "missing-essay", out, entities=[])
     assert path.exists()
     assert "not yet written" in path.read_text()
@@ -238,25 +246,23 @@ def test_render_thematic_essay_placeholder_when_no_file(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_render_sources_page_creates_file(tmp_path):
-    import markery.common.config as cfg
     _make_proj(tmp_path)
     (tmp_path / "projects" / "test" / "content" / "sources.md").write_text(
         "## Primary Sources\n\nUSPTO filings."
     )
     out = tmp_path / "site"
     out.mkdir(exist_ok=True)
-    with patch.object(cfg, "ROOT", tmp_path):
+    with _patch_root(tmp_path):
         path = render_sources_page("test", out, entities=[])
     assert path.name == "sources.html"
     assert "Primary Sources" in path.read_text()
 
 
 def test_render_sources_page_placeholder_when_missing(tmp_path):
-    import markery.common.config as cfg
     _make_proj(tmp_path)
     out = tmp_path / "site"
     out.mkdir(exist_ok=True)
-    with patch.object(cfg, "ROOT", tmp_path):
+    with _patch_root(tmp_path):
         path = render_sources_page("test", out, entities=[])
     assert "not yet written" in path.read_text()
 
@@ -266,14 +272,13 @@ def test_render_sources_page_placeholder_when_missing(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_render_timeline_page_creates_file(tmp_path):
-    import markery.common.config as cfg
     _make_proj(tmp_path)
     (tmp_path / "projects" / "test" / "content" / "timeline.md").write_text(
         "This project spans 1910–1935.\n\n### 1918\n\n**Russell patents Soundex.**"
     )
     out = tmp_path / "site"
     out.mkdir(exist_ok=True)
-    with patch.object(cfg, "ROOT", tmp_path):
+    with _patch_root(tmp_path):
         path = render_timeline_page(
             "test", out, entities=[], patents=[], trademarks=[], entity_colors={}
         )
@@ -284,11 +289,10 @@ def test_render_timeline_page_creates_file(tmp_path):
 
 
 def test_render_timeline_page_placeholder_when_missing(tmp_path):
-    import markery.common.config as cfg
     _make_proj(tmp_path)
     out = tmp_path / "site"
     out.mkdir(exist_ok=True)
-    with patch.object(cfg, "ROOT", tmp_path):
+    with _patch_root(tmp_path):
         path = render_timeline_page(
             "test", out, entities=[], patents=[], trademarks=[], entity_colors={}
         )
@@ -300,7 +304,6 @@ def test_render_timeline_page_placeholder_when_missing(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_render_search_page_creates_file(tmp_path):
-    import markery.common.config as cfg
     out = tmp_path / "site"
     out.mkdir()
     path = render_search_page("test", out, entities=[])

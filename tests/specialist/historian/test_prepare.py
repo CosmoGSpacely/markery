@@ -68,9 +68,16 @@ def _write_jsonl(path: Path, rows: list[dict]) -> None:
     path.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
 
 
+from contextlib import contextmanager
+
+@contextmanager
 def _patch_root(tmp_path: Path):
-    import markery.common.config as cfg
-    return patch.object(cfg, "ROOT", tmp_path)
+    """Patch ROOT in both config and project modules."""
+    import markery.common.config as cfg_mod
+    import markery.common.project as proj_mod
+    with patch.object(cfg_mod, "ROOT", tmp_path), \
+         patch.object(proj_mod, "ROOT", tmp_path):
+        yield
 
 
 # ---------------------------------------------------------------------------
