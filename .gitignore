@@ -31,6 +31,7 @@ csv/
 # Ignore Claude Code runtime config but track project commands
 .claude/*.json
 .claude/*.local.*
+.claude/*.lock
 input/
 output/
 tools/image_enhancement/weights/
