@@ -295,11 +295,69 @@ a:hover { color: #8b5e3c; }
 .sources h2 { font-size: .95em; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
 .sources dt { font-weight: bold; margin-top: 8px; }
 .sources dd { margin-left: 16px; }
+
+/* ── Timeline annotation page ── */
+.timeline-entries { max-width: 700px; margin-top: 40px; }
+.timeline-entries h3 {
+  font-size: 1.05em;
+  font-weight: bold;
+  color: #3d2b1a;
+  margin: 32px 0 6px;
+  border-left: 3px solid #8b5e3c;
+  padding-left: 10px;
+}
+.timeline-entries p { margin-bottom: .8em; }
+
+/* ── Thematic essay ── */
+.theme-essay { max-width: 700px; }
+.theme-essay h2 { font-size: 1.2em; font-weight: normal; margin: 32px 0 10px; color: #3d2b1a; }
+.theme-essay h3 { font-size: 1.05em; font-weight: normal; margin: 24px 0 8px; color: #5a3e28; }
+.theme-essay p { margin-bottom: 1em; }
+.theme-essay table { width: 100%; border-collapse: collapse; font-size: .88em; margin: 16px 0; }
+.theme-essay th, .theme-essay td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ddd; }
+.theme-essay th { background: #ede8de; font-weight: normal; color: #555; }
+
+/* ── Search page ── */
+.search-form { display: flex; gap: 8px; margin-bottom: 32px; }
+.search-form input[type=search] {
+  flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 3px;
+  font-size: 1em; font-family: Georgia, serif; background: #fff;
+}
+.search-form button {
+  padding: 8px 18px; background: #5a3e28; color: #f5f0e8;
+  border: none; border-radius: 3px; cursor: pointer; font-size: .9em;
+}
+.search-results { list-style: none; }
+.search-results li { margin-bottom: 20px; }
+.search-results .result-title { font-size: 1.05em; font-weight: bold; }
+.search-results .result-type { font-size: .75em; color: #888; font-family: monospace; margin-left: 6px; }
+.search-results .result-excerpt { font-size: .88em; color: #444; margin-top: 4px; }
+
+/* ── Search input in header ── */
+.site-search { margin-left: auto; }
+.site-search input[type=search] {
+  padding: 3px 8px; border: 1px solid #555; border-radius: 3px;
+  background: #1a1208; color: #e8dcc8; font-size: .8em; width: 140px;
+}
+.site-search input[type=search]::placeholder { color: #888; }
+
+/* ── Patent figure (embedded via [[figure:patent_no]]) ── */
+.patent-figure { margin: 24px 0; text-align: center; }
+.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+
+/* ── Site footer ── */
+.site-footer {
+  margin-top: 48px; padding: 20px 24px; border-top: 1px solid #ddd;
+  font-size: .78em; color: #888; text-align: center;
+}
+.site-footer a { color: #8b5e3c; text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a></nav></header>
-<div class="page-header"><h1>Remington Rand</h1><div class="subtitle">office-systems · manufacturer</div><div class="stat-chips"><span class="chip">15 marks</span><span class="chip">171 patents</span><span class="chip">5 confirmed</span><span class="chip">1917–1939</span></div></div><div class="page-body"><div class="narrative"><h2>Remington Rand</h2>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<div class="page-header"><h1>Remington Rand</h1><div class="subtitle">office-systems · manufacturer</div><div class="stat-chips"><span class="chip">15 marks</span><span class="chip">820 patents</span><span class="chip">5 confirmed</span><span class="chip">1909–1939</span></div></div><div class="page-body"><div class="narrative"><h2>Remington Rand</h2>
 <h2>Historical Identity</h2>
 <p>
 Remington Rand Inc. was formed in 1927 by the merger of Remington Typewriter Company — one of the largest typewriter manufacturers in the United States since the 1870s — and Rand Kardex Bureau, Inc., the leading maker of visible-record card-index systems. The merged company combined two distinct traditions of office efficiency: the Remington name carried decades of associations with typewriting and business-machine reliability; the Rand Kardex name brought the Kardex visible-record system, an overlapping-tray card-index that had become standard equipment in American business offices. 
@@ -318,5 +376,6 @@ The 171 patents assigned to this entity in filing-appliance and blank-book class
 <p>
 Remington Rand is the central entity in the information-systems project because its combined patent and trademark record documents the full arc of visible-card-index technology from its 1918 origins (the Russell Soundex patent) through its commercial peak (the 1930s KARDEX product family). Confirmed pairs include the Russell and Odell Soundex patents linked to the SOUNDEX and SOUNDEX QUICK AS A FLASH marks (1927), and US2152606A and US2178457A linked to VARIADEX and KARDEX respectively (1939). Together they demonstrate how Remington Rand used its patent portfolio to anchor successive product-name trademarks over more than two decades. 
 </p><table><thead><tr><th>Name variant</th><th>Source</th></tr></thead><tbody><tr><td>FIRM REMINGTON RAND INC</td><td>patent_assignee</td></tr><tr><td>REMINGTON RAND INC</td><td>patent_assignee</td></tr><tr><td>REMINGTON TYPEWRITER CO</td><td>patent_assignee</td></tr><tr><td>REMINGTON TYPEWRITER CO [US]</td><td>patent_assignee</td></tr><tr><td>Remington Typewriter Company</td><td>patent_assignee</td></tr><tr><td>KARDEX SYSTEMS, INC.</td><td>trademark_owner</td></tr><tr><td>RAND KARDEX BUREAU, INC.</td><td>trademark_owner</td></tr><tr><td>REMINGTON RAND BUSINESS SERVICE, INC.</td><td>trademark_owner</td></tr><tr><td>REMINGTON RAND INC.</td><td>trademark_owner</td></tr><tr><td>REMINGTON TYPEWRITER COMPANY, THE</td><td>trademark_owner</td></tr><tr><td>Remington Rand Corporation</td><td>trademark_owner</td></tr></tbody></table><h2>Confirmed Pairs</h2><ul><li><a href="../matches/soundex.html">SOUNDEX ↔ US1261167A</a></li><li><a href="../matches/soundex.html">SOUNDEX ↔ US1435663A</a></li><li><a href="../matches/soundex-quick-as-a-flash.html">SOUNDEX QUICK AS A FLASH ↔ US1435663A</a></li><li><a href="../matches/variadex.html">VARIADEX ↔ US2152606A</a></li><li><a href="../matches/kardex.html">KARDEX ↔ US2178457A</a></li></ul><p><a href="../trademarks.html">Trademark gallery →</a> &nbsp; <a href="../patents.html">Patent gallery →</a></p></div></div>
+<footer class="site-footer">Built with <a href="https://github.com/CosmoGSpacely/markery">Markery</a></footer>
 </body>
 </html>

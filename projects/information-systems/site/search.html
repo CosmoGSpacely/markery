@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Wilson Jones</title>
+<title>Search</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -356,26 +356,51 @@ a:hover { color: #8b5e3c; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
-<div class="page-header"><h1>Wilson Jones</h1><div class="subtitle">office-systems · manufacturer</div><div class="stat-chips"><span class="chip">6 marks</span><span class="chip">132 patents</span><span class="chip">2 confirmed</span><span class="chip">1916–1939</span></div></div><div class="page-body"><div class="narrative"><h2>Wilson Jones</h2>
-<h2>Historical Identity</h2>
-<p>
-Wilson Jones Company was a Chicago manufacturer of loose-leaf binders, filing systems, and visible-index products. Founded in the late nineteenth century, the company grew into one of the dominant producers of filing appliances in the American market, competing directly with Remington Rand in the card-index and visible-record categories while maintaining a distinct specialty in loose-leaf binders and expanding files. Wilson Jones's products were aimed at the same customer — the American business office organizing large volumes of correspondence, records, and accounts — but approached the problem through the loose-leaf binder rather than the card-index tray. 
-</p>
-<p>
-The company registered six trademarks in the 1900–1939 period covered by this project: FAVORITE (1925), VI-DEX (1927), REDIREF and HANDIREF (both September 19, 1927), SHAW'S HIGH GRADE (1932), and LEATHER LIFE (1932). The four marks filed in 1925 and 1927 correspond directly to the company's most active period of binder-mechanism patenting, with inventor George W. Newman driving much of the technical development. Wilson Jones was later acquired by ACCO Brands, under whose ownership the brand continues to operate. 
-</p>
-<h2>In the Filing Record</h2>
-<p>
-Wilson Jones appears in the patent record under five variant names — Wilson Jones Co, Wilson Jones Loose Leaf Co, Wilson Jones Loose Leaf Co [US], Wilson Jones Loose Leaf Compan, and Wilson Jones Loose Leaf Company [US] — reflecting name changes and inconsistent transcription across the filing period. On the trademark side, the owner of record is consistently &quot;Wilson Jones Company,&quot; a simplified form of the full corporate name. 
-</p>
-<p>
-The company's 130 patents in filing-appliance classes span the full research period, with a concentration in the mid-1920s corresponding to the visible-index and quick-reference product launches documented by the VI-DEX, REDIREF, and HANDIREF trademarks. The later marks — SHAW'S HIGH GRADE and LEATHER LIFE — appear to cover the blank-book and binding-materials segment rather than the filing-mechanism products. 
-</p>
-<h2>Research Significance</h2>
-<p>
-Wilson Jones is the project's primary example of a filing-appliance company with a clear patent-trademark strategy for loose-leaf binder products. Three confirmed pairs link George W. Newman's binder patents to the company's most significant product-name marks: US1527374A (1925) to VI-DEX, and US1614080A (1927) to REDIREF and HANDIREF. The September 1927 cluster — three trademarks filed in a two-month window — illustrates the portfolio-registration approach that distinguishes deliberate brand management from opportunistic filing. 
-</p><table><thead><tr><th>Name variant</th><th>Source</th></tr></thead><tbody><tr><td>WILSON JONES CO</td><td>patent_assignee</td></tr><tr><td>WILSON JONES LOOSE LEAF CO</td><td>patent_assignee</td></tr><tr><td>WILSON JONES LOOSE LEAF CO [US]</td><td>patent_assignee</td></tr><tr><td>WILSON JONES LOOSE LEAF COMPAN</td><td>patent_assignee</td></tr><tr><td>WILSON JONES LOOSE LEAF COMPANY [US]</td><td>patent_assignee</td></tr><tr><td>WILSON JONES COMPANY</td><td>trademark_owner</td></tr></tbody></table><h2>Confirmed Pairs</h2><ul><li><a href="../matches/vi-dex.html">VI-DEX ↔ US1527374A</a></li><li><a href="../matches/rediref.html">REDIREF ↔ US1614080A</a></li></ul><p><a href="../trademarks.html">Trademark gallery →</a> &nbsp; <a href="../patents.html">Patent gallery →</a></p></div></div>
+<header class="site-header"><a class="site-title" href="index.html">Markery Research</a><nav><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a><a href="entities/remington-rand.html">Remington Rand</a><a href="entities/wilson-jones.html">Wilson Jones</a><a href="entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="entities/boorum-and-pease.html">Boorum &amp; Pease</a><a href="search.html">Search</a></nav><form class="site-search" action="search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<div class="page-header"><h1>Search</h1><div class="subtitle">Information Systems</div></div><div class="page-body"><div class="search-form"><input type="search" id="q" placeholder="Search marks, patents, essays…" autofocus><button id="search-btn">Search</button></div><ul class="search-results" id="results"></ul><script>
+(function () {
+  var idx = null;
+  function load(cb) {
+    if (idx !== null) { cb(); return; }
+    fetch('search.json').then(function(r){ return r.json(); }).then(function(data){
+      idx = data;
+      cb();
+    }).catch(function(){ idx = []; cb(); });
+  }
+  function run(q) {
+    q = q.toLowerCase().trim();
+    var ul = document.getElementById('results');
+    ul.innerHTML = '';
+    if (!q) return;
+    var hits = idx.filter(function(p){
+      return (p.title + ' ' + p.excerpt).toLowerCase().indexOf(q) !== -1;
+    });
+    if (!hits.length) {
+      ul.innerHTML = '<li>No results.</li>';
+      return;
+    }
+    hits.forEach(function(p) {
+      var li = document.createElement('li');
+      li.innerHTML = '<div class="result-title"><a href="' + p.url + '">' +
+        p.title.replace(/</g,'&lt;') + '</a><span class="result-type">' +
+        p.type + '</span></div><div class="result-excerpt">' +
+        p.excerpt.replace(/</g,'&lt;').substring(0,180) + '…</div>';
+      ul.appendChild(li);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var input = document.getElementById('q');
+    var btn   = document.getElementById('search-btn');
+    var params = new URLSearchParams(window.location.search);
+    var initial = params.get('q') || '';
+    if (initial) { input.value = initial; load(function(){ run(initial); }); }
+    btn.addEventListener('click', function(){ load(function(){ run(input.value); }); });
+    input.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') { load(function(){ run(input.value); }); }
+    });
+  });
+})();
+</script></div>
 <footer class="site-footer">Built with <a href="https://github.com/CosmoGSpacely/markery">Markery</a></footer>
 </body>
 </html>

@@ -36,14 +36,14 @@ def get_entities(entity_ids: list[int]) -> list[dict]:
     conn = _connect()
     placeholders = ",".join("?" * len(entity_ids))
     rows = conn.execute(f"""
-        SELECT entity_id, canonical_name, entity_type, industry, notes
+        SELECT entity_id, canonical_name, entity_type, industry
         FROM company_entity
         WHERE entity_id IN ({placeholders})
         ORDER BY entity_id
     """, entity_ids).fetchall()
 
     entities = []
-    for eid, name, etype, industry, notes in rows:
+    for eid, name, etype, industry in rows:
         variants = conn.execute("""
             SELECT variant_name, source FROM entity_name_variant
             WHERE entity_id = ?
@@ -54,7 +54,6 @@ def get_entities(entity_ids: list[int]) -> list[dict]:
             "canonical_name": name,
             "entity_type": etype,
             "industry": industry,
-            "notes": notes,
             "slug": name.lower().replace(" & ", "-and-").replace(" ", "-").replace(",", "").replace(".", ""),
             "name_variants": [{"name": v[0], "source": v[1]} for v in variants],
         })

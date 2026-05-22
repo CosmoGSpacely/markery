@@ -295,10 +295,68 @@ a:hover { color: #8b5e3c; }
 .sources h2 { font-size: .95em; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
 .sources dt { font-weight: bold; margin-top: 8px; }
 .sources dd { margin-left: 16px; }
+
+/* ── Timeline annotation page ── */
+.timeline-entries { max-width: 700px; margin-top: 40px; }
+.timeline-entries h3 {
+  font-size: 1.05em;
+  font-weight: bold;
+  color: #3d2b1a;
+  margin: 32px 0 6px;
+  border-left: 3px solid #8b5e3c;
+  padding-left: 10px;
+}
+.timeline-entries p { margin-bottom: .8em; }
+
+/* ── Thematic essay ── */
+.theme-essay { max-width: 700px; }
+.theme-essay h2 { font-size: 1.2em; font-weight: normal; margin: 32px 0 10px; color: #3d2b1a; }
+.theme-essay h3 { font-size: 1.05em; font-weight: normal; margin: 24px 0 8px; color: #5a3e28; }
+.theme-essay p { margin-bottom: 1em; }
+.theme-essay table { width: 100%; border-collapse: collapse; font-size: .88em; margin: 16px 0; }
+.theme-essay th, .theme-essay td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ddd; }
+.theme-essay th { background: #ede8de; font-weight: normal; color: #555; }
+
+/* ── Search page ── */
+.search-form { display: flex; gap: 8px; margin-bottom: 32px; }
+.search-form input[type=search] {
+  flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 3px;
+  font-size: 1em; font-family: Georgia, serif; background: #fff;
+}
+.search-form button {
+  padding: 8px 18px; background: #5a3e28; color: #f5f0e8;
+  border: none; border-radius: 3px; cursor: pointer; font-size: .9em;
+}
+.search-results { list-style: none; }
+.search-results li { margin-bottom: 20px; }
+.search-results .result-title { font-size: 1.05em; font-weight: bold; }
+.search-results .result-type { font-size: .75em; color: #888; font-family: monospace; margin-left: 6px; }
+.search-results .result-excerpt { font-size: .88em; color: #444; margin-top: 4px; }
+
+/* ── Search input in header ── */
+.site-search { margin-left: auto; }
+.site-search input[type=search] {
+  padding: 3px 8px; border: 1px solid #555; border-radius: 3px;
+  background: #1a1208; color: #e8dcc8; font-size: .8em; width: 140px;
+}
+.site-search input[type=search]::placeholder { color: #888; }
+
+/* ── Patent figure (embedded via [[figure:patent_no]]) ── */
+.patent-figure { margin: 24px 0; text-align: center; }
+.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+
+/* ── Site footer ── */
+.site-footer {
+  margin-top: 48px; padding: 20px 24px; border-top: 1px solid #ddd;
+  font-size: .78em; color: #888; text-align: center;
+}
+.site-footer a { color: #8b5e3c; text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a></nav></header>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
 <div class="page-header"><h1>Boorum &amp; Pease</h1><div class="subtitle">blank-books · manufacturer</div><div class="stat-chips"><span class="chip">3 marks</span><span class="chip">38 patents</span><span class="chip">0 confirmed</span><span class="chip">1903–1936</span></div></div><div class="page-body"><div class="narrative"><h2>Boorum &amp; Pease</h2>
 <h2>Historical Identity</h2>
 <p>
@@ -321,5 +379,6 @@ Boorum &amp; Pease is included in the project's entity registry as a representat
 <p>
 The absence of a confirmed pair for Boorum &amp; Pease is itself informative. The company held patents and registered trademarks across the same period as the project's paired entities, but its product strategy centered on brand identity and material quality rather than the mechanism-specific product naming that generates patent-trademark correspondence. BULLDOG sells a binding concept; the Remington Rand and Wilson Jones marks name specific mechanical systems whose technical basis appears in contemporaneous patents. 
 </p><table><thead><tr><th>Name variant</th><th>Source</th></tr></thead><tbody><tr><td>BOORUM &amp; PEASE COMPANY</td><td>patent_assignee</td></tr><tr><td>BOORUM &amp; PEASE LOOSE LEAF BOOK COMPANY [US]</td><td>patent_assignee</td></tr><tr><td>BOORUM AND PEASE COMPANY</td><td>patent_assignee</td></tr><tr><td>BOORUM AND PEASE COMPANY [US]</td><td>patent_assignee</td></tr><tr><td>BOORUM &amp; PEASE CO.</td><td>trademark_owner</td></tr><tr><td>BOORUM &amp; PEASE COMPANY</td><td>trademark_owner</td></tr></tbody></table><p><a href="../trademarks.html">Trademark gallery →</a> &nbsp; <a href="../patents.html">Patent gallery →</a></p></div></div>
+<footer class="site-footer">Built with <a href="https://github.com/CosmoGSpacely/markery">Markery</a></footer>
 </body>
 </html>

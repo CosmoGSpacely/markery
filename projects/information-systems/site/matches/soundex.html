@@ -295,11 +295,69 @@ a:hover { color: #8b5e3c; }
 .sources h2 { font-size: .95em; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
 .sources dt { font-weight: bold; margin-top: 8px; }
 .sources dd { margin-left: 16px; }
+
+/* ── Timeline annotation page ── */
+.timeline-entries { max-width: 700px; margin-top: 40px; }
+.timeline-entries h3 {
+  font-size: 1.05em;
+  font-weight: bold;
+  color: #3d2b1a;
+  margin: 32px 0 6px;
+  border-left: 3px solid #8b5e3c;
+  padding-left: 10px;
+}
+.timeline-entries p { margin-bottom: .8em; }
+
+/* ── Thematic essay ── */
+.theme-essay { max-width: 700px; }
+.theme-essay h2 { font-size: 1.2em; font-weight: normal; margin: 32px 0 10px; color: #3d2b1a; }
+.theme-essay h3 { font-size: 1.05em; font-weight: normal; margin: 24px 0 8px; color: #5a3e28; }
+.theme-essay p { margin-bottom: 1em; }
+.theme-essay table { width: 100%; border-collapse: collapse; font-size: .88em; margin: 16px 0; }
+.theme-essay th, .theme-essay td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ddd; }
+.theme-essay th { background: #ede8de; font-weight: normal; color: #555; }
+
+/* ── Search page ── */
+.search-form { display: flex; gap: 8px; margin-bottom: 32px; }
+.search-form input[type=search] {
+  flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 3px;
+  font-size: 1em; font-family: Georgia, serif; background: #fff;
+}
+.search-form button {
+  padding: 8px 18px; background: #5a3e28; color: #f5f0e8;
+  border: none; border-radius: 3px; cursor: pointer; font-size: .9em;
+}
+.search-results { list-style: none; }
+.search-results li { margin-bottom: 20px; }
+.search-results .result-title { font-size: 1.05em; font-weight: bold; }
+.search-results .result-type { font-size: .75em; color: #888; font-family: monospace; margin-left: 6px; }
+.search-results .result-excerpt { font-size: .88em; color: #444; margin-top: 4px; }
+
+/* ── Search input in header ── */
+.site-search { margin-left: auto; }
+.site-search input[type=search] {
+  padding: 3px 8px; border: 1px solid #555; border-radius: 3px;
+  background: #1a1208; color: #e8dcc8; font-size: .8em; width: 140px;
+}
+.site-search input[type=search]::placeholder { color: #888; }
+
+/* ── Patent figure (embedded via [[figure:patent_no]]) ── */
+.patent-figure { margin: 24px 0; text-align: center; }
+.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+
+/* ── Site footer ── */
+.site-footer {
+  margin-top: 48px; padding: 20px 24px; border-top: 1px solid #ddd;
+  font-size: .78em; color: #888; text-align: center;
+}
+.site-footer a { color: #8b5e3c; text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a></nav></header>
-<div class="page-header"><h1>SOUNDEX ↔ US1261167A</h1><div class="subtitle">Confirmed patent-trademark pair · Information Systems</div><div class="stat-chips"><span class="chip">Remington Rand</span><span class="chip">Patent 1918-04-02</span><span class="chip">Mark filed 1927-03-31</span></div></div><div class="page-body"><div class="essay"><div class="essay-media"><div><img src="data:image/png;base64,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" alt="SOUNDEX"><div class="media-label">SOUNDEX · Serial 71246709</div></div></div><h2>The Soundex Marks: Rand Kardex Bureau and the Commercialization of Phonetic Indexing</h2>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<div class="page-header"><h1>SOUNDEX ↔ US1261167A</h1><div class="subtitle">Confirmed patent-trademark pair · Information Systems</div><div class="stat-chips"><span class="chip">Remington Rand</span><span class="chip">Patent 1918-04-02</span><span class="chip">Mark filed 1927-03-31</span></div></div><div class="page-body"><div class="essay"><div class="essay-media"><div><img src="../images/marks/71246709.png" alt="SOUNDEX"><div class="media-label">SOUNDEX · Serial 71246709</div></div></div><h2>The Soundex Marks: Rand Kardex Bureau and the Commercialization of Phonetic Indexing</h2>
 <h2>The Two Marks</h2>
 <p>
 The USPTO trademark record contains two design marks bearing the SOUNDEX name, both filed in 1927 by <strong>Rand Kardex Bureau, Inc.</strong> of Tonawanda, New York. 
@@ -369,5 +427,6 @@ The most consequential deployment of the Soundex algorithm came not from Rand Ka
 <p>
 The WPA Soundex index cards — phonetically coded, hand-written, filed in the same style of overlapping-tray systems that Rand Kardex commercialized — became one of the most heavily used genealogical resources in American history. A researcher today looking up a great-grandparent in the 1920 census navigates a system whose commercial form was trademarked by Rand Kardex Bureau on March 31, 1927. 
 </p><div class="sources"><h2>Primary Sources</h2><dl><dt>Trademark</dt><dd>Serial No. 71246709 · SOUNDEX · Filed 1927-03-31</dd><dt>Patent</dt><dd>US1261167A · Index · Granted 1918-04-02</dd></dl></div></div></div>
+<footer class="site-footer">Built with <a href="https://github.com/CosmoGSpacely/markery">Markery</a></footer>
 </body>
 </html>

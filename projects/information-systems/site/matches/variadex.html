@@ -295,11 +295,69 @@ a:hover { color: #8b5e3c; }
 .sources h2 { font-size: .95em; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
 .sources dt { font-weight: bold; margin-top: 8px; }
 .sources dd { margin-left: 16px; }
+
+/* ── Timeline annotation page ── */
+.timeline-entries { max-width: 700px; margin-top: 40px; }
+.timeline-entries h3 {
+  font-size: 1.05em;
+  font-weight: bold;
+  color: #3d2b1a;
+  margin: 32px 0 6px;
+  border-left: 3px solid #8b5e3c;
+  padding-left: 10px;
+}
+.timeline-entries p { margin-bottom: .8em; }
+
+/* ── Thematic essay ── */
+.theme-essay { max-width: 700px; }
+.theme-essay h2 { font-size: 1.2em; font-weight: normal; margin: 32px 0 10px; color: #3d2b1a; }
+.theme-essay h3 { font-size: 1.05em; font-weight: normal; margin: 24px 0 8px; color: #5a3e28; }
+.theme-essay p { margin-bottom: 1em; }
+.theme-essay table { width: 100%; border-collapse: collapse; font-size: .88em; margin: 16px 0; }
+.theme-essay th, .theme-essay td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ddd; }
+.theme-essay th { background: #ede8de; font-weight: normal; color: #555; }
+
+/* ── Search page ── */
+.search-form { display: flex; gap: 8px; margin-bottom: 32px; }
+.search-form input[type=search] {
+  flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 3px;
+  font-size: 1em; font-family: Georgia, serif; background: #fff;
+}
+.search-form button {
+  padding: 8px 18px; background: #5a3e28; color: #f5f0e8;
+  border: none; border-radius: 3px; cursor: pointer; font-size: .9em;
+}
+.search-results { list-style: none; }
+.search-results li { margin-bottom: 20px; }
+.search-results .result-title { font-size: 1.05em; font-weight: bold; }
+.search-results .result-type { font-size: .75em; color: #888; font-family: monospace; margin-left: 6px; }
+.search-results .result-excerpt { font-size: .88em; color: #444; margin-top: 4px; }
+
+/* ── Search input in header ── */
+.site-search { margin-left: auto; }
+.site-search input[type=search] {
+  padding: 3px 8px; border: 1px solid #555; border-radius: 3px;
+  background: #1a1208; color: #e8dcc8; font-size: .8em; width: 140px;
+}
+.site-search input[type=search]::placeholder { color: #888; }
+
+/* ── Patent figure (embedded via [[figure:patent_no]]) ── */
+.patent-figure { margin: 24px 0; text-align: center; }
+.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+
+/* ── Site footer ── */
+.site-footer {
+  margin-top: 48px; padding: 20px 24px; border-top: 1px solid #ddd;
+  font-size: .78em; color: #888; text-align: center;
+}
+.site-footer a { color: #8b5e3c; text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a></nav></header>
-<div class="page-header"><h1>VARIADEX ↔ US2152606A</h1><div class="subtitle">Confirmed patent-trademark pair · Information Systems</div><div class="stat-chips"><span class="chip">Remington Rand</span><span class="chip">Patent 1939-03-28</span><span class="chip">Mark filed 1939-04-07</span></div></div><div class="page-body"><div class="essay"><div class="essay-media"><div><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqAAAADwAQAAAAD3Vuu2AAAACXBIWXMAAAsSAAALEgHS3X78AAACRklEQVR42u3WMY7UMBQG4GcZ5ArlBpiOK2yFuQl7CxqkeESxJUcYbkKkKabbOcIYbUHr0RTr0Vp+PCfDLtvsClsIIf1JqiT6Yj3b/wvxXzgIKFCgQIECBQoUKFCgQIECBQoUKFCgQIECBQoUaAu642yY06trS1a1o994zydmT2OiikZSHIhe96BBl4ETF6KholectHdJJ+vHz31olHdoyDI0LWi0UgLr3aYZjQPbivqsRZQrm3qyDW7XjKaKBkGL+oWWGY1u34zmgUcOI3t+jK6j+9COGkGnx6iWm/tox3ZUV9SdUamBoCqbrdSlBy2CWp4eUJ7R/IJ7UH5AM1WUKlqoHS1KUC/oPPuJxntUtaOs0oLO6zT5M3rVNVJeCXoxCGoEPU0Lqs2zMfQ0euJSUdlagoYFJUF9B+rvBDU8UUWPwS0j3XaixzPqfkNNRcd2dPrIRSZpChX9EWwxEi7mVlDXgb7lPKNW0E0YlsV/y+XStqPBcLoQNFZ0enNGZVekPrR2kCnVidrG4Rwouy401uAnqWNFdzWg5+jbHeQrPehhRuviX9+jXw61Bs2oFdSPSztZL2RN/u9Fd6COj5LSS0o5CS2T5sa34Q40Ob6Z0RXr4rLKOsoGSHbFHT8T2fFGUC+oKjYr6fvSpr9a9UxMPfm0OOHIkfOZPknvjxIm4T3Zl8wdqAQVT+9ojHzHf3D8678+oECBAgUKFChQoECBAgUKFChQoECBAgUKFChQoECBAgUKFChQoECBAgUKFChQoECB/i/oTz0ZT3DUgR6hAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDE3LTA1LTIyVDEyOjIzOjA4LTA0OjAwVmo1QwAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxNy0wNS0yMlQxMjoyMzowOC0wNDowMCc3jf8AAAAPdEVYdHRpZmY6ZW5kaWFuAGxzYlW3F0MAAAAYdEVYdHRpZmY6cGhvdG9tZXRyaWMAdW5rbm93blO6t9IAAAAASUVORK5CYII=" alt="VARIADEX"><div class="media-label">VARIADEX · Serial 71417978</div></div></div><h2>VARIADEX: The Ten-Day Patent</h2>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<div class="page-header"><h1>VARIADEX ↔ US2152606A</h1><div class="subtitle">Confirmed patent-trademark pair · Information Systems</div><div class="stat-chips"><span class="chip">Remington Rand</span><span class="chip">Patent 1939-03-28</span><span class="chip">Mark filed 1939-04-07</span></div></div><div class="page-body"><div class="essay"><div class="essay-media"><div><img src="../images/marks/71417978.png" alt="VARIADEX"><div class="media-label">VARIADEX · Serial 71417978</div></div></div><h2>VARIADEX: The Ten-Day Patent</h2>
 <p>
 The VARIADEX trademark (serial 71417978, filed April 7, 1939) was registered by Remington Rand Inc. ten days after the company was granted US2152606A, &quot;Card Index,&quot; on March 28, 1939. No other confirmed pair in this project has a shorter gap between patent and trademark. The sequence documents, with unusual precision, the moment a new filing-system product moved from patent grant to commercial registration. 
 </p>
@@ -343,5 +401,6 @@ The inventor, Benjamin G. Rand, shared his surname with the company's own corpor
 <p>
 The VARIADEX pair illustrates what systematic patent-trademark practice looked like at a mature American manufacturing company in 1939. Remington Rand had been filing patents and trademarks in the filing-system classes since the late 1910s. By 1939, the process was evidently routine: patent the mechanism, register the name, within days of each other. The VARIADEX filing sits at the end of a decade of intensive visible-record innovation — 171 patents across the consolidated Remington Rand entity — and represents one of the last product-name marks the company filed before the Second World War restructured its business priorities. 
 </p><div class="sources"><h2>Primary Sources</h2><dl><dt>Trademark</dt><dd>Serial No. 71417978 · VARIADEX · Filed 1939-04-07</dd><dt>Patent</dt><dd>US2152606A · Card Index · Granted 1939-03-28</dd></dl></div></div></div>
+<footer class="site-footer">Built with <a href="https://github.com/CosmoGSpacely/markery">Markery</a></footer>
 </body>
 </html>
