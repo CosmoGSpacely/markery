@@ -24,7 +24,7 @@ cd markery
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 
-pip install -r requirements.txt
+pip install -e "."
 ```
 
 All `markery` commands below assume the venv is active.
@@ -233,9 +233,40 @@ markery site build <project>
 
 ## Image enhancement
 
-Mark image enhancement uses Real-ESRGAN. Model weights (~17 MB) are downloaded automatically on first use to `src/markery/specialist/publisher/image_enhancement/weights/`.
+The `markery enhance` command has three subcommands — `gallery`, `enhance`, and `batch` — with tiered optional dependencies. Install the tier you need:
 
-Enhancement is selective and manually confirmed — not a batch operation on all candidates. See `markery enhance --help` for options.
+**Tier 1 — base install (gallery only)**
+
+No extra dependencies required. `markery enhance gallery` builds a self-contained HTML gallery from mark images stored in the database. The `enhance` and `batch` subcommands are not available at this tier.
+
+```bash
+pip install -e "."
+markery enhance gallery --where "..." --title "..." --out gallery.html
+```
+
+**Tier 2 — enhance group (all subcommands, Lanczos upscaling)**
+
+Installs `opencv-python-headless` and `vtracer`. All three subcommands work. `enhance` and `batch` upscale marks 4× using Pillow LANCZOS resampling and optionally vectorize to SVG. This is the recommended tier for research use — no GPU or large ML dependencies required.
+
+```bash
+pip install -e ".[enhance]"
+markery enhance enhance <serial_no> --out-dir <dir>
+markery enhance batch "<sql_where_clause>" --out-dir <dir>
+```
+
+`model_used` in the output will report `lanczos-fallback`.
+
+**Tier 3 — full Real-ESRGAN (highest quality upscaling)**
+
+Manually install `realesrgan` on top of Tier 2. This pulls in PyTorch, basicsr, and related packages (~1–2 GB). On first use, model weights (~64 MB) are downloaded automatically to `src/markery/specialist/publisher/image_enhancement/weights/`. When `realesrgan` is present, `enhance` and `batch` use it automatically; no configuration change needed.
+
+```bash
+pip install -e ".[enhance]"
+pip install realesrgan
+markery enhance enhance <serial_no> --out-dir <dir>
+```
+
+`model_used` will report `x4plus-anime`. Suitable for machines with a GPU or where quality is more important than install size. CPU inference works but is slow (~30–120 s per image).
 
 ---
 
