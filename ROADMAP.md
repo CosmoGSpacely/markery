@@ -234,7 +234,7 @@ Phase PASSED when P1, P2, P3, and P4 all pass.
 
 ---
 
-### P1 — `common/project.py`: foundation module
+### P1 — `common/project.py`: foundation module — CLOSED
 
 1. Create `src/markery/common/project.py`
 2. Define `ProjectType` enum: `MATCH_REVIEW_ESSAY`, `GALLERY_EXPLORATION`
@@ -282,7 +282,7 @@ Note: implementation touches `specialist/orchestrator.py`, not the common layer,
 
 ### Phase Gate
 
-P1 PASSED when: `from markery.common import Project, ProjectType, load_project` works; `load_project(Path("projects/information-systems"))` returns a `MATCH_REVIEW_ESSAY` project; `load_project(Path("projects/monthly-image-review"))` returns a `GALLERY_EXPLORATION` project.
+P1 PASSED when: `from markery.common import Project, ProjectType, load_project` works; `load_project(Path("projects/information-systems"))` returns a `MATCH_REVIEW_ESSAY` project; `load_project(Path("projects/monthly-image-review"))` returns a `GALLERY_EXPLORATION` project. — PASSED 2026-05-22
 
 P2 PASSED when: both existing projects have `project.json` committed and `load_project()` resolves both correctly.
 
