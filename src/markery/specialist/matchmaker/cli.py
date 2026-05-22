@@ -17,7 +17,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from markery.common.config import DB, Project
+from markery.common.config import DB
+from markery.common.project import Project
 
 
 # ---------------------------------------------------------------------------

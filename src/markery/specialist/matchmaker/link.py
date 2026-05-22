@@ -16,7 +16,8 @@ from pathlib import Path
 
 import duckdb
 
-from markery.common.config import DB, Project
+from markery.common.config import DB
+from markery.common.project import Project
 from markery.specialist.matchmaker.score import (
     is_company_name_mark, total_score,
     date_score, class_score, semantic_score, SEMANTIC_CAP,

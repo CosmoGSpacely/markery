@@ -1,8 +1,11 @@
-"""Project root resolution and path contracts for all specialists."""
+"""Project root resolution and shared database paths.
+
+Project type definitions and path contracts have moved to
+markery.common.project. Import Project from there.
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -21,57 +24,3 @@ DB = {
     "trademarks": ROOT / "data" / "trademarks.duckdb",
     "entities":   ROOT / "data" / "entities.duckdb",
 }
-
-
-@dataclass
-class Project:
-    """Path contract for a research project directory."""
-
-    name: str
-
-    @property
-    def root(self) -> Path:
-        return ROOT / "projects" / self.name
-
-    @property
-    def candidates(self) -> Path:
-        return self.root / "matches" / "candidates.jsonl"
-
-    @property
-    def confirmed(self) -> Path:
-        return self.root / "matches" / "confirmed.jsonl"
-
-    @property
-    def content(self) -> Path:
-        return self.root / "content"
-
-    @property
-    def site(self) -> Path:
-        return self.root / "site"
-
-    @property
-    def rejected(self) -> Path:
-        return self.root / "matches" / "rejected.jsonl"
-
-    @property
-    def pipeline_state(self) -> Path:
-        return self.root / "matches" / "pipeline_state.json"
-
-    @property
-    def entities_file(self) -> Path:
-        return self.root / "entities.txt"
-
-    @property
-    def objectives(self) -> Path:
-        return self.root / "OBJECTIVES.md"
-
-    @property
-    def brief(self) -> Path:
-        return self.root / "BRIEF.md"
-
-    @property
-    def references(self) -> Path:
-        return self.root / "references"
-
-    def exists(self) -> bool:
-        return self.root.is_dir()

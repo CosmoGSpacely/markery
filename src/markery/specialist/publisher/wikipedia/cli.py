@@ -13,7 +13,7 @@ import json
 import sys
 from pathlib import Path
 
-from markery.common.config import Project
+from markery.common.project import Project
 
 
 def _load_match(project: str, slug: str) -> dict:

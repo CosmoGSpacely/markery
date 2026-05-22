@@ -7,7 +7,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from markery.common.config import Project
+from markery.common.project import Project
 from markery.specialist.publisher import queries as q
 from markery.specialist.publisher import render as r
 

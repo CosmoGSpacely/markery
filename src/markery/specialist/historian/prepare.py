@@ -17,7 +17,7 @@ from pathlib import Path
 
 import duckdb
 
-from markery.common.config import Project
+from markery.common.project import Project
 from markery.specialist.historian import queries as hq
 
 

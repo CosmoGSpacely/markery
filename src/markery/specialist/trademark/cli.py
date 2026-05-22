@@ -59,7 +59,7 @@ def cmd_enrich_project(args: argparse.Namespace) -> None:
     from markery.specialist.trademark.enrich import enrich_project
     from markery.specialist.trademark.tsdr_client import TSDRClient
     from markery.common.auth import load_tsdr_key
-    from markery.common.config import Project
+    from markery.common.project import Project
 
     proj = Project(args.project)
     if not proj.exists():

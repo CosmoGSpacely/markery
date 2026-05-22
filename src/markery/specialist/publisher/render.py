@@ -7,7 +7,7 @@ import re
 from datetime import date
 from pathlib import Path
 
-from markery.common.config import Project
+from markery.common.project import Project
 from markery.specialist.publisher.queries import get_mark_image_b64, get_patent_figure_b64
 
 # ---------------------------------------------------------------------------

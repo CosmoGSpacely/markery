@@ -16,7 +16,8 @@ from __future__ import annotations
 import argparse
 import sys
 
-from markery.common.config import DB, Project
+from markery.common.config import DB
+from markery.common.project import Project
 
 
 # ---------------------------------------------------------------------------
@@ -40,7 +41,7 @@ def cmd_fetch(args: argparse.Namespace) -> None:
     from markery.specialist.patent.figures import fetch_and_store
     from markery.specialist.patent.epo_client import EPOClient
     from markery.common.auth import load_epo_credentials
-    from markery.common.config import Project
+    from markery.common.project import Project
 
     project = Project(args.project)
     if not project.exists():
