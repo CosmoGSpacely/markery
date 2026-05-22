@@ -296,7 +296,7 @@ Phase PASSED when P1–P5 all pass. — PASSED 2026-05-22
 
 ---
 
-## Phase 11 — Specialist Tools: Token Reduction and Model Accessibility
+## Phase 11 — Specialist Tools: Token Reduction and Model Accessibility — CLOSED
 
 **Opened:** 2026-05-21  
 **Dependency:** Phase 10 must be complete — all tools that accept a project argument require `load_project()` and type validation.  
@@ -304,7 +304,7 @@ Phase PASSED when P1–P5 all pass. — PASSED 2026-05-22
 
 ---
 
-### P1 — `markery match auto-disposition` (MATCHMAKER)
+### P1 — `markery match auto-disposition` (MATCHMAKER) — CLOSED
 
 Applies deterministic rejection rules to candidates below a configurable score threshold. Writes rejection records to `rejected.jsonl` with `auto_rejected: true` flag. `--dry-run` reports without writing. Eliminates model review for below-floor candidates — typically 30–50% of the queue.
 
@@ -316,7 +316,7 @@ Applies deterministic rejection rules to candidates below a configurable score t
 
 ---
 
-### P2 — `markery match preflight` (MATCHMAKER)
+### P2 — `markery match preflight` (MATCHMAKER) — CLOSED
 
 Pre-runs all available enrichment for a project before any model session. Fetches signals for candidates above min-score; TSDR for uncertainty-band candidates lacking goods descriptions; figures for confirmed pairs lacking images. Writes `matches/preflight.json` recording what was fetched and skipped.
 
@@ -327,7 +327,7 @@ Pre-runs all available enrichment for a project before any model session. Fetche
 
 ---
 
-### P3 — `markery matchmaker suggest-variants` (MATCHMAKER)
+### P3 — `markery matchmaker suggest-variants` (MATCHMAKER) — CLOSED
 
 Fuzzy-matches a canonical entity name against `assignee_name` in `patents.duckdb` and `own_name` in `trademarks.duckdb`. Returns ranked candidate variant strings with occurrence counts and source. Uses token overlap, edit distance, and common abbreviation expansion (Inc./Incorporated/Corp./Company/Co.).
 
@@ -338,7 +338,7 @@ Fuzzy-matches a canonical entity name against `assignee_name` in `patents.duckdb
 
 ---
 
-### P4 — `markery historian card` (HISTORIAN)
+### P4 — `markery historian card` (HISTORIAN) — CLOSED
 
 Generates a compact (~250 token) fixed-format candidate summary block for a single slug from DB records — no model required. Structured fields optimized for model input: mark, goods, entity, patent, date gap, score, signals, essay/figure status. Written to stdout or `matches/cards/<slug>.md`.
 
@@ -349,7 +349,7 @@ Generates a compact (~250 token) fixed-format candidate summary block for a sing
 
 ---
 
-### P5 — `markery historian digest` (HISTORIAN)
+### P5 — `markery historian digest` (HISTORIAN) — CLOSED
 
 Produces a compact (~800–1,200 token) model-optimized project state summary. Dense structured blocks, no prose. Includes: confirmed/rejected/unreviewed counts, essay status by slug, next-review candidates ordered by score, enrichment status, preflight timestamp, available cards and scaffolds.
 
@@ -359,7 +359,7 @@ Produces a compact (~800–1,200 token) model-optimized project state summary. D
 
 ---
 
-### P6 — `markery historian scaffold` (HISTORIAN)
+### P6 — `markery historian scaffold` (HISTORIAN) — CLOSED
 
 Generates a structured essay skeleton for a confirmed pair. Factual sections pre-filled from DB records (frontmatter, primary sources, filing record, patent summary); interpretive sections left as titled prompt stubs. Written to `essays/<slug>.md`. Full field list in `archive/SPECIALIST-REVIEW-2026-05-21.md §scaffold`.
 
@@ -369,7 +369,7 @@ Generates a structured essay skeleton for a confirmed pair. Factual sections pre
 
 ---
 
-### P7 — `markery historian validate` (HISTORIAN)
+### P7 — `markery historian validate` (HISTORIAN) — CLOSED
 
 Validates a completed essay against the DB. Checks: serial numbers resolve against `case_file`; patent numbers resolve against `patents`; dates and registration numbers match DB records; goods description excerpts match `statement` within edit-distance threshold; entity name matches a known variant; no cross-pair contamination. Structured report; exit code 1 on any failure.
 
@@ -382,9 +382,9 @@ Validates a completed essay against the DB. Checks: serial numbers resolve again
 
 ### Phase Gate
 
-P1 PASSED when: `markery match auto-disposition information-systems --dry-run` correctly identifies below-floor candidates; `--reject-below` writes to `rejected.jsonl` with `auto_rejected: true`.
+P1 PASSED when: `markery match auto-disposition information-systems --dry-run` correctly identifies below-floor candidates; `--reject-below` writes to `rejected.jsonl` with `auto_rejected: true`. — PASSED 2026-05-22
 
-P7 PASSED when: `markery historian validate` catches a deliberate date error injected into a test essay.
+P7 PASSED when: `markery historian validate` catches a deliberate date error injected into a test essay. — PASSED 2026-05-22
 
 Phase PASSED when P1–P7 all pass and at least one end-to-end cheap-model workflow has been demonstrated: digest + cards loaded into a small-context session, candidate review decisions written, validate run on the resulting essay without errors.
 
