@@ -227,7 +227,7 @@ Phase PASSED when P1, P2, P3, and P4 all pass.
 
 ---
 
-## Phase 10 — Common Layer: Project Types
+## Phase 10 — Common Layer: Project Types — CLOSED
 
 **Opened:** 2026-05-21  
 **Scope:** Add project type as a first-class concept in the common layer. Prerequisite for Phase 11 token-reduction tools and for type-aware orchestrator routing. Full design in `archive/COMMON-REVIEW-2026-05-21.md`.
@@ -290,9 +290,9 @@ P3 PASSED when: `markery project init test-project` creates a new directory with
 
 P4 PASSED when: `markery project adopt` (run on a project without `project.json`) infers the correct type, shows the signals found, prompts for confirmation, and writes `project.json`. — PASSED 2026-05-22
 
-P5 PASSED when: `enrich_signal_fields` raises a typed error when passed a `GALLERY_EXPLORATION` project.
+P5 PASSED when: `enrich_signal_fields` raises a typed error when passed a `GALLERY_EXPLORATION` project. — PASSED 2026-05-22
 
-Phase PASSED when P1–P5 all pass.
+Phase PASSED when P1–P5 all pass. — PASSED 2026-05-22
 
 ---
 
