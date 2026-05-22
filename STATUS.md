@@ -17,7 +17,7 @@
 | `specialist/historian/` — interactive review, status | ✅ | `markery review / status` |
 | `specialist/publisher/` — static site, image enhancement, Wikipedia tooling | ✅ | `markery site build / enhance / wikipedia` |
 | `enhance` — gallery subcommand | ✅ | Works without optional deps (lazy import fix 2026-05-20) |
-| `enhance` — enhance/batch subcommands | ⚠️ Partial | vtracer not installed; realesrgan not installed — Phase 9 P1 |
+| `enhance` — enhance/batch subcommands | ✅ | Lanczos fallback active; Real-ESRGAN activates automatically if installed |
 | `wikipedia` — draft/submit subcommands | ⚠️ Partial | Requires confirmed.jsonl pair — Phase 9 P2 adds standalone path |
 | GitHub Pages CI (`pages.yml`) | ❌ Disabled | Workflows deleted 2026-05-20 — Phase 12 P5 |
 
@@ -29,7 +29,7 @@
 
 | Sub-phase | Status |
 |---|---|
-| P1 — vtracer install + Lanczos fallback in `upscale.py` | Not started |
+| P1 — vtracer install + Lanczos fallback in `upscale.py` | ✅ PASSED 2026-05-22 |
 | P2 — `markery wikipedia from-essay` subcommand | Not started |
 | P3 — Dependency tier documentation in `SETUP.md` | Not started |
 | P4 — Wikipedia live edit test (sandbox → Chicago Pneumatic external link) | Blocked: Wikipedia account not yet created |

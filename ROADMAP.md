@@ -130,7 +130,7 @@ Trade-off: still requires the essay to live inside a known project directory. Do
 
 ### Work Plan
 
-**P1 — Image enhancement: install vtracer, add Lanczos fallback**
+**P1 — Image enhancement: install vtracer, add Lanczos fallback — CLOSED**
 
 1. Install vtracer into the project venv: `pip install vtracer`
 2. In `upscale.py`, wrap the realesrgan/basicsr imports in a try/except inside `upscale()`. On ImportError, log a notice and return `img.resize((w*4, h*4), Image.LANCZOS)`.
@@ -215,7 +215,7 @@ After Stages 4a–4c complete, identify the next target. Remington Rand or the S
 
 ### Phase Gate
 
-P1 PASSED when: `markery enhance enhance <serial>` runs to completion without error in an environment with only `pip install -e ".[enhance]"` (no manual realesrgan install), and `model_used` reports `"lanczos-fallback"`.
+P1 PASSED when: `markery enhance enhance <serial>` runs to completion without error in an environment with only `pip install -e ".[enhance]"` (no manual realesrgan install), and `model_used` reports `"lanczos-fallback"`. — PASSED 2026-05-22
 
 P2 PASSED when: `markery wikipedia from-essay <essay_path> --serial <serial>` produces valid wikitext without requiring `confirmed.jsonl` to exist, for any project or no project.
 
