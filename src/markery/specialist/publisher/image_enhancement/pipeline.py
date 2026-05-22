@@ -116,7 +116,7 @@ def process_mark(
     if img is None:
         raise FileNotFoundError(f"No image found for serial {serial_no}")
 
-    enhanced = _upscale.upscale(img, model_name=hints["model"])
+    enhanced, actual_model = _upscale.upscale(img, model_name=hints["model"])
     enhanced.save(png_path, format="PNG", optimize=False)
 
     svg_path = None
@@ -127,4 +127,4 @@ def process_mark(
             svg_candidate.write_text(svg_str, encoding="utf-8")
             svg_path = svg_candidate
 
-    return MarkResult(serial_no, png_path, svg_path, hints["model"], svg_path is not None)
+    return MarkResult(serial_no, png_path, svg_path, actual_model, svg_path is not None)

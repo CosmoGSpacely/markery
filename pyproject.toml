@@ -19,7 +19,6 @@ markery = "markery.cli:main"
 [project.optional-dependencies]
 enhance = [
     "opencv-python-headless>=4.8.0",
-    "realesrgan>=0.3.0",
     "vtracer>=0.6.0",
 ]
 dev = ["pytest>=8.0.0", "responses>=0.25.0"]

@@ -42,10 +42,20 @@ def _ensure_weights(model_name: str) -> Path:
     return path
 
 
-def upscale(img: Image.Image, model_name: str = "x4plus-anime") -> Image.Image:
-    """Upscale a PIL Image 4× with Real-ESRGAN. Returns a new PIL Image."""
-    from basicsr.archs.rrdbnet_arch import RRDBNet
-    from realesrgan import RealESRGANer
+def upscale(img: Image.Image, model_name: str = "x4plus-anime") -> tuple[Image.Image, str]:
+    """Upscale a PIL Image 4×. Returns (upscaled_image, model_used).
+
+    Uses Real-ESRGAN when realesrgan/basicsr are installed; falls back to
+    Pillow LANCZOS otherwise. model_used is 'lanczos-fallback' on the
+    fallback path so callers can report which path ran.
+    """
+    try:
+        from basicsr.archs.rrdbnet_arch import RRDBNet
+        from realesrgan import RealESRGANer
+    except ImportError:
+        print("realesrgan/basicsr not installed — using Lanczos 4× fallback")
+        w, h = img.size
+        return img.resize((w * 4, h * 4), Image.LANCZOS), "lanczos-fallback"
 
     if model_name not in MODELS:
         raise ValueError(f"Unknown model '{model_name}'. Choose from: {list(MODELS)}")
@@ -73,4 +83,4 @@ def upscale(img: Image.Image, model_name: str = "x4plus-anime") -> Image.Image:
 
     img_bgr = cv2.cvtColor(np.array(img.convert("RGB")), cv2.COLOR_RGB2BGR)
     output_bgr, _ = upsampler.enhance(img_bgr, outscale=spec["scale"])
-    return Image.fromarray(cv2.cvtColor(output_bgr, cv2.COLOR_BGR2RGB))
+    return Image.fromarray(cv2.cvtColor(output_bgr, cv2.COLOR_BGR2RGB)), model_name
