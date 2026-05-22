@@ -38,6 +38,7 @@ _SUBCOMMANDS = {
     "site":        "Build static research site  (build <project>)",
     "publisher":   "Publisher specialist  (build <project>)",
     "wikipedia":   "Wikipedia tooling  (draft|submit <project> <slug>)",
+    "project":     "Project management  (init|adopt)",
 }
 
 
@@ -110,6 +111,12 @@ def cmd_wikipedia(rest: list[str]) -> None:
     wikipedia_main()
 
 
+def cmd_project(rest: list[str]) -> None:
+    from markery.common.project_cli import project_main
+    sys.argv = ["markery project"] + rest
+    project_main()
+
+
 def cmd_site(rest: list[str]) -> None:
     import argparse
     from pathlib import Path
@@ -156,6 +163,7 @@ def main() -> None:
         "site":       lambda: cmd_site(rest),
         "publisher":  lambda: cmd_publisher(rest),
         "wikipedia":  lambda: cmd_wikipedia(rest),
+        "project":    lambda: cmd_project(rest),
     }[cmd]()
 
 

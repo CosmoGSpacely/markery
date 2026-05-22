@@ -139,6 +139,57 @@ def load_project(path: Path) -> Project:
     return Project(name=path.name, type=project_type)
 
 
+def scaffold_project(root: Path, project_type: ProjectType) -> list[Path]:
+    """Create the canonical directory structure for a new project.
+
+    Creates directories and empty placeholder files. Returns the list of
+    paths created (directories and files). Does not overwrite existing files.
+    Raises FileExistsError if root already contains a project.json.
+    """
+    project_json = root / "project.json"
+    if project_json.exists():
+        raise FileExistsError(
+            f"{project_json} already exists. "
+            "Use 'markery project adopt' to update the type of an existing project."
+        )
+
+    created: list[Path] = []
+
+    def _mkdir(p: Path) -> None:
+        p.mkdir(parents=True, exist_ok=True)
+        created.append(p)
+
+    def _touch(p: Path, content: str = "") -> None:
+        if not p.exists():
+            p.write_text(content, encoding="utf-8")
+            created.append(p)
+
+    _mkdir(root)
+
+    if project_type == ProjectType.MATCH_REVIEW_ESSAY:
+        _mkdir(root / "matches")
+        _touch(root / "matches" / "candidates.jsonl")
+        _touch(root / "matches" / "confirmed.jsonl")
+        _touch(root / "matches" / "rejected.jsonl")
+        _touch(root / "entities.csv", "entity_id,canonical_name,entity_type,industry\n")
+        _touch(root / "variants.csv", "entity_id,variant_name,source\n")
+        _mkdir(root / "references")
+        _mkdir(root / "content")
+        _touch(root / "OBJECTIVES.md", f"# Objectives — {root.name}\n\n")
+        _touch(root / "BRIEF.md", f"# Brief — {root.name}\n\n")
+
+    elif project_type == ProjectType.GALLERY_EXPLORATION:
+        _mkdir(root / "output")
+        _mkdir(root / "essays")
+        _mkdir(root / "wikipedia")
+
+    _touch(root / "README.md", f"# {root.name}\n\n")
+    _touch(root / "project.json",
+           json.dumps({"type": project_type.value}, indent=2) + "\n")
+
+    return created
+
+
 def detect_project_type(path: Path) -> ProjectType | None:
     """Infer project type from directory structure.
 
