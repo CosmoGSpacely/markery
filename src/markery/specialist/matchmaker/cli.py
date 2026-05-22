@@ -558,6 +558,88 @@ def match_main() -> None:
 # markery matchmaker
 # ---------------------------------------------------------------------------
 
+def cmd_suggest_variants(args: argparse.Namespace) -> None:
+    import re
+    import duckdb
+    from markery.common.config import DB
+
+    canonical = args.name
+    top_n     = args.top
+
+    _ABBREV = {
+        r'\bINCORPORATED\b': 'INC',
+        r'\bCORPORATION\b':  'CORP',
+        r'\bCOMPANY\b':      'CO',
+        r'\bLIMITED\b':      'LTD',
+        r'\bMANUFACTURING\b':'MFG',
+        r'\bBROTHERS\b':     'BROS',
+    }
+    _STRIP = re.compile(r'\b(INC\.?|CORP\.?|CO\.?|LTD\.?|MFG\.?|THE)\b|[,.]', re.I)
+
+    def _normalise(s: str) -> str:
+        s = s.upper()
+        for pat, repl in _ABBREV.items():
+            s = re.sub(pat, repl, s)
+        s = _STRIP.sub(' ', s)
+        return ' '.join(s.split())
+
+    def _score(query_tokens: set[str], candidate: str) -> float:
+        cand_tokens = set(_normalise(candidate).split())
+        if not cand_tokens:
+            return 0.0
+        overlap = query_tokens & cand_tokens
+        # Jaccard on normalised tokens
+        return len(overlap) / len(query_tokens | cand_tokens)
+
+    query_tokens = set(_normalise(canonical).split())
+
+    # Patent assignees
+    conn_pat = duckdb.connect(str(DB["patents"]), read_only=True)
+    pat_rows = conn_pat.execute(
+        "SELECT assignee_name, COUNT(*) AS n FROM patents "
+        "WHERE assignee_name IS NOT NULL AND assignee_name != '' "
+        "GROUP BY assignee_name ORDER BY n DESC"
+    ).fetchall()
+    conn_pat.close()
+
+    # Trademark owners
+    conn_tm = duckdb.connect(str(DB["trademarks"]), read_only=True)
+    tm_rows = conn_tm.execute(
+        "SELECT own_name, COUNT(*) AS n FROM owner "
+        "WHERE own_name IS NOT NULL AND own_name != '' "
+        "GROUP BY own_name ORDER BY n DESC"
+    ).fetchall()
+    conn_tm.close()
+
+    def _rank(rows: list[tuple], min_score: float = 0.3) -> list[tuple]:
+        scored = [
+            (name, count, _score(query_tokens, name))
+            for name, count in rows
+        ]
+        return sorted(
+            [(n, c, s) for n, c, s in scored if s >= min_score],
+            key=lambda x: (-x[2], -x[1]),
+        )[:top_n]
+
+    pat_ranked = _rank(pat_rows)
+    tm_ranked  = _rank(tm_rows)
+
+    print(f"Variant suggestions for: {canonical!r}\n")
+    print("Patent assignees:")
+    if pat_ranked:
+        for name, count, score in pat_ranked:
+            print(f"  {score:.2f}  {count:>5}×  {name}")
+    else:
+        print("  (none above threshold)")
+
+    print("\nTrademark owners:")
+    if tm_ranked:
+        for name, count, score in tm_ranked:
+            print(f"  {score:.2f}  {count:>5}×  {name}")
+    else:
+        print("  (none above threshold)")
+
+
 def cmd_build(args: argparse.Namespace) -> None:
     from markery.specialist.matchmaker.entities import build
     counts = build(data_dir=args.data_dir)
@@ -602,10 +684,16 @@ def matchmaker_main() -> None:
                              help="Directory containing entities.csv and variants.csv")
     sub.add_parser("list",   help="List all entities with IDs and names")
     sub.add_parser("status", help="Row counts for entity registry tables")
+    p_sv = sub.add_parser("suggest-variants",
+                          help="Rank patent assignee and trademark owner strings matching a canonical name")
+    p_sv.add_argument("name", help="Canonical entity name to match against")
+    p_sv.add_argument("--top", type=int, default=15, metavar="N",
+                      help="Return top N results per source (default: 15)")
 
     args = ap.parse_args()
     {
-        "build":  cmd_build,
-        "list":   cmd_list,
-        "status": cmd_status,
+        "build":            cmd_build,
+        "list":             cmd_list,
+        "status":           cmd_status,
+        "suggest-variants": cmd_suggest_variants,
     }[args.cmd](args)
