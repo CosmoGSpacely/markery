@@ -44,7 +44,7 @@ Run the standard session workflow on `information-systems` and record the token 
 
 ---
 
-### P3 — Hotspot reductions
+### P3 — Hotspot reductions — CLOSED
 
 For each hotspot identified in P2, design and apply a targeted reduction. Measure the delta after each change.
 
@@ -96,7 +96,7 @@ P1 PASSED when: `--tokens` flag produces accurate token counts on any API-callin
 
 P2 PASSED when: baseline sweep is complete, `tests/benchmarks/README.md` has a populated baseline table, and the top 3 hotspots are named.
 
-P3 PASSED when: session-level prompt tokens are ≥ 20% below the P2 baseline; `markery historian validate` passes on essays produced post-reduction.
+P3 PASSED when: session-level prompt tokens are ≥ 20% below the P2 baseline; `markery historian validate` passes on essays produced post-reduction. — PASSED (22.3% reduction, 1,648 vs 2,122 tokens; validate all-PASS)
 
 P4 PASSED when: gallery-exploration and card/digest historian workflows complete end-to-end on Haiku without hallucinated structured data or context-window overflow; results recorded in `tests/benchmarks/README.md`.
 

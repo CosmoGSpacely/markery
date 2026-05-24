@@ -64,7 +64,7 @@ def cmd_card(args: argparse.Namespace) -> None:
         [int(serial_no)],
     ).fetchall()
     goods_raw  = goods_rows[0][0] if goods_rows else ""
-    goods_trunc = (goods_raw[:100] + "…") if len(goods_raw) > 100 else goods_raw
+    goods_trunc = (goods_raw[:80] + "…") if len(goods_raw) > 80 else goods_raw
 
     intl_rows = conn_tm.execute(
         "SELECT intl_class FROM intl_class WHERE serial_no = ?", [int(serial_no)]
@@ -83,7 +83,7 @@ def cmd_card(args: argparse.Namespace) -> None:
     pat_abstract = pat_row[1] if pat_row else ""
     pat_grant    = pat_row[2] if pat_row else ""
     pat_assignee = pat_row[3] if pat_row else ""
-    abstract_trunc = (pat_abstract[:120] + "…") if pat_abstract and len(pat_abstract) > 120 else (pat_abstract or "")
+    abstract_trunc = (pat_abstract[:80] + "…") if pat_abstract and len(pat_abstract) > 80 else (pat_abstract or "")
 
     # Date gap
     try:
@@ -107,8 +107,6 @@ def cmd_card(args: argparse.Namespace) -> None:
     essay_status = "present" if essay_path.exists() else "absent"
 
     cards_dir = proj.root / "matches" / "cards"
-    fig_path  = proj.root / "output" / pat_no
-    fig_status = "present" if any((proj.root / "output").glob(f"{pat_no}*")) else "absent"
 
     # Confirmed status
     confirmed_key = (pat_no, serial_no)
@@ -123,30 +121,22 @@ def cmd_card(args: argparse.Namespace) -> None:
                 break
 
     # Format card
+    status_str = 'confirmed' if is_confirmed else 'candidate'
     lines = [
-        f"## CARD: {args.slug}",
-        f"status:    {'confirmed' if is_confirmed else 'candidate'}",
-        f"score:     {cand['score']:.4f}",
-        f"date_gap:  {gap_str}",
-        "",
+        f"## CARD: {args.slug}  [{status_str}  {cand['score']:.4f}  gap={gap_str}]",
         f"mark:      {cand['trademark']} (serial {serial_no})",
         f"filed:     {cand.get('tm_filing_dt', '?')}",
-        f"reg_no:    {cand.get('tm_reg_no', '?')}",
         f"owner:     {cand.get('tm_owner', '?')}",
         f"goods:     {goods_trunc}" + (f"  [{class_count} class(es)]" if class_count else ""),
-        "",
         f"entity:    {cand['entity']} (id {cand['entity_id']})",
-        "",
         f"patent:    {pat_no}",
         f"title:     {pat_title}",
         f"grant:     {pat_grant}",
         f"assignee:  {pat_assignee}",
         f"cpc:       {', '.join(cand.get('cpc_classes', []))}",
         f"abstract:  {abstract_trunc}",
-        "",
-        f"signals:   title_hit={signals['title_hit']}  abstract_hit={signals['abstract_hit']}  goods_title={signals['goods_title']}  goods_abs={signals['goods_abs']}",
+        f"signals:   {'T' if signals['title_hit'] else ''}{'A' if signals['abstract_hit'] else ''}  gt={signals['goods_title']}  ga={signals['goods_abs']}",
         f"essay:     {essay_status}",
-        f"figures:   {fig_status}",
     ]
     card_text = "\n".join(lines)
 
@@ -212,23 +202,28 @@ def cmd_digest(args: argparse.Namespace) -> None:
             if c.get("goods_title_overlap", 0) > 0.05: sig += "G"
             lines.append(f"  {c['score']:.3f}  {c['trademark']:<28}  {c['patent_no']:<14}  {c['entity']:<20}  sig={sig or '-'}")
 
-    # Confirmed pairs with essay status
-    cards_dir  = proj.root / "matches" / "cards"
+    # Confirmed pairs — summary line only; full list via `markery review`
+    cards_dir   = proj.root / "matches" / "cards"
     content_dir = proj.root / "content"
     if confirmed_pairs:
-        lines.append("")
-        lines.append("confirmed_pairs:")
         seen: set[tuple] = set()
+        essays_done = cards_done = 0
         for c in confirmed_pairs:
             key = (c["patent_no"], str(c["trademark_serial"]))
             if key in seen:
                 continue
             seen.add(key)
-            tm_slug  = re.sub(r'[^a-z0-9]+', '-', c["trademark"].lower()).strip('-')
-            slug     = f"{tm_slug}-{c['patent_no'].lower()}"
-            essay_ok = (content_dir / f"{slug}.md").exists()
-            card_ok  = (cards_dir  / f"{slug}.md").exists()
-            lines.append(f"  {slug:<50}  essay={'✓' if essay_ok else '✗'}  card={'✓' if card_ok else '✗'}")
+            tm_slug = re.sub(r'[^a-z0-9]+', '-', c["trademark"].lower()).strip('-')
+            slug    = f"{tm_slug}-{c['patent_no'].lower()}"
+            if (content_dir / f"{slug}.md").exists(): essays_done += 1
+            if (cards_dir   / f"{slug}.md").exists(): cards_done  += 1
+        n = len(seen)
+        lines.append("")
+        lines.append(
+            f"confirmed_pairs:  {n} total"
+            f"  (essays: {essays_done}/{n}"
+            f"  cards: {cards_done}/{n})"
+        )
 
     # Enrichment status
     enriched_count = sum(1 for c in candidates if "title_name_hit" in c)
@@ -285,7 +280,8 @@ def cmd_scaffold(args: argparse.Namespace) -> None:
         "SELECT statement_text FROM statement WHERE serial_no = ? AND statement_type_cd LIKE 'GS%'",
         [int(serial_no)],
     ).fetchall()
-    goods_text = goods_rows[0][0] if goods_rows else ""
+    goods_raw  = goods_rows[0][0] if goods_rows else ""
+    goods_text = (goods_raw[:150] + "…") if len(goods_raw) > 150 else goods_raw
     owner_rows = conn_tm.execute(
         "SELECT own_name FROM owner WHERE serial_no = ? ORDER BY own_type_cd LIMIT 1",
         [int(serial_no)],
@@ -301,7 +297,7 @@ def cmd_scaffold(args: argparse.Namespace) -> None:
     ).fetchone()
     conn_pat.close()
     pat_title    = pat_row[0] if pat_row else ""
-    pat_abstract = (pat_row[1] or "")[:500]
+    pat_abstract = (pat_row[1] or "")[:150]
     pat_grant    = str(pat_row[2])[:10] if pat_row else ""
     pat_assignee = pat_row[3] if pat_row else ""
     pat_app_dt   = str(pat_row[4])[:10] if pat_row else ""
@@ -516,8 +512,8 @@ def historian_main() -> None:
     digest_p.add_argument("project", help="Project name")
     digest_p.add_argument("--min-score", type=float, default=0.5, dest="min_score",
                           help="Min score for unreviewed count (default: 0.5)")
-    digest_p.add_argument("--top", type=int, default=10, dest="top_n",
-                          help="Number of next-review candidates to list (default: 10)")
+    digest_p.add_argument("--top", type=int, default=5, dest="top_n",
+                          help="Number of next-review candidates to list (default: 5)")
     digest_p.add_argument("--tokens", action="store_true",
                           help="Print token count of digest output to stderr")
 

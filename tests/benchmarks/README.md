@@ -69,3 +69,55 @@ loss to typical sessions where only 3–5 candidates are reviewed per sitting.
   before the session starts).
 - The 2,122-token session total is well within Haiku's 200K context window. The P4
   viability question is output quality with reduced context, not window overflow.
+
+---
+
+## P3 Hotspot Reductions — 2026-05-24
+
+**Gate target:** ≥20% reduction vs baseline  
+**Result:** 22.3% reduction — **GATE PASSED**
+
+### Changes implemented
+
+| Target | Change | Tokens saved (est.) |
+|---|---|---|
+| Card format | Removed 4 blank separator lines | ~20 |
+| Card format | Compact header: status/score/gap → single `## CARD` line | ~10 |
+| Card format | Removed `figures` field (almost always "absent") | ~25 |
+| Card format | Removed `reg_no` field (available in scaffold frontmatter) | ~25 |
+| Card abstract | Truncated 120 → 80 chars | ~10 |
+| Card goods | Truncated 100 → 80 chars | ~5 |
+| Card signals | Compact sig-code format (`TA gt=0.123 ga=0.456`) | ~15 |
+| Digest confirmed | Single summary line instead of per-pair listing | ~200 |
+| Digest next_review | `--top` default 10 → 5 | ~150 |
+| Scaffold abstract | Truncated 500 → 150 chars | 0* |
+| Scaffold goods | Truncated raw → 150 chars | 0* |
+
+\* variadex-us2152606a (benchmark scaffold slug) has no abstract and 35-char goods;
+truncation fires on patents with longer texts.
+
+### Per-command measurements (post-P3)
+
+| Command | n | Mean prompt tokens | Min | Max |
+|---|---|---|---|---|
+| digest | 1 | 251 | 251 | 251 |
+| card | 5 | 188 | 179 | 196 |
+| scaffold | 1 | 456 | 456 | 456 |
+
+**Session total (7 instrumented commands):** 1,648 prompt tokens  
+**Reduction vs baseline:** 474 tokens (22.3%)  
+**Gate (≥20%):** PASSED
+
+### Validate gate
+
+`historian validate information-systems soundex-us1261167a` — all 6 checks PASS after
+card format changes. No regressions introduced.
+
+### Notes
+
+- Scaffold abstract/goods truncation is correct but does not fire on the benchmark slug
+  (variadex has no abstract in the DB; goods = "CARD AND CORRESPONDENCE FILE GUIDES",
+  35 chars). Sessions with longer-abstract patents will see additional savings.
+- Card mean dropped from 224 (baseline) → 188 post-P3, a 16% per-card reduction.
+- Digest dropped from 545 → 251, a 54% reduction driven by confirmed-pairs summary
+  and top-5 default.
