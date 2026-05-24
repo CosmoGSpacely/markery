@@ -305,13 +305,15 @@ def test_digest_token_estimate_under_ceiling(tmp_path, capsys):
         args.project   = "test-proj"
         args.min_score = 0.0
         args.top_n     = 5
+        args.tokens    = True
         cmd_digest(args)
 
-    out = capsys.readouterr().out
-    # Extract token estimate
+    captured = capsys.readouterr()
+    # Token count is now emitted to stderr via --tokens flag (word-count
+    # estimate when no ANTHROPIC_API_KEY is present).
     import re
-    m = re.search(r'\[~(\d+) tokens', out)
-    assert m, "Token estimate not found in digest output"
+    m = re.search(r'prompt=(\d+)', captured.err)
+    assert m, "Token count not found in stderr; --tokens flag not working"
     assert int(m.group(1)) < 1200
 
 
