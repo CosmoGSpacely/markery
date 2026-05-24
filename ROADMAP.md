@@ -8,7 +8,7 @@ Phases 9–13 closed 2026-05-24. Archived to `archive/ROADMAP-2026-05-24.md`.
 
 ---
 
-## Phase 14 — Efficiency Baseline: Token and Model Benchmarking
+## Phase 14 — Efficiency Baseline: Token and Model Benchmarking — CLOSED
 
 **Opened:** 2026-05-24  
 **Trigger:** Phase 13 complete — v0.3.0 tagged, public readiness achieved.  
@@ -18,7 +18,7 @@ Phases 9–13 closed 2026-05-24. Archived to `archive/ROADMAP-2026-05-24.md`.
 
 ---
 
-### P1 — Token instrumentation
+### P1 — Token instrumentation — CLOSED
 
 Add per-command token measurement so every API call is observable without external tooling.
 
@@ -29,7 +29,7 @@ Add per-command token measurement so every API call is observable without extern
 
 ---
 
-### P2 — Baseline sweep
+### P2 — Baseline sweep — CLOSED
 
 Run the standard session workflow on `information-systems` and record the token profile as the baseline.
 
@@ -79,7 +79,7 @@ Validate that the reduced workflows are completable on a free-tier model.
 
 ---
 
-### P5 — MVO contracts
+### P5 — MVO contracts — CLOSED
 
 Formalize the minimum viable output definition per command so free-model results are testable without human review.
 
@@ -92,17 +92,17 @@ Formalize the minimum viable output definition per command so free-model results
 
 ### Phase Gate
 
-P1 PASSED when: `--tokens` flag produces accurate token counts on any API-calling command; `MARKERY_TOKEN_LOG` appends valid JSON lines; confirmed against an actual API response.
+P1 PASSED when: `--tokens` flag produces accurate token counts on any API-calling command; `MARKERY_TOKEN_LOG` appends valid JSON lines; confirmed against an actual API response. — PASSED
 
-P2 PASSED when: baseline sweep is complete, `tests/benchmarks/README.md` has a populated baseline table, and the top 3 hotspots are named.
+P2 PASSED when: baseline sweep is complete, `tests/benchmarks/README.md` has a populated baseline table, and the top 3 hotspots are named. — PASSED (2,122-token baseline; 3 hotspots identified in tests/benchmarks/README.md)
 
 P3 PASSED when: session-level prompt tokens are ≥ 20% below the P2 baseline; `markery historian validate` passes on essays produced post-reduction. — PASSED (22.3% reduction, 1,648 vs 2,122 tokens; validate all-PASS)
 
 P4 PASSED when: gallery-exploration and card/digest historian workflows complete end-to-end on Haiku without hallucinated structured data or context-window overflow; results recorded in `tests/benchmarks/README.md`. — PASSED (both workflows PASS; max 1.5% of 200K context window; hallucination check PASS on all runs)
 
-P5 PASSED when: all MVO tests pass with the primary paid model; `tests/benchmarks/mvo.md` is complete.
+P5 PASSED when: all MVO tests pass with the primary paid model; `tests/benchmarks/mvo.md` is complete. — PASSED (55/55 tests pass; mvo.md written; mvo CI job added to ci.yml under workflow_dispatch)
 
-Phase PASSED when P1–P5 all pass.
+Phase PASSED when P1–P5 all pass. — PASSED 2026-05-24
 
 ---
 
