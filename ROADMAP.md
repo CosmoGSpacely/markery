@@ -62,7 +62,7 @@ For each hotspot identified in P2, design and apply a targeted reduction. Measur
 
 ---
 
-### P4 — Free-model run
+### P4 — Free-model run — CLOSED
 
 Validate that the reduced workflows are completable on a free-tier model.
 
@@ -98,7 +98,7 @@ P2 PASSED when: baseline sweep is complete, `tests/benchmarks/README.md` has a p
 
 P3 PASSED when: session-level prompt tokens are ≥ 20% below the P2 baseline; `markery historian validate` passes on essays produced post-reduction. — PASSED (22.3% reduction, 1,648 vs 2,122 tokens; validate all-PASS)
 
-P4 PASSED when: gallery-exploration and card/digest historian workflows complete end-to-end on Haiku without hallucinated structured data or context-window overflow; results recorded in `tests/benchmarks/README.md`.
+P4 PASSED when: gallery-exploration and card/digest historian workflows complete end-to-end on Haiku without hallucinated structured data or context-window overflow; results recorded in `tests/benchmarks/README.md`. — PASSED (both workflows PASS; max 1.5% of 200K context window; hallucination check PASS on all runs)
 
 P5 PASSED when: all MVO tests pass with the primary paid model; `tests/benchmarks/mvo.md` is complete.
 

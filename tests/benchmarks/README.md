@@ -121,3 +121,66 @@ card format changes. No regressions introduced.
 - Card mean dropped from 224 (baseline) → 188 post-P3, a 16% per-card reduction.
 - Digest dropped from 545 → 251, a 54% reduction driven by confirmed-pairs summary
   and top-5 default.
+
+---
+
+## P4 Free-Model Run — 2026-05-24
+
+**Model:** `claude-haiku-4-5-20251001`  
+**Script:** `tests/benchmarks/p4_haiku_run.py`  
+**Log file:** `p4-haiku-2026-05-24.jsonl`
+
+### Test design
+
+Both workflows send actual inference requests to Haiku. Validation checks that
+responses contain no serial or patent numbers absent from the input context
+(hallucination check).
+
+### Historian workflow — card/digest
+
+| Metric | Value |
+|---|---|
+| Context: persona + digest + 3 cards | 2,455 prompt tokens |
+| Completion tokens | 472 |
+| Wall time | 5,615 ms |
+| Hallucination check | PASS |
+| Context window used | 1.2% of 200K |
+
+**Response quality:** Haiku correctly identified the REMINGTON RAND pair as the
+strongest candidate (matching assignee, 18-day filing gap, goods alignment), noted
+the weaker FAVORITE-US1527374A score, and flagged the entity ambiguity on the RAND
+card. All serial and patent numbers referenced were from the input cards.
+
+### Gallery/Wikipedia workflow — essay review
+
+| Metric | Value |
+|---|---|
+| Context: persona + chicago-pneumatic essay | 3,090 prompt tokens |
+| Completion tokens | 164 |
+| Wall time | 2,821 ms |
+| Hallucination check | PASS |
+| Context window used | 1.5% of 200K |
+
+**Response quality:** Haiku produced a correctly-sourced Wikipedia talk-page note
+citing serial number 71299042, the April 1930 filing date, and the historical
+significance of the CP monogram. No invented sources or serial numbers.
+
+### P4 gate result
+
+| Criterion | Result |
+|---|---|
+| No hallucinated serial or patent numbers | PASS (both workflows) |
+| Context window not exceeded | PASS (max 1.5% of 200K used) |
+| Structurally valid, parseable without human correction | PASS |
+
+**Gate: PASSED**
+
+### Notes
+
+- The `validate` subcommand check ("output passes validate") applies to essay
+  markdown files; the historian workflow in this test produced candidate assessments,
+  not a complete essay. Quality was evaluated by response structure and hallucination
+  absence instead.
+- Wall times (2.8–5.6 s) reflect actual Haiku inference, not just token counting.
+- Haiku correctly declined to invent facts when context was sparse (e.g., did not
+  fabricate a goods description for the RAND card that was absent from the input).
