@@ -26,3 +26,8 @@ def load_epo_credentials() -> tuple[str, str]:
 def load_tsdr_key() -> str:
     """Return USPTO API key for TSDR."""
     return _require_env("USPTO_API_KEY", "register at https://account.uspto.gov/api-manager/")
+
+
+def load_anthropic_key() -> str:
+    """Return Anthropic API key for token counting and future inference."""
+    return _require_env("ANTHROPIC_API_KEY", "register at https://console.anthropic.com")

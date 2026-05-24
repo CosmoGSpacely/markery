@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
+import time
 from pathlib import Path
 
 from markery.common.config import DB
 from markery.common.project import Project, require_project
+from markery.common.tokens import TokenRecord, count_output_tokens, emit as emit_tokens
 
 
 def _parse_slug(slug: str) -> tuple[str, str]:
@@ -31,6 +34,7 @@ def _slug_matches_trademark(slug: str, trademark: str) -> bool:
 def cmd_card(args: argparse.Namespace) -> None:
     import duckdb
 
+    t0 = time.monotonic()
     proj     = require_project(args.project)
     tm_slug, pat_no = _parse_slug(args.slug)
 
@@ -154,11 +158,18 @@ def cmd_card(args: argparse.Namespace) -> None:
         out_path.write_text(card_text + "\n", encoding="utf-8")
         print(f"Card written → {out_path}")
 
+    tokens_flag = getattr(args, "tokens", False)
+    if tokens_flag or os.environ.get("MARKERY_TOKEN_LOG"):
+        rec = count_output_tokens(card_text)
+        rec.wall_ms = int((time.monotonic() - t0) * 1000)
+        emit_tokens(rec, specialist="historian", command="card", tokens_flag=tokens_flag)
+
 
 def cmd_digest(args: argparse.Namespace) -> None:
     import json as _json
     from datetime import datetime
 
+    t0 = time.monotonic()
     proj = require_project(args.project)
 
     lines: list[str] = [f"## DIGEST: {args.project}  [{datetime.utcnow().strftime('%Y-%m-%dT%H:%M')}Z]", ""]
@@ -235,15 +246,17 @@ def cmd_digest(args: argparse.Namespace) -> None:
     digest_text = "\n".join(lines)
     print(digest_text)
 
-    # Token estimate (rough: ~0.75 tokens per word)
-    word_count = len(digest_text.split())
-    token_est  = int(word_count * 0.75)
-    print(f"\n[~{token_est} tokens estimated]")
+    tokens_flag = getattr(args, "tokens", False)
+    if tokens_flag or os.environ.get("MARKERY_TOKEN_LOG"):
+        rec = count_output_tokens(digest_text)
+        rec.wall_ms = int((time.monotonic() - t0) * 1000)
+        emit_tokens(rec, specialist="historian", command="digest", tokens_flag=tokens_flag)
 
 
 def cmd_scaffold(args: argparse.Namespace) -> None:
     import duckdb
 
+    t0 = time.monotonic()
     proj = require_project(args.project)
     tm_slug, pat_no = _parse_slug(args.slug)
 
@@ -371,6 +384,12 @@ date_gap: "{gap_str}"
     out_path.write_text(scaffold, encoding="utf-8")
     print(f"Scaffold written → {out_path}")
 
+    tokens_flag = getattr(args, "tokens", False)
+    if tokens_flag or os.environ.get("MARKERY_TOKEN_LOG"):
+        rec = count_output_tokens(scaffold)
+        rec.wall_ms = int((time.monotonic() - t0) * 1000)
+        emit_tokens(rec, specialist="historian", command="scaffold", tokens_flag=tokens_flag)
+
 
 def cmd_validate(args: argparse.Namespace) -> None:
     import duckdb
@@ -490,6 +509,8 @@ def historian_main() -> None:
     card_p.add_argument("slug",    help="Candidate slug, e.g. soundex-us1261167a")
     card_p.add_argument("--out",   default=None, metavar="PATH",
                         help="Output path (default: matches/cards/<slug>.md); use '-' for stdout")
+    card_p.add_argument("--tokens", action="store_true",
+                        help="Print token count of card output to stderr")
 
     digest_p = sub.add_parser("digest", help="Project state summary (~800-1200 tokens)")
     digest_p.add_argument("project", help="Project name")
@@ -497,12 +518,16 @@ def historian_main() -> None:
                           help="Min score for unreviewed count (default: 0.5)")
     digest_p.add_argument("--top", type=int, default=10, dest="top_n",
                           help="Number of next-review candidates to list (default: 10)")
+    digest_p.add_argument("--tokens", action="store_true",
+                          help="Print token count of digest output to stderr")
 
     scaffold_p = sub.add_parser("scaffold", help="Generate essay skeleton for a confirmed pair")
     scaffold_p.add_argument("project", help="Project name")
     scaffold_p.add_argument("slug",    help="Confirmed pair slug, e.g. soundex-us1261167a")
     scaffold_p.add_argument("--force", action="store_true",
                             help="Overwrite existing essay file")
+    scaffold_p.add_argument("--tokens", action="store_true",
+                            help="Print token count of scaffold output to stderr")
 
     validate_p = sub.add_parser("validate", help="Validate essay against DB records")
     validate_p.add_argument("project", help="Project name")
