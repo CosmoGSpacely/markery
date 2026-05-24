@@ -1,6 +1,6 @@
 # Markery Status
 
-**Last updated:** 2026-05-22
+**Last updated:** 2026-05-24
 
 ---
 
@@ -19,20 +19,23 @@
 | `enhance` — gallery subcommand | ✅ | Works without optional deps (lazy import fix 2026-05-20) |
 | `enhance` — enhance/batch subcommands | ✅ | Lanczos fallback active; Real-ESRGAN activates automatically if installed |
 | `wikipedia` — draft/submit/from-essay subcommands | ✅ | `from-essay` works without confirmed.jsonl for any project |
-| GitHub Pages CI (`pages.yml`) | ❌ Disabled | Workflows deleted 2026-05-20 — Phase 12 P5 |
+| GitHub Pages CI (`pages.yml`) | ✅ | Fixed in v0.3.1a1 (2026-05-24) — `notes` column removed from query, Node.js 24 opted in |
 
 ---
 
 ## Active Roadmap Phase
 
-**Phase 9 — Tool Generalization: Image Enhancement & Wikipedia** (opened 2026-05-20)
+**Phase 14 — Efficiency Baseline: Token and Model Benchmarking** (opened 2026-05-24)
 
 | Sub-phase | Status |
 |---|---|
-| P1 — vtracer install + Lanczos fallback in `upscale.py` | ✅ PASSED 2026-05-22 |
-| P2 — `markery wikipedia from-essay` subcommand | ✅ PASSED 2026-05-22 |
-| P3 — Dependency tier documentation in `SETUP.md` | ✅ PASSED 2026-05-22 |
-| P4 — Wikipedia live edit test (sandbox → Chicago Pneumatic external link) | Stage 4a ✅ (rev 1355562394) · Stage 4b ✅ live (rev 1355562959) · awaiting 48h revert check |
+| P1 — Token instrumentation (`--tokens` flag, `MARKERY_TOKEN_LOG`) | 🔲 Not started |
+| P2 — Baseline sweep on `information-systems` | 🔲 Not started |
+| P3 — Hotspot reductions (≥ 20% prompt-token reduction) | 🔲 Not started |
+| P4 — Free-model run (Haiku end-to-end validation) | 🔲 Not started |
+| P5 — MVO contracts and `tests/test_mvo.py` | 🔲 Not started |
+
+**Phases 9–13 closed 2026-05-24.** Phase 9 P4 final state: Stage 4a ✅ (rev 1355562394) · Stage 4b ✅ live (rev 1355562959) · 48h window elapsed unreverted. Stages 4c–4d deferred as D023, D024.
 
 ---
 
@@ -52,6 +55,6 @@ Project types define the workflow a project follows. Type definitions and sessio
 | Project | Type | Next action |
 |---|---|---|
 | `information-systems` | Match-review-essay | Resume candidate review |
-| `monthly-image-review` | Gallery/exploration | Run July–December 1930 months; Chicago Pneumatic Wikipedia article pending Phase 9 P4 |
+| `monthly-image-review` | Gallery/exploration | Run July–December 1930 months; Stage 4c Wikipedia inline citation deferred (D023) |
 
 See each project's `STATUS.md` for detail.
