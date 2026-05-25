@@ -94,6 +94,63 @@ stronger simultaneously.
 
 ---
 
+## Repo Architecture Decision — 2026-05-25
+
+**Decision: new repo (`Markery-LangGraph`), shared data contract, no code dependency.**
+
+Evaluated after Phase 14 closed and Phases 15–16 were planned.
+
+### Options considered
+
+| Option | Verdict | Reason |
+|---|---|---|
+| Fork of Markery | Rejected | Implies Markery was inadequate; muddies which is canonical; diverges immediately with no benefit |
+| Monorepo subdirectory | Rejected | Dilutes the portfolio signal — the architectural contrast between CLI pipeline and LangGraph harness is the point; burying one inside the other collapses that contrast |
+| New repo with pip dependency on Markery | Rejected | Tightly couples the repos; every internal Markery refactor risks breaking the LangGraph repo; would require refactoring Markery to expose a stable Python API before the companion can start |
+| **New repo, shared data contract** | **Chosen** | Cleanest separation; each repo tells a complete story; the DuckDB schema and project directory conventions are the interface, not Python imports |
+
+### What "shared data contract" means
+
+The two repos operate against the same data files via shared path conventions. Neither imports the other's Python code. The contract is:
+
+**DuckDB files** (read by both repos):
+- `data/patents.duckdb` — schema documented in `src/markery/specialist/patent/`
+- `data/trademarks.duckdb` — schema documented in `src/markery/specialist/trademark/`
+- `data/entities.duckdb` — schema documented in `src/markery/specialist/matchmaker/`
+
+**Project artifact files** (written by Markery-ICM, read by Markery-LangGraph):
+- `projects/<name>/matches/candidates.jsonl` — one JSON record per candidate pair
+- `projects/<name>/matches/confirmed.jsonl` — human-confirmed pairs
+- `projects/<name>/matches/rejected.jsonl` — explicitly rejected pairs
+- `projects/<name>/content/*.md` — research essays with YAML frontmatter
+- `projects/<name>/entities.csv`, `variants.csv` — entity registry
+
+**Library files** (written by LIBRARIAN in Markery-ICM, readable by both):
+- `library/works/<slug>/excerpts.md` — curated passages
+- `library/index.jsonl` — passage index
+- `library/index.duckdb` — embedding vectors (Phase 15 P7)
+
+### The portfolio story
+
+Both repos should acknowledge the relationship explicitly in their READMEs:
+
+- **Markery-ICM README:** "See also: Markery-LangGraph — the same domain implemented as a LangGraph agent graph with LiteLLM-routed inference, operating against the same DuckDB corpus."
+- **Markery-LangGraph README:** "Companion to Markery-ICM — this repo demonstrates the same patent-trademark research pipeline implemented using industry-standard agent orchestration (LangGraph + LiteLLM). It reads from and writes to the same DuckDB files."
+
+The contrast is the signal: one repo proves you can build infrastructure from scratch; the other proves you know how to use production harnesses.
+
+### Implementation sequence
+
+- **Phase 16** (Markery-ICM): PatentsView bulk import, Wikipedia Stage 4, documentation pass, code gap analysis.
+- **Phase 17** (Markery-ICM): any changes Markery requires to make the shared data contract formal and stable — schema documentation, file format versioning, query interface hardening. This is Markery work done in service of Markery-LangGraph.
+- **After Phase 17**: begin `langgraph new` in the new repo. Wire one workflow (patent search → classification → report) through the graph before adding agents. The data contract defined in Phase 17 is the starting point.
+
+### LIBRARIAN wrinkle
+
+Phase 15 adds a non-trivial acquisitions layer (IA/Gutenberg fetch, Claude-assisted extraction, sentence-transformers embeddings). When Markery-LangGraph adds a LIBRARIAN node, it will either reimplement that logic or the acquisition/embedding code will need extracting into a shared package (`markery-lib`). This is a Phase 18+ consideration — do not solve it before Markery-LangGraph exists and the duplication is real.
+
+---
+
 ## Architecture Diagrams — LangGraph Mapping
 
 These diagrams map Markery's specialist structure onto a LangGraph implementation.

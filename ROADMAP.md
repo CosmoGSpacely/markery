@@ -424,3 +424,74 @@ P6 PASSED when: `DEFERRED.md` updated with all newly discovered gaps; every open
 P7 PASSED when: bulk-import MVO tests pass; D007, D023, D024 all marked resolved in `DEFERRED.md`.
 
 Phase PASSED when P1–P7 all pass.
+
+---
+
+## Phase 17 — Shared Data Contract: Markery-ICM Preparation for Markery-LangGraph
+
+**Trigger:** Phase 16 complete; Markery-LangGraph repo initiated.  
+**Scope:** Any changes Markery-ICM requires to make the shared data contract between the two repos formal, stable, and documented. This phase exists entirely in service of the companion repo. No new specialist features; no new research capabilities. If Phase 16's code gap analysis (P6) surfaces contract-relevant gaps, they are promoted here.
+
+**What Markery-LangGraph depends on (the contract):**
+- DuckDB schemas for `patents.duckdb`, `trademarks.duckdb`, `entities.duckdb`
+- JSONL record shapes for `candidates.jsonl`, `confirmed.jsonl`, `rejected.jsonl`
+- Essay frontmatter keys in `projects/<name>/content/*.md`
+- `library/index.jsonl` passage record shape and `library/index.duckdb` embedding schema (Phase 15)
+- Score field semantics (structural + semantic ceiling; 0.80 cap)
+
+Full architecture decision and repo relationship documented in `GITHUB_REVIEW.md` §"Repo Architecture Decision — 2026-05-25".
+
+---
+
+### P1 — Contract audit
+
+Identify every data shape the companion repo will consume and verify each is explicitly documented somewhere in Markery-ICM.
+
+1. Enumerate all files the contract covers (DuckDB tables, JSONL records, markdown frontmatter, library index). For each: locate the existing documentation (schema DDL, identity.md scope, README, or inline comment). Flag any shape with no authoritative documentation.
+2. Review DuckDB schemas for runtime stability: any column that a query outside Markery-ICM might depend on must have a documented type and nullable constraint. Columns used only internally can remain undocumented.
+3. Review JSONL record shapes: `candidates.jsonl` and `confirmed.jsonl` field sets have grown organically. Document the canonical field list and mark which fields are guaranteed-present vs. optional.
+4. Review essay frontmatter: verify the seven required keys (`title`, `trademark_serial`, `trademark`, `tm_filing_dt`, `patent_no`, `patent_grant_dt`, `entity`) are enforced by `historian validate` and documented as the stable interface.
+5. Output: a `CONTRACT.md` at repo root listing each contract surface, its format, and a pointer to the authoritative schema definition.
+
+---
+
+### P2 — Schema hardening
+
+Fix any gaps the P1 audit surfaces. No new features — only documentation, light enforcement, and stability fixes.
+
+1. For any undocumented DuckDB column that the companion repo will need: add a `-- contract: <type>, <nullable>` comment to the DDL or a schema note in the relevant specialist's design doc.
+2. For any JSONL field that is present in some records but not others without documentation: add it to the canonical field list with `optional: true` and document the condition under which it appears (e.g., `cpc_classes` is present only after `markery patent signals` has run).
+3. For any essay frontmatter key that `historian scaffold` does not currently write: either add it to scaffold output or remove it from the contract.
+4. Verify `historian validate` enforces all seven required frontmatter keys. If any key passes validate despite being absent or malformed, fix the check.
+
+---
+
+### P3 — CONTRACT.md and version marker
+
+1. Write `CONTRACT.md` at repo root: one section per contract surface (DuckDB tables, JSONL files, essay frontmatter, library index). Each section: field name, type, nullable, guaranteed-present or optional, example value, and a one-line description of its purpose for a Markery-LangGraph node consuming it.
+2. Add a `contract_version` field to `data/` or a `MANIFEST.json` at repo root (e.g., `{"contract_version": "1.0", "markery_version": "0.3.0"}`). Markery-LangGraph reads this at startup to verify compatibility. Increment on any breaking contract change.
+3. Update `GITHUB_REVIEW.md` to note that `CONTRACT.md` is the authoritative interface document.
+
+---
+
+### P4 — Integration smoke test
+
+Verify that a minimal Markery-LangGraph node can read all contract surfaces without error.
+
+1. Write `tests/test_contract.py`: for each contract surface, assert the expected fields are present in a real data record from the `information-systems` project. This test does not depend on LangGraph — it validates that Markery-ICM's output matches what `CONTRACT.md` promises.
+2. Run against `information-systems` corpus. All assertions pass.
+3. Add `test_contract` to the MVO job in `ci.yml` (runs under `workflow_dispatch` only, same as `test_mvo`).
+
+---
+
+### Phase Gate
+
+P1 PASSED when: every contract surface has located documentation; gaps are listed.
+
+P2 PASSED when: all documented gaps are resolved; `historian validate` enforces all required frontmatter keys.
+
+P3 PASSED when: `CONTRACT.md` exists at repo root; `MANIFEST.json` has `contract_version`; `GITHUB_REVIEW.md` updated.
+
+P4 PASSED when: `tests/test_contract.py` passes against `information-systems`; test added to CI mvo job.
+
+Phase PASSED when P1–P4 all pass. Markery-LangGraph repo may begin after this gate.
