@@ -106,78 +106,145 @@ Phase PASSED when P1–P5 all pass. — PASSED 2026-05-24
 
 ---
 
-## Phase 15 — LIBRARIAN Specialist: Cross-Project Reference Retrieval
+## Phase 15 — LIBRARIAN Specialist: Acquisitions, Indexing, and Semantic Retrieval
 
 **Trigger:** Phase 14 complete — v0.3.0 public, token benchmarks established.  
-**Scope:** Build the sixth specialist. LIBRARIAN owns a shared `library/` directory at repo root, indexes secondary literature across all projects, and gives the historian a searchable reference corpus rather than isolated per-project stubs.
+**Scope:** Build the sixth specialist with two distinct capabilities: (1) an acquisitions layer that fetches full text from Internet Archive and Project Gutenberg and uses Claude to extract relevant passages; (2) a retrieval layer with both keyword and semantic (vector) search. LIBRARIAN owns `library/` at repo root and makes secondary literature available to any historian session via compact context cards.
 
-**Goal state:** By phase close, `markery librarian search <query>` returns annotated passages from indexed works; at least three works with real excerpts are in `library/`; the historian can load a compact context card from the library into any session; D020 is closed.
+**Goal state:** By phase close, `markery librarian acquire` can fetch a public-domain work and populate its excerpts using Claude-assisted extraction; `markery librarian search` supports both keyword and semantic (embedding-based) modes; at least five works are indexed with real passages; the historian can load a context card in any session; D020 is closed.
+
+**Source landscape:**
+- **Internet Archive (primary):** No auth required for public domain works. Full text available as plain `.txt` or EPUB. Large collection strong in American business and industrial history 1870–1930.
+- **Project Gutenberg via Gutendex (secondary):** No auth required. Human-proofread plain text — highest quality. Smaller collection; fills gaps for canonical titles IA also has but with better OCR.
+- **Library of Congress:** Supplemental, for government reports and trade publications where IA coverage is thin.
+- **Google Books:** Metadata and discovery only — API cannot return full text programmatically. Used to find an IA or Gutenberg copy of a known title, not as a text source itself.
+- **HathiTrust:** Data API retired July 2024. Not viable for real-time access.
+
+**Embedding model:** `sentence-transformers/all-MiniLM-L6-v2` (local, no API key, ~80 MB). Fits the model-agnosticism principle; runs offline. Embeddings stored as JSON float arrays in `library/index.duckdb`; cosine similarity computed in Python with numpy at search time. Swappable via config for an API-based provider (OpenAI, Voyage AI) if scale or quality requires it.
 
 **D020 blocking condition status (at phase open):**
-- Condition 1 (format proven across two projects): NOT MET — `information-systems/references/` has three files but passage sections are all stubs. `monthly-image-review` has no `references/` directory. Phase opens by meeting these conditions in P1.
-- Condition 2 (concrete cross-project retrieval need): NOT MET — no second project holds references. Phase opens by establishing it in P1.
+- Condition 1 (format proven across two projects): NOT MET — `information-systems/references/` has three stub files; `monthly-image-review` has no `references/` directory. Met in P1.
+- Condition 2 (concrete cross-project retrieval need): NOT MET — no second project holds references. Met in P1.
 
 ---
 
 ### P1 — Prove blocking conditions
 
-Satisfy D020 conditions before writing a line of specialist code.
+Satisfy D020 conditions before writing a line of specialist code. This is manual work — the acquisitions tooling built in P2 will automate future corpus growth, but the format must be proven first with hand-curated content.
 
-1. Populate real excerpts in `information-systems/references/` for at least two works (Yates and Cortada are the natural first choices — both have IA-borrowable copies). Each passage block must have a verbatim quotation and a context note. Stub `<!-- Add passage -->` comments do not count.
-2. Create `projects/monthly-image-review/references/` with at least one work relevant to that project's scope (industrial design mark history, pneumatic tool industry, or American manufacturing branding in the 1920s–1930s). Follow the same format established in `information-systems/references/README.md`.
-3. In `projects/monthly-image-review/references/README.md`, document one concrete example of a passage in `information-systems/references/` that the `monthly-image-review` historian would benefit from — establishing that cross-project access is the real need, not just copying files.
-4. Verify: both directories have at least one work with real (non-stub) passage sections.
-
----
-
-### P2 — Library structure
-
-Move from per-project stubs to a shared, schema-defined corpus.
-
-1. Create `library/` at repo root with:
-   - `library/works/<author-slug>/metadata.json` (author, title, year, publisher, isbn, ia_identifier, ia_access)
-   - `library/works/<author-slug>/excerpts.md` (annotated passages — same format as current `references/` files, minus per-project bias)
-   - `library/works/<author-slug>/index.md` (topic index: one line per passage heading with a short description)
-   - `library/README.md` (schema documentation and sourcing guidelines)
-2. Migrate the three `information-systems/references/` works (Yates, Cortada, Austrian/Hollerith) into `library/works/`. Carry forward all curated excerpts; do not lose passage content.
-3. Update `information-systems/references/` files to citation-only stubs — each file becomes a pointer (`see: library/works/<slug>`) rather than a content holder. Update `references/README.md` to describe the per-project citation convention.
-4. Migrate `monthly-image-review/references/` work(s) into `library/works/` on the same basis.
-5. Verify: `library/` contains at least three works; `projects/*/references/` contain only citation stubs; no passage content lives outside `library/`.
+1. Populate real excerpts in `information-systems/references/` for at least two works. Yates (*Control Through Communication*) and Cortada (*Before the Computer*) both have IA-borrow access via their `ia_identifier` fields. Each passage block must have a verbatim quotation with page number and a context note. Stub `<!-- Add passage -->` comments do not count.
+2. Create `projects/monthly-image-review/references/` with at least one work relevant to that project's scope — a history of American industrial tool design marks, Chicago Pneumatic's industry context, or branding in the 1920s–1930s manufacturing sector. Follow the format in `information-systems/references/README.md`.
+3. In `projects/monthly-image-review/references/README.md`, name one specific passage in `information-systems/references/` that this project's historian would use — documenting the cross-project retrieval need concretely.
+4. Commit all reference files. Verify: both directories have at least one work with real (non-stub) passage sections.
 
 ---
 
-### P3 — LIBRARIAN persona and specialist scaffold
+### P2 — Source adapters and acquisition CLI
 
-1. Create `src/markery/specialist/librarian/` with: `__init__.py`, `cli.py`, `persona/identity.md`, `persona/instructions/` (empty for now).
-2. Write `identity.md`: LIBRARIAN's scope is `library/` (owns it, writes to it) and `projects/*/references/` (reads citation stubs). It does not touch DuckDB, candidates, or confirmed records. It writes `library/` and `library/index.jsonl`.
-3. Register `markery librarian` in the top-level CLI dispatcher (`src/markery/cli.py` or equivalent entry point).
-4. Verify: `markery librarian --help` shows registered subcommands.
+Build the layer that fetches works from external sources. Output is normalized to a common format regardless of source.
+
+**Source adapters** — one module per source in `src/markery/specialist/librarian/sources/`:
+
+1. `ia.py` — Internet Archive adapter:
+   - `search(query, max_results=10) -> list[IAResult]`: calls the IA search API (`archive.org/advancedsearch.php`), returns items with `identifier`, `title`, `creator`, `year`, `mediatype=texts`
+   - `fetch_metadata(identifier) -> dict`: calls `/metadata/{identifier}`, returns structured metadata
+   - `download_text(identifier, out_dir) -> Path`: downloads the `.txt` file (preferred) or falls back to EPUB; saves to `out_dir/<identifier>.txt`
+
+2. `gutenberg.py` — Project Gutenberg adapter via Gutendex (`gutendex.com/books`):
+   - `search(query, max_results=10) -> list[GutenbergResult]`
+   - `fetch_metadata(book_id) -> dict`
+   - `download_text(book_id, out_dir) -> Path`: downloads plain text format
+
+3. `common.py` — shared `SourceResult` dataclass and `normalize_metadata() -> dict` for mapping source-specific fields to the `library/works/<slug>/metadata.json` schema.
+
+**CLI commands:**
+
+4. `markery librarian search-sources <query> [--source ia|gutenberg|all] [--top N]`: searches registered sources and prints a ranked results list with identifier, title, author, year, and source. No download. Used to discover works before acquiring them.
+
+5. `markery librarian acquire <identifier> [--source ia|gutenberg]`: fetches metadata and full text for a work; creates `library/works/<slug>/` with `metadata.json` and `raw_text.txt`; prints the created slug. Does not extract passages — that is P4's job.
+
+6. `markery librarian raw-text <slug>`: prints the path to `raw_text.txt` for a work (for manual inspection before extraction).
 
 ---
 
-### P4 — Index build and keyword search
+### P3 — Library structure and migration
 
-1. Implement `markery librarian index`: reads all `library/works/*/excerpts.md` files; extracts passage blocks (section heading + passage text + optional context note); writes `library/index.jsonl` (one record per passage: `work_slug`, `author`, `title`, `year`, `section`, `passage`, `context`).
-2. Implement `markery librarian search <query> [--top N]`: loads `library/index.jsonl`; case-insensitive substring match across `passage` + `section` + `context` text; returns top N matches (default 5) with work citation and passage context.
-3. Implement `markery librarian list`: prints one line per work (slug, author short, year, excerpt count) and a total.
-4. Add `--tokens` flag to `search` and `list` via existing `tokens.py` infrastructure.
-5. Verify: `markery librarian search "card index"` returns at least one passage from Cortada or Yates.
+Establish the canonical `library/` schema and migrate existing per-project reference files.
+
+1. Create `library/` at repo root:
+   - `library/README.md` — schema documentation, sourcing guidelines, acquisition workflow
+   - `library/works/<slug>/metadata.json` — structured metadata (source, author, title, year, isbn, ia_identifier, ia_access, gutenberg_id, acquired_at)
+   - `library/works/<slug>/raw_text.txt` — full acquired text (may be absent for manually-curated works; never committed to git if >1 MB — add to `.gitignore`)
+   - `library/works/<slug>/excerpts.md` — curated passages with page references and context notes
+   - `library/works/<slug>/index.md` — topic index: one line per passage heading
+2. Migrate the three `information-systems/references/` works (Yates, Cortada, Austrian/Hollerith) into `library/works/`. Carry all curated content.
+3. Migrate `monthly-image-review/references/` work(s) on the same basis.
+4. Convert per-project `references/` files to citation stubs: `see: library/works/<slug>`. Update both `references/README.md` files to describe the pointer convention.
+5. Add `library/works/*/raw_text.txt` to `.gitignore` (texts can be multi-MB; re-acquirable on demand).
+6. Verify: `library/` has at least four works; no passage content outside `library/`; raw texts excluded from git.
 
 ---
 
-### P5 — Historian context card
+### P4 — Claude-assisted passage extraction
 
-1. Implement `markery librarian card <query> [--top N]`: produces a compact context block (target ≤300 tokens) suitable for pasting into a historian session. Format: one record per match with `[Work, Year] Section heading — passage text (p. XX).`
-2. Add `--out -` flag (stdout) and default file output to `library/cards/<query-slug>.md` for persistence across sessions.
-3. Add `--tokens` flag.
-4. MVO contract: card output must contain at least one `[` citation marker and the word count of each passage must be preserved exactly (no truncation of excerpts mid-sentence).
+The acquisitions layer fetches raw text; this layer turns it into curated excerpts.
+
+1. Implement `markery librarian extract <slug> --topics <topic> [<topic> ...] [--max-passages N]`:
+   - Reads `library/works/<slug>/raw_text.txt`
+   - Chunks the text into overlapping windows (~2,000 tokens each with 200-token overlap)
+   - For each chunk, sends a prompt to Claude: "From the following passage, extract up to 3 verbatim quotations relevant to: {topics}. For each quotation, provide: the quoted text, an estimated page reference, and one sentence of context explaining its relevance."
+   - Collects candidate passages across all chunks; deduplicates by similarity
+   - Writes candidates to `library/works/<slug>/candidates.md` (staging area, not yet in excerpts.md)
+2. Implement `markery librarian review <slug>`: interactive review of `candidates.md` — prints each candidate passage with an accept/reject/edit prompt; accepted passages are appended to `excerpts.md` with proper section heading; rejected passages are discarded.
+3. Add `--auto-accept` flag to `extract` (non-interactive; writes directly to `excerpts.md`, skipping review). For use when the historian trusts the extraction quality. Default is interactive review.
+4. Add `--tokens` flag to `extract` via existing `tokens.py`.
+5. Verify: `markery librarian extract cortada-before-the-computer --topics "card index" "Remington Rand"` produces at least two candidate passages.
 
 ---
 
-### P6 — Tests, MVO contracts, and D020 close
+### P5 — LIBRARIAN persona and CLI scaffold
 
-1. Write `tests/test_librarian.py` covering: `index` builds `library/index.jsonl` with expected record structure; `search` returns matches for a known query; `list` enumerates works; `card` produces a compact output with citation markers. Use `tmp_path` fixtures with minimal library content — do not depend on the live `library/`.
-2. Add LIBRARIAN to `tests/benchmarks/mvo.md`: one table per command (`index`, `search`, `list`, `card`) with field and exit-code contracts.
+1. Create `src/markery/specialist/librarian/` with `__init__.py`, `cli.py`, `sources/` package, `persona/identity.md`, `persona/instructions/`.
+2. Write `identity.md`: LIBRARIAN owns `library/` (reads and writes); reads `projects/*/references/` (citation stubs only); never touches DuckDB, candidates, or confirmed records; never modifies project `content/` or `site/`. Acquisition commands (fetch from external sources) are within scope.
+3. Register `markery librarian` in the top-level CLI dispatcher.
+4. Verify: `markery librarian --help` shows: `search-sources`, `acquire`, `raw-text`, `extract`, `review`, `index`, `search`, `list`, `card`.
+
+---
+
+### P6 — Keyword index and search
+
+1. Implement `markery librarian index [--rebuild]`: parses all `library/works/*/excerpts.md`; extracts passage records (`work_slug`, `author`, `title`, `year`, `section`, `passage`, `context`); writes `library/index.jsonl`. The `--rebuild` flag forces a full reparse; default is incremental (only reindexes works whose `excerpts.md` is newer than the index entry).
+2. Implement `markery librarian search <query> [--top N] [--mode keyword|semantic|both]`: in `keyword` mode, case-insensitive substring match across passage + section + context; returns ranked matches with citation and passage preview.
+3. Implement `markery librarian list [--verbose]`: one line per work (slug, author, year, excerpt count, raw text present/absent).
+4. Add `--tokens` flag to `search` and `list`.
+5. Verify: `markery librarian search "card index" --mode keyword` returns at least one passage.
+
+---
+
+### P7 — Semantic (vector) search
+
+1. Add `sentence-transformers` (`all-MiniLM-L6-v2`) to optional dependencies in `pyproject.toml` under `[project.optional-dependencies]` as `librarian = ["sentence-transformers>=2.2"]`. Do not require it for base install.
+2. Extend `markery librarian index` with `--embed` flag: for each passage in `index.jsonl`, compute an embedding vector and store it in `library/index.duckdb` — table `passage_embeddings (work_slug TEXT, passage_id INT, embedding FLOAT[])`. Incremental: only embeds passages not already in the table.
+3. Implement `markery librarian search <query> --mode semantic [--top N]`: embeds the query with the same model; loads all embeddings from `library/index.duckdb`; computes cosine similarity with numpy; returns top N passages ranked by similarity. Falls back to keyword mode with a warning if embeddings have not been built.
+4. `--mode both`: runs keyword and semantic in parallel, merges results (deduplicated by passage_id), re-ranks by a weighted combination (default: 0.4 keyword presence + 0.6 semantic similarity).
+5. Document the model choice in `library/README.md`: why `all-MiniLM-L6-v2`, how to substitute an API-based provider, the DuckDB embedding table schema.
+6. Verify: `markery librarian search "systematic record-keeping" --mode semantic` returns the Yates passage about filing infrastructure even when "systematic record-keeping" does not appear verbatim.
+
+---
+
+### P8 — Historian context card
+
+1. Implement `markery librarian card <query> [--top N] [--mode keyword|semantic|both]`: compact output (≤300 tokens) for loading into a historian session. Format per match: `[Author (Year)] Section — "passage text" (p. XX).`
+2. `--out -` for stdout; default saves to `library/cards/<query-slug>.md`.
+3. `--tokens` flag.
+4. Verify: `markery librarian card "Remington Rand filing" --mode semantic` produces output ≤300 tokens containing at least one citation bracket.
+
+---
+
+### P9 — Tests, MVO contracts, and D020 close
+
+1. Write `tests/test_librarian.py`: unit tests using `tmp_path` fixtures with synthetic library content (3 works, 5 passages each). Cover: `index` record structure; keyword search returns correct passage; semantic search returns passage (mock embeddings — patch `sentence-transformers` call); `list` enumerates works; `card` ≤300 tokens with citation markers; `extract` calls Claude with expected prompt structure (mock API); `acquire` creates correct directory structure (mock HTTP).
+2. Add LIBRARIAN to `tests/benchmarks/mvo.md`: contracts for `search`, `list`, `card`, `index`.
 3. All tests pass.
 4. Mark D020 resolved in `DEFERRED.md`.
 
@@ -185,19 +252,25 @@ Move from per-project stubs to a shared, schema-defined corpus.
 
 ### Phase Gate
 
-P1 PASSED when: two projects have `references/` with real (non-stub) excerpts; cross-project need is documented.
+P1 PASSED when: two projects have `references/` with real excerpts; cross-project retrieval need documented.
 
-P2 PASSED when: `library/` exists with at least three works migrated; per-project `references/` are citation stubs only.
+P2 PASSED when: `markery librarian acquire` successfully fetches a work from IA; `search-sources` returns results for a known query.
 
-P3 PASSED when: `markery librarian --help` shows subcommands; `identity.md` written with correct scope.
+P3 PASSED when: `library/` exists with at least four works; per-project `references/` are citation stubs; `raw_text.txt` gitignored.
 
-P4 PASSED when: `markery librarian search "card index"` returns at least one real passage; `index.jsonl` exists and is valid JSON-L.
+P4 PASSED when: `markery librarian extract <slug> --topics <query>` produces candidate passages; `review` appends at least one accepted passage to `excerpts.md`.
 
-P5 PASSED when: `markery librarian card <query>` produces output ≤300 tokens with citation markers.
+P5 PASSED when: `markery librarian --help` shows all nine subcommands; `identity.md` written with correct scope.
 
-P6 PASSED when: all MVO tests pass; D020 closed in `DEFERRED.md`.
+P6 PASSED when: `markery librarian search <query> --mode keyword` returns real passages; `index.jsonl` valid JSON-L.
 
-Phase PASSED when P1–P6 all pass.
+P7 PASSED when: `markery librarian search "systematic record-keeping" --mode semantic` returns the Yates passage without that exact phrase; `passage_embeddings` table exists in `index.duckdb`.
+
+P8 PASSED when: `markery librarian card <query>` ≤300 tokens with citation markers.
+
+P9 PASSED when: all MVO tests pass; D020 closed.
+
+Phase PASSED when P1–P9 all pass.
 
 ---
 
