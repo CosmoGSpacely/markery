@@ -470,7 +470,7 @@ Fix any gaps the P1 audit surfaces. No new features — only documentation, ligh
 
 1. Write `CONTRACT.md` at repo root: one section per contract surface (DuckDB tables, JSONL files, essay frontmatter, library index). Each section: field name, type, nullable, guaranteed-present or optional, example value, and a one-line description of its purpose for a Markery-LangGraph node consuming it.
 2. Add a `contract_version` field to `data/` or a `MANIFEST.json` at repo root (e.g., `{"contract_version": "1.0", "markery_version": "0.3.0"}`). Markery-LangGraph reads this at startup to verify compatibility. Increment on any breaking contract change.
-3. Update `GITHUB_REVIEW.md` to note that `CONTRACT.md` is the authoritative interface document.
+   Architecture diagrams and the repo architecture decision are in `archive/GITHUB-REVIEW-2026-05-25.md`; `CONTRACT.md` supersedes that document as the authoritative interface definition.
 
 ---
 
@@ -490,7 +490,7 @@ P1 PASSED when: every contract surface has located documentation; gaps are liste
 
 P2 PASSED when: all documented gaps are resolved; `historian validate` enforces all required frontmatter keys.
 
-P3 PASSED when: `CONTRACT.md` exists at repo root; `MANIFEST.json` has `contract_version`; `GITHUB_REVIEW.md` updated.
+P3 PASSED when: `CONTRACT.md` exists at repo root; `MANIFEST.json` has `contract_version`.
 
 P4 PASSED when: `tests/test_contract.py` passes against `information-systems`; test added to CI mvo job.
 
