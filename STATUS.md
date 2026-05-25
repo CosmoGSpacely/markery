@@ -1,6 +1,6 @@
 # Markery Status
 
-**Last updated:** 2026-05-24
+**Last updated:** 2026-05-25
 
 ---
 
@@ -25,15 +25,11 @@
 
 ## Active Roadmap Phase
 
-**Phase 14 — Efficiency Baseline: Token and Model Benchmarking** (opened 2026-05-24)
+**Phase 15 — LIBRARIAN Specialist** — next to begin.
 
-| Sub-phase | Status |
-|---|---|
-| P1 — Token instrumentation (`--tokens` flag, `MARKERY_TOKEN_LOG`) | 🔲 Not started |
-| P2 — Baseline sweep on `information-systems` | 🔲 Not started |
-| P3 — Hotspot reductions (≥ 20% prompt-token reduction) | 🔲 Not started |
-| P4 — Free-model run (Haiku end-to-end validation) | 🔲 Not started |
-| P5 — MVO contracts and `tests/test_mvo.py` | 🔲 Not started |
+**Phase 14 — Efficiency Baseline: Token and Model Benchmarking — CLOSED 2026-05-24**
+
+All five sub-phases complete: `--tokens` flag + `MARKERY_TOKEN_LOG` instrumentation; baseline sweep (digest 2,125 tokens → 1,648 after hotspots, 22.3% reduction); Haiku free-model run (PASS, no hallucinations); MVO contracts + `tests/test_mvo.py` (55 contracts, `mvo` CI job).
 
 **Phases 9–13 closed 2026-05-24.** Phase 9 P4 final state: Stage 4a ✅ (rev 1355562394) · Stage 4b ✅ live (rev 1355562959) · 48h window elapsed unreverted. Stages 4c–4d deferred as D023, D024.
 

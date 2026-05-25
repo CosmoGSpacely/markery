@@ -70,6 +70,9 @@ markery trademark verify-credentials
 # Entity registry
 markery matchmaker build --data-dir projects/<project>
 markery matchmaker list
+markery matchmaker suggest-variants <project>   # suggest entity name variants from DB
+markery matchmaker auto-disposition <project> --reject-below 0.25  # batch-reject low-score candidates
+markery matchmaker preflight <project>          # pre-session signal audit
 
 # Match pipeline
 markery match <project>                    # generate candidates
@@ -78,6 +81,7 @@ markery review <project>                   # interactive review (Y / N / Q)
 
 # Historian tools
 markery historian prepare <project>        # generate session brief
+markery historian digest <project>         # compact project state summary (~800–1200 tokens)
 markery historian card <project> <slug>    # compact candidate card (~250 tokens)
 markery historian scaffold <project> <slug>  # generate essay skeleton
 markery historian validate <project> <slug>  # validate essay against DB
