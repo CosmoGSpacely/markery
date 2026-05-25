@@ -354,11 +354,54 @@ Depends on P2 (attribution resolved) and P3 (Stage 4c live ≥48 hours unreverte
 
 ---
 
-### P5 — Tests, cleanup, and gate
+### P5 — Documentation pass
 
-1. Add `markery patent bulk-import` to `tests/benchmarks/mvo.md`: contract for `status` command (prints row counts, exits 0) and `load` command (idempotent on re-run — no duplicate rows inserted on second load of same data).
-2. Write `tests/test_bulk_import.py`: test `status` against a fixture `.tsv.gz` (synthetic, 10-row subset); test `load` inserts expected rows and is idempotent. No real PatentsView download required in tests.
-3. Mark D007 resolved in `DEFERRED.md` with a note on the test scope and any `app_dt`-NULL constraint.
+Review all user-facing and developer-facing documentation for staleness and gaps introduced across Phases 14–16. This is a holistic pass, not a file-by-file rewrite — update only what has drifted or is missing.
+
+**Top-level docs:**
+1. `README.md` — verify it reflects v0.3.0 capabilities; update the command inventory if any commands added in Phases 14–16 are absent; confirm the setup instructions still work end-to-end.
+2. `DESIGN.md` — check whether the model-agnosticism section (added Phase 12) accurately describes the Phase 14 token instrumentation and Phase 15 LIBRARIAN embedding approach; add any new architectural patterns introduced.
+3. `SETUP.md` — confirm all new optional dependencies (`sentence-transformers`, `anthropic`) are documented with install instructions and purpose.
+4. `CONTEXT.md` — update the "what exists" summary to reflect the LIBRARIAN specialist and bulk-import capability.
+
+**Specialist docs:**
+5. Each specialist's `identity.md` — verify scope sections are current; any commands added in Phases 14–16 that changed what a specialist reads or writes must be reflected.
+6. Instruction cards (`persona/instructions/`) — audit against implemented commands: any command reachable via `markery <specialist> --help` that has no instruction card is a gap. Create stub cards for gaps; note which require full content.
+7. `src/markery/specialist/patent/BULK_CSV.md` — update with implementation decisions made during P1 (actual column mappings used, `app_dt` NULL behavior, any schema deviations from the design doc).
+8. `src/markery/specialist/librarian/` — write `persona/instructions/` cards for `acquire`, `discover`, `extract`, `search`, and `card` — the commands most likely to be used in historian sessions.
+
+**Benchmark docs:**
+9. `tests/benchmarks/README.md` — add a Phase 16 section noting the bulk-import command's token profile (if instrumented) and confirming the Phase 14 baseline is still valid after bulk-import rows are added.
+
+---
+
+### P6 — Code gap analysis
+
+Audit the full codebase for incomplete implementation, missing test coverage, and deferred items that Phase 14–16 work may have made satisfiable. The output is an updated `DEFERRED.md` — new entries for newly discovered gaps, closed entries for anything now satisfiable.
+
+**Implementation gaps:**
+1. Grep for `TODO`, `FIXME`, `HACK`, `raise NotImplementedError`, and `pass` in `src/`. For each hit: classify as (a) intentional stub to implement later, (b) known gap already in `DEFERRED.md`, or (c) newly discovered gap. Add any (c) items to `DEFERRED.md` with a reopen trigger.
+2. Cross-reference all subcommands in every specialist's `--help` output against their implementation in `cli.py`. Any subcommand registered but not dispatched is a gap.
+3. Check `markery historian prepare` — it dispatches to `prepare.py` but instruction cards may not reflect the current output format. Verify and flag if stale.
+
+**Test coverage gaps:**
+4. Run `python -m pytest --co -q` and compare collected tests against the full command inventory. Any command with zero test coverage gets a DEFERRED entry (`D0xx — add MVO tests for markery <specialist> <command>`).
+5. Check `tests/benchmarks/mvo.md` — verify every command in the MVO contract table has a corresponding test in `tests/test_mvo.py`. Add any missing contracts.
+
+**Schema and data gaps:**
+6. Document in `DEFERRED.md` any known data-quality constraints that Phase 16 P1 exposed: `app_dt` NULL for bulk-imported patents, assignee disambiguation quality differences between EPO OPS and PatentsView, CPC subclass truncation decisions.
+7. Check whether the `assignment` table queried in Phase 16 P2 (SOUNDEX ownership research) is actually populated. If not, add a DEFERRED entry for assignment data import.
+
+**DEFERRED.md hygiene:**
+8. Review every open DEFERRED entry. For each: confirm the reopen trigger is still valid; close any whose trigger conditions were silently met during Phases 14–16; update descriptions that reference stale paths or commands.
+
+---
+
+### P7 — Tests, cleanup, and close
+
+1. Add `markery patent bulk-import` to `tests/benchmarks/mvo.md`: contract for `status` (prints row counts, exits 0) and `load` (idempotent on re-run — no duplicate rows on second load of same data).
+2. Write `tests/test_bulk_import.py`: test `status` against a synthetic fixture `.tsv.gz` (10-row subset); test `load` inserts expected rows and is idempotent. No real PatentsView download required.
+3. Mark D007 resolved in `DEFERRED.md` with a note on test scope and the `app_dt`-NULL constraint.
 4. Mark D023 resolved in `DEFERRED.md` with the Wikipedia edit URL and timestamp.
 5. Mark D024 resolved in `DEFERRED.md` with the Wikipedia edit URL and the attribution finding from P2.
 
@@ -374,6 +417,10 @@ P3 PASSED when: Chicago Pneumatic inline citation is live on Wikipedia ≥48 hou
 
 P4 PASSED when: second article contribution is live; edit summary recorded in `STATUS.md`.
 
-P5 PASSED when: bulk-import MVO tests pass; D007, D023, D024 all marked resolved in `DEFERRED.md`.
+P5 PASSED when: all docs reviewed; instruction card gaps filed as DEFERRED or filled; `BULK_CSV.md` and LIBRARIAN instruction cards updated.
 
-Phase PASSED when P1–P5 all pass.
+P6 PASSED when: `DEFERRED.md` updated with all newly discovered gaps; every open entry has a valid reopen trigger; no command in `--help` output is unimplemented without a DEFERRED entry.
+
+P7 PASSED when: bulk-import MVO tests pass; D007, D023, D024 all marked resolved in `DEFERRED.md`.
+
+Phase PASSED when P1–P7 all pass.
