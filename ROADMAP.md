@@ -106,14 +106,178 @@ Phase PASSED when P1–P5 all pass. — PASSED 2026-05-24
 
 ---
 
-## Post-Phase-14 Horizon
+## Phase 15 — LIBRARIAN Specialist: Cross-Project Reference Retrieval
 
-### Phase 15 — LIBRARIAN Specialist: Cross-Project Reference Retrieval
+**Trigger:** Phase 14 complete — v0.3.0 public, token benchmarks established.  
+**Scope:** Build the sixth specialist. LIBRARIAN owns a shared `library/` directory at repo root, indexes secondary literature across all projects, and gives the historian a searchable reference corpus rather than isolated per-project stubs.
 
-Do not begin until both D020 blocking conditions are met: (1) `references/` format proven across two projects with curated excerpts; (2) historian demonstrates a concrete cross-project retrieval need. See `DEFERRED.md` D020 for full design.
+**Goal state:** By phase close, `markery librarian search <query>` returns annotated passages from indexed works; at least three works with real excerpts are in `library/`; the historian can load a compact context card from the library into any session; D020 is closed.
+
+**D020 blocking condition status (at phase open):**
+- Condition 1 (format proven across two projects): NOT MET — `information-systems/references/` has three files but passage sections are all stubs. `monthly-image-review` has no `references/` directory. Phase opens by meeting these conditions in P1.
+- Condition 2 (concrete cross-project retrieval need): NOT MET — no second project holds references. Phase opens by establishing it in P1.
 
 ---
 
-### Phase 16 — PatentsView Bulk Import
+### P1 — Prove blocking conditions
 
-Do not begin until trigger fires: a project with 1976+ scope opens where EPO OPS quota is a genuine bottleneck, or where PatentsView's assignee-name and abstract coverage is needed. See `DEFERRED.md` D007 for full design.
+Satisfy D020 conditions before writing a line of specialist code.
+
+1. Populate real excerpts in `information-systems/references/` for at least two works (Yates and Cortada are the natural first choices — both have IA-borrowable copies). Each passage block must have a verbatim quotation and a context note. Stub `<!-- Add passage -->` comments do not count.
+2. Create `projects/monthly-image-review/references/` with at least one work relevant to that project's scope (industrial design mark history, pneumatic tool industry, or American manufacturing branding in the 1920s–1930s). Follow the same format established in `information-systems/references/README.md`.
+3. In `projects/monthly-image-review/references/README.md`, document one concrete example of a passage in `information-systems/references/` that the `monthly-image-review` historian would benefit from — establishing that cross-project access is the real need, not just copying files.
+4. Verify: both directories have at least one work with real (non-stub) passage sections.
+
+---
+
+### P2 — Library structure
+
+Move from per-project stubs to a shared, schema-defined corpus.
+
+1. Create `library/` at repo root with:
+   - `library/works/<author-slug>/metadata.json` (author, title, year, publisher, isbn, ia_identifier, ia_access)
+   - `library/works/<author-slug>/excerpts.md` (annotated passages — same format as current `references/` files, minus per-project bias)
+   - `library/works/<author-slug>/index.md` (topic index: one line per passage heading with a short description)
+   - `library/README.md` (schema documentation and sourcing guidelines)
+2. Migrate the three `information-systems/references/` works (Yates, Cortada, Austrian/Hollerith) into `library/works/`. Carry forward all curated excerpts; do not lose passage content.
+3. Update `information-systems/references/` files to citation-only stubs — each file becomes a pointer (`see: library/works/<slug>`) rather than a content holder. Update `references/README.md` to describe the per-project citation convention.
+4. Migrate `monthly-image-review/references/` work(s) into `library/works/` on the same basis.
+5. Verify: `library/` contains at least three works; `projects/*/references/` contain only citation stubs; no passage content lives outside `library/`.
+
+---
+
+### P3 — LIBRARIAN persona and specialist scaffold
+
+1. Create `src/markery/specialist/librarian/` with: `__init__.py`, `cli.py`, `persona/identity.md`, `persona/instructions/` (empty for now).
+2. Write `identity.md`: LIBRARIAN's scope is `library/` (owns it, writes to it) and `projects/*/references/` (reads citation stubs). It does not touch DuckDB, candidates, or confirmed records. It writes `library/` and `library/index.jsonl`.
+3. Register `markery librarian` in the top-level CLI dispatcher (`src/markery/cli.py` or equivalent entry point).
+4. Verify: `markery librarian --help` shows registered subcommands.
+
+---
+
+### P4 — Index build and keyword search
+
+1. Implement `markery librarian index`: reads all `library/works/*/excerpts.md` files; extracts passage blocks (section heading + passage text + optional context note); writes `library/index.jsonl` (one record per passage: `work_slug`, `author`, `title`, `year`, `section`, `passage`, `context`).
+2. Implement `markery librarian search <query> [--top N]`: loads `library/index.jsonl`; case-insensitive substring match across `passage` + `section` + `context` text; returns top N matches (default 5) with work citation and passage context.
+3. Implement `markery librarian list`: prints one line per work (slug, author short, year, excerpt count) and a total.
+4. Add `--tokens` flag to `search` and `list` via existing `tokens.py` infrastructure.
+5. Verify: `markery librarian search "card index"` returns at least one passage from Cortada or Yates.
+
+---
+
+### P5 — Historian context card
+
+1. Implement `markery librarian card <query> [--top N]`: produces a compact context block (target ≤300 tokens) suitable for pasting into a historian session. Format: one record per match with `[Work, Year] Section heading — passage text (p. XX).`
+2. Add `--out -` flag (stdout) and default file output to `library/cards/<query-slug>.md` for persistence across sessions.
+3. Add `--tokens` flag.
+4. MVO contract: card output must contain at least one `[` citation marker and the word count of each passage must be preserved exactly (no truncation of excerpts mid-sentence).
+
+---
+
+### P6 — Tests, MVO contracts, and D020 close
+
+1. Write `tests/test_librarian.py` covering: `index` builds `library/index.jsonl` with expected record structure; `search` returns matches for a known query; `list` enumerates works; `card` produces a compact output with citation markers. Use `tmp_path` fixtures with minimal library content — do not depend on the live `library/`.
+2. Add LIBRARIAN to `tests/benchmarks/mvo.md`: one table per command (`index`, `search`, `list`, `card`) with field and exit-code contracts.
+3. All tests pass.
+4. Mark D020 resolved in `DEFERRED.md`.
+
+---
+
+### Phase Gate
+
+P1 PASSED when: two projects have `references/` with real (non-stub) excerpts; cross-project need is documented.
+
+P2 PASSED when: `library/` exists with at least three works migrated; per-project `references/` are citation stubs only.
+
+P3 PASSED when: `markery librarian --help` shows subcommands; `identity.md` written with correct scope.
+
+P4 PASSED when: `markery librarian search "card index"` returns at least one real passage; `index.jsonl` exists and is valid JSON-L.
+
+P5 PASSED when: `markery librarian card <query>` produces output ≤300 tokens with citation markers.
+
+P6 PASSED when: all MVO tests pass; D020 closed in `DEFERRED.md`.
+
+Phase PASSED when P1–P6 all pass.
+
+---
+
+## Phase 16 — PatentsView Bulk Import and Wikipedia Stage 4
+
+**Trigger:** Phase 15 complete — LIBRARIAN operational; OR a project with 1976+ scope opens where EPO OPS quota is a genuine bottleneck (for D007 sub-track only).  
+**Scope:** Three deferred items from distinct workstreams — patent data infrastructure (D007), Wikipedia inline citation (D023), and Wikipedia second article (D024) — all mature enough to close in the same phase. D007 and D023/D024 are independent and can proceed in parallel.
+
+**Goal state:** By phase close, `markery patent bulk-import` is implemented and tested; the Chicago Pneumatic Wikipedia citation is live; a second Wikipedia article is enriched; D007, D023, and D024 are all closed.
+
+---
+
+### P1 — PatentsView bulk import (D007)
+
+Full design is in `src/markery/specialist/patent/BULK_CSV.md`. Implement as specified there.
+
+1. Implement `markery patent bulk-import download --year-start YEAR --year-end YEAR --out-dir PATH`: downloads the required PatentsView `.tsv.gz` files (`g_patent`, `g_assignee_disambiguated`, `g_cpc_current`) for the specified year range. Files are large; command must show progress and resume safely if interrupted.
+2. Implement `markery patent bulk-import load --tsv-dir PATH --classes CPC [CPC ...] [--year-start YEAR] [--year-end YEAR]`: reads the `.tsv.gz` files with DuckDB `read_csv()` and predicate pushdown; constructs `patent_no` as `US{number}{kind}`; inserts into `patents` and `patent_classes` tables using insert-if-not-exists (idempotent against the existing EPO-sourced schema).
+3. Verify schema compatibility: bulk-imported rows must pass the same queries that EPO-sourced rows pass. `app_dt` will be NULL for bulk-imported rows — document this in `BULK_CSV.md` and confirm no existing query hard-requires it.
+4. Test against a narrow scope: one CPC class (`B42F`), year range 1976–1985. Confirm row counts match manual PatentsView query. Confirm no duplicate `patent_no` collisions with EPO-sourced rows in that range.
+5. Add `markery patent bulk-import status --tsv-dir PATH`: reports row counts in the `.tsv.gz` files before load (sanity check before committing to a multi-hour import).
+
+---
+
+### P2 — Soundex owner attribution research (D024 prerequisite)
+
+D024 requires resolving who filed the 1927 SOUNDEX trademark before any Wikipedia edit attributes it to a specific entity.
+
+1. Query `trademarks.duckdb` for the SOUNDEX filing: serial number, filing date, owner on file, any assignment records. The SOUNDEX serial is in `information-systems/matches/confirmed.jsonl`.
+2. Cross-reference: the Remington-Rand merger closed June 1927. The SOUNDEX filing date relative to that merger date determines whether the filer was Rand Kardex Corporation, Remington Rand Inc., or a predecessor.
+3. Check `assignment` table (if populated) for any ownership transfer on the SOUNDEX serial.
+4. Document the finding in `projects/information-systems/RESEARCH.md` under a new "SOUNDEX ownership timeline" section. State explicitly: (a) who the filing-date owner was, (b) whether the merger predated or postdated the filing, (c) which entity name is safe to use in a Wikipedia edit.
+5. Gate: do not proceed to P4 until this question is resolved with DB evidence.
+
+---
+
+### P3 — Wikipedia Stage 4c: Chicago Pneumatic inline citation (D023)
+
+D023 blocking conditions: Stage 4b (external link) live ≥48 hours unreverted; account has ≥5 confirmed non-reverted mainspace edits. Verify both before proceeding.
+
+1. Confirm the Stage 4b external link is still live on the Chicago Pneumatic Tool Company article.
+2. Confirm account edit count ≥5 non-reverted mainspace edits.
+3. Identify the exact insertion point: the History section paragraph covering the 1920s–1930s branding period.
+4. Draft the sentence per D023 specification: "The CP monogram design trademark (USPTO Serial No. 71299042) was filed on April 18, 1930, covering pneumatic tools, air compressors, and related apparatus." Add a `<ref>` tag citing the TSDR filing record URL.
+5. Use `markery wikipedia` tooling to read-modify-write: fetch current article, insert sentence, generate diff, confirm before submitting.
+6. Verify: confirm the edit is live; monitor for 48 hours; note any reviewer response.
+
+---
+
+### P4 — Wikipedia Stage 4d: second article (D024)
+
+Depends on P2 (attribution resolved) and P3 (Stage 4c live ≥48 hours unreverted).
+
+1. Based on P2 research, choose the target article: Soundex (if attribution is clean and the patent-trademark angle is clearly addable) or Remington Rand (if the product-line angle — SOUNDEX, VARIADEX, KARDEX — fits the article's existing structure).
+2. Identify the specific section and sentence to add or enrich. Use `markery wikipedia from-essay` to generate a wikitext draft from the relevant confirmed-pair essay as a starting point; edit manually to meet Wikipedia's NPOV and citation standards.
+3. Read-modify-write with diff review and explicit confirmation before submitting. Do not submit more than one paragraph of new content in a single edit.
+4. Verify: confirm the edit is live; document the edit summary and timestamp in `projects/information-systems/STATUS.md`.
+
+---
+
+### P5 — Tests, cleanup, and gate
+
+1. Add `markery patent bulk-import` to `tests/benchmarks/mvo.md`: contract for `status` command (prints row counts, exits 0) and `load` command (idempotent on re-run — no duplicate rows inserted on second load of same data).
+2. Write `tests/test_bulk_import.py`: test `status` against a fixture `.tsv.gz` (synthetic, 10-row subset); test `load` inserts expected rows and is idempotent. No real PatentsView download required in tests.
+3. Mark D007 resolved in `DEFERRED.md` with a note on the test scope and any `app_dt`-NULL constraint.
+4. Mark D023 resolved in `DEFERRED.md` with the Wikipedia edit URL and timestamp.
+5. Mark D024 resolved in `DEFERRED.md` with the Wikipedia edit URL and the attribution finding from P2.
+
+---
+
+### Phase Gate
+
+P1 PASSED when: `markery patent bulk-import load` runs without error on B42F/1976–1985; row counts match PatentsView; no duplicate collisions with EPO-sourced rows.
+
+P2 PASSED when: SOUNDEX owner attribution is documented in `RESEARCH.md` with DB evidence; a safe entity name for Wikipedia is identified.
+
+P3 PASSED when: Chicago Pneumatic inline citation is live on Wikipedia ≥48 hours unreverted.
+
+P4 PASSED when: second article contribution is live; edit summary recorded in `STATUS.md`.
+
+P5 PASSED when: bulk-import MVO tests pass; D007, D023, D024 all marked resolved in `DEFERRED.md`.
+
+Phase PASSED when P1–P5 all pass.
