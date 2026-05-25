@@ -155,15 +155,37 @@ Build the layer that fetches works from external sources. Output is normalized t
    - `fetch_metadata(book_id) -> dict`
    - `download_text(book_id, out_dir) -> Path`: downloads plain text format
 
-3. `common.py` — shared `SourceResult` dataclass and `normalize_metadata() -> dict` for mapping source-specific fields to the `library/works/<slug>/metadata.json` schema.
+3. `wikipedia.py` — Wikipedia discovery adapter (discovery only, not a text source):
+   - `fetch_citations(article_title) -> list[WikiCitation]`: calls the Wikipedia API (`action=parse&prop=wikitext`), extracts `{{cite book}}` and `{{cite journal}}` templates, parses author/title/year/isbn/url fields into a `WikiCitation` dataclass
+   - `resolve_to_source(citation) -> SourceResult | None`: for each citation, searches IA and Gutenberg for a matching work by title + author + year; returns the best match or None if not found
+   - Wikipedia article prose is never used as a source — this adapter surfaces what Wikipedia's editors have already cited, not Wikipedia's own claims
+
+4. `common.py` — shared `SourceResult` and `WikiCitation` dataclasses; `normalize_metadata() -> dict` for mapping source-specific fields to the `library/works/<slug>/metadata.json` schema; `WantsEntry` dataclass (title, author, year, isbn, source_article, added_at, status: `wanted | in-progress | acquired`).
 
 **CLI commands:**
 
-4. `markery librarian search-sources <query> [--source ia|gutenberg|all] [--top N]`: searches registered sources and prints a ranked results list with identifier, title, author, year, and source. No download. Used to discover works before acquiring them.
+5. `markery librarian search-sources <query> [--source ia|gutenberg|all] [--top N]`: searches registered sources and prints a ranked results list with identifier, title, author, year, and source. No download. Used to discover works before acquiring them.
 
-5. `markery librarian acquire <identifier> [--source ia|gutenberg]`: fetches metadata and full text for a work; creates `library/works/<slug>/` with `metadata.json` and `raw_text.txt`; prints the created slug. Does not extract passages — that is P4's job.
+6. `markery librarian discover --wikipedia <article-title> [--add-wants]`: fetches the Wikipedia article's citations; for each, searches IA and Gutenberg; prints a three-column report:
 
-6. `markery librarian raw-text <slug>`: prints the path to `raw_text.txt` for a work (for manual inspection before extraction).
+   ```
+   FOUND (IA)    cortada-before-the-computer    Before the Computer, Cortada 1993
+   FOUND (GUT)   yates-control-through-comm     Control Through Communication, Yates 1989
+   NOT FOUND     —                              The Punched Card, Austrian 1982
+   NOT FOUND     —                              Office Management, Galloway 1919
+   ```
+
+   With `--add-wants`, NOT FOUND entries are appended to `library/wants.jsonl` with status `wanted` and `source_article` recorded.
+
+7. `markery librarian wants [--status wanted|in-progress|acquired]`: prints the wants list with status, title, author, year, and source article. Default shows only `wanted` and `in-progress`.
+
+8. `markery librarian wants-update <title-slug> --status <status> [--note <text>]`: updates a wants entry status (e.g., mark `in-progress` when ILL request is submitted, `acquired` when the copy arrives).
+
+9. `markery librarian acquire <identifier> [--source ia|gutenberg]`: fetches metadata and full text for a work; creates `library/works/<slug>/` with `metadata.json` and `raw_text.txt`; prints the created slug. Does not extract passages — that is P4's job. If the work was in `wants.jsonl`, automatically updates its status to `acquired`.
+
+10. `markery librarian enter <slug> --title <title> --author <author> --year <year> [--isbn <isbn>]`: manually registers a work that arrived via ILL or other non-digital acquisition. Creates `library/works/<slug>/metadata.json` with `source: manual` and an empty `excerpts.md`. No `raw_text.txt` is created — the user adds excerpts by hand. If the work was in `wants.jsonl`, updates its status to `acquired`.
+
+11. `markery librarian raw-text <slug>`: prints the path to `raw_text.txt` for a work (for manual inspection before extraction).
 
 ---
 
@@ -173,8 +195,9 @@ Establish the canonical `library/` schema and migrate existing per-project refer
 
 1. Create `library/` at repo root:
    - `library/README.md` — schema documentation, sourcing guidelines, acquisition workflow
-   - `library/works/<slug>/metadata.json` — structured metadata (source, author, title, year, isbn, ia_identifier, ia_access, gutenberg_id, acquired_at)
-   - `library/works/<slug>/raw_text.txt` — full acquired text (may be absent for manually-curated works; never committed to git if >1 MB — add to `.gitignore`)
+   - `library/wants.jsonl` — works identified but not yet obtainable digitally; one JSON record per line (title, author, year, isbn, source_article, added_at, status)
+   - `library/works/<slug>/metadata.json` — structured metadata (source: ia|gutenberg|manual, author, title, year, isbn, ia_identifier, ia_access, gutenberg_id, acquired_at)
+   - `library/works/<slug>/raw_text.txt` — full acquired text (absent for manual entries; never committed to git if >1 MB — add to `.gitignore`)
    - `library/works/<slug>/excerpts.md` — curated passages with page references and context notes
    - `library/works/<slug>/index.md` — topic index: one line per passage heading
 2. Migrate the three `information-systems/references/` works (Yates, Cortada, Austrian/Hollerith) into `library/works/`. Carry all curated content.
@@ -207,7 +230,7 @@ The acquisitions layer fetches raw text; this layer turns it into curated excerp
 1. Create `src/markery/specialist/librarian/` with `__init__.py`, `cli.py`, `sources/` package, `persona/identity.md`, `persona/instructions/`.
 2. Write `identity.md`: LIBRARIAN owns `library/` (reads and writes); reads `projects/*/references/` (citation stubs only); never touches DuckDB, candidates, or confirmed records; never modifies project `content/` or `site/`. Acquisition commands (fetch from external sources) are within scope.
 3. Register `markery librarian` in the top-level CLI dispatcher.
-4. Verify: `markery librarian --help` shows: `search-sources`, `acquire`, `raw-text`, `extract`, `review`, `index`, `search`, `list`, `card`.
+4. Verify: `markery librarian --help` shows: `search-sources`, `discover`, `wants`, `wants-update`, `acquire`, `enter`, `raw-text`, `extract`, `review`, `index`, `search`, `list`, `card`.
 
 ---
 
@@ -254,7 +277,7 @@ The acquisitions layer fetches raw text; this layer turns it into curated excerp
 
 P1 PASSED when: two projects have `references/` with real excerpts; cross-project retrieval need documented.
 
-P2 PASSED when: `markery librarian acquire` successfully fetches a work from IA; `search-sources` returns results for a known query.
+P2 PASSED when: `markery librarian acquire` successfully fetches a work from IA; `search-sources` returns results for a known query; `markery librarian discover --wikipedia "Soundex" --add-wants` produces a found/not-found report and populates `library/wants.jsonl` for any NOT FOUND entries; `markery librarian wants` lists the queue.
 
 P3 PASSED when: `library/` exists with at least four works; per-project `references/` are citation stubs; `raw_text.txt` gitignored.
 
