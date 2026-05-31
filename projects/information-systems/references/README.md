@@ -1,48 +1,33 @@
-# References Format
+# References — information-systems
 
-Each file in this directory is a curated excerpt document for one secondary source. The historian reads these alongside the DuckDB data and uses them to ground essays in secondary literature.
+Secondary literature relevant to this project lives in the shared library at
+`library/works/`. Each file here is a one-line pointer:
 
-## File naming
-
-`<author-surname>-<short-title>.md`
-
-Examples: `yates-control-through-communication.md`, `cortada-before-the-computer.md`
-
-## File format
-
-```markdown
----
-author: Last, First
-title: Full Title
-year: 1989
-publisher: MIT Press
-isbn: 978-0-262-24029-1
-ia_identifier: controlthroughcom00yate   # Internet Archive item ID (if available)
-ia_access: borrow                         # open, borrow, or restricted
----
-
-## Overview
-
-One paragraph: what the book argues, why it is relevant to this project.
-
-## Relevant passages
-
-### [Topic heading]
-
-> "Direct quotation from the text." (p. 42)
-
-Context note: how this passage bears on the project's argument.
-
-### [Another topic]
-
-> "Another quotation." (p. 117)
-
-Context note.
+```
+see: library/works/<slug>
 ```
 
-## Sourcing guidelines
+To load a work's passages in a historian session, read
+`library/works/<slug>/excerpts.md` directly.
 
-- Prefer Internet Archive for open-access or borrowable works. The `ia_identifier` field is the IA item slug (from the URL `archive.org/details/<slug>`).
-- For in-copyright works without IA access, paste relevant passages by hand from the physical or digital copy. Note the edition and page numbers precisely.
-- Passages should be quoted verbatim with page numbers. Paraphrase is acceptable only when quotation is impractical; label paraphrases as such.
-- Organize passages by topic, not by page order. The historian searches by topic.
+## Works in scope for this project
+
+| File | Library slug |
+|---|---|
+| `galloway-office-management.md` | `library/works/galloway-office-management` |
+| `leffingwell-scientific-office-management.md` | `library/works/leffingwell-scientific-office-management` |
+| `yates-control-through-communication.md` | `library/works/yates-control-through-communication` |
+| `cortada-before-the-computer.md` | `library/works/cortada-before-the-computer` |
+| `austrian-herman-hollerith.md` | `library/works/austrian-herman-hollerith` |
+
+## Adding a work to this project
+
+1. Acquire or enter the work: `markery librarian acquire <identifier>` or
+   `markery librarian enter <slug> --title ... --author ... --year ...`
+2. Create `references/<slug>.md` containing only `see: library/works/<slug>`
+3. The historian reads `library/works/<slug>/excerpts.md` in sessions
+
+## Format reference
+
+See `library/README.md` for the full metadata.json schema, excerpts.md format,
+and sourcing guidelines.

@@ -191,7 +191,7 @@ Build the layer that fetches works from external sources. Output is normalized t
 
 ---
 
-### P3 — Library structure and migration
+### P3 — Library structure and migration — CLOSED
 
 Establish the canonical `library/` schema and migrate existing per-project reference files.
 
