@@ -141,7 +141,7 @@ P1 PASSED — 2026-05-31. Yates and Cortada stubs are borrow-only and remain as 
 
 ---
 
-### P2 — Source adapters and acquisition CLI
+### P2 — Source adapters and acquisition CLI — CLOSED
 
 Build the layer that fetches works from external sources. Output is normalized to a common format regardless of source.
 
