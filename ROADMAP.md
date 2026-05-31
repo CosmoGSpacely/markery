@@ -128,7 +128,7 @@ Phase PASSED when P1–P5 all pass. — PASSED 2026-05-24
 
 ---
 
-### P1 — Prove blocking conditions
+### P1 — Prove blocking conditions — CLOSED
 
 Satisfy D020 conditions before writing a line of specialist code. This is manual work — the acquisitions tooling built in P2 will automate future corpus growth, but the format must be proven first with hand-curated content.
 
@@ -136,6 +136,8 @@ Satisfy D020 conditions before writing a line of specialist code. This is manual
 2. Create `projects/monthly-image-review/references/` with at least one work relevant to that project's scope — a history of American industrial tool design marks, Chicago Pneumatic's industry context, or branding in the 1920s–1930s manufacturing sector. Follow the format in `information-systems/references/README.md`.
 3. In `projects/monthly-image-review/references/README.md`, name one specific passage in `information-systems/references/` that this project's historian would use — documenting the cross-project retrieval need concretely.
 4. Commit all reference files. Verify: both directories have at least one work with real (non-stub) passage sections.
+
+P1 PASSED — 2026-05-31. Yates and Cortada stubs are borrow-only and remain as stubs; two open-access public domain works added instead: Galloway (1918, `officemanagement00gall`, open) with 3 verbatim passages (pp. 146, 153–154, 164) and Leffingwell (1917, `scientificoffice00leff`, open) with 3 verbatim passages (pp. v, 58, 160). `monthly-image-review/references/` created with Leffingwell (different passage set, manufacturing-company focus). README documents cross-project need: Galloway pp. 153–154 from information-systems is required for monthly-image-review context.
 
 ---
 
