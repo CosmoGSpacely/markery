@@ -43,3 +43,5 @@ projects/*/BRIEF.md
 # Library raw text files — multi-MB, re-acquirable via markery librarian acquire
 library/works/*/raw_text.txt
 library/works/*/*.txt
+# Extraction staging area — regenerable, accepted passages land in excerpts.md
+library/works/*/candidates.md

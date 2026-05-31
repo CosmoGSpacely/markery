@@ -58,7 +58,7 @@ def download_text(book_id: int | str, out_dir: Path) -> Path:
             f"No plain text format for Gutenberg book {book_id}."
         )
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"gutenberg-{book_id}.txt"
+    out_path = out_dir / "raw_text.txt"
     req = urllib.request.Request(text_url, headers={"User-Agent": "markery/1.0"})
     with urllib.request.urlopen(req, timeout=120) as r:
         out_path.write_bytes(r.read())

@@ -97,7 +97,7 @@ def download_text(identifier: str, out_dir: Path) -> Path:
         )
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"{identifier}.txt"
+    out_path = out_dir / "raw_text.txt"
 
     url = f"{_DL_BASE}/{identifier}/{txt_name}"
     req = urllib.request.Request(url, headers={"User-Agent": "markery/1.0"})

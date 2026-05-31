@@ -210,7 +210,7 @@ Establish the canonical `library/` schema and migrate existing per-project refer
 
 ---
 
-### P4 — Claude-assisted passage extraction
+### P4 — Claude-assisted passage extraction — CLOSED
 
 The acquisitions layer fetches raw text; this layer turns it into curated excerpts.
 
@@ -224,6 +224,8 @@ The acquisitions layer fetches raw text; this layer turns it into curated excerp
 3. Add `--auto-accept` flag to `extract` (non-interactive; writes directly to `excerpts.md`, skipping review). For use when the historian trusts the extraction quality. Default is interactive review.
 4. Add `--tokens` flag to `extract` via existing `tokens.py`.
 5. Verify: `markery librarian extract cortada-before-the-computer --topics "card index" "Remington Rand"` produces at least two candidate passages.
+
+P4 PASSED — 2026-05-31. Cortada is borrow-only (no raw_text.txt); verified with `galloway-office-management` instead — 5 candidates produced including a direct Remington Rand Visible Index Card File passage (p. 103) not previously in excerpts.md. `--tokens` confirmed (86,313 prompt / 2,614 completion tokens, 40 chunks, Haiku). `candidates.md` added to `.gitignore`.
 
 ---
 

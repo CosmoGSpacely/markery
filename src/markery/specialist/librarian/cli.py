@@ -374,17 +374,32 @@ def cmd_raw_text(args: argparse.Namespace) -> None:
     if not work_dir.exists():
         print(f"No library entry for slug '{args.slug}'.", file=sys.stderr)
         sys.exit(1)
-    # Find any .txt file in the work dir
-    txt_files = list(work_dir.glob("*.txt"))
-    if not txt_files:
-        print(f"No raw_text.txt in {work_dir}.", file=sys.stderr)
+    raw = work_dir / "raw_text.txt"
+    if not raw.exists():
+        print(f"No raw_text.txt in {work_dir}.\n"
+              f"Run: markery librarian acquire <identifier> --source ia", file=sys.stderr)
         sys.exit(1)
-    # Prefer the canonical name
-    canonical = work_dir / "raw_text.txt"
-    if canonical.exists():
-        print(canonical)
-    else:
-        print(txt_files[0])
+    print(raw)
+
+
+# ---------------------------------------------------------------------------
+# extract / review
+# ---------------------------------------------------------------------------
+
+def cmd_extract(args: argparse.Namespace) -> None:
+    from markery.specialist.librarian.extract import extract
+    extract(
+        slug=args.slug,
+        topics=args.topics,
+        max_passages=args.max_passages,
+        auto_accept=args.auto_accept,
+        tokens_flag=args.tokens,
+    )
+
+
+def cmd_review(args: argparse.Namespace) -> None:
+    from markery.specialist.librarian.extract import review
+    review(slug=args.slug)
 
 
 # ---------------------------------------------------------------------------
@@ -446,6 +461,28 @@ def librarian_main() -> None:
     p_rt = sub.add_parser("raw-text", help="Print path to raw_text.txt for a slug")
     p_rt.add_argument("slug")
 
+    # extract
+    p_ext = sub.add_parser(
+        "extract",
+        help="Extract passages from raw_text.txt using Claude (writes candidates.md)",
+    )
+    p_ext.add_argument("slug", help="Library slug (library/works/<slug>)")
+    p_ext.add_argument("--topics", nargs="+", required=True, metavar="TOPIC",
+                       help="Research topics to guide extraction")
+    p_ext.add_argument("--max-passages", type=int, default=10, metavar="N",
+                       help="Maximum candidates to retain after deduplication (default 10)")
+    p_ext.add_argument("--auto-accept", action="store_true",
+                       help="Skip review; append directly to excerpts.md")
+    p_ext.add_argument("--tokens", action="store_true",
+                       help="Print token usage to stderr after extraction")
+
+    # review
+    p_rev = sub.add_parser(
+        "review",
+        help="Interactively accept/reject candidates from candidates.md",
+    )
+    p_rev.add_argument("slug", help="Library slug")
+
     args = parser.parse_args()
 
     dispatch = {
@@ -456,5 +493,7 @@ def librarian_main() -> None:
         "acquire":        cmd_acquire,
         "enter":          cmd_enter,
         "raw-text":       cmd_raw_text,
+        "extract":        cmd_extract,
+        "review":         cmd_review,
     }
     dispatch[args.action](args)
