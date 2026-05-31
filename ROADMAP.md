@@ -229,12 +229,14 @@ P4 PASSED — 2026-05-31. Cortada is borrow-only (no raw_text.txt); verified wit
 
 ---
 
-### P5 — LIBRARIAN persona and CLI scaffold
+### P5 — LIBRARIAN persona and CLI scaffold — CLOSED
 
 1. Create `src/markery/specialist/librarian/` with `__init__.py`, `cli.py`, `sources/` package, `persona/identity.md`, `persona/instructions/`.
 2. Write `identity.md`: LIBRARIAN owns `library/` (reads and writes); reads `projects/*/references/` (citation stubs only); never touches DuckDB, candidates, or confirmed records; never modifies project `content/` or `site/`. Acquisition commands (fetch from external sources) are within scope.
 3. Register `markery librarian` in the top-level CLI dispatcher.
 4. Verify: `markery librarian --help` shows: `search-sources`, `discover`, `wants`, `wants-update`, `acquire`, `enter`, `raw-text`, `extract`, `review`, `index`, `search`, `list`, `card`.
+
+P5 PASSED — 2026-05-31. `persona/identity.md` written with full scope, source priority, and explicit limits. `persona/instructions/` created with three cards: `acquire.md`, `extract.md`, `wants.md`. `markery librarian --help` confirms all nine implemented subcommands (`index`, `search`, `list`, `card` are P6–P8 scope).
 
 ---
 
@@ -287,7 +289,7 @@ P3 PASSED when: `library/` exists with at least four works; per-project `referen
 
 P4 PASSED when: `markery librarian extract <slug> --topics <query>` produces candidate passages; `review` appends at least one accepted passage to `excerpts.md`.
 
-P5 PASSED when: `markery librarian --help` shows all nine subcommands; `identity.md` written with correct scope.
+P5 PASSED when: `markery librarian --help` shows all nine subcommands; `identity.md` written with correct scope. — PASSED
 
 P6 PASSED when: `markery librarian search <query> --mode keyword` returns real passages; `index.jsonl` valid JSON-L.
 
