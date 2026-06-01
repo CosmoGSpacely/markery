@@ -276,12 +276,14 @@ P8 PASSED — 2026-06-01. `card "Remington Rand filing" --mode semantic` produce
 
 ---
 
-### P9 — Tests, MVO contracts, and D020 close
+### P9 — Tests, MVO contracts, and D020 close — CLOSED
 
 1. Write `tests/test_librarian.py`: unit tests using `tmp_path` fixtures with synthetic library content (3 works, 5 passages each). Cover: `index` record structure; keyword search returns correct passage; semantic search returns passage (mock embeddings — patch `sentence-transformers` call); `list` enumerates works; `card` ≤300 tokens with citation markers; `extract` calls Claude with expected prompt structure (mock API); `acquire` creates correct directory structure (mock HTTP).
 2. Add LIBRARIAN to `tests/benchmarks/mvo.md`: contracts for `search`, `list`, `card`, `index`.
 3. All tests pass.
 4. Mark D020 resolved in `DEFERRED.md`.
+
+P9 PASSED — 2026-06-01. 42 tests pass (7 index, 6 keyword search, 6 semantic search, 4 list, 4 card, 3 extract, 2 acquire unit tests; 10 MVO CLI tests). LIBRARIAN contracts added to `tests/benchmarks/mvo.md`. D020 closed in `DEFERRED.md`.
 
 ---
 
@@ -303,9 +305,9 @@ P7 PASSED when: `markery librarian search "systematic record-keeping" --mode sem
 
 P8 PASSED when: `markery librarian card <query>` ≤300 tokens with citation markers. — PASSED
 
-P9 PASSED when: all MVO tests pass; D020 closed.
+P9 PASSED when: all MVO tests pass; D020 closed. — PASSED
 
-Phase PASSED when P1–P9 all pass.
+Phase PASSED when P1–P9 all pass. — PASSED 2026-06-01
 
 ---
 

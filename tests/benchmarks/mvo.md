@@ -91,6 +91,60 @@ and deterministic — no LLM inference is required.
 
 ---
 
+---
+
+## librarian index
+
+**Command:** `markery librarian index`
+
+| Field | Validation rule |
+|---|---|
+| Exit code | 0 |
+| Stdout | Contains `Indexed N work(s)` where N ≥ 0 |
+| `library/index.jsonl` | Exists after run |
+| Records | Each line is valid JSON with fields `work_slug`, `author`, `title`, `year`, `section`, `passage`, `page`, `context`, `indexed_at` |
+
+---
+
+## librarian search
+
+**Command:** `markery librarian search <query> --mode keyword`
+
+| Field | Validation rule |
+|---|---|
+| Exit code | 0 |
+| Header row | Output contains `AUTHOR` and `SECTION` and `PASSAGE` |
+| Result rows | Each result row contains a 4-digit year |
+| No-match case | Exit code 0; output contains `No matches` |
+
+---
+
+## librarian list
+
+**Command:** `markery librarian list`
+
+| Field | Validation rule |
+|---|---|
+| Exit code | 0 |
+| Header row | Output matches `SLUG.*AUTHOR.*YEAR` |
+| Work rows | At least one row present when `library/works/` is non-empty |
+| Excerpt counts | Non-negative integer in `EXC` column for each row |
+
+---
+
+## librarian card
+
+**Command:** `markery librarian card <query> --mode keyword --out -`
+
+| Field | Validation rule |
+|---|---|
+| Exit code | 0 |
+| Header | First line matches `^# Library card:` |
+| Citation brackets | At least one `[Surname (Year)]` bracket present |
+| Token estimate | `len(output) // 4 ≤ 300` |
+
+---
+
 ## Notes
 
 - All contracts are checked against real DuckDB data — the tests must be run
@@ -101,3 +155,6 @@ and deterministic — no LLM inference is required.
 - Haiku compatibility: all four contracts pass with `claude-haiku-4-5-20251001`
   since none of the checks depend on LLM output — they validate Markery's own
   deterministic CLI output.
+- LIBRARIAN contracts: checked against `library/index.jsonl` (committed to repo).
+  The `search` and `card` contracts do not require embeddings (`index.duckdb` is
+  gitignored); `--mode keyword` is used for MVO testing.
