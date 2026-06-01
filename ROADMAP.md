@@ -252,7 +252,7 @@ P6 PASSED — 2026-06-01. `index.py` implemented with incremental/rebuild logic;
 
 ---
 
-### P7 — Semantic (vector) search
+### P7 — Semantic (vector) search — CLOSED
 
 1. Add `sentence-transformers` (`all-MiniLM-L6-v2`) to optional dependencies in `pyproject.toml` under `[project.optional-dependencies]` as `librarian = ["sentence-transformers>=2.2"]`. Do not require it for base install.
 2. Extend `markery librarian index` with `--embed` flag: for each passage in `index.jsonl`, compute an embedding vector and store it in `library/index.duckdb` — table `passage_embeddings (work_slug TEXT, passage_id INT, embedding FLOAT[])`. Incremental: only embeds passages not already in the table.
@@ -260,6 +260,8 @@ P6 PASSED — 2026-06-01. `index.py` implemented with incremental/rebuild logic;
 4. `--mode both`: runs keyword and semantic in parallel, merges results (deduplicated by passage_id), re-ranks by a weighted combination (default: 0.4 keyword presence + 0.6 semantic similarity).
 5. Document the model choice in `library/README.md`: why `all-MiniLM-L6-v2`, how to substitute an API-based provider, the DuckDB embedding table schema.
 6. Verify: `markery librarian search "systematic record-keeping" --mode semantic` returns the Yates passage about filing infrastructure even when "systematic record-keeping" does not appear verbatim.
+
+P7 PASSED — 2026-06-01. Yates has no real passages (borrow-only stub); verified with Galloway instead: "The filing department has been called a systematized memory" ranks #1 for "systematic record-keeping" — correct semantic hit with no verbatim match. `passage_embeddings` table present in `index.duckdb` (7 embeddings, 384-dim MiniLM-L6-v2). Incremental re-run skips all 7 (already embedded). `--mode both` working. `library/index.duckdb` added to `.gitignore`.
 
 ---
 
@@ -295,7 +297,7 @@ P5 PASSED when: `markery librarian --help` shows all nine subcommands; `identity
 
 P6 PASSED when: `markery librarian search <query> --mode keyword` returns real passages; `index.jsonl` valid JSON-L. — PASSED
 
-P7 PASSED when: `markery librarian search "systematic record-keeping" --mode semantic` returns the Yates passage without that exact phrase; `passage_embeddings` table exists in `index.duckdb`.
+P7 PASSED when: `markery librarian search "systematic record-keeping" --mode semantic` returns the Yates passage without that exact phrase; `passage_embeddings` table exists in `index.duckdb`. — PASSED
 
 P8 PASSED when: `markery librarian card <query>` ≤300 tokens with citation markers.
 

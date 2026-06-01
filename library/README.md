@@ -12,6 +12,8 @@ relevant slug rather than a copy of the content.
 library/
 ├── README.md              This document
 ├── wants.jsonl            ILL/acquisition queue (one JSON record per line)
+├── index.jsonl            Flat keyword index — one record per passage
+├── index.duckdb           Embedding index — passage_embeddings table (optional, P7)
 └── works/
     └── <slug>/
         ├── metadata.json  Bibliographic record + acquisition provenance
@@ -96,6 +98,56 @@ This replaces the per-project excerpt files that existed before Phase 15 P3.
 To add a work to a project's scope, create `references/<slug>.md` with
 `see: library/works/<slug>`. The historian loads the actual excerpts.md from
 `library/works/<slug>/` during sessions.
+
+---
+
+## Keyword and semantic search index
+
+### index.jsonl
+
+Built by `markery librarian index`. One JSON record per passage with fields:
+
+| Field | Type | Notes |
+|---|---|---|
+| `work_slug` | string | Directory name in `library/works/` |
+| `author` | string | From `metadata.json` |
+| `title` | string | From `metadata.json` |
+| `year` | integer \| null | From `metadata.json` |
+| `section` | string | `### heading` from `excerpts.md` |
+| `passage` | string | Verbatim passage text |
+| `page` | string | Page reference (e.g. `p. 146`, `pp. 153–154`) |
+| `context` | string | Context note collapsed to one line |
+| `indexed_at` | ISO-8601 string | Timestamp of last indexing |
+
+Incremental by default: only re-parses works whose `excerpts.md` is newer than the stored `indexed_at`. Use `--rebuild` to force a full reparse.
+
+### index.duckdb — embedding index
+
+Built by `markery librarian index --embed` (requires `pip install 'markery[librarian]'`).
+
+**Embedding model:** `sentence-transformers/all-MiniLM-L6-v2`
+- Local inference, no API key required
+- ~80 MB model weight, 384-dimension vectors
+- Fits the model-agnosticism principle: runs fully offline
+- Speed: ~7 passages in under 1 second on CPU
+
+**Why this model:** MiniLM-L6-v2 is well-calibrated for short semantic similarity tasks at very low latency. For historical prose retrieval the 384-dimension space is sufficient; a larger model (e.g. `all-mpnet-base-v2`, 768 dimensions) would not materially improve recall for a corpus this size.
+
+**Substituting an API-based provider:** Replace `_get_model()` and `index_embeddings()` in `src/markery/specialist/librarian/index.py`. The embedding vectors are stored as `FLOAT[]` in DuckDB; as long as the query vector and stored vectors use the same dimensionality, `search_semantic()` requires no other changes.
+
+**DuckDB schema:**
+
+```sql
+CREATE TABLE passage_embeddings (
+    work_slug TEXT,
+    passage_id INTEGER,   -- row index in index.jsonl (0-based)
+    section   TEXT,
+    passage   TEXT,
+    embedding FLOAT[]     -- 384-dimension MiniLM-L6-v2 vector
+);
+```
+
+Incremental: re-run `index --embed` after adding new passages; already-embedded `passage_id` values are skipped. Use `index --embed --rebuild` to recompute all vectors (required after changing models).
 
 ---
 

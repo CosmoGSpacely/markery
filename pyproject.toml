@@ -22,6 +22,9 @@ enhance = [
     "opencv-python-headless>=4.8.0",
     "vtracer>=0.6.0",
 ]
+librarian = [
+    "sentence-transformers>=2.2",
+]
 dev = ["pytest>=8.0.0", "responses>=0.25.0"]
 
 [tool.setuptools.packages.find]

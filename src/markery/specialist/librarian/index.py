@@ -1,8 +1,11 @@
-"""Keyword index and search for the LIBRARIAN specialist.
+"""Keyword index, semantic index, and search for the LIBRARIAN specialist.
 
-index_works()  — parses excerpts.md files; writes library/index.jsonl (incremental or full)
-search_index() — keyword mode: case-insensitive substring match across passage/section/context
-list_works()   — one line per work with excerpt count
+index_works()       — parses excerpts.md files; writes library/index.jsonl
+index_embeddings()  — computes sentence embeddings; stores in library/index.duckdb
+search_keyword()    — case-insensitive all-terms substring match
+search_semantic()   — cosine-similarity ranked by sentence embedding
+search_both()       — weighted merge of keyword + semantic (0.4/0.6)
+list_works()        — one summary row per work
 """
 
 from __future__ import annotations
@@ -18,6 +21,8 @@ from markery.common.config import ROOT
 
 _LIBRARY = ROOT / "library"
 _INDEX_PATH = _LIBRARY / "index.jsonl"
+_EMBED_DB = _LIBRARY / "index.duckdb"
+_EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
 # ---------------------------------------------------------------------------
@@ -259,3 +264,172 @@ def list_works(verbose: bool = False) -> list[dict]:
             "has_excerpts": has_excerpts,
         })
     return summaries
+
+
+# ---------------------------------------------------------------------------
+# Embedding helpers
+# ---------------------------------------------------------------------------
+
+def _get_model():
+    """Load the sentence-transformers model; returns None if not installed."""
+    try:
+        from sentence_transformers import SentenceTransformer
+        return SentenceTransformer(_EMBED_MODEL)
+    except ImportError:
+        return None
+
+
+def _open_embed_db(read_only: bool = False):
+    import duckdb
+    con = duckdb.connect(str(_EMBED_DB), read_only=read_only)
+    if not read_only:
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS passage_embeddings (
+                work_slug TEXT,
+                passage_id INTEGER,
+                section TEXT,
+                passage TEXT,
+                embedding FLOAT[]
+            )
+        """)
+    return con
+
+
+# ---------------------------------------------------------------------------
+# Public: index embeddings
+# ---------------------------------------------------------------------------
+
+def index_embeddings(rebuild: bool = False) -> tuple[int, int]:
+    """Compute sentence embeddings for all passages in index.jsonl.
+
+    Stores them in library/index.duckdb (table passage_embeddings).
+    Incremental: skips passages already embedded (by passage_id).
+    Returns (embedded_count, skipped_count).
+    """
+    records = _read_index()
+    if not records:
+        print("No passages in index.jsonl. Run: markery librarian index", file=sys.stderr)
+        return 0, 0
+
+    model = _get_model()
+    if model is None:
+        print(
+            "sentence-transformers not installed.\n"
+            "Run: pip install 'markery[librarian]'",
+            file=sys.stderr,
+        )
+        return 0, 0
+
+    con = _open_embed_db()
+
+    if rebuild:
+        con.execute("DELETE FROM passage_embeddings")
+        existing_ids: set[int] = set()
+    else:
+        rows = con.execute("SELECT passage_id FROM passage_embeddings").fetchall()
+        existing_ids = {r[0] for r in rows}
+
+    to_embed = [
+        (i, rec) for i, rec in enumerate(records)
+        if i not in existing_ids
+    ]
+
+    if not to_embed:
+        con.close()
+        return 0, len(records)
+
+    print(f"  Embedding {len(to_embed)} passage(s) with {_EMBED_MODEL}…", flush=True)
+    texts = [rec["passage"] for _, rec in to_embed]
+    vectors = model.encode(texts, show_progress_bar=False)
+
+    for (pid, rec), vec in zip(to_embed, vectors):
+        con.execute(
+            "INSERT INTO passage_embeddings VALUES (?, ?, ?, ?, ?)",
+            [rec["work_slug"], pid, rec.get("section", ""), rec["passage"], vec.tolist()],
+        )
+
+    con.close()
+    return len(to_embed), len(records) - len(to_embed)
+
+
+# ---------------------------------------------------------------------------
+# Public: semantic search
+# ---------------------------------------------------------------------------
+
+def search_semantic(query: str, top: int = 10) -> list[dict]:
+    """Rank all indexed passages by cosine similarity to the query embedding."""
+    import numpy as np
+
+    if not _EMBED_DB.exists():
+        return []
+
+    model = _get_model()
+    if model is None:
+        return []
+
+    con = _open_embed_db(read_only=True)
+    rows = con.execute(
+        "SELECT passage_id, work_slug, section, embedding FROM passage_embeddings"
+    ).fetchall()
+    con.close()
+
+    if not rows:
+        return []
+
+    query_vec = model.encode([query])[0].astype(np.float32)
+    q_norm = np.linalg.norm(query_vec) + 1e-10
+
+    scored: list[tuple[float, int]] = []
+    for passage_id, work_slug, section, embedding in rows:
+        vec = np.array(embedding, dtype=np.float32)
+        sim = float(np.dot(query_vec, vec) / (q_norm * (np.linalg.norm(vec) + 1e-10)))
+        scored.append((sim, passage_id))
+
+    scored.sort(reverse=True)
+
+    all_records = _read_index()
+    results = []
+    for sim, pid in scored[:top]:
+        if pid < len(all_records):
+            results.append({**all_records[pid], "_score": sim})
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Public: combined keyword + semantic search
+# ---------------------------------------------------------------------------
+
+def search_both(query: str, top: int = 10) -> list[dict]:
+    """Weighted merge of keyword and semantic results (0.4 keyword + 0.6 semantic)."""
+    kw_results = search_keyword(query, top=top * 2)
+    sem_results = search_semantic(query, top=top * 2)
+
+    # Natural keys for deduplication and join
+    kw_keys = [(r["work_slug"], r["section"]) for r in kw_results]
+    sem_map = {(r["work_slug"], r["section"]): r.get("_score", 0.0) for r in sem_results}
+
+    max_sem = max(sem_map.values(), default=1.0)
+
+    all_keys = {k for k in kw_keys} | set(sem_map.keys())
+    scored: list[tuple[float, tuple]] = []
+
+    for key in all_keys:
+        kw_rank = kw_keys.index(key) if key in kw_keys else len(kw_keys)
+        kw_score = 1.0 - kw_rank / (len(kw_keys) + 1) if key in kw_keys else 0.0
+        sem_score = sem_map.get(key, 0.0) / (max_sem + 1e-10)
+        combined = 0.4 * kw_score + 0.6 * sem_score
+        scored.append((combined, key))
+
+    scored.sort(reverse=True)
+
+    all_records = _read_index()
+    rec_map = {(r["work_slug"], r["section"]): r for r in all_records}
+
+    results = []
+    for _, key in scored[:top]:
+        rec = rec_map.get(key)
+        if rec:
+            results.append(rec)
+
+    return results

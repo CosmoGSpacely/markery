@@ -410,10 +410,16 @@ def cmd_review(args: argparse.Namespace) -> None:
 # ---------------------------------------------------------------------------
 
 def cmd_index(args: argparse.Namespace) -> None:
-    from markery.specialist.librarian.index import index_works
+    from markery.specialist.librarian.index import index_works, index_embeddings
     indexed, skipped = index_works(rebuild=args.rebuild)
     print(f"Indexed {indexed} work(s), skipped {skipped} (up to date).")
     print(f"  {_LIBRARY / 'index.jsonl'}")
+
+    if args.embed:
+        embedded, emb_skipped = index_embeddings(rebuild=args.rebuild)
+        if embedded or emb_skipped:
+            print(f"Embedded {embedded} passage(s), skipped {emb_skipped} (up to date).")
+            print(f"  {_LIBRARY / 'index.duckdb'}")
 
 
 # ---------------------------------------------------------------------------
@@ -421,25 +427,31 @@ def cmd_index(args: argparse.Namespace) -> None:
 # ---------------------------------------------------------------------------
 
 def cmd_search(args: argparse.Namespace) -> None:
+    from markery.specialist.librarian.index import (
+        search_keyword, search_semantic, search_both,
+        _INDEX_PATH, _EMBED_DB,
+    )
+
     mode = args.mode or "keyword"
 
-    if mode in ("semantic", "both"):
+    if not _INDEX_PATH.exists():
+        print("No index found. Run: markery librarian index", file=sys.stderr)
+        sys.exit(1)
+
+    if mode in ("semantic", "both") and not _EMBED_DB.exists():
         print(
-            "Semantic search not yet available (P7). Falling back to keyword mode.",
+            "No embedding index found. Run: markery librarian index --embed\n"
+            "Falling back to keyword mode.",
             file=sys.stderr,
         )
         mode = "keyword"
 
-    from markery.specialist.librarian.index import search_keyword, _INDEX_PATH
-
-    if not _INDEX_PATH.exists():
-        print(
-            "No index found. Run: markery librarian index",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    results = search_keyword(args.query, top=args.top)
+    if mode == "keyword":
+        results = search_keyword(args.query, top=args.top)
+    elif mode == "semantic":
+        results = search_semantic(args.query, top=args.top)
+    else:  # both
+        results = search_both(args.query, top=args.top)
 
     if not results:
         print(f"No matches for '{args.query}'.")
@@ -580,6 +592,9 @@ def librarian_main() -> None:
     )
     p_idx.add_argument("--rebuild", action="store_true",
                        help="Force full reparse (default: incremental)")
+    p_idx.add_argument("--embed", action="store_true",
+                       help="Also compute sentence embeddings into library/index.duckdb"
+                            " (requires pip install markery[librarian])")
 
     # search
     p_srch = sub.add_parser(
