@@ -265,12 +265,14 @@ P7 PASSED — 2026-06-01. Yates has no real passages (borrow-only stub); verifie
 
 ---
 
-### P8 — Historian context card
+### P8 — Historian context card — CLOSED
 
 1. Implement `markery librarian card <query> [--top N] [--mode keyword|semantic|both]`: compact output (≤300 tokens) for loading into a historian session. Format per match: `[Author (Year)] Section — "passage text" (p. XX).`
 2. `--out -` for stdout; default saves to `library/cards/<query-slug>.md`.
 3. `--tokens` flag.
 4. Verify: `markery librarian card "Remington Rand filing" --mode semantic` produces output ≤300 tokens containing at least one citation bracket.
+
+P8 PASSED — 2026-06-01. `card "Remington Rand filing" --mode semantic` produces 258 tokens (estimated), 5 passages, all with `[Surname (Year)]` citation brackets. Default mode is semantic (falls back to keyword if embedding index absent). Passage text truncated at 120 chars to stay within token budget. `library/cards/` gitignored.
 
 ---
 
@@ -299,7 +301,7 @@ P6 PASSED when: `markery librarian search <query> --mode keyword` returns real p
 
 P7 PASSED when: `markery librarian search "systematic record-keeping" --mode semantic` returns the Yates passage without that exact phrase; `passage_embeddings` table exists in `index.duckdb`. — PASSED
 
-P8 PASSED when: `markery librarian card <query>` ≤300 tokens with citation markers.
+P8 PASSED when: `markery librarian card <query>` ≤300 tokens with citation markers. — PASSED
 
 P9 PASSED when: all MVO tests pass; D020 closed.
 

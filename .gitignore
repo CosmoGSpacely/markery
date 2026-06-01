@@ -47,3 +47,5 @@ library/works/*/*.txt
 library/works/*/candidates.md
 # Embedding index — regenerable via markery librarian index --embed
 library/index.duckdb
+# Context cards — regenerable via markery librarian card <query>
+library/cards/

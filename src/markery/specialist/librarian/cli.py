@@ -505,6 +505,92 @@ def cmd_list(args: argparse.Namespace) -> None:
 
 
 # ---------------------------------------------------------------------------
+# card
+# ---------------------------------------------------------------------------
+
+_CARDS_DIR = _LIBRARY / "cards"
+
+_CARD_HEADER = "# Library card: {query}\n\n"
+_CARD_LINE = '[{author} ({year})] {section} — "{passage}" ({page})\n'
+
+
+def _query_slug(query: str) -> str:
+    import re
+    return re.sub(r"[^a-z0-9]+", "-", query.lower()).strip("-")
+
+
+def _estimate_tokens(text: str) -> int:
+    return max(1, len(text) // 4)
+
+
+def cmd_card(args: argparse.Namespace) -> None:
+    from markery.specialist.librarian.index import (
+        search_keyword, search_semantic, search_both,
+        _INDEX_PATH, _EMBED_DB,
+    )
+
+    mode = args.mode or "semantic"
+
+    if not _INDEX_PATH.exists():
+        print("No index found. Run: markery librarian index", file=sys.stderr)
+        sys.exit(1)
+
+    if mode in ("semantic", "both") and not _EMBED_DB.exists():
+        print(
+            "No embedding index found. Run: markery librarian index --embed\n"
+            "Falling back to keyword mode.",
+            file=sys.stderr,
+        )
+        mode = "keyword"
+
+    if mode == "keyword":
+        results = search_keyword(args.query, top=args.top)
+    elif mode == "semantic":
+        results = search_semantic(args.query, top=args.top)
+    else:
+        results = search_both(args.query, top=args.top)
+
+    if not results:
+        print(f"No matches for '{args.query}'.", file=sys.stderr)
+        sys.exit(0)
+
+    lines = [_CARD_HEADER.format(query=args.query)]
+    for rec in results:
+        author = rec.get("author", "?")
+        # Surname only for compactness
+        surname = author.split(",")[0].strip() if "," in author else author.split()[-1]
+        year = str(rec.get("year", "?")) if rec.get("year") else "?"
+        section = rec.get("section", "")
+        passage = rec.get("passage", "")
+        # Truncate passage to ~120 chars for ≤300-token card target
+        if len(passage) > 120:
+            passage = passage[:117].rstrip() + "…"
+        page = rec.get("page", "?")
+        lines.append(_CARD_LINE.format(
+            author=surname,
+            year=year,
+            section=section,
+            passage=passage,
+            page=page,
+        ))
+
+    content = "\n".join(lines)
+    token_est = _estimate_tokens(content)
+
+    if args.out == "-":
+        print(content, end="")
+    else:
+        _CARDS_DIR.mkdir(parents=True, exist_ok=True)
+        slug = _query_slug(args.query)
+        out_path = _CARDS_DIR / f"{slug}.md"
+        out_path.write_text(content, encoding="utf-8")
+        print(f"Card written: {out_path}  (~{token_est} tokens)")
+
+    if args.tokens:
+        print(f"[tokens] card ~{token_est} tokens (estimated)", file=sys.stderr)
+
+
+# ---------------------------------------------------------------------------
 # CLI wiring
 # ---------------------------------------------------------------------------
 
@@ -622,6 +708,22 @@ def librarian_main() -> None:
     p_lst.add_argument("--tokens", action="store_true",
                        help="(reserved) print token usage to stderr")
 
+    # card
+    p_card = sub.add_parser(
+        "card",
+        help="Generate a compact context card (≤300 tokens) for historian sessions",
+    )
+    p_card.add_argument("query", help="Research query")
+    p_card.add_argument("--top", type=int, default=5, metavar="N",
+                        help="Maximum passages to include (default 5)")
+    p_card.add_argument("--mode", choices=["keyword", "semantic", "both"],
+                        default="semantic",
+                        help="Search mode (default: semantic)")
+    p_card.add_argument("--out", metavar="PATH", default=None,
+                        help="Output path; '-' for stdout (default: library/cards/<slug>.md)")
+    p_card.add_argument("--tokens", action="store_true",
+                        help="Print estimated token count to stderr")
+
     args = parser.parse_args()
 
     dispatch = {
@@ -637,5 +739,6 @@ def librarian_main() -> None:
         "index":          cmd_index,
         "search":         cmd_search,
         "list":           cmd_list,
+        "card":           cmd_card,
     }
     dispatch[args.action](args)
