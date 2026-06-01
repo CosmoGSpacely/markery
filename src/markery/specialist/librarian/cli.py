@@ -2,7 +2,7 @@
 
 Registered as: markery librarian <subcommand>
 
-P2 subcommands (source adapters and acquisition):
+Subcommands:
   search-sources  Search IA and/or Gutenberg without downloading
   discover        Resolve Wikipedia article citations to acquirable sources
   wants           List the ILL/wants queue
@@ -10,8 +10,11 @@ P2 subcommands (source adapters and acquisition):
   acquire         Fetch metadata + full text; register in library/works/
   enter           Manually register a work (ILL arrival, physical copy)
   raw-text        Print path to raw_text.txt for a slug
-
-Later phases add: extract, review, index, search, list, card
+  extract         Extract passages from raw_text.txt using Claude
+  review          Interactively accept/reject candidates from candidates.md
+  index           Build/update library/index.jsonl from excerpts.md files
+  search          Keyword search across indexed passages
+  list            List all works in the library
 """
 
 from __future__ import annotations
@@ -403,6 +406,93 @@ def cmd_review(args: argparse.Namespace) -> None:
 
 
 # ---------------------------------------------------------------------------
+# index
+# ---------------------------------------------------------------------------
+
+def cmd_index(args: argparse.Namespace) -> None:
+    from markery.specialist.librarian.index import index_works
+    indexed, skipped = index_works(rebuild=args.rebuild)
+    print(f"Indexed {indexed} work(s), skipped {skipped} (up to date).")
+    print(f"  {_LIBRARY / 'index.jsonl'}")
+
+
+# ---------------------------------------------------------------------------
+# search
+# ---------------------------------------------------------------------------
+
+def cmd_search(args: argparse.Namespace) -> None:
+    mode = args.mode or "keyword"
+
+    if mode in ("semantic", "both"):
+        print(
+            "Semantic search not yet available (P7). Falling back to keyword mode.",
+            file=sys.stderr,
+        )
+        mode = "keyword"
+
+    from markery.specialist.librarian.index import search_keyword, _INDEX_PATH
+
+    if not _INDEX_PATH.exists():
+        print(
+            "No index found. Run: markery librarian index",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    results = search_keyword(args.query, top=args.top)
+
+    if not results:
+        print(f"No matches for '{args.query}'.")
+        return
+
+    print(f"{'#':<3} {'AUTHOR (YEAR)':<28} {'SECTION':<35} PASSAGE PREVIEW")
+    print("-" * 110)
+    for i, rec in enumerate(results, 1):
+        yr = f" {rec['year']}" if rec.get("year") else ""
+        citation = f"{rec.get('author', '?')}{yr}"
+        section = rec.get("section", "")[:34]
+        passage_preview = rec.get("passage", "")[:60].replace("\n", " ")
+        page = rec.get("page", "?")
+        print(f"{i:<3} {citation:<28} {section:<35} \"{passage_preview}...\"")
+        print(f"{'':3} {'':28} {'':35} ({page})")
+        if args.verbose:
+            ctx = rec.get("context", "")
+            if ctx:
+                print(f"{'':3} Context: {ctx[:120]}")
+        print()
+
+
+# ---------------------------------------------------------------------------
+# list
+# ---------------------------------------------------------------------------
+
+def cmd_list(args: argparse.Namespace) -> None:
+    from markery.specialist.librarian.index import list_works
+
+    summaries = list_works(verbose=args.verbose)
+    if not summaries:
+        print("No works in library.")
+        return
+
+    if args.verbose:
+        for w in summaries:
+            yr = str(w["year"]) if w.get("year") else "?"
+            raw = "raw" if w["has_raw_text"] else "no-raw"
+            exc = f"{w['excerpt_count']} excerpt(s)"
+            print(f"{w['slug']}")
+            print(f"  {w['author']}, {yr} | {w['source']} | {exc} | {raw}")
+            print(f"  {w['title']}")
+            print()
+    else:
+        print(f"{'SLUG':<45} {'AUTHOR':<25} {'YEAR':<6} {'EXC':>4}  RAW")
+        print("-" * 90)
+        for w in summaries:
+            yr = str(w["year"]) if w.get("year") else "?"
+            raw = "✓" if w["has_raw_text"] else "-"
+            print(f"{w['slug']:<45} {w.get('author','?'):<25} {yr:<6} {w['excerpt_count']:>4}  {raw}")
+
+
+# ---------------------------------------------------------------------------
 # CLI wiring
 # ---------------------------------------------------------------------------
 
@@ -483,6 +573,40 @@ def librarian_main() -> None:
     )
     p_rev.add_argument("slug", help="Library slug")
 
+    # index
+    p_idx = sub.add_parser(
+        "index",
+        help="Build/update library/index.jsonl from excerpts.md files",
+    )
+    p_idx.add_argument("--rebuild", action="store_true",
+                       help="Force full reparse (default: incremental)")
+
+    # search
+    p_srch = sub.add_parser(
+        "search",
+        help="Keyword search across indexed passages",
+    )
+    p_srch.add_argument("query", help="Search query")
+    p_srch.add_argument("--top", type=int, default=10, metavar="N",
+                        help="Maximum results (default 10)")
+    p_srch.add_argument("--mode", choices=["keyword", "semantic", "both"],
+                        default="keyword",
+                        help="Search mode (semantic requires P7 index; default: keyword)")
+    p_srch.add_argument("--verbose", "-v", action="store_true",
+                        help="Show context note for each result")
+    p_srch.add_argument("--tokens", action="store_true",
+                        help="(reserved for semantic mode) print token usage to stderr")
+
+    # list
+    p_lst = sub.add_parser(
+        "list",
+        help="List all works in the library",
+    )
+    p_lst.add_argument("--verbose", "-v", action="store_true",
+                       help="Show title and source for each work")
+    p_lst.add_argument("--tokens", action="store_true",
+                       help="(reserved) print token usage to stderr")
+
     args = parser.parse_args()
 
     dispatch = {
@@ -495,5 +619,8 @@ def librarian_main() -> None:
         "raw-text":       cmd_raw_text,
         "extract":        cmd_extract,
         "review":         cmd_review,
+        "index":          cmd_index,
+        "search":         cmd_search,
+        "list":           cmd_list,
     }
     dispatch[args.action](args)

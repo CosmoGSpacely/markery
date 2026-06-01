@@ -240,13 +240,15 @@ P5 PASSED — 2026-05-31. `persona/identity.md` written with full scope, source 
 
 ---
 
-### P6 — Keyword index and search
+### P6 — Keyword index and search — CLOSED
 
 1. Implement `markery librarian index [--rebuild]`: parses all `library/works/*/excerpts.md`; extracts passage records (`work_slug`, `author`, `title`, `year`, `section`, `passage`, `context`); writes `library/index.jsonl`. The `--rebuild` flag forces a full reparse; default is incremental (only reindexes works whose `excerpts.md` is newer than the index entry).
 2. Implement `markery librarian search <query> [--top N] [--mode keyword|semantic|both]`: in `keyword` mode, case-insensitive substring match across passage + section + context; returns ranked matches with citation and passage preview.
 3. Implement `markery librarian list [--verbose]`: one line per work (slug, author, year, excerpt count, raw text present/absent).
 4. Add `--tokens` flag to `search` and `list`.
 5. Verify: `markery librarian search "card index" --mode keyword` returns at least one passage.
+
+P6 PASSED — 2026-06-01. `index.py` implemented with incremental/rebuild logic; `index.jsonl` has 7 valid records across Galloway (3) and Leffingwell (4). `markery librarian search "card index" --mode keyword` returns 5 passages. `list` shows all 5 works with excerpt counts and raw-text status. Semantic/both modes fall back to keyword with warning (P7 scope).
 
 ---
 
@@ -291,7 +293,7 @@ P4 PASSED when: `markery librarian extract <slug> --topics <query>` produces can
 
 P5 PASSED when: `markery librarian --help` shows all nine subcommands; `identity.md` written with correct scope. — PASSED
 
-P6 PASSED when: `markery librarian search <query> --mode keyword` returns real passages; `index.jsonl` valid JSON-L.
+P6 PASSED when: `markery librarian search <query> --mode keyword` returns real passages; `index.jsonl` valid JSON-L. — PASSED
 
 P7 PASSED when: `markery librarian search "systematic record-keeping" --mode semantic` returns the Yates passage without that exact phrase; `passage_embeddings` table exists in `index.duckdb`.
 
