@@ -54,6 +54,42 @@ This project assembles them, entry by entry, beginning with the information syst
 
 ---
 
+## SOUNDEX Ownership Timeline
+
+*Researched 2026-06-01. Source: `data/trademarks.duckdb` (case_file and owner tables).*
+
+**Question:** Who owned the SOUNDEX trademark at the time of filing — Rand Kardex Bureau or Remington Rand? The merger that created Remington Rand Inc. was also in 1927, so the filing predates or postdates it is not obvious from corporate history alone.
+
+**DB evidence:**
+
+| Field | Value |
+|---|---|
+| Serial number | 71246709 |
+| Filing date | **March 31, 1927** |
+| Filing-date owner | **RAND KARDEX BUREAU, INC.** (574 Main St, Tonawanda, NY) |
+| Later owner | KARDEX SYSTEMS, INC. (by name change, Marietta OH) — recorded in `owner_name_change` table |
+| Registration date | August 9, 1927 |
+| File location | FILE REPOSITORY (FRANCONIA) |
+
+Query used:
+```sql
+SELECT cf.serial_no, cf.filing_dt, cf.registration_dt, o.own_name
+FROM case_file cf
+JOIN owner o ON o.serial_no = cf.serial_no
+WHERE cf.serial_no = 71246709;
+```
+
+**Finding (a) — who the filing-date owner was:**
+RAND KARDEX BUREAU, INC. filed the SOUNDEX trademark on March 31, 1927. The DB `owner` table lists two records for this serial: RAND KARDEX BUREAU, INC. as the original owner and KARDEX SYSTEMS, INC. as a later successor by name change. There is no record of Remington Rand Inc. as an owner in `trademarks.duckdb`.
+
+**Finding (b) — merger timing relative to filing:**
+The Remington-Rand merger (Remington Typewriter Company + Rand Kardex Bureau → Remington Rand Inc.) closed in the spring/summer of 1927. The SOUNDEX filing date of March 31, 1927 predates the merger close. The `case_file` registration date of August 9, 1927 is consistent with the merger having been completed by the time registration was granted, but the applicant of record is the pre-merger entity.
+
+**Finding (c) — safe entity name for Wikipedia:**
+The safe and accurate entity name for any Wikipedia edit citing the SOUNDEX trademark filing is **Rand Kardex Bureau** (or "Rand Kardex Bureau, Inc." for the formal legal name). "Remington Rand" is not appropriate for describing the 1927 filing event — it is accurate only for describing subsequent ownership. The confirmed.jsonl note already reflects this: "commercialized as SOUNDEX by successor Rand Kardex Bureau (filed 1927)."
+
+---
+
 ## Method: The Confirmed Pair
 
 The unit of research output is the **confirmed patent-trademark pair**: a specific US patent and a specific USPTO trademark registration, for the same corporate entity, where the patent describes the technical basis of the named product.

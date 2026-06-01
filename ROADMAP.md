@@ -332,7 +332,7 @@ Full design is in `src/markery/specialist/patent/BULK_CSV.md`. Implement as spec
 
 ---
 
-### P2 — Soundex owner attribution research (D024 prerequisite)
+### P2 — Soundex owner attribution research (D024 prerequisite) — CLOSED
 
 D024 requires resolving who filed the 1927 SOUNDEX trademark before any Wikipedia edit attributes it to a specific entity.
 
@@ -341,6 +341,8 @@ D024 requires resolving who filed the 1927 SOUNDEX trademark before any Wikipedi
 3. Check `assignment` table (if populated) for any ownership transfer on the SOUNDEX serial.
 4. Document the finding in `projects/information-systems/RESEARCH.md` under a new "SOUNDEX ownership timeline" section. State explicitly: (a) who the filing-date owner was, (b) whether the merger predated or postdated the filing, (c) which entity name is safe to use in a Wikipedia edit.
 5. Gate: do not proceed to P4 until this question is resolved with DB evidence.
+
+P2 PASSED — 2026-06-01. DB evidence: filing date March 31, 1927; filing entity RAND KARDEX BUREAU, INC. (owner table, serial 71246709). No `assignment` table in trademarks.duckdb; name-change record shows later succession to KARDEX SYSTEMS, INC. Filing predates merger close. Safe Wikipedia entity: "Rand Kardex Bureau". Documented in `projects/information-systems/RESEARCH.md §SOUNDEX Ownership Timeline`.
 
 ---
 
@@ -355,6 +357,8 @@ D023 blocking conditions: Stage 4b (external link) live ≥48 hours unreverted; 
 5. Use `markery wikipedia` tooling to read-modify-write: fetch current article, insert sentence, generate diff, confirm before submitting.
 6. Verify: confirm the edit is live; monitor for 48 hours; note any reviewer response.
 
+**Status (2026-06-01):** Draft complete at `projects/monthly-image-review/wikipedia/d023-inline-citation.md`. Stage 4b ✅ live since 2026-05-22, unreverted. Account edit count ❌ 1/5 — need 4 more non-reverted mainspace edits before D023 can be submitted. Article title corrected: "Chicago Pneumatic" (not "Chicago Pneumatic Tool Company"). Insertion point confirmed: after 1925 oil-well drilling sentence, before 1939 impact wrench paragraph.
+
 ---
 
 ### P4 — Wikipedia Stage 4d: second article (D024)
@@ -365,6 +369,8 @@ Depends on P2 (attribution resolved) and P3 (Stage 4c live ≥48 hours unreverte
 2. Identify the specific section and sentence to add or enrich. Use `markery wikipedia from-essay` to generate a wikitext draft from the relevant confirmed-pair essay as a starting point; edit manually to meet Wikipedia's NPOV and citation standards.
 3. Read-modify-write with diff review and explicit confirmation before submitting. Do not submit more than one paragraph of new content in a single edit.
 4. Verify: confirm the edit is live; document the edit summary and timestamp in `projects/information-systems/STATUS.md`.
+
+**Status (2026-06-01):** P2 resolved: target is **Soundex** article. Draft complete at `projects/information-systems/wikipedia/d024-soundex-draft.md`. Trademark-only variant confirmed (patent US1261167 already cited in article). Insertion point confirmed: after 1922 patent sentence, before "A variation, American Soundex" sentence. Depends on P3 completion.
 
 ---
 
