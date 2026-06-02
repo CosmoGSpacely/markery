@@ -618,6 +618,59 @@ Verify that a minimal Markery-LangGraph node can read all contract surfaces with
 
 ---
 
+---
+
+### P5 — Historian inference mode (Level 2)
+
+**Prerequisite:** P1–P4 complete. The data contract must be stable before adding inference on top of it — inference mode reads the same surfaces the contract defines, and the contract tests (P4) serve as the regression suite.
+
+**Goal:** Give historian commands the ability to call Claude directly with `--infer`, so the full card-review and candidate-assessment workflow can run without a human-driven Claude Code session. This is the bridge to Markery-LangGraph.
+
+**Design constraint:** `--infer` mode must work with any model reachable via `MARKERY_MODEL`. It must not assume Claude-specific output formatting. The existing `--tokens` flag applies automatically to all `--infer` calls.
+
+1. Add `--infer [--model MODEL]` to `markery historian card <project> <slug>`:
+   - Load the card context document (existing output)
+   - Send to the API: system prompt = `persona/identity.md` (condensed); user prompt = card context + assessment request
+   - Parse response into a structured result: `{"recommendation": "confirm|reject|defer", "score": 1–5, "reasoning": "..."}`
+   - Print result; append token record to `MARKERY_TOKEN_LOG` if set
+   - `--model` overrides `MARKERY_MODEL` for this call only
+
+2. Add `--infer` to `markery historian digest <project>`:
+   - After generating the digest document, send it to the API with the question: "Which candidates are most worth reviewing first and why?"
+   - Append the model's ranked recommendation list below the digest output
+   - Token count appended to log
+
+3. Add `markery historian draft <project> <slug> [--model MODEL]`:
+   - New command: takes an existing scaffold and calls the API to produce a first-draft essay
+   - Output written to `content/<slug>-draft.md` (distinct from the final `<slug>.md` to avoid overwriting human work)
+   - Immediately run `historian validate` on the draft; print PASS/FAIL alongside token counts
+   - This is the primary test of whether a given model can complete the full essay workflow end-to-end
+
+4. Verify on radio-pioneers: run `historian card --infer` on ≥3 candidates with `MARKERY_MODEL=claude-haiku-4-5-20251001`; run `historian draft` on one confirmed pair; record validate result.
+
+---
+
+### P6 — Token efficiency and model-agnostic hardening
+
+**Goal:** Close the gap between the model-agnosticism principle (documented in DESIGN.md) and the reality of how sessions run. After P5, every API-calling path in Markery goes through a single configurable model. This phase makes that configuration robust and reduces per-call cost.
+
+**Prompt caching** (highest ROI):
+1. Add `cache_control: {"type": "ephemeral"}` to the system prompt block in `librarian extract` and the new historian inference calls. Persona content (`identity.md`) is identical across all calls in a session — it is the canonical cache candidate. Measure the cache hit rate via `cache_read_tokens` in `MARKERY_TOKEN_LOG`. Target: ≥80% cache hit rate on repeated calls within a session.
+2. Document the caching behaviour in `DESIGN.md`: what is cached, what is not, and why (cache TTL is 5 minutes — sessions longer than 5 minutes between calls will miss).
+
+**Context budget control**:
+3. Add `MARKERY_CONTEXT_BUDGET` env var (integer, token count). When set, historian commands that assemble context — `digest`, `card` — truncate their output to stay within budget. Default: 4000 (sized for Haiku's cost-efficient range). Higher values allow richer context on larger models without code changes.
+4. Verify: set `MARKERY_CONTEXT_BUDGET=2000`, run `historian digest radio-pioneers`, confirm output fits the budget. Set to 8000, confirm more candidates are included.
+
+**Multi-model MVO validation**:
+5. Extend the existing MVO test job in `ci.yml` with a `model-matrix` step: run all MVO contracts with `MARKERY_MODEL=claude-haiku-4-5-20251001` and `MARKERY_MODEL=claude-sonnet-4-6`. Both must pass. This is the continuous proof that the output contracts are model-agnostic, not just token-efficient.
+6. Record the first multi-model MVO run results in `tests/benchmarks/README.md`: a model-comparison table (command, Haiku tokens, Sonnet tokens, both pass/fail).
+
+**Provider abstraction** (forward-looking, minimal):
+7. Extract the `anthropic.Anthropic` client construction from `extract.py` and the new inference calls into a shared `common/llm.py` module: `get_client() -> client`, `call(model, system, user, max_tokens) -> (text, prompt_tokens, completion_tokens)`. The implementation calls Anthropic; the interface is generic enough that a second implementation (OpenAI-compatible, Gemini) could be dropped in by changing one file. Do not implement any second provider — define the abstraction only.
+
+---
+
 ### Phase Gate
 
 P1 PASSED when: every contract surface has located documentation; gaps are listed.
@@ -628,4 +681,8 @@ P3 PASSED when: `CONTRACT.md` exists at repo root; `MANIFEST.json` has `contract
 
 P4 PASSED when: `tests/test_contract.py` passes against `information-systems`; test added to CI mvo job.
 
-Phase PASSED when P1–P4 all pass. Markery-LangGraph repo may begin after this gate.
+P5 PASSED when: `historian card --infer` returns structured recommendation on radio-pioneers data with Haiku; `historian draft` produces an essay that passes `historian validate` (or fails with a documented reason); token counts logged.
+
+P6 PASSED when: prompt cache hit rate ≥80% on repeated extract calls; `MARKERY_CONTEXT_BUDGET` respected by digest and card; MVO contracts pass on both Haiku and Sonnet; `common/llm.py` abstraction in place.
+
+Phase PASSED when P1–P6 all pass. Markery-LangGraph repo may begin after this gate.
