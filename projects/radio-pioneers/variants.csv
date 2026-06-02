@@ -1,0 +1,36 @@
+entity_id,variant_name,source
+1,RADIO CORPORATION OF AMERICA,patent_assignee
+1,RCA CORPORATION,patent_assignee
+1,Radio Corporation of America,trademark_owner
+1,RCA CORPORATION,trademark_owner
+1,RADIOLA,trademark_search
+1,RADIOTRON,trademark_search
+1,SUPERHETERODYNE,trademark_search
+2,WESTINGHOUSE ELECTRIC & MANUFACTURING CO,patent_assignee
+2,WESTINGHOUSE ELECTRIC AND MANUFACTURING COMPANY,patent_assignee
+2,WESTINGHOUSE ELECTRIC & MFG CO,patent_assignee
+2,Westinghouse Electric and Manufacturing Company,trademark_owner
+2,WESTINGHOUSE ELECTRIC & MFG. CO.,trademark_owner
+2,RADIOPHONE,trademark_search
+2,AERIOLA,trademark_search
+3,ATWATER KENT MANUFACTURING CO,patent_assignee
+3,A. ATWATER KENT MANUFACTURING CO,patent_assignee
+3,ATWATER KENT MFG CO,patent_assignee
+3,Atwater Kent Manufacturing Company,trademark_owner
+3,ATWATER KENT MANUFACTURING COMPANY,trademark_owner
+3,ATWATERKENT,trademark_search
+3,ATWATER KENT,trademark_search
+4,ZENITH RADIO CORPORATION,patent_assignee
+4,CHICAGO RADIO LABORATORY,patent_assignee
+4,Zenith Radio Corporation,trademark_owner
+4,ZENITH RADIO CORPORATION,trademark_owner
+4,ZENITH,trademark_search
+4,ZEPHYR,trademark_search
+5,DE FOREST RADIO COMPANY,patent_assignee
+5,LEE DE FOREST,patent_assignee
+5,DE FOREST RADIO TELEPHONE AND TELEGRAPH COMPANY,patent_assignee
+5,De Forest Radio Company,trademark_owner
+5,DE FOREST RADIO COMPANY,trademark_owner
+5,AUDION,trademark_search
+5,OSCILLION,trademark_search
+5,DE FOREST,trademark_search
