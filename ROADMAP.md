@@ -374,7 +374,7 @@ Attribution basis: RAND KARDEX BUREAU, INC. confirmed as filing-date owner in `d
 
 ---
 
-### P4 — Project setup: `radio-pioneers`
+### P4 — Project setup: `radio-pioneers` — CLOSED
 
 Target domain: early American radio manufacturers, 1920–1940. Vacuum tube patents, receiver circuit patents, and broadcast equipment patents map cleanly to branded product names. The RCA patent pool (GE, Westinghouse, AT&T, RCA as joint licensors) means that product trademarks are the primary evidence of each company's distinct commercial activity — patent ownership was pooled and cross-licensed, but brand names were proprietary.
 
@@ -450,7 +450,7 @@ P2 PASSED when: D023 live on Wikipedia ≥48 hours unreverted; edit URL recorded
 
 P3 PASSED when: D024 live on Wikipedia ≥48 hours unreverted; edit URL recorded in `projects/information-systems/STATUS.md`.
 
-P4 PASSED when: `projects/radio-pioneers/entities.csv`, `variants.csv`, and `RESEARCH.md` all exist.
+P4 PASSED when: `projects/radio-pioneers/entities.csv`, `variants.csv`, and `RESEARCH.md` all exist. — PASSED 2026-06-02
 
 P5 PASSED when: ≥10 trademark records and ≥20 patent records in scope; sweep complete without errors.
 
