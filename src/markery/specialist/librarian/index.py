@@ -358,14 +358,14 @@ def index_embeddings(rebuild: bool = False) -> tuple[int, int]:
 
 def search_semantic(query: str, top: int = 10) -> list[dict]:
     """Rank all indexed passages by cosine similarity to the query embedding."""
-    import numpy as np
-
     if not _EMBED_DB.exists():
         return []
 
     model = _get_model()
     if model is None:
         return []
+
+    import numpy as np
 
     con = _open_embed_db(read_only=True)
     rows = con.execute(
