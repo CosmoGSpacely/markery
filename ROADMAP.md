@@ -406,12 +406,23 @@ CPC patent classes to sweep: `H04B` (radio transmission), `H01J` (vacuum tubes),
 
 ---
 
-### P6 — Candidate generation and first review cycle
+### P6 — Candidate generation, first review cycle, and token baseline
 
 1. Run `markery matchmaker generate radio-pioneers` to populate `candidates.jsonl`.
-2. Run `markery historian digest radio-pioneers` to get session brief.
-3. Review top-scoring candidates with `markery historian card radio-pioneers <slug>`. Target ≥3 confirmed pairs across ≥2 entities.
-4. For each confirmed pair: `markery historian scaffold radio-pioneers <slug>`, expand manually, then `markery historian validate radio-pioneers <slug>`. All confirmed essays must pass validate.
+2. Run historian commands with token logging enabled:
+   ```
+   MARKERY_TOKEN_LOG=tests/benchmarks/radio-pioneers-p6.jsonl \
+     markery historian digest radio-pioneers --tokens
+   ```
+   Then for each card reviewed:
+   ```
+   MARKERY_TOKEN_LOG=tests/benchmarks/radio-pioneers-p6.jsonl \
+     markery historian card radio-pioneers <slug> --tokens
+   ```
+3. Review top-scoring candidates. Target ≥3 confirmed pairs across ≥2 entities.
+4. **Haiku simulation:** after reviewing at least 3 candidates, run the Phase 14 P4 test harness against radio-pioneers data — load the digest + cards as context and send to `claude-haiku-4-5-20251001`. Verify: no hallucinated serial or patent numbers; response is structurally coherent. Record pass/fail and token counts in `tests/benchmarks/radio-pioneers-p6.jsonl`.
+5. Aggregate the log: record mean prompt tokens for digest and card in `tests/benchmarks/README.md` alongside the Phase 14 baseline (digest=251, card=188 post-P3). Flag any command whose radio-pioneers count exceeds the baseline by >20% — that is a regression signal, not a gate failure, but it must be investigated before P8.
+6. For each confirmed pair: `markery historian scaffold radio-pioneers <slug>`, expand manually, then `markery historian validate radio-pioneers <slug>`. All confirmed essays must pass validate.
 
 ---
 
@@ -428,17 +439,19 @@ Key works to acquire (verify IA open-access before requesting):
 1. Run `markery librarian discover --wikipedia "Radio Corporation of America" --add-wants` to surface citations.
 2. Run `markery librarian search-sources "radio history" --source ia` to find open-access texts.
 3. Acquire confirmed open-access works with `markery librarian acquire`.
-4. Run `markery librarian extract <slug> --topics "RCA" "RADIOLA" "patent pool" "vacuum tube"` on acquired texts; run `markery librarian review` to accept relevant passages.
+4. Run `markery librarian extract <slug> --topics "RCA" "RADIOLA" "patent pool" "vacuum tube" --tokens` on acquired texts. `extract` calls `claude-haiku-4-5-20251001` directly — record the prompt and completion token counts. Append results to `tests/benchmarks/radio-pioneers-p6.jsonl`. Run `markery librarian review` to accept relevant passages.
 5. Run `markery librarian index --embed`.
 6. Load a context card in the first historian session: `markery librarian card "radio receiver patents" --mode semantic`.
 
 ---
 
-### P8 — Site build and phase close
+### P8 — Site build, Haiku essay test, and phase close
 
-1. Write at least one full essay for a confirmed pair (scaffold + manual expansion + validate).
-2. Run `markery site build radio-pioneers` and verify the site renders without error.
-3. Create `projects/radio-pioneers/wikipedia/` with a draft file for the strongest Wikipedia contribution identified during the review cycle. Do not submit — save for a future phase.
+1. **Haiku essay test:** Take the scaffold for one confirmed pair and attempt a complete draft using `claude-haiku-4-5-20251001` as the session model. Run `markery historian validate radio-pioneers <slug>` on the result. Record: pass/fail, any fields that required manual correction, and completion token count. This is the open question left from Phase 14 P4 — Haiku was validated for card/digest but not for full essay generation.
+2. Write at least one full validated essay (Haiku draft or manual expansion — whichever passes validate).
+3. Run `markery site build radio-pioneers` and verify the site renders without error.
+4. Create `projects/radio-pioneers/wikipedia/` with a draft file for the strongest Wikipedia contribution identified during the review cycle. Do not submit — save for a future phase.
+5. Append a `radio-pioneers` section to `tests/benchmarks/README.md`: token summary table (digest, card, extract, essay), Haiku simulation result, and comparison to Phase 14 baseline.
 
 ---
 
@@ -454,11 +467,11 @@ P4 PASSED when: `projects/radio-pioneers/entities.csv`, `variants.csv`, and `RES
 
 P5 PASSED when: ≥10 trademark records and ≥20 patent records in scope; sweep complete without errors.
 
-P6 PASSED when: ≥3 confirmed pairs in `confirmed.jsonl`; all pass `historian validate`.
+P6 PASSED when: ≥3 confirmed pairs in `confirmed.jsonl`; all pass `historian validate`; token counts recorded in `tests/benchmarks/radio-pioneers-p6.jsonl`; Haiku simulation pass/fail recorded.
 
-P7 PASSED when: ≥2 radio secondary works indexed; `markery librarian card "radio receiver" --mode semantic` returns at least one passage.
+P7 PASSED when: ≥2 radio secondary works indexed; `markery librarian card "radio receiver" --mode semantic` returns at least one passage; `extract` token counts recorded.
 
-P8 PASSED when: `markery site build radio-pioneers` exits 0; one Wikipedia draft written.
+P8 PASSED when: `markery site build radio-pioneers` exits 0; one Wikipedia draft written; Haiku essay test result recorded; `tests/benchmarks/README.md` updated with radio-pioneers section.
 
 Phase PASSED when P1–P8 all pass.
 
