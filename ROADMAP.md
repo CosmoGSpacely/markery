@@ -311,12 +311,165 @@ Phase PASSED when P1–P9 all pass. — PASSED 2026-06-01
 
 ---
 
-## Phase 16 — PatentsView Bulk Import and Wikipedia Stage 4
+## Phase 16 — Wikipedia Account Building and Early Radio Project
 
-**Trigger:** Phase 15 complete — LIBRARIAN operational; OR a project with 1976+ scope opens where EPO OPS quota is a genuine bottleneck (for D007 sub-track only).  
-**Scope:** Three deferred items from distinct workstreams — patent data infrastructure (D007), Wikipedia inline citation (D023), and Wikipedia second article (D024) — all mature enough to close in the same phase. D007 and D023/D024 are independent and can proceed in parallel.
+**Trigger:** Phase 15 complete.  
+**Scope:** Two independent workstreams. Track A closes the deferred Wikipedia Stage 4c/4d edits (D023, D024) by first building the account to five non-reverted mainspace edits — the blocking condition confirmed 2026-06-01. Track B launches `radio-pioneers`, a second research project on early American radio manufacturers (1920–1940), as a live end-to-end test of the full Markery pipeline.
 
-**Goal state:** By phase close, `markery patent bulk-import` is implemented and tested; the Chicago Pneumatic Wikipedia citation is live; a second Wikipedia article is enriched; D007, D023, and D024 are all closed.
+**Goal state:** D023 and D024 live on Wikipedia; `radio-pioneers` has confirmed pairs, at least one validated essay, a working site build, and radio-domain secondary literature in the LIBRARIAN corpus.
+
+---
+
+### Track A — Wikipedia
+
+---
+
+### P1 — Four mainspace edits (account threshold)
+
+Current state: account `CosmoGSpacely` has 1 confirmed non-reverted mainspace edit (Stage 4b external link, 2026-05-22). Four more required before D023 can be submitted. Space edits across ≥10 days — one per day minimum.
+
+1. **Library Bureau — resolve `{{Citation needed}}`**: The sentence "It sold merchandise and services through a network of sales offices and distributors in the United States (46 in 1922), England (4), France (1), and Belgium." carries a `{{Citation needed|date=June 2023}}` tag. The 1921 Library Bureau catalog (Google Books, already linked in the article's References section) documents the office network. Add `<ref>{{cite book|title=Steel Card and Filing Cabinets|publisher=Library Bureau|year=1921|url=https://books.google.com/books?id=nkhIAAAAYAAJ&pg=PA1}}</ref>` after "Belgium"; remove the tag.
+
+2. **Library Bureau — add absorption citation**: The lead sentence "In 1927, it was absorbed into Remington Rand" is uncited. The Los Angeles Times advertisement of June 21, 1927 (already cited as a reference in the article) announces Remington Rand's formation and names Library Bureau among its business services. Add it as an inline `<ref>` on that sentence.
+
+3. **Rolodex — Wheeldex trademark citation**: The article states Rolodex "was an improvement to an earlier design called the *Wheeldex*" without sourcing the Wheeldex name. The USPTO trademark record for WHEELDEX (Serial No. 71321669, Scholfield Service, Inc.) is a primary source. Add one sentence: "The Wheeldex name was registered as a United States trademark by Scholfield Service, Inc. (USPTO Serial No. 71321669)." with a TSDR `<ref>`.
+
+4. **Remington Rand or another domain article — citation or housekeeping**: After completing edits 1–3, identify the single best unsourced factual claim in the Remington Rand article or another article in the domain that the USPTO record or LIBRARIAN corpus directly supports. Make a genuine improvement — do not save this slot for a strategically motivated edit.
+
+---
+
+### P2 — D023: Chicago Pneumatic inline citation
+
+Prerequisite: ≥5 confirmed non-reverted mainspace edits.
+
+1. Confirm Stage 4b TSDR external link still live on the "Chicago Pneumatic" article.
+2. Using `markery wikipedia` tooling, fetch current wikitext, insert at confirmed insertion point (after 1925 oil-well drilling paragraph, before 1939 impact wrench paragraph):
+   ```wikitext
+   The CP monogram design trademark (USPTO Serial No. 71299042) was filed on April 18, 1930, covering pneumatic tools, air compressors, and related apparatus.<ref>{{cite web|url=https://tsdr.uspto.gov/#caseNumber=71299042&caseType=SERIAL_NO&searchType=statusSearch|title=Trademark Serial No. 71299042|publisher=USPTO Trademark Status and Document Retrieval|access-date=2026-06-01}}</ref>
+   ```
+3. Review diff; submit with summary: "Add primary source citation for CP monogram trademark (USPTO Serial 71299042, April 1930)"
+4. Monitor ≥48 hours; record edit URL in `projects/monthly-image-review/STATUS.md`.
+
+Full draft and pre-submission checklist: `projects/monthly-image-review/wikipedia/d023-inline-citation.md`.
+
+---
+
+### P3 — D024: Soundex article
+
+Prerequisite: D023 live ≥48 hours unreverted.
+
+1. Fetch current Soundex article to confirm 1918 patent is still cited and trademark sentence is absent.
+2. Insert trademark-only sentence after the 1922 patent sentence (before "A variation, American Soundex..."):
+   ```wikitext
+   The SOUNDEX trademark (USPTO Serial No. 71246709) was filed on March 31, 1927, by Rand Kardex Bureau, Inc., covering index cards and forms for phonetic indexing systems.<ref>{{cite web|url=https://tsdr.uspto.gov/#caseNumber=71246709&caseType=SERIAL_NO&searchType=statusSearch|title=Trademark Serial No. 71246709 — SOUNDEX|publisher=USPTO Trademark Status and Document Retrieval|access-date=2026-06-01}}</ref>
+   ```
+3. Edit summary: "Add primary source citation for SOUNDEX trademark filing (USPTO 71246709, 1927, Rand Kardex Bureau)"
+4. Monitor ≥48 hours; record edit URL in `projects/information-systems/STATUS.md`.
+
+Attribution basis: RAND KARDEX BUREAU, INC. confirmed as filing-date owner in `data/trademarks.duckdb`; see `projects/information-systems/RESEARCH.md §SOUNDEX Ownership Timeline`. Full draft: `projects/information-systems/wikipedia/d024-soundex-draft.md`.
+
+---
+
+### Track B — Early Radio Project
+
+---
+
+### P4 — Project setup: `radio-pioneers`
+
+Target domain: early American radio manufacturers, 1920–1940. Vacuum tube patents, receiver circuit patents, and broadcast equipment patents map cleanly to branded product names. The RCA patent pool (GE, Westinghouse, AT&T, RCA as joint licensors) means that product trademarks are the primary evidence of each company's distinct commercial activity — patent ownership was pooled and cross-licensed, but brand names were proprietary.
+
+Initial entity set:
+
+| ID | Entity | Key trademark strings |
+|---|---|---|
+| 1 | Radio Corporation of America | RADIOLA, RADIOTRON, SUPERHETERODYNE |
+| 2 | Westinghouse Electric and Manufacturing Company | RADIOPHONE, AERIOLA |
+| 3 | Atwater Kent Manufacturing Company | ATWATERKENT |
+| 4 | Zenith Radio Corporation | ZENITH |
+| 5 | De Forest Radio Company | AUDION, OSCILLION |
+
+CPC patent classes to sweep: `H04B` (radio transmission), `H01J` (vacuum tubes), `H03F` (amplifiers), `H04R` (loudspeakers, receiver components).
+
+1. Create `projects/radio-pioneers/` with standard directory structure: `entities.csv`, `variants.csv`, `matches/`, `content/`, `site/`, `references/`.
+2. Write `entities.csv` (IDs 1–5) and `variants.csv` with the trademark search strings above.
+3. Write `projects/radio-pioneers/RESEARCH.md`: central argument and scope note on the patent pool structure and why trademarks are the primary evidence of commercial identity.
+4. Write `projects/radio-pioneers/RESEARCH-AGENDA.md`: candidate confirmed pairs to investigate (De Forest AUDION vacuum tube patent + AUDION trademark; RCA transmitter patents + RADIOLA marks; Zenith early marks).
+
+---
+
+### P5 — Patent and trademark acquisition
+
+1. Run trademark sweeps for each entity's variants. Identify which serials are already in `trademarks.duckdb` and which require TSDR enrichment via `markery trademark fetch`.
+2. Run patent sweeps for CPC classes `H04B`, `H01J`, `H03F`, `H04R` over 1918–1940 via EPO OPS. If coverage is thin (radio CPC classes may be outside the current data window), document in `RESEARCH-AGENDA.md` as a scope note.
+3. Run `markery patent signals` for any unreviewed patents in the candidate pool to populate abstract text.
+4. Gate: ≥10 trademark records and ≥20 patent records in scope; no sweep errors.
+
+---
+
+### P6 — Candidate generation and first review cycle
+
+1. Run `markery matchmaker generate radio-pioneers` to populate `candidates.jsonl`.
+2. Run `markery historian digest radio-pioneers` to get session brief.
+3. Review top-scoring candidates with `markery historian card radio-pioneers <slug>`. Target ≥3 confirmed pairs across ≥2 entities.
+4. For each confirmed pair: `markery historian scaffold radio-pioneers <slug>`, expand manually, then `markery historian validate radio-pioneers <slug>`. All confirmed essays must pass validate.
+
+---
+
+### P7 — LIBRARIAN: secondary literature for radio domain
+
+Key works to acquire (verify IA open-access before requesting):
+
+| Work | Notes |
+|---|---|
+| Gleason Archer, *History of Radio to 1926* (1938) | Contemporary account covering RCA formation and patent pool |
+| W. Rupert Maclaurin, *Invention and Innovation in the Radio Industry* (1949) | Business history of the patent-to-product pipeline; directly relevant to confirmed-pair methodology |
+| Erik Barnouw, *A Tower in Babel* (1966) | Standard scholarly history of American broadcasting |
+
+1. Run `markery librarian discover --wikipedia "Radio Corporation of America" --add-wants` to surface citations.
+2. Run `markery librarian search-sources "radio history" --source ia` to find open-access texts.
+3. Acquire confirmed open-access works with `markery librarian acquire`.
+4. Run `markery librarian extract <slug> --topics "RCA" "RADIOLA" "patent pool" "vacuum tube"` on acquired texts; run `markery librarian review` to accept relevant passages.
+5. Run `markery librarian index --embed`.
+6. Load a context card in the first historian session: `markery librarian card "radio receiver patents" --mode semantic`.
+
+---
+
+### P8 — Site build and phase close
+
+1. Write at least one full essay for a confirmed pair (scaffold + manual expansion + validate).
+2. Run `markery site build radio-pioneers` and verify the site renders without error.
+3. Create `projects/radio-pioneers/wikipedia/` with a draft file for the strongest Wikipedia contribution identified during the review cycle. Do not submit — save for a future phase.
+
+---
+
+### Phase Gate
+
+P1 PASSED when: account `CosmoGSpacely` has ≥5 confirmed non-reverted mainspace edits; all four new edits are in articles within the research domain.
+
+P2 PASSED when: D023 live on Wikipedia ≥48 hours unreverted; edit URL recorded in `projects/monthly-image-review/STATUS.md`.
+
+P3 PASSED when: D024 live on Wikipedia ≥48 hours unreverted; edit URL recorded in `projects/information-systems/STATUS.md`.
+
+P4 PASSED when: `projects/radio-pioneers/entities.csv`, `variants.csv`, and `RESEARCH.md` all exist.
+
+P5 PASSED when: ≥10 trademark records and ≥20 patent records in scope; sweep complete without errors.
+
+P6 PASSED when: ≥3 confirmed pairs in `confirmed.jsonl`; all pass `historian validate`.
+
+P7 PASSED when: ≥2 radio secondary works indexed; `markery librarian card "radio receiver" --mode semantic` returns at least one passage.
+
+P8 PASSED when: `markery site build radio-pioneers` exits 0; one Wikipedia draft written.
+
+Phase PASSED when P1–P8 all pass.
+
+---
+
+## Phase 17 — PatentsView Bulk Import, Documentation, and Code Gap Analysis
+
+**Trigger:** Phase 16 complete.  
+**Scope:** Patent data infrastructure (D007) and a holistic documentation and code-quality pass covering Phases 14–17 additions. D023 and D024 have moved to Phase 16.
+
+**Goal state:** By phase close, `markery patent bulk-import` is implemented and tested; all top-level and specialist documentation reflects Phase 14–17 work; `DEFERRED.md` is fully current; D007 is closed.
 
 ---
 
@@ -332,98 +485,53 @@ Full design is in `src/markery/specialist/patent/BULK_CSV.md`. Implement as spec
 
 ---
 
-### P2 — Soundex owner attribution research (D024 prerequisite) — CLOSED
+### P2 — Documentation pass
 
-D024 requires resolving who filed the 1927 SOUNDEX trademark before any Wikipedia edit attributes it to a specific entity.
-
-1. Query `trademarks.duckdb` for the SOUNDEX filing: serial number, filing date, owner on file, any assignment records. The SOUNDEX serial is in `information-systems/matches/confirmed.jsonl`.
-2. Cross-reference: the Remington-Rand merger closed June 1927. The SOUNDEX filing date relative to that merger date determines whether the filer was Rand Kardex Corporation, Remington Rand Inc., or a predecessor.
-3. Check `assignment` table (if populated) for any ownership transfer on the SOUNDEX serial.
-4. Document the finding in `projects/information-systems/RESEARCH.md` under a new "SOUNDEX ownership timeline" section. State explicitly: (a) who the filing-date owner was, (b) whether the merger predated or postdated the filing, (c) which entity name is safe to use in a Wikipedia edit.
-5. Gate: do not proceed to P4 until this question is resolved with DB evidence.
-
-P2 PASSED — 2026-06-01. DB evidence: filing date March 31, 1927; filing entity RAND KARDEX BUREAU, INC. (owner table, serial 71246709). No `assignment` table in trademarks.duckdb; name-change record shows later succession to KARDEX SYSTEMS, INC. Filing predates merger close. Safe Wikipedia entity: "Rand Kardex Bureau". Documented in `projects/information-systems/RESEARCH.md §SOUNDEX Ownership Timeline`.
-
----
-
-### P3 — Wikipedia Stage 4c: Chicago Pneumatic inline citation (D023)
-
-D023 blocking conditions: Stage 4b (external link) live ≥48 hours unreverted; account has ≥5 confirmed non-reverted mainspace edits. Verify both before proceeding.
-
-1. Confirm the Stage 4b external link is still live on the Chicago Pneumatic Tool Company article.
-2. Confirm account edit count ≥5 non-reverted mainspace edits.
-3. Identify the exact insertion point: the History section paragraph covering the 1920s–1930s branding period.
-4. Draft the sentence per D023 specification: "The CP monogram design trademark (USPTO Serial No. 71299042) was filed on April 18, 1930, covering pneumatic tools, air compressors, and related apparatus." Add a `<ref>` tag citing the TSDR filing record URL.
-5. Use `markery wikipedia` tooling to read-modify-write: fetch current article, insert sentence, generate diff, confirm before submitting.
-6. Verify: confirm the edit is live; monitor for 48 hours; note any reviewer response.
-
-**Status (2026-06-01):** Draft complete at `projects/monthly-image-review/wikipedia/d023-inline-citation.md`. Stage 4b ✅ live since 2026-05-22, unreverted. Account edit count ❌ 1/5 — need 4 more non-reverted mainspace edits before D023 can be submitted. Article title corrected: "Chicago Pneumatic" (not "Chicago Pneumatic Tool Company"). Insertion point confirmed: after 1925 oil-well drilling sentence, before 1939 impact wrench paragraph.
-
----
-
-### P4 — Wikipedia Stage 4d: second article (D024)
-
-Depends on P2 (attribution resolved) and P3 (Stage 4c live ≥48 hours unreverted).
-
-1. Based on P2 research, choose the target article: Soundex (if attribution is clean and the patent-trademark angle is clearly addable) or Remington Rand (if the product-line angle — SOUNDEX, VARIADEX, KARDEX — fits the article's existing structure).
-2. Identify the specific section and sentence to add or enrich. Use `markery wikipedia from-essay` to generate a wikitext draft from the relevant confirmed-pair essay as a starting point; edit manually to meet Wikipedia's NPOV and citation standards.
-3. Read-modify-write with diff review and explicit confirmation before submitting. Do not submit more than one paragraph of new content in a single edit.
-4. Verify: confirm the edit is live; document the edit summary and timestamp in `projects/information-systems/STATUS.md`.
-
-**Status (2026-06-01):** P2 resolved: target is **Soundex** article. Draft complete at `projects/information-systems/wikipedia/d024-soundex-draft.md`. Trademark-only variant confirmed (patent US1261167 already cited in article). Insertion point confirmed: after 1922 patent sentence, before "A variation, American Soundex" sentence. Depends on P3 completion.
-
----
-
-### P5 — Documentation pass
-
-Review all user-facing and developer-facing documentation for staleness and gaps introduced across Phases 14–16. This is a holistic pass, not a file-by-file rewrite — update only what has drifted or is missing.
+Review all user-facing and developer-facing documentation for staleness and gaps introduced across Phases 14–17. Update only what has drifted or is missing.
 
 **Top-level docs:**
-1. `README.md` — verify it reflects v0.3.0 capabilities; update the command inventory if any commands added in Phases 14–16 are absent; confirm the setup instructions still work end-to-end.
-2. `DESIGN.md` — check whether the model-agnosticism section (added Phase 12) accurately describes the Phase 14 token instrumentation and Phase 15 LIBRARIAN embedding approach; add any new architectural patterns introduced.
+1. `README.md` — verify it reflects current capabilities; update the command inventory if any commands added in Phases 14–17 are absent; confirm the setup instructions still work end-to-end.
+2. `DESIGN.md` — check whether the model-agnosticism section accurately describes the Phase 14 token instrumentation, Phase 15 LIBRARIAN embedding approach, and Phase 16 radio project structure; add any new architectural patterns.
 3. `SETUP.md` — confirm all new optional dependencies (`sentence-transformers`, `anthropic`) are documented with install instructions and purpose.
-4. `CONTEXT.md` — update the "what exists" summary to reflect the LIBRARIAN specialist and bulk-import capability.
+4. `CONTEXT.md` — update the "what exists" summary to reflect the LIBRARIAN specialist, bulk-import capability, and `radio-pioneers` project.
 
 **Specialist docs:**
-5. Each specialist's `identity.md` — verify scope sections are current; any commands added in Phases 14–16 that changed what a specialist reads or writes must be reflected.
-6. Instruction cards (`persona/instructions/`) — audit against implemented commands: any command reachable via `markery <specialist> --help` that has no instruction card is a gap. Create stub cards for gaps; note which require full content.
-7. `src/markery/specialist/patent/BULK_CSV.md` — update with implementation decisions made during P1 (actual column mappings used, `app_dt` NULL behavior, any schema deviations from the design doc).
-8. `src/markery/specialist/librarian/` — write `persona/instructions/` cards for `acquire`, `discover`, `extract`, `search`, and `card` — the commands most likely to be used in historian sessions.
+5. Each specialist's `identity.md` — verify scope sections are current for any commands added in Phases 14–17.
+6. Instruction cards (`persona/instructions/`) — audit against implemented commands. Any command reachable via `markery <specialist> --help` that has no instruction card is a gap. Create stub cards; note which require full content.
+7. `src/markery/specialist/patent/BULK_CSV.md` — update with implementation decisions made during P1 (actual column mappings, `app_dt` NULL behavior, schema deviations from the design doc).
 
 **Benchmark docs:**
-9. `tests/benchmarks/README.md` — add a Phase 16 section noting the bulk-import command's token profile (if instrumented) and confirming the Phase 14 baseline is still valid after bulk-import rows are added.
+8. `tests/benchmarks/README.md` — add a Phase 17 section noting the bulk-import command's token profile and confirming the Phase 14 baseline is still valid after bulk-import rows are added.
 
 ---
 
-### P6 — Code gap analysis
+### P3 — Code gap analysis
 
-Audit the full codebase for incomplete implementation, missing test coverage, and deferred items that Phase 14–16 work may have made satisfiable. The output is an updated `DEFERRED.md` — new entries for newly discovered gaps, closed entries for anything now satisfiable.
+Audit the full codebase for incomplete implementation, missing test coverage, and deferred items that Phase 14–17 work may have made satisfiable.
 
 **Implementation gaps:**
-1. Grep for `TODO`, `FIXME`, `HACK`, `raise NotImplementedError`, and `pass` in `src/`. For each hit: classify as (a) intentional stub to implement later, (b) known gap already in `DEFERRED.md`, or (c) newly discovered gap. Add any (c) items to `DEFERRED.md` with a reopen trigger.
-2. Cross-reference all subcommands in every specialist's `--help` output against their implementation in `cli.py`. Any subcommand registered but not dispatched is a gap.
-3. Check `markery historian prepare` — it dispatches to `prepare.py` but instruction cards may not reflect the current output format. Verify and flag if stale.
+1. Grep for `TODO`, `FIXME`, `HACK`, `raise NotImplementedError`, and `pass` in `src/`. Classify each as: (a) intentional stub, (b) known gap already in `DEFERRED.md`, or (c) newly discovered. Add (c) items to `DEFERRED.md` with a reopen trigger.
+2. Cross-reference all subcommands in every specialist's `--help` output against `cli.py`. Any subcommand registered but not dispatched is a gap.
+3. Check `markery historian prepare` — verify instruction cards reflect the current output format.
 
 **Test coverage gaps:**
-4. Run `python -m pytest --co -q` and compare collected tests against the full command inventory. Any command with zero test coverage gets a DEFERRED entry (`D0xx — add MVO tests for markery <specialist> <command>`).
-5. Check `tests/benchmarks/mvo.md` — verify every command in the MVO contract table has a corresponding test in `tests/test_mvo.py`. Add any missing contracts.
+4. Run `python -m pytest --co -q` and compare collected tests against the full command inventory. Any command with zero test coverage gets a DEFERRED entry.
+5. Check `tests/benchmarks/mvo.md` — verify every contract row has a corresponding test in `tests/test_mvo.py`.
 
 **Schema and data gaps:**
-6. Document in `DEFERRED.md` any known data-quality constraints that Phase 16 P1 exposed: `app_dt` NULL for bulk-imported patents, assignee disambiguation quality differences between EPO OPS and PatentsView, CPC subclass truncation decisions.
-7. Check whether the `assignment` table queried in Phase 16 P2 (SOUNDEX ownership research) is actually populated. If not, add a DEFERRED entry for assignment data import.
+6. Document any data-quality constraints that Phase 17 P1 exposed: `app_dt` NULL for bulk-imported patents, assignee disambiguation differences between EPO OPS and PatentsView.
+7. Check whether the `assignment` table (queried during the SOUNDEX ownership research in Phase 16) is populated. If not, add a DEFERRED entry for assignment data import.
 
 **DEFERRED.md hygiene:**
-8. Review every open DEFERRED entry. For each: confirm the reopen trigger is still valid; close any whose trigger conditions were silently met during Phases 14–16; update descriptions that reference stale paths or commands.
+8. Review every open DEFERRED entry. Confirm reopen triggers are still valid; close any silently met during Phases 14–17; update stale path or command references.
 
 ---
 
-### P7 — Tests, cleanup, and close
+### P4 — Tests, cleanup, and close
 
 1. Add `markery patent bulk-import` to `tests/benchmarks/mvo.md`: contract for `status` (prints row counts, exits 0) and `load` (idempotent on re-run — no duplicate rows on second load of same data).
 2. Write `tests/test_bulk_import.py`: test `status` against a synthetic fixture `.tsv.gz` (10-row subset); test `load` inserts expected rows and is idempotent. No real PatentsView download required.
 3. Mark D007 resolved in `DEFERRED.md` with a note on test scope and the `app_dt`-NULL constraint.
-4. Mark D023 resolved in `DEFERRED.md` with the Wikipedia edit URL and timestamp.
-5. Mark D024 resolved in `DEFERRED.md` with the Wikipedia edit URL and the attribution finding from P2.
 
 ---
 
@@ -431,26 +539,20 @@ Audit the full codebase for incomplete implementation, missing test coverage, an
 
 P1 PASSED when: `markery patent bulk-import load` runs without error on B42F/1976–1985; row counts match PatentsView; no duplicate collisions with EPO-sourced rows.
 
-P2 PASSED when: SOUNDEX owner attribution is documented in `RESEARCH.md` with DB evidence; a safe entity name for Wikipedia is identified.
+P2 PASSED when: all docs reviewed; instruction card gaps filed as DEFERRED or filled; `BULK_CSV.md` updated.
 
-P3 PASSED when: Chicago Pneumatic inline citation is live on Wikipedia ≥48 hours unreverted.
+P3 PASSED when: `DEFERRED.md` updated with all newly discovered gaps; every open entry has a valid reopen trigger; no command in `--help` output is unimplemented without a DEFERRED entry.
 
-P4 PASSED when: second article contribution is live; edit summary recorded in `STATUS.md`.
+P4 PASSED when: bulk-import MVO tests pass; D007 marked resolved in `DEFERRED.md`.
 
-P5 PASSED when: all docs reviewed; instruction card gaps filed as DEFERRED or filled; `BULK_CSV.md` and LIBRARIAN instruction cards updated.
-
-P6 PASSED when: `DEFERRED.md` updated with all newly discovered gaps; every open entry has a valid reopen trigger; no command in `--help` output is unimplemented without a DEFERRED entry.
-
-P7 PASSED when: bulk-import MVO tests pass; D007, D023, D024 all marked resolved in `DEFERRED.md`.
-
-Phase PASSED when P1–P7 all pass.
+Phase PASSED when P1–P4 all pass.
 
 ---
 
-## Phase 17 — Shared Data Contract: Markery-ICM Preparation for Markery-LangGraph
+## Phase 18 — Shared Data Contract: Markery-ICM Preparation for Markery-LangGraph
 
-**Trigger:** Phase 16 complete; Markery-LangGraph repo initiated.  
-**Scope:** Any changes Markery-ICM requires to make the shared data contract between the two repos formal, stable, and documented. This phase exists entirely in service of the companion repo. No new specialist features; no new research capabilities. If Phase 16's code gap analysis (P6) surfaces contract-relevant gaps, they are promoted here.
+**Trigger:** Phase 17 complete; Markery-LangGraph repo initiated.  
+**Scope:** Any changes Markery-ICM requires to make the shared data contract between the two repos formal, stable, and documented. This phase exists entirely in service of the companion repo. No new specialist features; no new research capabilities. If Phase 17's code gap analysis (P3) surfaces contract-relevant gaps, they are promoted here.
 
 **What Markery-LangGraph depends on (the contract):**
 - DuckDB schemas for `patents.duckdb`, `trademarks.duckdb`, `entities.duckdb`
@@ -459,7 +561,7 @@ Phase PASSED when P1–P7 all pass.
 - `library/index.jsonl` passage record shape and `library/index.duckdb` embedding schema (Phase 15)
 - Score field semantics (structural + semantic ceiling; 0.80 cap)
 
-Full architecture decision and repo relationship documented in `GITHUB_REVIEW.md` §"Repo Architecture Decision — 2026-05-25".
+Full architecture decision and repo relationship documented in `archive/GITHUB-REVIEW-2026-05-25.md`; `CONTRACT.md` supersedes that document as the authoritative interface definition once written.
 
 ---
 
@@ -480,7 +582,7 @@ Identify every data shape the companion repo will consume and verify each is exp
 Fix any gaps the P1 audit surfaces. No new features — only documentation, light enforcement, and stability fixes.
 
 1. For any undocumented DuckDB column that the companion repo will need: add a `-- contract: <type>, <nullable>` comment to the DDL or a schema note in the relevant specialist's design doc.
-2. For any JSONL field that is present in some records but not others without documentation: add it to the canonical field list with `optional: true` and document the condition under which it appears (e.g., `cpc_classes` is present only after `markery patent signals` has run).
+2. For any JSONL field that is present in some records but not others without documentation: add it to the canonical field list with `optional: true` and document the condition under which it appears.
 3. For any essay frontmatter key that `historian scaffold` does not currently write: either add it to scaffold output or remove it from the contract.
 4. Verify `historian validate` enforces all seven required frontmatter keys. If any key passes validate despite being absent or malformed, fix the check.
 
@@ -490,7 +592,6 @@ Fix any gaps the P1 audit surfaces. No new features — only documentation, ligh
 
 1. Write `CONTRACT.md` at repo root: one section per contract surface (DuckDB tables, JSONL files, essay frontmatter, library index). Each section: field name, type, nullable, guaranteed-present or optional, example value, and a one-line description of its purpose for a Markery-LangGraph node consuming it.
 2. Add a `contract_version` field to `data/` or a `MANIFEST.json` at repo root (e.g., `{"contract_version": "1.0", "markery_version": "0.3.0"}`). Markery-LangGraph reads this at startup to verify compatibility. Increment on any breaking contract change.
-   Architecture diagrams and the repo architecture decision are in `archive/GITHUB-REVIEW-2026-05-25.md`; `CONTRACT.md` supersedes that document as the authoritative interface definition.
 
 ---
 
