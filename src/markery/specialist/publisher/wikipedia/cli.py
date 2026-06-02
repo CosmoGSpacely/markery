@@ -183,6 +183,62 @@ def cmd_from_essay(
     print("Review and edit the draft before submitting.")
 
 
+def cmd_replace(
+    page_title: str,
+    find: str,
+    replace: str,
+    summary: str,
+) -> None:
+    """Targeted find-and-replace on a Wikipedia article, with diff and confirmation."""
+    from markery.specialist.publisher.wikipedia.api import WikipediaClient
+
+    client = WikipediaClient()
+    current = client.get_page(page_title)
+    if current is None:
+        print(f"Page '{page_title}' not found on Wikipedia.", file=sys.stderr)
+        sys.exit(1)
+
+    if find not in current:
+        print(f"Target text not found in '{page_title}'.", file=sys.stderr)
+        print(f"Looking for: {find!r}", file=sys.stderr)
+        sys.exit(1)
+
+    count = current.count(find)
+    if count > 1:
+        print(
+            f"Target text appears {count} times — cannot safely replace. "
+            "Expand the search string to make it unique.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    new_text = current.replace(find, replace, 1)
+
+    diff_lines = list(difflib.unified_diff(
+        current.splitlines(keepends=True),
+        new_text.splitlines(keepends=True),
+        fromfile=f"{page_title} (current)",
+        tofile=f"{page_title} (proposed)",
+        lineterm="",
+    ))
+    print("".join(diff_lines))
+    print(f"\nPage:    https://en.wikipedia.org/wiki/{page_title.replace(' ', '_')}")
+    print(f"Summary: {summary}")
+    answer = input("\nSubmit to Wikipedia? [y/N] ").strip().lower()
+    if answer != "y":
+        print("Aborted.")
+        return
+
+    result = client.edit_page(page_title, new_text, summary)
+    if result.get("edit", {}).get("result") == "Success":
+        revid = result["edit"].get("newrevid")
+        print(f"Submitted. Revision: {revid}")
+        print(f"View: https://en.wikipedia.org/w/index.php?diff={revid}")
+    else:
+        print(f"Unexpected API response: {result}", file=sys.stderr)
+        sys.exit(1)
+
+
 def cmd_submit(project: str, slug: str, page_title: str | None, summary: str) -> None:
     """Show diff against current Wikipedia article and prompt before submitting."""
     from markery.specialist.publisher.wikipedia.api import WikipediaClient
@@ -280,6 +336,15 @@ def wikipedia_main() -> None:
                      default="Add external link",
                      help="Edit summary")
 
+    rep = sub.add_parser("replace",
+                         help="Targeted find-and-replace with diff and confirmation")
+    rep.add_argument("page_title", help="Wikipedia article title")
+    rep.add_argument("--find",    required=True, metavar="TEXT",
+                     help="Exact wikitext string to find (must be unique in article)")
+    rep.add_argument("--replace", required=True, dest="replace_text", metavar="TEXT",
+                     help="Replacement wikitext string")
+    rep.add_argument("--summary", required=True, metavar="MSG", help="Edit summary")
+
     args = parser.parse_args()
 
     if args.action == "draft":
@@ -292,3 +357,5 @@ def wikipedia_main() -> None:
         cmd_verify_credentials()
     elif args.action == "add-external-link":
         cmd_add_external_link(args.page_title, args.url, args.label, args.summary)
+    elif args.action == "replace":
+        cmd_replace(args.page_title, args.find, args.replace_text, args.summary)

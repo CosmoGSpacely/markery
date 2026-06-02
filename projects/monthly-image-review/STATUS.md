@@ -1,6 +1,6 @@
 # Monthly Image Review — Project Status
 
-**Last updated:** 2026-05-20
+**Last updated:** 2026-06-02
 
 ---
 
@@ -37,6 +37,15 @@ Marks of interest identified through gallery review that may connect to active p
 | Serial | Mark | Filed | Interest |
 |---|---|---|---|
 | 71299042 | CHICAGO PNEUMATIC CP DEPEND UPON THAT NAME | 1930-04-18 | Full workflow test: essay + Wikipedia draft complete. Enhanced image at `output/apr1930-enhanced/71299042.png`. |
+
+---
+
+## Wikipedia Edits (Phase 16 Track A)
+
+| # | Article | Change | Revision | Date | Status |
+|---|---|---|---|---|---|
+| 1/5 | Library Bureau (Stage 4b) | External link — TSDR for CP trademark | — | 2026-05-22 | Live, unreverted |
+| 2/5 | Library Bureau | Resolve `{{Citation needed}}` — office network citation (1921 catalog) | [1357391696](https://en.wikipedia.org/w/index.php?diff=1357391696) | 2026-06-02 | Live |
 
 ---
 
