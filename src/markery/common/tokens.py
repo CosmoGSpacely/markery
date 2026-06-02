@@ -5,7 +5,7 @@ Usage:
 
     t0 = time.monotonic()
     # ... run command, capture output text ...
-    record = count_output_tokens(output_text, model="claude-haiku-4-5-20251001")
+    record = count_output_tokens(output_text)  # uses MARKERY_MODEL env var
     record.wall_ms = int((time.monotonic() - t0) * 1000)
     emit(record, specialist="historian", command="card", tokens_flag=args.tokens)
 """
@@ -33,12 +33,14 @@ class TokenRecord:
     wall_ms: int
 
 
-def count_output_tokens(text: str, model: str = "claude-haiku-4-5-20251001") -> TokenRecord:
+def count_output_tokens(text: str, model: str | None = None) -> TokenRecord:
     """Count tokens in text using the Anthropic count_tokens endpoint.
 
     Requires ANTHROPIC_API_KEY. Falls back to a word-count estimate
     (word_count * 0.75) if the key is absent or the SDK is unavailable.
     """
+    if model is None:
+        model = os.environ.get("MARKERY_MODEL", "claude-haiku-4-5-20251001")
     api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     if api_key:
         try:

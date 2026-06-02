@@ -18,7 +18,7 @@ from markery.common.config import ROOT
 from markery.common.tokens import TokenRecord, emit as emit_tokens
 
 _LIBRARY = ROOT / "library"
-_MODEL = "claude-haiku-4-5-20251001"
+_MODEL = os.environ.get("MARKERY_MODEL", "claude-haiku-4-5-20251001")
 
 # ~8 000 chars ≈ 2 000 tokens; 800-char overlap ≈ 200 tokens
 _CHUNK_CHARS = 8_000
