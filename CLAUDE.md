@@ -67,6 +67,26 @@ Specialist identity files:
 
 ---
 
+## Use the CLI — Do Not Bypass It
+
+Markery's CLI is the product being tested. Prefer CLI commands over direct file creation or database writes at all times. This is not a convenience preference — it is how the tool validates its own correctness.
+
+Before creating project files, directories, or data manually, run `markery --help` and check whether a command exists for the task. If one does, use it.
+
+| Task | Use this | Not this |
+|---|---|---|
+| Start a new project | `markery project init <name>` | `mkdir` + `Write` files by hand |
+| Add trademark data | `markery trademark build` / `enrich` | Direct DuckDB writes |
+| Add patent data | `markery patent build` | Direct DuckDB writes |
+| Generate candidates | `markery matchmaker generate <project>` | Editing `candidates.jsonl` by hand |
+| Build the site | `markery site build <project>` | Writing HTML directly |
+
+**When ROADMAP steps describe file outcomes** ("create `entities.csv`", "populate `variants.csv`"), that means populate the file *after* scaffolding via the CLI — not skip the CLI entirely. Steps that describe what should exist are not permission to create it by hand if a command does the job.
+
+The only exception: research documents (`RESEARCH.md`, `RESEARCH-AGENDA.md`, `BRIEF.md`) have no CLI command and must be written by hand.
+
+---
+
 ## Constraints
 
 - **Never commit `.env`** — contains `EPO_CONSUMER_KEY`, `EPO_CONSUMER_SECRET`, `USPTO_API_KEY`; gitignored
