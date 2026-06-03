@@ -535,6 +535,11 @@ These were discovered during the radio-pioneers candidate review and Haiku simul
 - D030 (`historian simulate`): Phase 16 P6 ran the Haiku simulation as an inline Python script (`/tmp/radio_haiku_sim.py`) rather than a CLI command. Verify D030 is in DEFERRED. No P6-equivalent test should be hand-scripted again.
 - D031 (`class_score` domain specificity): `PRODUCT_CLASSES` in `score.py` hardcodes information-systems CPC classes. For radio-pioneers, G09F (display/advertising) patents scored 0.3 higher than H01J (vacuum tubes) and H04B (radio) patents with identical date proximity — the top-scoring candidates were cross-product-line coincidences, not genuine matches. Fix design is in D031; verify it is correctly specified before audit is complete.
 
+**Known gaps from Phase 16 P7 (verify and test):**
+These were discovered during the radio-pioneers secondary literature acquisition.
+- D032 (`librarian review --auto-accept`): Phase 16 P7 wrote `excerpts.md` directly for all three acquired works because `markery librarian review` is interactive (terminal-bound) and `--auto-accept` only exists on `extract` (which would repeat expensive API calls). No CLI path exists to accept an already-generated `candidates.md` non-interactively. Verify D032 is in DEFERRED.
+- D033 (`librarian index` format validation): Phase 16 P7 initially wrote `excerpts.md` with `##` headings; the indexer requires `###`. `markery librarian index --rebuild` reported success ("8 work(s)") with zero new passages and gave no warning. The mismatch was discovered only by manually checking record counts. Verify D033 is in DEFERRED.
+
 **Implementation gaps:**
 1. Grep for `TODO`, `FIXME`, `HACK`, `raise NotImplementedError`, and `pass` in `src/`. Classify each as: (a) intentional stub, (b) known gap already in `DEFERRED.md`, or (c) newly discovered. Add (c) items to `DEFERRED.md` with a reopen trigger.
 2. Cross-reference all subcommands in every specialist's `--help` output against `cli.py`. Any subcommand registered but not dispatched is a gap.
