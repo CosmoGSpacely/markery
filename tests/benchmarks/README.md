@@ -184,3 +184,59 @@ significance of the CP monogram. No invented sources or serial numbers.
 - Wall times (2.8–5.6 s) reflect actual Haiku inference, not just token counting.
 - Haiku correctly declined to invent facts when context was sparse (e.g., did not
   fabricate a goods description for the RAND card that was absent from the input).
+
+---
+
+## Phase 16 P6 — radio-pioneers Baseline — 2026-06-03
+
+**Project:** `radio-pioneers`  
+**Model:** `claude-haiku-4-5-20251001`  
+**Log file:** `radio-pioneers-p6.jsonl`  
+**Script:** `radio_haiku_sim.py` (inline, embedded in P6 workflow)
+
+### Session composition
+
+Full P6 card/digest review cycle on radio-pioneers (2,748 candidates, 3 confirmed pairs, 2 entities):
+
+| Step | Command | n | Description |
+|---|---|---|---|
+| 1 | `historian digest radio-pioneers` | 2 | Session orientation (initial + post-confirm) |
+| 2–8 | `historian card radio-pioneers <slug>` | 7 | Candidate review (5 exploratory + 3 confirmed) |
+| — | Haiku simulation | 1 | Inference run: digest + 3 confirmed cards → Haiku |
+
+### Per-command measurements
+
+| Command | n | Mean prompt tokens | Phase 14 baseline | Delta |
+|---|---|---|---|---|
+| digest | 2 | 249 | 251 | −1% (within noise) |
+| card | 7 | 195 | 188 | +4% (within noise) |
+| haiku-simulation | 1 | 2,488 | 2,455 (P4 IS run) | +1% |
+
+**No regressions.** All measurements within ±5% of Phase 14 baseline. The slight card increase (195 vs 188) reflects radio-pioneers cards having longer goods descriptions than the information-systems baseline.
+
+### Haiku simulation — hallucination check
+
+| Metric | Value |
+|---|---|
+| Prompt tokens | 2,488 |
+| Completion tokens | 600 |
+| Wall time | 7,632 ms |
+| Hallucination check | **PASS** |
+| Context window used | 1.2% of 200K |
+
+**Response quality:** Haiku correctly assessed STERILAMP and MINALITE as strong confirmations (17-day and 15-day post-grant gaps; goods descriptions matching patent technology class). For VICTOR-US1486221A (RCA), Haiku correctly flagged uncertainty: VICTOR was a pre-existing brand and the patent is a component-level invention rather than a product patent. No alien serials or patent numbers. Haiku's confidence calibration matched the human reviewer's assessment of pair quality.
+
+### Confirmed pairs validated
+
+| Slug | Entity | Patent | Trademark | Gap | Validate |
+|---|---|---|---|---|---|
+| sterilamp-us2168861a | Westinghouse | US2168861A | STERILAMP (71423019) | 0.0y | PASS |
+| minalite-us1829460a | Westinghouse | US1829460A | MINALITE (71321058) | 0.0y | PASS |
+| victor-us1486221a | RCA | US1486221A | VICTOR (71195203) | 0.1y | PASS |
+
+### Notes
+
+- radio-pioneers has no patent abstracts for any of the 2,748 candidates (EPO OPS returns no abstract for pre-1940 radio patents in the H04B/H01J/H03F/H04R classes). Signals are structural-only (gt, ga always 0.0). This is a known gap documented in RESEARCH-AGENDA.md.
+- Top-scoring candidates (score 0.80) are Westinghouse pairs that are temporally close but product-line-mismatched (STERILAMP + "Display Device"). The *confirmed* pairs were selected from lower-scoring candidates that have genuine product correspondence.
+- Zenith, De Forest, and Atwater Kent have zero candidates due to patent DB coverage gaps (CPC reclassification incomplete for pre-1940 era, documented in P5).
+- The `information-systems` P14 baseline remains valid. radio-pioneers measurements are within ±5%.
