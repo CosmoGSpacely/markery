@@ -76,6 +76,20 @@ of primary sources to verify it.
 2. **De Forest patent dates:** US879532 (1908) predates the current EPO sweep range if the
    sweep starts at 1918. Widen lower bound to 1905 for entity_id 5 if needed.
 
-3. **RCA pool boundary:** If RCA patent counts are low after P5, consider adding
-   GENERAL ELECTRIC COMPANY as a Tier-1 variant for entity_id 1 — but document the
-   analytical consequence (GE patents ≠ RCA commercial products).
+3. **RCA pool boundary:** RCA CORP has 2,885 radio-class patents already in the DB —
+   well above the gate. GEN ELECTRIC (266 H04B patents) is also present. Do not add
+   GE as an RCA variant unless a specific confirmed pair requires it; document any
+   GE-assignee pair separately as a pool-licensed product.
+
+4. **Patent sweep depth (P5 finding):** H04B/H01J/H03F/H04R sweeps for 1918–1940 via
+   EPO OPS returned +0 new records (CPC reclassification coverage is incomplete for
+   pre-1940 US patents; API also hit 403 rate limits). The 11,213 radio-class patents
+   in the DB are co-classifications from prior sweeps. ZENITH RADIO CORPORATION and
+   DE FOREST entity strings are absent — their radio patents are not in the DB.
+   Mitigation: use `markery patent pull <patent_no>` to add known De Forest and Zenith
+   patents individually. D007 (PatentsView) does not help for 1918–1940.
+
+5. **EPO-normalized assignee strings:** EPO OPS truncates and reformats names.
+   Verified mappings now in variants.csv: "RCA CORP" (not "RADIO CORPORATION OF
+   AMERICA"); "FOREST RADIO COMPANY DE" (not "DE FOREST RADIO COMPANY"). Always
+   run `markery matchmaker suggest-variants` before assuming a variant string works.

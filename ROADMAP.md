@@ -465,7 +465,7 @@ P3 PASSED when: D024 live on Wikipedia ≥48 hours unreverted; edit URL recorded
 
 P4 PASSED when: `projects/radio-pioneers/entities.csv`, `variants.csv`, and `RESEARCH.md` all exist. — PASSED 2026-06-02
 
-P5 PASSED when: ≥10 trademark records and ≥20 patent records in scope; sweep complete without errors.
+P5 PASSED when: ≥10 trademark records and ≥20 patent records in scope; sweep complete without errors. — PASSED 2026-06-03 (10 TM records: RCA 3, Zenith 7; 2,885+ radio patents for RCA alone; 2,748 candidates generated; CPC coverage gaps for Zenith/De Forest documented in RESEARCH-AGENDA.md)
 
 P6 PASSED when: ≥3 confirmed pairs in `confirmed.jsonl`; all pass `historian validate`; token counts recorded in `tests/benchmarks/radio-pioneers-p6.jsonl`; Haiku simulation pass/fail recorded.
 
