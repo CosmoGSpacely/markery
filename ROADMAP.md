@@ -256,7 +256,7 @@ The research question — why did a technology company choose an animal mark? �
 
 ### Phase Gate
 
-P1 PASSED when: `projects/animal-marks-1930/` scaffolded; ≥4 entities identified via design-search query; `MARKERY_MODEL` set to Haiku; D034 logged if design-search CLI is absent.
+P1 PASSED when: `projects/animal-marks-1930/` scaffolded; ≥4 entities identified via design-search query; `MARKERY_MODEL` set to Haiku; D034 logged if design-search CLI is absent. — PASSED 2026-06-03 (5 entities: Mack Trucks/bulldog, Pratt&Whitney/eagle, Eagle Electric/eagle, Pathé/rooster, Albert Setzer MULE/mule; D034 logged — design_search queried via raw DuckDB; D027 triggered — project init crashes non-interactively, scaffolded manually; MARKERY_MODEL=claude-haiku-4-5-20251001 committed in RESEARCH.md)
 
 P2 PASSED when: `validate-variants` exits 0 for all entities in scope; each entity has ≥1 animal-mark serial with technology goods in `extended_marks`.
 
