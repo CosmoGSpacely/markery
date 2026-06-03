@@ -529,6 +529,12 @@ These were discovered during the radio-pioneers live-test and implemented as imm
 - `markery patent coverage-check` — dry-run EPO query to surface zero-coverage CPC classes before committing to a full sweep
 - D027 (`project onboard`) and D028 (`trademark search-tsdr`) are in DEFERRED; promote here if a third project setup hits the same gaps
 
+**Known gaps from Phase 16 P6 (verify and test):**
+These were discovered during the radio-pioneers candidate review and Haiku simulation.
+- D029 (`matchmaker confirm`): Phase 16 P6 wrote to `confirmed.jsonl` directly because no non-interactive CLI path exists — `markery review` requires a raw-mode terminal. Verify D029 is in DEFERRED with correct reopen trigger.
+- D030 (`historian simulate`): Phase 16 P6 ran the Haiku simulation as an inline Python script (`/tmp/radio_haiku_sim.py`) rather than a CLI command. Verify D030 is in DEFERRED. No P6-equivalent test should be hand-scripted again.
+- D031 (`class_score` domain specificity): `PRODUCT_CLASSES` in `score.py` hardcodes information-systems CPC classes. For radio-pioneers, G09F (display/advertising) patents scored 0.3 higher than H01J (vacuum tubes) and H04B (radio) patents with identical date proximity — the top-scoring candidates were cross-product-line coincidences, not genuine matches. Fix design is in D031; verify it is correctly specified before audit is complete.
+
 **Implementation gaps:**
 1. Grep for `TODO`, `FIXME`, `HACK`, `raise NotImplementedError`, and `pass` in `src/`. Classify each as: (a) intentional stub, (b) known gap already in `DEFERRED.md`, or (c) newly discovered. Add (c) items to `DEFERRED.md` with a reopen trigger.
 2. Cross-reference all subcommands in every specialist's `--help` output against `cli.py`. Any subcommand registered but not dispatched is a gap.
