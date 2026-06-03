@@ -326,7 +326,7 @@ Phase PASSED when P1–P9 all pass. — PASSED 2026-06-01
 
 ### P1 — Four mainspace edits (account threshold)
 
-Current state: account `CosmoGSpacely` has 1 confirmed non-reverted mainspace edit (Stage 4b external link, 2026-05-22). Four more required before D023 can be submitted. Space edits across ≥10 days — one per day minimum.
+Current state: account `CosmoGSpacely` has 3 confirmed non-reverted mainspace edits (Stage 4b external link 2026-05-22; Library Bureau CN fix 2026-06-02; Library Bureau absorption citation 2026-06-03). Two more required before D023 can be submitted. Edits must be spaced across days — one per day minimum.
 
 1. **Library Bureau — resolve `{{Citation needed}}`**: The sentence "It sold merchandise and services through a network of sales offices and distributors in the United States (46 in 1922), England (4), France (1), and Belgium." carries a `{{Citation needed|date=June 2023}}` tag. The 1921 Library Bureau catalog (Google Books, already linked in the article's References section) documents the office network. Add `<ref>{{cite book|title=Steel Card and Filing Cabinets|publisher=Library Bureau|year=1921|url=https://books.google.com/books?id=nkhIAAAAYAAJ&pg=PA1}}</ref>` after "Belgium"; remove the tag.
 
@@ -370,7 +370,7 @@ Attribution basis: RAND KARDEX BUREAU, INC. confirmed as filing-date owner in `d
 
 ---
 
-### Track B — Early Radio Project
+### Track B — Early Radio Project — CLOSED
 
 ---
 
@@ -397,7 +397,7 @@ CPC patent classes to sweep: `H04B` (radio transmission), `H01J` (vacuum tubes),
 
 ---
 
-### P5 — Patent and trademark acquisition
+### P5 — Patent and trademark acquisition — CLOSED
 
 1. Run trademark sweeps for each entity's variants. Identify which serials are already in `trademarks.duckdb` and which require TSDR enrichment via `markery trademark fetch`.
 2. Run patent sweeps for CPC classes `H04B`, `H01J`, `H03F`, `H04R` over 1918–1940 via EPO OPS. If coverage is thin (radio CPC classes may be outside the current data window), document in `RESEARCH-AGENDA.md` as a scope note.
@@ -406,7 +406,7 @@ CPC patent classes to sweep: `H04B` (radio transmission), `H01J` (vacuum tubes),
 
 ---
 
-### P6 — Candidate generation, first review cycle, and token baseline
+### P6 — Candidate generation, first review cycle, and token baseline — CLOSED
 
 1. Run `markery matchmaker generate radio-pioneers` to populate `candidates.jsonl`.
 2. Run historian commands with token logging enabled:
@@ -426,7 +426,7 @@ CPC patent classes to sweep: `H04B` (radio transmission), `H01J` (vacuum tubes),
 
 ---
 
-### P7 — LIBRARIAN: secondary literature for radio domain
+### P7 — LIBRARIAN: secondary literature for radio domain — CLOSED
 
 Key works to acquire (verify IA open-access before requesting):
 
@@ -445,7 +445,7 @@ Key works to acquire (verify IA open-access before requesting):
 
 ---
 
-### P8 — Site build, Haiku essay test, and phase close
+### P8 — Site build, Haiku essay test, and phase close — CLOSED
 
 1. **Haiku essay test:** Take the scaffold for one confirmed pair and attempt a complete draft using `claude-haiku-4-5-20251001` as the session model. Run `markery historian validate radio-pioneers <slug>` on the result. Record: pass/fail, any fields that required manual correction, and completion token count. This is the open question left from Phase 14 P4 — Haiku was validated for card/digest but not for full essay generation.
 2. Write at least one full validated essay (Haiku draft or manual expansion — whichever passes validate).
