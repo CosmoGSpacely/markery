@@ -522,6 +522,13 @@ Review all user-facing and developer-facing documentation for staleness and gaps
 
 Audit the full codebase for incomplete implementation, missing test coverage, and deferred items that Phase 14–17 work may have made satisfiable.
 
+**Known gaps from Phase 16 P5 (address first):**
+These were discovered during the radio-pioneers live-test and implemented as immediate hardening; verify they are complete and tested before broader audit.
+- `matchmaker build` entity ID collision detection — silent skip when ID exists with different name was the root cause of radio-pioneers data corruption
+- `markery matchmaker validate-variants <project>` — zero-match variant detection against actual DB strings
+- `markery patent coverage-check` — dry-run EPO query to surface zero-coverage CPC classes before committing to a full sweep
+- D027 (`project onboard`) and D028 (`trademark search-tsdr`) are in DEFERRED; promote here if a third project setup hits the same gaps
+
 **Implementation gaps:**
 1. Grep for `TODO`, `FIXME`, `HACK`, `raise NotImplementedError`, and `pass` in `src/`. Classify each as: (a) intentional stub, (b) known gap already in `DEFERRED.md`, or (c) newly discovered. Add (c) items to `DEFERRED.md` with a reopen trigger.
 2. Cross-reference all subcommands in every specialist's `--help` output against `cli.py`. Any subcommand registered but not dispatched is a gap.

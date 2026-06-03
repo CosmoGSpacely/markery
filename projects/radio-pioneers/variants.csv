@@ -1,46 +1,27 @@
 entity_id,variant_name,source
-8,RADIO CORPORATION OF AMERICA,patent_assignee
-8,RCA CORPORATION,patent_assignee
 8,RCA CORP,patent_assignee
 8,RCA CORP [US],patent_assignee
-8,Radio Corporation of America,trademark_owner
 8,RCA CORPORATION,trademark_owner
 8,RADIOLA,trademark_search
 8,RADIOTRON,trademark_search
 8,SUPERHETERODYNE,trademark_search
-9,WESTINGHOUSE ELECTRIC & MANUFACTURING CO,patent_assignee
-9,WESTINGHOUSE ELECTRIC AND MANUFACTURING COMPANY,patent_assignee
 9,WESTINGHOUSE ELECTRIC & MFG CO,patent_assignee
 9,WESTINGHOUSE ELECTRIC & MFG CO [US],patent_assignee
-9,Westinghouse Electric and Manufacturing Company,trademark_owner
-9,WESTINGHOUSE ELECTRIC & MFG. CO.,trademark_owner
-9,WESTINGHOUSE ELECTRIC & MANUFACTURING CO,trademark_owner
 9,WESTINGHOUSE ELECTRIC CORPORATION,trademark_owner
 9,RADIOPHONE,trademark_search
 9,AERIOLA,trademark_search
-10,ATWATER KENT MANUFACTURING CO,patent_assignee
-10,A. ATWATER KENT MANUFACTURING CO,patent_assignee
 10,ARTHUR ATWATER KENT,patent_assignee
 10,ATWATER KENT MFG CO,patent_assignee
-10,Atwater Kent Manufacturing Company,trademark_owner
-10,ATWATER KENT MANUFACTURING COMPANY,trademark_owner
 10,ATWATERKENT,trademark_search
 10,ATWATER KENT,trademark_search
-11,ZENITH RADIO CORPORATION,patent_assignee
-11,CHICAGO RADIO LABORATORY,patent_assignee
 11,Zenith Radio Corporation,trademark_owner
 11,ZENITH RADIO CORPORATION,trademark_owner
 11,ZENITH,trademark_search
 11,ZEPHYR,trademark_search
-12,DE FOREST RADIO COMPANY,patent_assignee
-12,LEE DE FOREST,patent_assignee
-12,DE FOREST RADIO TELEPHONE AND TELEGRAPH COMPANY,patent_assignee
 12,FOREST RADIO TELEPHONE & TELEG,patent_assignee
 12,FOREST RADIO COMPANY DE,patent_assignee
 12,FOREST RADIO TELEPHONE AND TEL,patent_assignee
 12,DEFOREST RADIO COMPANY,patent_assignee
-12,De Forest Radio Company,trademark_owner
-12,DE FOREST RADIO COMPANY,trademark_owner
 12,AUDION,trademark_search
 12,OSCILLION,trademark_search
 12,DE FOREST,trademark_search

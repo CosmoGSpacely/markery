@@ -631,9 +631,63 @@ def cmd_suggest_variants(args: argparse.Namespace) -> None:
         print("  (none above threshold)")
 
 
+def cmd_validate_variants(args: argparse.Namespace) -> None:
+    """Check every patent_assignee and trademark_owner variant against actual DB strings."""
+    import duckdb
+    from markery.common.config import DB
+    from markery.specialist.matchmaker.entities import _read_csv
+
+    data_dir = Path(args.data_dir)
+    entities = {int(r["entity_id"]): r["canonical_name"]
+                for r in _read_csv(data_dir / "entities.csv")}
+    variants = _read_csv(data_dir / "variants.csv")
+
+    conn_pat = duckdb.connect(str(DB["patents"]), read_only=True)
+    conn_tm  = duckdb.connect(str(DB["trademarks"]), read_only=True)
+
+    zero_matches = 0
+    for eid in sorted(entities):
+        name = entities[eid]
+        eid_variants = [v for v in variants if int(v["entity_id"]) == eid]
+        actionable = [v for v in eid_variants if v["source"] in ("patent_assignee", "trademark_owner")]
+        if not actionable:
+            continue
+        print(f"\nEntity {eid}: {name}")
+        for v in actionable:
+            vname, source = v["variant_name"], v["source"]
+            if source == "patent_assignee":
+                cnt = conn_pat.execute(
+                    "SELECT COUNT(*) FROM patents WHERE assignee_name = ?", [vname]
+                ).fetchone()[0]
+            else:
+                cnt = conn_tm.execute(
+                    "SELECT COUNT(DISTINCT serial_no) FROM owner WHERE own_name = ?", [vname]
+                ).fetchone()[0]
+            flag = "  *** NO MATCH ***" if cnt == 0 else ""
+            label = "patent  " if source == "patent_assignee" else "trademark"
+            print(f"  {label}  {cnt:>6}×  {vname}{flag}")
+            if cnt == 0:
+                zero_matches += 1
+
+    conn_pat.close()
+    conn_tm.close()
+
+    print()
+    if zero_matches == 0:
+        print(f"All variants matched. ({len(variants)} total)")
+    else:
+        print(f"{zero_matches} zero-match variant(s) found.")
+        print("  → run: markery matchmaker suggest-variants \"<entity name>\"")
+        sys.exit(1)
+
+
 def cmd_build(args: argparse.Namespace) -> None:
     from markery.specialist.matchmaker.entities import build
-    counts = build(data_dir=args.data_dir)
+    try:
+        counts = build(data_dir=args.data_dir)
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(1)
     print(f"entities.duckdb:")
     print(f"  {counts['entities']} entity/entities added")
     print(f"  {counts['variants']} variant(s) added")
@@ -681,10 +735,16 @@ def matchmaker_main() -> None:
     p_sv.add_argument("--top", type=int, default=15, metavar="N",
                       help="Return top N results per source (default: 15)")
 
+    p_vv = sub.add_parser("validate-variants",
+                          help="Check every patent_assignee and trademark_owner variant against actual DB strings")
+    p_vv.add_argument("--data-dir", metavar="DIR", required=True,
+                      help="Directory containing entities.csv and variants.csv")
+
     args = ap.parse_args()
     {
-        "build":            cmd_build,
-        "list":             cmd_list,
-        "status":           cmd_status,
-        "suggest-variants": cmd_suggest_variants,
+        "build":              cmd_build,
+        "list":               cmd_list,
+        "status":             cmd_status,
+        "suggest-variants":   cmd_suggest_variants,
+        "validate-variants":  cmd_validate_variants,
     }[args.cmd](args)

@@ -108,9 +108,19 @@ def build(data_dir: str | Path, db_path: str | Path | None = None) -> dict[str, 
     added_entities = 0
     for row in entities:
         eid = int(row["entity_id"])
-        if not conn.execute(
-            "SELECT 1 FROM company_entity WHERE entity_id = ?", [eid]
-        ).fetchone():
+        existing = conn.execute(
+            "SELECT canonical_name FROM company_entity WHERE entity_id = ?", [eid]
+        ).fetchone()
+        if existing:
+            if existing[0] != row["canonical_name"]:
+                conn.close()
+                raise ValueError(
+                    f"entity_id {eid} is already registered as '{existing[0]}' — "
+                    f"cannot overwrite with '{row['canonical_name']}'. "
+                    f"Assign a different entity_id in {Path(data_dir) / 'entities.csv'}."
+                )
+            # Same name — idempotent skip
+        else:
             conn.execute(
                 "INSERT INTO company_entity (entity_id, canonical_name, entity_type, industry) "
                 "VALUES (?, ?, ?, ?)",

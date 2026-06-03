@@ -165,6 +165,43 @@ def cmd_citations(args: argparse.Namespace) -> None:
     print(f"{n} new patent(s) added.")
 
 
+def cmd_coverage_check(args: argparse.Namespace) -> None:
+    """Query EPO OPS for expected record counts before committing to a full sweep."""
+    from markery.specialist.patent.build import _cql
+    from markery.specialist.patent.epo_client import EPOClient
+    from markery.common.auth import load_epo_credentials
+
+    key, secret = load_epo_credentials()
+    client = EPOClient(key, secret)
+
+    window_years = 5
+    print(f"Coverage check: {', '.join(args.classes)}  {args.year_start}–{args.year_end}\n")
+    any_nonzero = False
+    for cls in args.classes:
+        total_class = 0
+        windows = range(args.year_start, args.year_end + 1, window_years)
+        for ys in windows:
+            ye = min(ys + window_years - 1, args.year_end)
+            cql = _cql(cls, ys, ye)
+            try:
+                total, _ = client.search(cql, 1, 1)
+                mark = "" if total > 0 else "  (no coverage)"
+                print(f"  {cls}  {ys}–{ye}:  {total:>6}{mark}")
+                total_class += total
+                if total > 0:
+                    any_nonzero = True
+            except Exception as exc:
+                print(f"  {cls}  {ys}–{ye}:  ERROR — {exc}")
+        print(f"  {cls}  total: {total_class}\n")
+
+    if not any_nonzero:
+        print("WARNING: all classes returned 0 results.")
+        print("CPC reclassification may be incomplete for this era.")
+        print("Consider: markery patent pull <patent_no> for known patents,")
+        print("          or D007 (PatentsView) for 1976+ coverage.")
+        sys.exit(1)
+
+
 # ---------------------------------------------------------------------------
 # Argument parser
 # ---------------------------------------------------------------------------
@@ -223,6 +260,16 @@ def main() -> None:
                             help="Fetch backward citations for a patent; pull any new ones")
     p_cit.add_argument("patent_no", metavar="PATENT_NO")
 
+    # coverage-check
+    p_cov = sub.add_parser(
+        "coverage-check",
+        help="Dry-run: query EPO OPS for expected record counts before a full sweep",
+    )
+    p_cov.add_argument("--classes", nargs="+", metavar="CPC", required=True,
+                       help="CPC class codes to check")
+    p_cov.add_argument("--year-start", type=int, required=True, metavar="YEAR")
+    p_cov.add_argument("--year-end",   type=int, required=True, metavar="YEAR")
+
     args = ap.parse_args()
     {
         "build":               cmd_build,
@@ -232,4 +279,5 @@ def main() -> None:
         "citations":           cmd_citations,
         "verify-credentials":  cmd_verify_credentials,
         "signals":             cmd_signals,
+        "coverage-check":      cmd_coverage_check,
     }[args.cmd](args)
