@@ -240,3 +240,56 @@ Full P6 card/digest review cycle on radio-pioneers (2,748 candidates, 3 confirme
 - Top-scoring candidates (score 0.80) are Westinghouse pairs that are temporally close but product-line-mismatched (STERILAMP + "Display Device"). The *confirmed* pairs were selected from lower-scoring candidates that have genuine product correspondence.
 - Zenith, De Forest, and Atwater Kent have zero candidates due to patent DB coverage gaps (CPC reclassification incomplete for pre-1940 era, documented in P5).
 - The `information-systems` P14 baseline remains valid. radio-pioneers measurements are within ±5%.
+
+---
+
+## Phase 16 P8 — radio-pioneers Haiku Essay Test — 2026-06-03
+
+**Project:** `radio-pioneers`  
+**Model:** `claude-haiku-4-5-20251001`  
+**Log file:** `radio-pioneers-p6.jsonl` (command: `haiku-essay-draft`)  
+**Note:** Run via inline Python script pending `historian draft` command (Phase 18 P5 / D030)
+
+### Haiku essay test — full essay generation
+
+**Open question from Phase 14 P4:** Haiku was validated for card/digest (context generation) and for candidate assessment (inference). Whether Haiku could generate a complete validated essay was explicitly deferred to P8.
+
+| Metric | Value |
+|---|---|
+| Slug | sterilamp-us2168861a |
+| Prompt tokens | 2,006 |
+| Completion tokens | 922 |
+| Wall time | 11,325 ms |
+| `historian validate` | **PASS (6/6)** |
+| Hallucinated identifiers | None |
+
+**Result: PASS.** Haiku generated a complete 5-section essay from the scaffold frontmatter + primary sources alone. All six validate checks passed without correction. The essay correctly identified the 17-day patent-to-trademark gap, drew the goods description from the input, and produced coherent historical prose without inventing dates, serial numbers, or assignee names.
+
+### Full radio-pioneers token summary
+
+| Command | n | Mean prompt | Mean completion | Notes |
+|---|---|---|---|---|
+| `historian digest` | 2 | 249 | 0 | Context generation only |
+| `historian card` | 7 | 195 | 0 | Context generation only |
+| Haiku candidate simulation | 1 | 2,488 | 600 | P6 inference test |
+| Haiku essay draft | 1 | 2,006 | 922 | P8 full essay test |
+| `librarian extract` (Archer) | 1 | 26,001 | 2,986 | 187 chunks, 9 passages accepted |
+| `librarian extract` (Barnouw) | 1 | 45,127 | 3,595 | 124 chunks, 5 passages accepted |
+| `librarian extract` (Taussig) | 1 | 64,981 | 3,128 | 100 chunks, 4 passages accepted |
+
+### Comparison to Phase 14 P4 baseline
+
+| Workflow | P14 baseline | radio-pioneers P8 | Delta |
+|---|---|---|---|
+| Historian digest | 251 tokens | 249 tokens | −1% |
+| Historian card | 188 tokens | 195 tokens | +4% |
+| Haiku simulation (inference) | 2,455 tokens | 2,488 tokens | +1% |
+| Haiku essay (inference) | — (not tested in P14) | 2,006 tokens | New data point |
+
+**Extract cost:** `librarian extract` is the highest-cost operation by far (26k–65k prompt tokens per work depending on length). The 65k figure for Taussig reflects its 100-chunk structure; the early-stopping threshold (32 candidates) fired at chunk 28. This is within expected range for Haiku extraction and does not represent a regression — P14 had no extract baseline for a radio-domain corpus.
+
+### Notes
+
+- All three P8 essays (sterilamp, minalite, victor) written manually in P6 passed validate; the Haiku draft is an additional validated artifact demonstrating automated generation capability.
+- The Haiku essay prompt (2,006 tokens) is substantially smaller than the card simulation (2,488 tokens) because the essay task sends only the scaffold + task description, not a full digest + multiple cards.
+- `historian draft` (Phase 18 P5) will replace the inline script used for this test.

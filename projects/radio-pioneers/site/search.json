@@ -1,0 +1,56 @@
+[
+  {
+    "title": "Radio Pioneers",
+    "type": "landing",
+    "url": "index.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Radio Corporation of America",
+    "type": "entity",
+    "url": "entities/radio-corporation-of-america.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Westinghouse Electric and Manufacturing Company",
+    "type": "entity",
+    "url": "entities/westinghouse-electric-and-manufacturing-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Atwater Kent Manufacturing Company",
+    "type": "entity",
+    "url": "entities/atwater-kent-manufacturing-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Zenith Radio Corporation",
+    "type": "entity",
+    "url": "entities/zenith-radio-corporation.html",
+    "excerpt": ""
+  },
+  {
+    "title": "De Forest Radio Company",
+    "type": "entity",
+    "url": "entities/de-forest-radio-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "STERILAMP ↔ US2168861A",
+    "type": "match_essay",
+    "url": "matches/sterilamp.html",
+    "excerpt": ""
+  },
+  {
+    "title": "MINALITE ↔ US1829460A",
+    "type": "match_essay",
+    "url": "matches/minalite.html",
+    "excerpt": ""
+  },
+  {
+    "title": "VICTOR ↔ US1486221A",
+    "type": "match_essay",
+    "url": "matches/victor.html",
+    "excerpt": ""
+  }
+]

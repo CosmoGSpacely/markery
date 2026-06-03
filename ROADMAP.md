@@ -471,7 +471,7 @@ P6 PASSED when: ≥3 confirmed pairs in `confirmed.jsonl`; all pass `historian v
 
 P7 PASSED when: ≥2 radio secondary works indexed; `markery librarian card "radio receiver" --mode semantic` returns at least one passage; `extract` token counts recorded. — PASSED 2026-06-03 (3 works acquired: Archer 1939 9 passages, Barnouw 1966 5 passages, Taussig 1922 4 passages; 25 total indexed passages, 18 new embeddings; card returns 5 passages; extract tokens: Archer 26,001p/2,986c, Barnouw 45,127p/3,595c, Taussig 64,981p/3,128c)
 
-P8 PASSED when: `markery site build radio-pioneers` exits 0; one Wikipedia draft written; Haiku essay test result recorded; `tests/benchmarks/README.md` updated with radio-pioneers section.
+P8 PASSED when: `markery site build radio-pioneers` exits 0; one Wikipedia draft written; Haiku essay test result recorded; `tests/benchmarks/README.md` updated with radio-pioneers section. — PASSED 2026-06-03 (site build: 12 pages; Haiku essay: sterilamp-us2168861a PASS 6/6, 2,006p/922c tokens; Wikipedia draft: rca-patent-pool-manufacturing-split.md; README updated with full radio-pioneers token summary)
 
 Phase PASSED when P1–P8 all pass.
 
