@@ -22,11 +22,29 @@
 | Pathe Cinema | 71198721 (rooster, cameras/projectors) | Optical/film: camera mechanism, projector patents | Likely French-origin patents; limited US filing expected |
 | Albert Setzer | 71164129 (mule, electric batteries) | Industrial: storage battery chemistry and construction | Low patent probability — may be structural-only pair |
 
-## Known data gaps
+## Patent coverage after P3 sweeps
 
-- No patent records in `patents.duckdb` for any entity at project setup. All patent acquisition is P3 scope.
-- Pathé is French; EPO OPS coverage for French filers in 1920s film equipment is uncertain.
-- Albert Setzer (entity 17) may need to be replaced if no patent records can be found.
+**6 of 18 entities have patent coverage (66 unique patents):**
+
+| Entity | Patents | Classes swept | Notes |
+|---|---|---|---|
+| Pratt & Whitney (14) | 1 | B64D 1923–1932 | US1871055A "Liquid Supplying Means For Aircraft Engines" |
+| Deere (19) | 47 | A01B 1908–1932 | Strong coverage across agricultural machinery patents |
+| Worthington Pump (21) | 3 | F04B 1918–1926 | Pump patents confirmed |
+| Goodyear (23) | 6 | B60C 1918–1930 | Tire patents confirmed |
+| Colt (24) | 3 | F41A/F41C 1918–1928 | Firearms patents confirmed |
+| General Motors (26) | 6 | F02B 1920–1930 | Engine/automotive patents confirmed |
+
+**12 entities with no patent coverage** — candidates will not be generated for these in P4:
+Mack Trucks (13), Eagle Electric (15), Pathé (16), MULE/Setzer (17), Shell Oil (18), Alfa Romeo (20), Raleigh Cycle (22), J.I. Case (25), James Walker (27), Gillette Tire (28), American Brass (29), Standard-Johnson (30).
+
+**Why no coverage:** EPO OPS sweeps for pre-1940 patents in these specific domains either returned zero (no CPC reclassification) or returned records with no matching assignee names. Targeted `markery patent pull <no>` with specific patent numbers from Google Patents lookup would be needed — not possible without internet access during this session. These entities remain in the project for their trademark-only research value (animal imagery, public domain drawings, "why animal" analysis).
+
+**False positives detected and excluded:**
+- CASE RES LAB INC → photo-electric devices, NOT J.I. Case agricultural machinery
+- SHAW WALKER CO → filing cabinets, NOT James Walker & Co. gaskets (UK)
+- GILLETTE SAFETY RAZOR CO → razors, NOT Gillette Tire Company
+- SHELL COMPANY OF CALIFORNIA → advertising/coupon patents, NOT petroleum fuel patents
 
 ## CLI bypass log
 

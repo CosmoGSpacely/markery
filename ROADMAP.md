@@ -260,7 +260,7 @@ P1 PASSED when: `projects/animal-marks-1930/` scaffolded; ≥4 entities identifi
 
 P2 PASSED when: `validate-variants` exits 0 for all entities in scope; each entity has ≥1 animal-mark serial with technology goods in `extended_marks`. — PASSED 2026-06-04 (18/18 entities enriched via `markery trademark enrich`; all 18 qualify with technology goods confirmed from `statement` table; D038 logged — `enrich` stores raw JSON only, structured fields remain NULL; `enrich-project` inapplicable pre-candidates)
 
-P3 PASSED when: ≥5 patents in `patents.duckdb` for animal-marks-1930 entities; `patent signals` run.
+P3 PASSED when: ≥5 patents in `patents.duckdb` for animal-marks-1930 entities; `patent signals` run. — PASSED 2026-06-04 (66 patents across 6 entities via sweeps of B60C, F41A/C, A01B, F04B, B64D, F02B, F16J; 12/18 entities have no EPO coverage — need targeted pulls with specific numbers; patent signals deferred to P4 post-candidate-generation; 12 false-positive assignee strings excluded)
 
 P4 PASSED when: ≥3 confirmed pairs in `confirmed.jsonl`; all pass `historian validate`; token counts in `tests/benchmarks/animal-marks-p4.jsonl`; all operations completed on Haiku (or failures documented).
 

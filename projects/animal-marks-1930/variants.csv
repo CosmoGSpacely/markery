@@ -4,6 +4,7 @@ entity_id,variant_name,source
 13,MACK MANUFACTURING CORPORATION,trademark_owner
 14,"PRATT & WHITNEY AIRCRAFT COMPANY, THE",trademark_owner
 14,PRATT & WHITNEY COMPANY,trademark_owner
+14,PRATT & WHITNEY AIRCRAFT COMPA,patent_assignee
 15,"EAGLE ELECTRIC MANUFACTURING COMPANY, INC.",trademark_owner
 15,EAGLE ELECTRIC MFG. CO.,trademark_owner
 16,"PATHE CINEMA, ANCIENS ETABLISSEMENTS PATHE FRERES",trademark_owner
@@ -11,9 +12,12 @@ entity_id,variant_name,source
 18,SHELL OIL COMPANY,trademark_owner
 18,"ASIATIC PETROLEUM COMPANY, LIMITED, THE",trademark_owner
 19,DEERE & COMPANY,trademark_owner
+19,DEERE & CO,patent_assignee
+19,DEERE & CO [US],patent_assignee
 20,ALFA ROMEO S.P.A.,trademark_owner
 20,"SOCIETA ANONIMA ITALIANA ING. NICOLA ROMEO & C.",trademark_owner
 21,WORTHINGTON PUMP AND MACHINERY CORPORATION,trademark_owner
+21,WORTHINGTON PUMP & MACH CORP,patent_assignee
 22,"RALEIGH CYCLE COMPANY LIMITED, THE",trademark_owner
 22,RALEIGH CYCLE COMPANY LTD,trademark_owner
 23,"GOODYEAR TIRE & RUBBER COMPANY, THE",trademark_owner
@@ -22,6 +26,7 @@ entity_id,variant_name,source
 24,COLT S MFG CO,patent_assignee
 25,J.I. CASE COMPANY,trademark_owner
 26,GENERAL MOTORS CORPORATION,trademark_owner
+26,GEN MOTORS CORP,patent_assignee
 27,JAMES WALKER & CO.,trademark_owner
 28,Gillette Tire Company,trademark_owner
 28,Gillette Rubber Company,trademark_owner
