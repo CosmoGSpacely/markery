@@ -262,7 +262,7 @@ P2 PASSED when: `validate-variants` exits 0 for all entities in scope; each enti
 
 P3 PASSED when: ≥5 patents in `patents.duckdb` for animal-marks-1930 entities; `patent signals` run. — PASSED 2026-06-04 (66 patents across 6 entities via sweeps of B60C, F41A/C, A01B, F04B, B64D, F02B, F16J; 12/18 entities have no EPO coverage — need targeted pulls with specific numbers; patent signals deferred to P4 post-candidate-generation; 12 false-positive assignee strings excluded)
 
-P4 PASSED when: ≥3 confirmed pairs in `confirmed.jsonl`; all pass `historian validate`; token counts in `tests/benchmarks/animal-marks-p4.jsonl`; all operations completed on Haiku (or failures documented).
+P4 PASSED when: ≥3 confirmed pairs in `confirmed.jsonl`; all pass `historian validate`; token counts in `tests/benchmarks/animal-marks-p4.jsonl`; all operations completed on Haiku (or failures documented). — PASSED 2026-06-04 (3 pairs: Deere/JOHN DEERE/plow, Goodyear/DOUBLE EAGLE/tire, GM/figurative-heraldic/engine; all validate PASS 6/6; Haiku drafts 2169p/980c, 2141p/945c, 2060p/667c; 2 code bugs fixed: None-trademark crash in digest formatter and card slug matcher)
 
 P5 PASSED when: ≥1 secondary work indexed with passages relevant to animal mark symbolism; `markery librarian card "animal trademark" --mode semantic` returns ≥1 passage.
 

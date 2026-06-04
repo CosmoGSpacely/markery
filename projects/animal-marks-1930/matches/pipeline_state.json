@@ -1,9 +1,9 @@
 {
-  "generated_at": null,
-  "enriched_at": "2026-06-04T08:59:15",
+  "generated_at": "2026-06-04T12:58:50",
+  "enriched_at": "2026-06-04T13:01:42",
   "rescored_at": null,
-  "candidate_count": 0,
-  "enriched_count": 0,
-  "score_p50": null,
-  "score_p90": null
+  "candidate_count": 265,
+  "enriched_count": 265,
+  "score_p50": 0.3888,
+  "score_p90": 0.6628
 }

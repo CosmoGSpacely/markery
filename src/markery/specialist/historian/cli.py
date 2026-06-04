@@ -26,7 +26,9 @@ def _parse_slug(slug: str) -> tuple[str, str]:
     return tm_slug, pat_no
 
 
-def _slug_matches_trademark(slug: str, trademark: str) -> bool:
+def _slug_matches_trademark(slug: str, trademark: str | None) -> bool:
+    if trademark is None:
+        return slug == "figurative"
     normalised = re.sub(r'[^a-z0-9]+', '-', trademark.lower()).strip('-')
     return slug == normalised or slug in normalised
 
@@ -200,7 +202,8 @@ def cmd_digest(args: argparse.Namespace) -> None:
             if c.get("title_name_hit"):    sig += "T"
             if c.get("abstract_name_hit"): sig += "A"
             if c.get("goods_title_overlap", 0) > 0.05: sig += "G"
-            lines.append(f"  {c['score']:.3f}  {c['trademark']:<28}  {c['patent_no']:<14}  {c['entity']:<20}  sig={sig or '-'}")
+            tm = c['trademark'] or '(figurative)'
+            lines.append(f"  {c['score']:.3f}  {tm:<28}  {c['patent_no']:<14}  {c['entity']:<20}  sig={sig or '-'}")
 
     # Confirmed pairs — summary line only; full list via `markery review`
     cards_dir   = proj.root / "matches" / "cards"
