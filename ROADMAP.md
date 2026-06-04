@@ -258,7 +258,7 @@ The research question — why did a technology company choose an animal mark? �
 
 P1 PASSED when: `projects/animal-marks-1930/` scaffolded; ≥4 entities identified via design-search query; `MARKERY_MODEL` set to Haiku; D034 logged if design-search CLI is absent. — PASSED 2026-06-03 (5 entities: Mack Trucks/bulldog, Pratt&Whitney/eagle, Eagle Electric/eagle, Pathé/rooster, Albert Setzer MULE/mule; D034 logged — design_search queried via raw DuckDB; D027 triggered — project init crashes non-interactively, scaffolded manually; MARKERY_MODEL=claude-haiku-4-5-20251001 committed in RESEARCH.md)
 
-P2 PASSED when: `validate-variants` exits 0 for all entities in scope; each entity has ≥1 animal-mark serial with technology goods in `extended_marks`.
+P2 PASSED when: `validate-variants` exits 0 for all entities in scope; each entity has ≥1 animal-mark serial with technology goods in `extended_marks`. — PASSED 2026-06-04 (18/18 entities enriched via `markery trademark enrich`; all 18 qualify with technology goods confirmed from `statement` table; D038 logged — `enrich` stores raw JSON only, structured fields remain NULL; `enrich-project` inapplicable pre-candidates)
 
 P3 PASSED when: ≥5 patents in `patents.duckdb` for animal-marks-1930 entities; `patent signals` run.
 
@@ -340,6 +340,10 @@ These were discovered during the animal-marks-1930 entity expansion from 5 to 18
 - D035 (CSV comma-in-name mis-parse): `markery matchmaker build` silently accepted a malformed `variants.csv` row where an unquoted comma in the variant name was parsed as a field delimiter; entity 16 (Pathé) appeared to build successfully but was never displayed by `validate-variants`. The "All variants matched" summary was misleading. Verify D035 is in DEFERRED with the corrected description.
 - D036 (`trademark mark-status`): finding dead marks required two raw `case_file.cfh_status_cd` DuckDB queries — one to filter the candidate pool, one to verify the final 15-dead/3-live breakdown. No CLI command can report trademark status for marks in a project's scope. Verify D036 is in DEFERRED.
 - D037 (`matchmaker clear`): after the D035 CSV bug corrupted entity 16, recovery required raw DuckDB `DELETE` statements. The `build` command is idempotent-add-only; there is no remove path. Verify D037 is in DEFERRED.
+
+**Known gaps from Phase 16.1 P2:**
+- D038 (`enrich` structured-fields): `markery trademark enrich` stores raw TSDR JSON but leaves `mark_text`, `status_cd`, `goods_desc`, `owner_name` NULL. P2 qualification fell back to `statement` table (goods) and `case_file.cfh_status_cd` (status) because `extended_marks` had no parsed data despite successful enrichment. Verify D038 is in DEFERRED.
+- `enrich-project` reads from `confirmed.jsonl` or `candidates.jsonl` — neither exists at P2 stage. No CLI path to batch-enrich project-scoped marks before candidate generation. Logged here; promote to DEFERRED if recurs in a third project.
 
 **Implementation gaps:**
 1. Grep for `TODO`, `FIXME`, `HACK`, `raise NotImplementedError`, and `pass` in `src/`. Classify each as: (a) intentional stub, (b) known gap already in `DEFERRED.md`, or (c) newly discovered. Add (c) items to `DEFERRED.md` with a reopen trigger.
