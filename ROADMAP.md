@@ -198,6 +198,8 @@ The discovery path here is trademark-first: find the marks, then identify the en
 4. Write `projects/animal-marks-1930/entities.csv`, `variants.csv`, `RESEARCH.md` (central argument: what does an animal communicate in a technology brand, and what does it tell us about the company's market positioning?), `RESEARCH-AGENDA.md` (candidate pairs to investigate; open questions about specific animal choices).
 5. Set `MARKERY_MODEL=claude-haiku-4-5-20251001` — record it here as the operational model for all subsequent steps.
 
+**Conclusions:** The trademark-first discovery path (design code → serial → owner → entity) worked but required two bypasses logged on the first day: D034 (no `markery trademark design-search` command, raw DuckDB used) and D027 (third project triggered the reopen condition — `markery project init` crashes non-interactively, scaffolded manually). Expanding from 5 to 18 entities surfaced D035: `markery matchmaker build` silently accepts CSV rows where an unquoted comma in a variant name corrupts the `source` field — entity 16 (Pathé) built with a malformed record, `validate-variants` reported "All variants matched" but never displayed entity 16, and discovery required checking record counts manually. Recovery required raw DuckDB DELETE (D037). Five structurally distinct "why animal" models were identified for the original five entities and extended to twelve models across eighteen; these form the analytical spine of the project's research question. Dead-mark / public-domain status was confirmed for all 18 drawings via CONTEXT.md's copyright rule (works published 1930 or earlier are unconditionally in the US public domain as of January 1, 2026).
+
 ---
 
 ### P2 — Trademark enrichment and entity qualification
@@ -206,6 +208,8 @@ The discovery path here is trademark-first: find the marks, then identify the en
 2. Run `markery matchmaker build --data-dir projects/animal-marks-1930` to load entities and variants.
 3. Run `markery matchmaker validate-variants --data-dir projects/animal-marks-1930` to confirm all variant strings match actual DB records. Fix any zero-match variants before proceeding.
 4. Qualify each entity: must have ≥1 animal-mark serial with technology goods in `extended_marks`. Entities that fail this check are removed from `entities.csv` — document the removal in `RESEARCH-AGENDA.md`.
+
+**Conclusions:** `markery trademark enrich` stored raw TSDR JSON in `raw_json` but left all structured columns (`mark_text`, `status_cd`, `goods_desc`, `owner_name`) NULL — D038. Qualification fell back to the bulk `statement` table for goods descriptions and `case_file.cfh_status_cd` for status, which worked but defeats the purpose of enrichment as a structured data source. The `enrich-project` command cannot be used at P2 because it reads from `confirmed.jsonl` or `candidates.jsonl`, neither of which exists before P4 — a pre-candidate enrichment gap logged in Phase 17 P3. All 18 entities qualified: technology goods confirmed for all 18 serials, including three with very short goods strings ("MOTOR TRUCKS", "AUTOMOBILES", "MOTOR CARS") that a length-threshold filter initially excluded. No entities were removed.
 
 ---
 
@@ -218,6 +222,8 @@ The CPC sweep approach used in `radio-pioneers` returned +0 for pre-1940 patents
 3. Run `markery patent signals animal-marks-1930` to populate abstract text for any candidates in the DB.
 4. Gate: ≥5 patents total across all entities; ≥1 patent per entity that has a confirmed trademark in scope.
 
+**Conclusions:** Seven targeted CPC sweeps (B60C, F41A/C, A01B, F04B, B64D, F02B, F16J) yielded 66 unique patents across 6 of 18 entities. Twelve entities have no EPO coverage — they require targeted `markery patent pull` with specific patent numbers from an external source, which was not available during this session. Three false-positive name collisions required raw patent-title inspection to reject: CASE RES LAB INC (photo-electric devices, not J.I. Case tractors), SHAW WALKER CO (filing cabinets, not James Walker gaskets), GILLETTE SAFETY RAZOR CO (razors, not Gillette Tire) — D039 logged for `suggest-variants` title display. `suggest-variants` should be re-run after each sweep to discover newly-arrived assignee strings; instead raw ILIKE queries were used (workflow bypass, not a missing command). `patent signals` was called per the spec but enriched 0 candidates — signals requires candidates (P4); the spec ordering is wrong and D040 was logged. The D031 class_score issue was anticipated but not yet measurable without candidates.
+
 ---
 
 ### P4 — Candidate generation and Haiku-native review
@@ -229,6 +235,8 @@ The CPC sweep approach used in `radio-pioneers` returned +0 for pre-1940 patents
 5. Write `confirmed.jsonl` entries. Note whether D029 (`markery matchmaker confirm`) is triggered.
 6. `markery historian scaffold animal-marks-1930 <slug>` for each confirmed pair; expand essays (using Haiku as the drafting model — i.e., test `historian draft` preview if Phase 18 P5 is not yet implemented, note D030 bypass); run `markery historian validate animal-marks-1930 <slug>`.
 7. Record all token counts. Flag any operation that Haiku cannot complete correctly.
+
+**Conclusions:** The generate command is `markery match`, not `markery matchmaker generate` — the ROADMAP spec had the wrong command name (a lighter model would crash on step 1). `markery match` generated 265 candidates from 4 of 6 patent-covered entities; Colt and Pratt & Whitney produced zero candidates because their trademark filings predated their patent grants, yielding negative scores excluded by the default min_score=0.0 threshold. This reversed commercial timeline — a long-standing brand name registered before specific technical patents were filed — is a historically real pattern that the scoring model penalises rather than recognises. Two crashes from figurative marks with `null` trademark fields — D041 logged for a systematic None audit. D031 confirmed with measurement: the GM Name Plate patent (G09F) scored 0.796 solely from the PRODUCT_CLASSES bonus, while the historically correct Hydrocarbon-Motor engine patent (F02B) scored 0.43; without manual intervention the wrong pair would have been confirmed. Only 9 of 265 candidates matched the specific animal-mark serials under study — the other 256 were incidental entity trademarks (CADILLAC, DELCO-REMY, various non-eagle Goodyear marks) — D042 logged for `markery match --serials` scoping. Haiku drafted all three essays cleanly at 2,060–2,169 prompt tokens with no hallucinated identifiers; all three validated PASS. D029 (confirm bypass) and D030 (draft inline script) recurred as expected.
 
 ---
 
