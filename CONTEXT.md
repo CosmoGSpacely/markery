@@ -151,6 +151,20 @@ Project-local `STATUS.md` carries the metrics and next action for that project. 
 
 ---
 
+## Copyright and Public Domain
+
+Markery research projects work with historical trademark drawings and patent figures. The copyright status of those images is a standing research-environment fact.
+
+**US copyright rollover (published works):** Each January 1, works published 95 years earlier enter the US public domain. As of January 1, 2026, all works published in **1930 or earlier** are in the public domain. On January 1, 2027, works from 1931 will follow, and so on annually.
+
+This means: any trademark drawing, patent figure, or illustration first published in the United States in 1930 or earlier is in the public domain today, unconditionally — regardless of whether copyright was separately registered or renewed. No renewal analysis is required.
+
+**Trademark vs. copyright are independent:** A mark's trademark registration (live or dead) has no bearing on copyright in its drawing. A live mark (e.g. Shell, Alfa Romeo) may still carry active trademark rights — meaning the image cannot be used commercially in a way that implies brand association — but the artwork itself is in the public domain. A dead mark has neither trademark protection nor copyright on its drawing.
+
+**Reference:** Duke Law Center for the Study of the Public Domain publishes an annual summary at `https://web.law.duke.edu/cspd/publicdomainday/`.
+
+---
+
 ## Root File Responsibilities
 
 | File | What it contains |
