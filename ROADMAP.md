@@ -341,6 +341,13 @@ These were discovered during the animal-marks-1930 entity expansion from 5 to 18
 - D036 (`trademark mark-status`): finding dead marks required two raw `case_file.cfh_status_cd` DuckDB queries — one to filter the candidate pool, one to verify the final 15-dead/3-live breakdown. No CLI command can report trademark status for marks in a project's scope. Verify D036 is in DEFERRED.
 - D037 (`matchmaker clear`): after the D035 CSV bug corrupted entity 16, recovery required raw DuckDB `DELETE` statements. The `build` command is idempotent-add-only; there is no remove path. Verify D037 is in DEFERRED.
 
+**Known gaps from Phase 16.1 P4:**
+- D041 (figurative mark None crash): `historian digest` and `historian card` crash on `trademark: null` candidates. GM serial 71199224 is a purely figurative mark; two spot-fixes applied inline but a systematic audit of all `c['trademark']` references in historian/cli.py is needed. Verify D041 in DEFERRED.
+- D042 (`match --serials`): `markery match` generates candidates for ALL entity trademarks, not just the specific animal-mark serials under study. Phase 16.1 P4 generated 265 candidates of which 9 were animal-mark-specific; the other 256 were noise from CADILLAC, DELCO-REMY, Chevrolet, non-eagle Goodyear marks. Verify D042 in DEFERRED.
+- Spec error: ROADMAP P4 step 1 says `markery matchmaker generate` — the correct command is `markery match`. A lighter model would crash on step 1. Fix the ROADMAP template.
+- D031 confirmed again: GM Name Plate patent (G09F) scored 0.796 — highest in project — while the better Hydrocarbon-Motor pair (F02B) scored 0.43. Score ordering is actively misleading for this project.
+- Colt and P&W excluded entirely: trademark filed before patent grant → negative scores → zero candidates. The reversed commercial timeline (long-standing brand name predating specific technical patents) is a real historical pattern not captured by the current scoring model.
+
 **Known gaps from Phase 16.1 P3:**
 - D039 (`suggest-variants` false positives): Phase 16.1 P3 found three false-positive assignee matches (CASE RES LAB ≠ J.I. Case; SHAW WALKER ≠ James Walker; GILLETTE SAFETY RAZOR ≠ Gillette Tire) that required raw patent-title inspection to reject. `suggest-variants` shows counts only — no titles — making name-collision disambiguation impossible without leaving the CLI. Verify D039 is in DEFERRED.
 - D040 (`patent signals` spec ordering): `patent signals` was called at P3 per the spec and returned "0 candidates enriched" — correct but useless, since candidates don't exist until P4. Signals belongs as step 1 of P4 post-`generate`, not in P3. Verify D040 is in DEFERRED.
