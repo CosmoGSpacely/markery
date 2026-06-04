@@ -26,6 +26,18 @@ Early American technology companies — manufacturers of motor trucks, aircraft 
 
 **Albert Setzer / mule:** MULE for electric storage batteries is the most oblique choice. A mule is a beast of burden — dependable, unspectacular, suited for work that does not require speed or grace. Electric storage batteries in 1922 were industrial infrastructure: they powered telephone exchanges, starting motors, and lighting plants. The mule is an honest metaphor for an honest product.
 
+**J.I. Case / eagle (Old Abe):** The J.I. Case eagle descends from a real animal — Old Abe, a bald eagle that served as the live mascot of the 8th Wisconsin Volunteer Infantry during the Civil War and survived the war to become a celebrity exhibit at the Wisconsin state capitol. Case adopted the eagle after the war as a regional prestige symbol: the machine company and the battle-hardened eagle both represented Wisconsin industry at its most capable. The mark is heritage transfer — borrowing social capital from a named historical animal.
+
+**General Motors / heraldic bird:** GM's 1924 mark features a bird on a heraldic shield. The shield design draws on European coat-of-arms conventions to assert corporate lineage and permanence for a company formed only in 1908. The bird species will be confirmed from the mark image; possible candidates include the duck/waterfowl family (DSC 031506) or a stylized bird of prey. Unlike the other marks in this set, the GM animal is not the brand's primary identity signal — the shield is — which makes this a case of incidental animal imagery.
+
+**James Walker & Co. / lion:** The Walker "LION TRADE MARK" makes the animal explicit in the trademark name itself. The lion is the dominant heraldic animal of British industry — reliable, powerful, long-lasting. Walker was a British manufacturer of industrial gaskets, packing, and sealing materials; "Lion" communicated the same product virtues that "bulldog" communicated for Mack, but through the conventions of British heraldry rather than the idiom of American vernacular culture.
+
+**Gillette Tire / bear:** "A BEAR FOR WEAR" is the most literarily playful mark in this set — a pun that makes the animal do double work as both brand image and product claim. The bear conveys toughness and endurance; "for wear" means built to withstand abrasion. The mark signals that the company is confident enough in its product to make the durability claim the slogan.
+
+**American Brass / eagle:** AMBRAC (AMerican BRAss Company) uses the eagle as patriotic brand anchor — the American eagle on an American company's mark for American-made metals. This is the most literal form of the national-symbol pattern: the eagle declares the company's identity as American in a period when domestic versus imported metals was a significant commercial distinction.
+
+**Standard-Johnson / eagle:** An eagle on a coin-counting machine mark is the most institutionally American symbol possible — coins carry the eagle, and the machine that counts them does too. Standard-Johnson's "COUNTING THE WORLD'S COIN" tagline extends the eagle's reach globally: this is not just an American machine for American coins, it counts the world's money. The eagle here is an authority symbol, not a product-character metaphor.
+
 ## Scope note on patent acquisition
 
 None of these five entities has patent records in `patents.duckdb` at project setup (the existing DB was swept for radio-era CPC classes H04B/H01J/H03F/H04R). Patent acquisition in P3 will use targeted per-assignee pulls via `markery patent pull <no>` for known specific patents. CPC sweeps are not used in this project — confirmed zero-coverage risk via `patent coverage-check` is the expected result for all relevant classes.
