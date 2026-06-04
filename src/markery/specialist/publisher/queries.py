@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import duckdb
@@ -196,7 +197,8 @@ def get_confirmed_matches(project: str) -> list[dict]:
         if pat:
             m["patent_title"], m["grant_dt"], m["application_dt"], m["assignee"] = pat
 
-        slug = m["trademark"].lower().replace(" ", "-")
+        tm_slug = re.sub(r'[^a-z0-9]+', '-', (m["trademark"] or "figurative").lower()).strip('-')
+        slug = f"{tm_slug}-{m['patent_no'].lower()}"
         essay = content_dir / f"{slug}.md"
         m["essay_path"] = str(essay) if essay.exists() else None
         m["slug"] = slug

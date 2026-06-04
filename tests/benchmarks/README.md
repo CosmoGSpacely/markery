@@ -293,3 +293,51 @@ Full P6 card/digest review cycle on radio-pioneers (2,748 candidates, 3 confirme
 - All three P8 essays (sterilamp, minalite, victor) written manually in P6 passed validate; the Haiku draft is an additional validated artifact demonstrating automated generation capability.
 - The Haiku essay prompt (2,006 tokens) is substantially smaller than the card simulation (2,488 tokens) because the essay task sends only the scaffold + task description, not a full digest + multiple cards.
 - `historian draft` (Phase 18 P5) will replace the inline script used for this test.
+
+---
+
+## Phase 16.1 — animal-marks-1930 — 2026-06-04
+
+**Project:** `animal-marks-1930`  
+**Model:** `claude-haiku-4-5-20251001` (all steps — Haiku-native phase)  
+**Log file:** `animal-marks-p4.jsonl`
+
+### Token summary
+
+| Command | n | Mean prompt | Mean completion | Notes |
+|---|---|---|---|---|
+| `historian digest` | 2 | 215 | 0 | Context generation only |
+| `historian card` | 4 | 191 | 0 | Context generation only |
+| Haiku essay draft | 3 | 2,123 | 864 | D030 bypass — inline script; all 3 validate PASS |
+| `librarian extract` (Presbrey 1929) | 1 | 37,654 | 2,868 | 248 chunks, early stop at 15, 10 passages accepted |
+
+### Haiku-native results
+
+All three essays (john-deere-moline-ill-us979019a, double-eagle-us1645089a, figurative-us1396890a) were drafted by Haiku and validated PASS 6/6 without correction. The figurative GM essay was the hardest case — no `trademark` field, purely visual mark — and Haiku described the heraldic shield without inventing visual details outside the scaffold.
+
+Steps that required fallback or correction:
+- D030 (historian draft): essays generated via inline script, not CLI command
+- D032 (librarian review): `--auto-accept` used on extract; no post-extract non-interactive review path
+- Site build: crashed with `AttributeError` on `trademark: null` in `publisher/queries.py` — fixed inline (two-line patch: `re.sub` slug with `"figurative"` fallback; also fixed `build.py` search record label). This is the D041 figurative-mark audit manifesting in the publisher — the historian spot-fixes from P4 did not cover this path.
+- D044 (librarian acquire slug): `acquire presbrey-history-and-development-of-advertising` failed; raw IA identifier required.
+
+### Comparison to Phase 14 and radio-pioneers baselines
+
+| Workflow | P14 baseline | radio-pioneers | animal-marks-1930 | Delta vs. P14 |
+|---|---|---|---|---|
+| `historian digest` | 251 | 249 | 215 | −14% |
+| `historian card` | 188 | 195 | 191 | +2% |
+| Haiku essay draft | — | 2,006 | 2,123 | +6% vs. radio-pioneers |
+
+The digest drop (251 → 215) reflects the animal-marks-1930 candidate pool: 265 candidates across only 4 entities with patent coverage, compared to radio-pioneers' broader entity mix. Fewer entities = shorter entity-header section in the digest. Not a regression — a structural difference in project scope. The card mean (191) is within ±2% of the radio-pioneers figure (195) and within ±2% of the P14 baseline (188).
+
+The Haiku essay mean (2,123 prompt tokens) is 6% higher than radio-pioneers (2,006) because the animal-marks essays include more complex historical context sections — figurative mark description adds prose that word-mark essays do not. All three essays validated PASS; no hallucinated identifiers.
+
+**Extract cost note:** Presbrey (1929) is a 52,000-line text (248 chunks). At 37,654 prompt tokens for 10 passages, extract is still the highest-cost operation by an order of magnitude — consistent with radio-pioneers (26k–65k per work). Early-stopping fired at chunk 15 (32 raw candidates), limiting total cost to roughly 15% of a full-corpus pass.
+
+### Notes
+
+- animal-marks-1930 is the first Haiku-native phase (no Sonnet fallback). All API-calling steps ran on `claude-haiku-4-5-20251001`.
+- The entity-scoping limitation (D042) was the most consequential structural finding: 256 of 265 candidates were incidental entity trademarks, not the animal-mark serials under study. Future projects with serial-specific research questions need `markery match --serials`.
+- D031 (class_score domain specificity) confirmed with the clearest evidence to date: GM Name Plate patent (G09F) scored 0.796 vs. the correct Hydrocarbon-Motor patent (F02B) at 0.43 — a 0.35-point gap from a single hardcoded CPC bonus.
+- The publisher `trademark: null` crash (D041) appeared in a third code path (`queries.py`) that the P4 historian spot-fixes did not cover. D041 audit is still open.

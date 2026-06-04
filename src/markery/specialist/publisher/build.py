@@ -164,7 +164,7 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
         print(f"  match essay      → matches/{p.name}")
         essay_path = Path(match["essay_path"]) if match.get("essay_path") else None
         search_records.append(_build_search_record(
-            f"{match['trademark']} ↔ {match['patent_no']}",
+            f"{match['trademark'] or '(figurative)'} ↔ {match['patent_no']}",
             "match_essay",
             f"matches/{slug}.html",
             essay_path,

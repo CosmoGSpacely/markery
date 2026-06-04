@@ -1,0 +1,134 @@
+[
+  {
+    "title": "Animal Marks 1930",
+    "type": "landing",
+    "url": "index.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Mack Trucks",
+    "type": "entity",
+    "url": "entities/mack-trucks.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Pratt and Whitney Aircraft",
+    "type": "entity",
+    "url": "entities/pratt-and-whitney-aircraft.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Eagle Electric Manufacturing",
+    "type": "entity",
+    "url": "entities/eagle-electric-manufacturing.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Pathe Cinema",
+    "type": "entity",
+    "url": "entities/pathe-cinema.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Albert Setzer",
+    "type": "entity",
+    "url": "entities/albert-setzer.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Shell Oil Company",
+    "type": "entity",
+    "url": "entities/shell-oil-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Deere and Company",
+    "type": "entity",
+    "url": "entities/deere-and-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Alfa Romeo",
+    "type": "entity",
+    "url": "entities/alfa-romeo.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Worthington Pump and Machinery",
+    "type": "entity",
+    "url": "entities/worthington-pump-and-machinery.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Raleigh Cycle Company",
+    "type": "entity",
+    "url": "entities/raleigh-cycle-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Goodyear Tire and Rubber",
+    "type": "entity",
+    "url": "entities/goodyear-tire-and-rubber.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Colts Patent Fire Arms Manufacturing",
+    "type": "entity",
+    "url": "entities/colts-patent-fire-arms-manufacturing.html",
+    "excerpt": ""
+  },
+  {
+    "title": "JI Case Company",
+    "type": "entity",
+    "url": "entities/ji-case-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "General Motors Corporation",
+    "type": "entity",
+    "url": "entities/general-motors-corporation.html",
+    "excerpt": ""
+  },
+  {
+    "title": "James Walker and Company",
+    "type": "entity",
+    "url": "entities/james-walker-and-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Gillette Tire Company",
+    "type": "entity",
+    "url": "entities/gillette-tire-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "American Brass Company",
+    "type": "entity",
+    "url": "entities/american-brass-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Standard Johnson Company",
+    "type": "entity",
+    "url": "entities/standard-johnson-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "JOHN DEERE MOLINE, ILL. ↔ US979019A",
+    "type": "match_essay",
+    "url": "matches/john-deere-moline-ill-us979019a.html",
+    "excerpt": "Primary Sources - USPTO Trademark Serial No. 71055630 — [JOHN DEERE MOLINE, ILL.](https://tsdr.uspto.gov/#caseNumber=71055630&caseType=SERIAL_NO&searchType=statusSearch) - Filed: 1911-04-08 · Register"
+  },
+  {
+    "title": "DOUBLE EAGLE ↔ US1645089A",
+    "type": "match_essay",
+    "url": "matches/double-eagle-us1645089a.html",
+    "excerpt": "Primary Sources - USPTO Trademark Serial No. 71273140 — [DOUBLE EAGLE](https://tsdr.uspto.gov/#caseNumber=71273140&caseType=SERIAL_NO&searchType=statusSearch) - Filed: 1928-09-29 · Registered: 0251857"
+  },
+  {
+    "title": "(figurative) ↔ US1396890A",
+    "type": "match_essay",
+    "url": "matches/figurative-us1396890a.html",
+    "excerpt": "Primary Sources - USPTO Trademark Serial No. 71199224 — [None](https://tsdr.uspto.gov/#caseNumber=71199224&caseType=SERIAL_NO&searchType=statusSearch) - Filed: 1924-06-27 · Registered: 0201708 · Owner"
+  }
+]

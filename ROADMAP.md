@@ -238,6 +238,16 @@ The CPC sweep approach used in `radio-pioneers` returned +0 for pre-1940 patents
 
 **Conclusions:** The generate command is `markery match`, not `markery matchmaker generate` — the ROADMAP spec had the wrong command name (a lighter model would crash on step 1). `markery match` generated 265 candidates from 4 of 6 patent-covered entities; Colt and Pratt & Whitney produced zero candidates because their trademark filings predated their patent grants, yielding negative scores excluded by the default min_score=0.0 threshold. This reversed commercial timeline — a long-standing brand name registered before specific technical patents were filed — is a historically real pattern that the scoring model penalises rather than recognises. Two crashes from figurative marks with `null` trademark fields — D041 logged for a systematic None audit. D031 confirmed with measurement: the GM Name Plate patent (G09F) scored 0.796 solely from the PRODUCT_CLASSES bonus, while the historically correct Hydrocarbon-Motor engine patent (F02B) scored 0.43; without manual intervention the wrong pair would have been confirmed. Only 9 of 265 candidates matched the specific animal-mark serials under study — the other 256 were incidental entity trademarks (CADILLAC, DELCO-REMY, various non-eagle Goodyear marks) — D042 logged for `markery match --serials` scoping. Haiku drafted all three essays cleanly at 2,060–2,169 prompt tokens with no hallucinated identifiers; all three validated PASS. D029 (confirm bypass) and D030 (draft inline script) recurred as expected.
 
+**Analysis:**
+
+Goal 1 — Bypasses and code gaps: Two actual crashes (not just bypasses) — D041 for figurative-mark None in historian CLI. The D029 `markery matchmaker confirm` bypass occurred again. The D030 historian draft inline script recurred. The ROADMAP spec had the wrong command name (`markery matchmaker generate` vs `markery match`). Total new entries: D041, D042.
+
+Goal 2 — Haiku-native: Clean success. All three essays drafted on Haiku at 2,060–2,169 prompt tokens, all validate PASS, no hallucinated identifiers. The figurative GM essay was the hardest case — Haiku correctly described the heraldic shield without inventing visual details from outside the scaffold.
+
+Goal 3 — Project structure flexibility: The entity-scoping assumption is now visibly limiting. 256 of 265 candidates were from non-animal trademarks of the same entities. The research question targets specific serials; the tool targets entities. D042 captures this gap.
+
+Goal 4 — Scoring domain specificity (D031): The most concrete evidence yet. GM's Name Plate patent (G09F, +0.3 class bonus) was the top-scoring candidate at 0.796. The historically correct pair — the engine patent — scored 0.43. The gap is not noise; it is the difference between confirming the right pair and the wrong one. Colt and P&W add a second scoring failure mode: the model penalizes trademark-before-patent sequences, but many iconic animal marks (the Colt horse, the P&W eagle) were registered before specific technical patents were filed.
+
 ---
 
 ### P5 — LIBRARIAN: secondary literature on animal imagery in American trademarks
@@ -251,6 +261,16 @@ The research question — why did a technology company choose an animal mark? �
 5. Run `markery librarian index --embed`.
 6. Load a context card before any essay session: `markery librarian card "animal trademark technology" --mode semantic`.
 
+**Analysis:**
+
+Goal 1 — Bypasses and code gaps: D032 (`--auto-accept`) recurred as expected — `markery librarian review` is terminal-bound and no non-interactive path exists. `markery librarian acquire <slug>` fails when passed the slug suggested by `search-sources`; the IA identifier (`historydevelopme0000fran`) must be used directly — a usability gap not yet in DEFERRED. The standard `discover` path was ineffective: Wikipedia citations for "trademark" and "Brand management" returned no acquirable IA sources. Source identification required targeted `search-sources "history development advertising Presbrey"` — the discovery workflow assumes a heavily-cited Wikipedia article; niche research domains require manual author search instead.
+
+Goal 2 — Haiku-native: `markery librarian extract` ran successfully on Haiku at 37,654p / 2,868c tokens across 248 chunks, early-stopping at chunk 15 after 32 raw candidates (10 after dedup). All 10 passages are on-topic; no hallucinated content. The card returned 4 directly relevant passages on first query.
+
+Goal 3 — Project structure flexibility: The same niche-domain limitation observed in P4 (entity-scoping vs. serial-scoping) recurs here: the discovery workflow is optimized for well-documented domains with dense Wikipedia citation graphs. Animal marks in American technology trademarks is too narrow a topic for the automated path. The effective strategy was to identify canonical scholarship by author name and acquire directly.
+
+Goal 4 — Passage quality and research fit: The 10 Presbrey passages document animal imagery from Roman Pompeii through medieval England — the painted cow signifying dairy, mule signifying bakery, goat signifying dairy from first-century Pompeii is the direct historical ancestor of the Mack bulldog and Goodyear eagle as commercial identifiers. The passages provide essential historical depth for the "why animal?" framing but predate the 1920s-1930s period by 1,900 years. A contemporaneous source — an advertising trade publication from the 1920s — would strengthen the direct-era argument; `advertising-age` (1930) is already in the library with 0 excerpts and could serve this role if raw text is available.
+
 ---
 
 ### P6 — Publisher, Wikipedia contribution, and phase close
@@ -259,6 +279,16 @@ The research question — why did a technology company choose an animal mark? �
 2. Identify the strongest Wikipedia contribution. The "why animal" angle is well-suited to adding cited context to a company or trademark article that currently lacks it. Write the draft to `projects/animal-marks-1930/wikipedia/`.
 3. Append an `animal-marks-1930` section to `tests/benchmarks/README.md`: token summary (digest, card, extract, essay), confirmation that Haiku completed all steps, and a note on any steps that required fallback or correction.
 4. D-number audit: list every new CLI bypass found during this phase. Verify each is in DEFERRED with a reopen trigger. Update Phase 17 P3 "Known gaps" section.
+
+**Analysis:**
+
+Goal 1 — Bypasses and code gaps: Site build crashed immediately with `AttributeError: 'NoneType' object has no attribute 'lower'` in `publisher/queries.py` line 199 — the D041 figurative-mark None audit surfacing in a third code path that the two P4 historian spot-fixes did not cover. Fixed inline: slug computation now uses `re.sub(r'[^a-z0-9]+', '-', (m["trademark"] or "figurative").lower()).strip('-')` with patent number appended, which also corrected a pre-existing mismatch between the slug format and historian's essay naming convention (essays were silently unfound on the site in all prior projects). Second fix: `build.py` search record label now uses `match['trademark'] or '(figurative)'`. No new DEFERRED entry — D041 covers the audit. D044 (acquire slug) already logged from P5. Total new code changes: 2 files, 3 lines.
+
+Goal 2 — Haiku-native: Full phase completed on Haiku with no Sonnet fallback. Site build, Wikipedia draft, and README were not API calls and are model-agnostic. All API-calling steps (digest, card, essay, extract) ran on Haiku. The only non-CLI step was the D030 essay-draft bypass (inline script). No step failed on Haiku.
+
+Goal 3 — Project structure flexibility: The Wikipedia draft required manual identification of the strongest animal-mark serial — the CLI has no command to filter confirmed pairs by trademark character (animal vs. text). The Objective 7 dead-mark priority check required a direct DuckDB query (`cfh_status_cd = 900` for all three confirmed pairs). Both are gaps observable in prior phases; neither is new.
+
+Goal 4 — Scoring domain specificity (D031): Not directly tested in P6, but the site build materialized the scoring consequence: the confirmed essays cover Goodyear and John Deere (clean patent-trademark correspondence) and GM (manually corrected from the top-scoring wrong pair). The site's match gallery therefore reflects researcher intervention, not the scorer's output. This is the correct result — but it underlines that D031 is not a minor calibration issue; without manual review, the animal-marks site would have confirmed a GM name-plate/engine pair with no historical support.
 
 ---
 
@@ -272,11 +302,11 @@ P3 PASSED when: ≥5 patents in `patents.duckdb` for animal-marks-1930 entities;
 
 P4 PASSED when: ≥3 confirmed pairs in `confirmed.jsonl`; all pass `historian validate`; token counts in `tests/benchmarks/animal-marks-p4.jsonl`; all operations completed on Haiku (or failures documented). — PASSED 2026-06-04 (3 pairs: Deere/JOHN DEERE/plow, Goodyear/DOUBLE EAGLE/tire, GM/figurative-heraldic/engine; all validate PASS 6/6; Haiku drafts 2169p/980c, 2141p/945c, 2060p/667c; 2 code bugs fixed: None-trademark crash in digest formatter and card slug matcher)
 
-P5 PASSED when: ≥1 secondary work indexed with passages relevant to animal mark symbolism; `markery librarian card "animal trademark" --mode semantic` returns ≥1 passage.
+P5 PASSED when: ≥1 secondary work indexed with passages relevant to animal mark symbolism; `markery librarian card "animal trademark" --mode semantic` returns ≥1 passage. — PASSED 2026-06-04 (Presbrey 1929 acquired from IA, 10 passages extracted with Haiku 37,654p/2,868c tokens, --auto-accept bypass (D032); card returns 4 passages on animal imagery in Roman/medieval advertising; passages on painted cow, mule, goat signboards and sheep advertising directly support "why animal?" research question)
 
-P6 PASSED when: `markery site build animal-marks-1930` exits 0; Wikipedia draft written; `tests/benchmarks/README.md` updated; all new DEFERRED entries confirmed present with reopen triggers.
+P6 PASSED when: `markery site build animal-marks-1930` exits 0; Wikipedia draft written; `tests/benchmarks/README.md` updated; all new DEFERRED entries confirmed present with reopen triggers. — PASSED 2026-06-04 (25 pages; site crashed on `trademark: null` in publisher/queries.py — fixed inline (D041 manifesting in third code path); Wikipedia draft: goodyear-double-eagle.md (DOUBLE EAGLE serial 71273140, dead mark, patent US1645089A); README updated with full token summary; D044 in DEFERRED)
 
-Phase PASSED when P1–P6 all pass.
+Phase PASSED when P1–P6 all pass. — PASSED 2026-06-04
 
 ---
 
@@ -364,6 +394,14 @@ These were discovered during the animal-marks-1930 entity expansion from 5 to 18
 **Known gaps from Phase 16.1 P2:**
 - D038 (`enrich` structured-fields): `markery trademark enrich` stores raw TSDR JSON but leaves `mark_text`, `status_cd`, `goods_desc`, `owner_name` NULL. P2 qualification fell back to `statement` table (goods) and `case_file.cfh_status_cd` (status) because `extended_marks` had no parsed data despite successful enrichment. Verify D038 is in DEFERRED.
 - `enrich-project` reads from `confirmed.jsonl` or `candidates.jsonl` — neither exists at P2 stage. No CLI path to batch-enrich project-scoped marks before candidate generation. Logged here; promote to DEFERRED if recurs in a third project.
+
+**Known gaps from Phase 16.1 P5:**
+- D032 (`librarian review --auto-accept`) recurred: `--auto-accept` used on `extract` because `markery librarian review` is terminal-bound. Verify D032 is in DEFERRED.
+- D044 (`librarian acquire` slug mismatch): `markery librarian search-sources` prints a suggested slug that `markery librarian acquire` rejects — the raw IA identifier must be used. Phase 16.1 P5 used `historydevelopme0000fran` after `presbrey-history-and-development-of-advertising` failed. Verify D044 is in DEFERRED with reopen trigger pointing to Phase 17 P2/P3.
+
+**Known gaps from Phase 16.1 P6:**
+- D041 (figurative mark None crash) in publisher: `publisher/queries.py` crashed with `AttributeError` on `trademark: null` — a third code path not covered by the two P4 historian spot-fixes. Fixed inline with `re.sub` slug + `"figurative"` fallback. D041 audit is still open for `scaffold`, `validate`, and `confirmed.jsonl` writer. Verify D041 is in DEFERRED with audit scope updated.
+- Slug mismatch (pre-existing, not a crash): `publisher/queries.py` derived essay slugs as `trademark.lower().replace(" ", "-")`, which did not match historian's `{tm_slug}-{patent_no}` convention. Essays were silently unfound in all prior projects' site builds. Fixed inline in the same patch. Not a new DEFERRED entry — the fix is in place; mention in Phase 17 P2 documentation pass as a note on the slug contract between historian and publisher.
 
 **Implementation gaps:**
 1. Grep for `TODO`, `FIXME`, `HACK`, `raise NotImplementedError`, and `pass` in `src/`. Classify each as: (a) intentional stub, (b) known gap already in `DEFERRED.md`, or (c) newly discovered. Add (c) items to `DEFERRED.md` with a reopen trigger.
