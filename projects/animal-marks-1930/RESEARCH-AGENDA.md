@@ -34,3 +34,4 @@
 |---|---|---|---|
 | P1 | design_search discovery via raw DuckDB query | `markery trademark design-search 03 --filing-before 1930 --goods-contains electric` | D034 |
 | P1 | `markery project init` crashes non-interactively; scaffolded manually | `markery project init <name>` | D027 (triggered) |
+| P1 | variants.csv comma-in-name bug: unquoted owner names containing commas parsed incorrectly by DictReader; entity 16 (Pathé) silent zero-match until fixed | variants.csv should quote fields containing commas; `markery matchmaker build` should validate CSV parse integrity | D035 |

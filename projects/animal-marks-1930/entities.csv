@@ -4,3 +4,10 @@ entity_id,canonical_name,entity_type,industry
 15,Eagle Electric Manufacturing,company,electrical
 16,Pathe Cinema,company,film
 17,Albert Setzer,individual,industrial
+18,Shell Oil Company,company,petroleum
+19,Deere and Company,company,agricultural machinery
+20,Alfa Romeo,company,automotive
+21,Worthington Pump and Machinery,company,industrial machinery
+22,Raleigh Cycle Company,company,transportation
+23,Goodyear Tire and Rubber,company,automotive
+24,Colts Patent Fire Arms Manufacturing,company,firearms
