@@ -341,6 +341,11 @@ These were discovered during the animal-marks-1930 entity expansion from 5 to 18
 - D036 (`trademark mark-status`): finding dead marks required two raw `case_file.cfh_status_cd` DuckDB queries — one to filter the candidate pool, one to verify the final 15-dead/3-live breakdown. No CLI command can report trademark status for marks in a project's scope. Verify D036 is in DEFERRED.
 - D037 (`matchmaker clear`): after the D035 CSV bug corrupted entity 16, recovery required raw DuckDB `DELETE` statements. The `build` command is idempotent-add-only; there is no remove path. Verify D037 is in DEFERRED.
 
+**Known gaps from Phase 16.1 P3:**
+- D039 (`suggest-variants` false positives): Phase 16.1 P3 found three false-positive assignee matches (CASE RES LAB ≠ J.I. Case; SHAW WALKER ≠ James Walker; GILLETTE SAFETY RAZOR ≠ Gillette Tire) that required raw patent-title inspection to reject. `suggest-variants` shows counts only — no titles — making name-collision disambiguation impossible without leaving the CLI. Verify D039 is in DEFERRED.
+- D040 (`patent signals` spec ordering): `patent signals` was called at P3 per the spec and returned "0 candidates enriched" — correct but useless, since candidates don't exist until P4. Signals belongs as step 1 of P4 post-`generate`, not in P3. Verify D040 is in DEFERRED.
+- Workflow gap (not a new command): after CPC sweeps, `suggest-variants` should be re-run for each entity to discover newly-arrived assignee strings. Instead, raw DuckDB ILIKE queries were used to find the correct patent assignee names. The CLI path existed (`suggest-variants`) but was bypassed. Document in P3 template that `suggest-variants` must be re-run after each sweep.
+
 **Known gaps from Phase 16.1 P2:**
 - D038 (`enrich` structured-fields): `markery trademark enrich` stores raw TSDR JSON but leaves `mark_text`, `status_cd`, `goods_desc`, `owner_name` NULL. P2 qualification fell back to `statement` table (goods) and `case_file.cfh_status_cd` (status) because `extended_marks` had no parsed data despite successful enrichment. Verify D038 is in DEFERRED.
 - `enrich-project` reads from `confirmed.jsonl` or `candidates.jsonl` — neither exists at P2 stage. No CLI path to batch-enrich project-scoped marks before candidate generation. Logged here; promote to DEFERRED if recurs in a third project.
