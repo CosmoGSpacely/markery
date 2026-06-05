@@ -150,6 +150,49 @@ def enrich_project(
     return {"images": images_stored, "status": status_stored}
 
 
+def backfill_structured_fields(conn: duckdb.DuckDBPyConnection) -> int:
+    """Re-parse stored raw_json to populate NULL structured columns.
+
+    Useful when _parse_case_status was updated after rows were already written.
+    No API calls are made. Returns the count of rows updated.
+    """
+    from markery.specialist.trademark.tsdr_client import _parse_case_status
+
+    rows = conn.execute(
+        "SELECT serial_no, raw_json FROM extended_marks "
+        "WHERE raw_json IS NOT NULL AND raw_json != '' "
+        "AND mark_text IS NULL"
+    ).fetchall()
+
+    updated = 0
+    for serial_no, raw_json_str in rows:
+        try:
+            data = json.loads(raw_json_str)
+        except (json.JSONDecodeError, TypeError):
+            continue
+        parsed = _parse_case_status(data, serial_no)
+        conn.execute(
+            """UPDATE extended_marks
+               SET mark_text = ?, filing_dt = ?, registration_no = ?,
+                   registration_dt = ?, status_cd = ?, goods_desc = ?,
+                   intl_class = ?, owner_name = ?, first_use_dt = ?,
+                   first_use_comm_dt = ?
+               WHERE serial_no = ?""",
+            [
+                parsed["mark_text"], parsed["filing_dt"],
+                parsed["registration_no"], parsed["registration_dt"],
+                parsed["status_cd"], parsed["goods_desc"],
+                parsed["intl_class"], parsed["owner_name"],
+                parsed["first_use_dt"], parsed["first_use_comm_dt"],
+                serial_no,
+            ],
+        )
+        updated += 1
+
+    conn.commit()
+    return updated
+
+
 def _collect_serial_nos(
     proj: Project, source: str, min_score: float
 ) -> list[str]:

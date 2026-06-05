@@ -98,39 +98,88 @@ class TSDRClient:
 # ---------------------------------------------------------------------------
 
 def _parse_case_status(data: dict, serial_no: str) -> dict:
-    """Extract flat fields from TSDR case status JSON."""
-    record = (
-        data.get("trademarkCaseFiles", [{}])[0]
-        if isinstance(data.get("trademarkCaseFiles"), list)
-        else data
-    )
+    """Extract flat fields from TSDR case status JSON.
 
-    def _get(key: str) -> str | None:
-        v = record.get(key)
+    Supports both response formats:
+    - New format: data["trademarks"][0] with nested status/parties/gsList objects
+    - Legacy format: data["trademarkCaseFiles"][0] with flat key names
+    """
+    def _str(v) -> str | None:
         return str(v).strip() if v is not None else None
 
-    # Goods and services classification is a list; take the first element
-    gsc = record.get("goodsAndServicesClassification")
-    if isinstance(gsc, list) and gsc and isinstance(gsc[0], dict):
-        goods_desc = str(gsc[0]["goodsAndServicesDescription"]).strip() \
-                     if gsc[0].get("goodsAndServicesDescription") else None
-        intl_class = str(gsc[0]["internationalClassNumber"]).strip() \
-                     if gsc[0].get("internationalClassNumber") else None
+    # New format: data["trademarks"][0].status / .gsList / .parties
+    if isinstance(data.get("trademarks"), list) and data["trademarks"]:
+        rec    = data["trademarks"][0]
+        status = rec.get("status", {}) if isinstance(rec.get("status"), dict) else {}
+
+        mark_text       = _str(status.get("markElement"))
+        filing_dt       = _str(status.get("filingDate"))
+        registration_no = _str(status.get("usRegistrationNumber"))
+        registration_dt = _str(status.get("usRegistrationDate"))
+        status_cd       = _str(status.get("status"))
+        first_use_dt       = _str(status.get("firstUsed"))
+        first_use_comm_dt  = _str(status.get("firstUsedInCommerce"))
+
+        # Goods: first item in gsList, field "description"
+        goods_desc  = None
+        intl_class  = None
+        gs_list = rec.get("gsList", [])
+        if isinstance(gs_list, list) and gs_list:
+            first_gs   = gs_list[0]
+            goods_desc = _str(first_gs.get("description"))
+            if goods_desc and len(goods_desc) > 500:
+                goods_desc = goods_desc[:500]
+            intl_classes = first_gs.get("internationalClasses", [])
+            if isinstance(intl_classes, list) and intl_classes:
+                intl_class = _str(intl_classes[0].get("code"))
+
+        # Owner: latest entry in parties.ownerGroups (highest numeric key)
+        owner_name = None
+        parties     = rec.get("parties", {})
+        owner_groups = parties.get("ownerGroups", {}) if isinstance(parties, dict) else {}
+        if owner_groups:
+            max_key = max(owner_groups, key=lambda k: int(k))
+            owners  = owner_groups[max_key]
+            if isinstance(owners, list) and owners:
+                owner_name = _str(owners[0].get("name"))
+
     else:
-        goods_desc = _get("goodsAndServicesDescription")
-        intl_class = None
+        # Legacy flat format: data["trademarkCaseFiles"][0]
+        tcf = data.get("trademarkCaseFiles", [{}])
+        record = tcf[0] if tcf else {}
+
+        def _get(key: str) -> str | None:
+            v = record.get(key)
+            return str(v).strip() if v is not None else None
+
+        gsc = record.get("goodsAndServicesClassification")
+        if isinstance(gsc, list) and gsc and isinstance(gsc[0], dict):
+            goods_desc = _str(gsc[0].get("goodsAndServicesDescription"))
+            intl_class = _str(gsc[0].get("internationalClassNumber"))
+        else:
+            goods_desc = None
+            intl_class = None
+
+        mark_text          = _get("markVerbalElementText")
+        filing_dt          = _get("applicationDate")
+        registration_no    = _get("registrationNumber")
+        registration_dt    = _get("registrationDate")
+        status_cd          = _get("caseStatusCode")
+        owner_name         = _get("registrantName") or _get("applicantName")
+        first_use_dt       = _get("firstUseAnywhere")
+        first_use_comm_dt  = _get("firstUseInCommerce")
 
     return {
         "serial_no":          serial_no,
-        "mark_text":          _get("markVerbalElementText"),
-        "filing_dt":          _get("applicationDate"),
-        "registration_no":    _get("registrationNumber"),
-        "registration_dt":    _get("registrationDate"),
-        "status_cd":          _get("caseStatusCode"),
+        "mark_text":          mark_text,
+        "filing_dt":          filing_dt,
+        "registration_no":    registration_no,
+        "registration_dt":    registration_dt,
+        "status_cd":          status_cd,
         "goods_desc":         goods_desc,
         "intl_class":         intl_class,
-        "owner_name":         _get("registrantName") or _get("applicantName"),
-        "first_use_dt":       _get("firstUseAnywhere"),
-        "first_use_comm_dt":  _get("firstUseInCommerce"),
+        "owner_name":         owner_name,
+        "first_use_dt":       first_use_dt,
+        "first_use_comm_dt":  first_use_comm_dt,
         "raw_json":           None,  # populated by caller with json.dumps(data)
     }

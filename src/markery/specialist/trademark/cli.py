@@ -163,6 +163,15 @@ def cmd_status(args: argparse.Namespace) -> None:
     conn.close()
 
 
+def cmd_reparse(args: argparse.Namespace) -> None:
+    from markery.specialist.trademark.build import open_db
+    from markery.specialist.trademark.enrich import backfill_structured_fields
+    conn = open_db()
+    n = backfill_structured_fields(conn)
+    conn.close()
+    print(f"Reparsed {n} extended_marks row(s).")
+
+
 # ---------------------------------------------------------------------------
 # Argument parser
 # ---------------------------------------------------------------------------
@@ -230,6 +239,10 @@ def main() -> None:
     p_ef.add_argument("--after-year", type=int, default=1939, metavar="YEAR",
                       help="Show marks filed after this year (default: 1939)")
 
+    # reparse
+    sub.add_parser("reparse",
+                   help="Re-parse stored raw_json to fill NULL structured fields (no API calls)")
+
     # verify-credentials
     sub.add_parser("verify-credentials",
                    help="Verify USPTO API key with a live TSDR request")
@@ -246,6 +259,7 @@ def main() -> None:
         "load-foreign":        cmd_load_foreign,
         "fetch":               cmd_fetch,
         "entity-forward":      cmd_entity_forward,
+        "reparse":             cmd_reparse,
         "verify-credentials":  cmd_verify_credentials,
         "status":              cmd_status,
     }[args.cmd](args)

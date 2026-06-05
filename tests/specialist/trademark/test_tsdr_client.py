@@ -30,6 +30,29 @@ _CASE_STATUS_JSON = {
     }]
 }
 
+# Current TSDR API format: nested trademarks[0].status / gsList / parties
+_CASE_STATUS_JSON_NEW = {
+    "trademarks": [{
+        "status": {
+            "markElement":          "SOUNDEX",
+            "filingDate":           "1927-03-31",
+            "usRegistrationNumber": "230958",
+            "usRegistrationDate":   "1927-08-09",
+            "status":               900,
+        },
+        "gsList": [{
+            "description": "BLANK AND PARTIALLY-PRINTED CARDS",
+            "internationalClasses": [{"code": "016", "description": "Paper goods"}],
+        }],
+        "parties": {
+            "ownerGroups": {
+                "30": [{"name": "RAND KARDEX BUREAU, INC."}],
+                "45": [{"name": "KARDEX SYSTEMS, INC."}],
+            }
+        },
+    }]
+}
+
 
 # ---------------------------------------------------------------------------
 # _parse_case_status
@@ -53,6 +76,50 @@ def test_parse_case_status_missing_goods_classification():
     assert result["mark_text"] == "SOUNDEX"
     assert result["intl_class"] is None
     assert result["goods_desc"] is None
+
+
+def test_parse_case_status_new_format_extracts_fields():
+    result = _parse_case_status(_CASE_STATUS_JSON_NEW, "71246709")
+    assert result["serial_no"]       == "71246709"
+    assert result["mark_text"]       == "SOUNDEX"
+    assert result["filing_dt"]       == "1927-03-31"
+    assert result["registration_no"] == "230958"
+    assert result["status_cd"]       == "900"
+    assert result["goods_desc"]      == "BLANK AND PARTIALLY-PRINTED CARDS"
+    assert result["intl_class"]      == "016"
+
+
+def test_parse_case_status_new_format_owner_is_latest():
+    result = _parse_case_status(_CASE_STATUS_JSON_NEW, "71246709")
+    # Key "45" > "30" — subsequent owner should be selected
+    assert result["owner_name"] == "KARDEX SYSTEMS, INC."
+
+
+def test_parse_case_status_new_format_design_mark_has_no_text():
+    data = {
+        "trademarks": [{
+            "status": {"markElement": None, "status": 900, "markDrawingCd": 2},
+            "gsList": [{"description": "MOTOR TRUCKS", "internationalClasses": []}],
+            "parties": {"ownerGroups": {"30": [{"name": "MACK TRUCKS, INC."}]}},
+        }]
+    }
+    result = _parse_case_status(data, "71247861")
+    assert result["mark_text"]  is None
+    assert result["goods_desc"] == "MOTOR TRUCKS"
+    assert result["owner_name"] == "MACK TRUCKS, INC."
+
+
+def test_parse_case_status_new_format_goods_truncated_at_500():
+    long_desc = "X" * 600
+    data = {
+        "trademarks": [{
+            "status": {"status": 900},
+            "gsList": [{"description": long_desc, "internationalClasses": []}],
+            "parties": {},
+        }]
+    }
+    result = _parse_case_status(data, "71000002")
+    assert len(result["goods_desc"]) == 500
 
 
 # ---------------------------------------------------------------------------

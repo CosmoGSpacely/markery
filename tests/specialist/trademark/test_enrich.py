@@ -13,6 +13,7 @@ from markery.specialist.trademark.enrich import (
     store_mark_image,
     store_case_status,
     enrich_project,
+    backfill_structured_fields,
     _collect_serial_nos,
 )
 from contextlib import contextmanager
@@ -248,3 +249,65 @@ def test_enrich_project_stores_marks(tmp_path: Path):
 
     assert result["images"] == 1
     assert result["status"] == 1
+
+
+# ---------------------------------------------------------------------------
+# backfill_structured_fields (D038)
+# ---------------------------------------------------------------------------
+
+_NEW_FORMAT_RAW_JSON = json.dumps({
+    "trademarks": [{
+        "status": {
+            "markElement":          "DOUBLE EAGLE",
+            "filingDate":           "1926-08-28",
+            "usRegistrationNumber": "216932",
+            "usRegistrationDate":   "1927-02-01",
+            "status":               900,
+        },
+        "gsList": [{
+            "description": "PNEUMATIC TIRES AND TUBES",
+            "internationalClasses": [{"code": "012", "description": "Vehicles"}],
+        }],
+        "parties": {
+            "ownerGroups": {
+                "30": [{"name": "GOODYEAR TIRE & RUBBER COMPANY, THE"}],
+            }
+        },
+    }]
+})
+
+
+def test_backfill_structured_fields_populates_null_rows():
+    conn = _in_memory_db()
+    # Insert a row with raw_json but NULL structured fields
+    conn.execute(
+        "INSERT INTO extended_marks (serial_no, raw_json, fetched_dt) VALUES (?, ?, '2026-01-01')",
+        ["71273695", _NEW_FORMAT_RAW_JSON],
+    )
+    conn.commit()
+
+    n = backfill_structured_fields(conn)
+    assert n == 1
+
+    row = conn.execute(
+        "SELECT mark_text, status_cd, goods_desc, owner_name FROM extended_marks "
+        "WHERE serial_no = '71273695'"
+    ).fetchone()
+    assert row[0] == "DOUBLE EAGLE"
+    assert row[1] == "900"
+    assert row[2] == "PNEUMATIC TIRES AND TUBES"
+    assert row[3] == "GOODYEAR TIRE & RUBBER COMPANY, THE"
+    conn.close()
+
+
+def test_backfill_skips_already_populated_rows():
+    conn = _in_memory_db()
+    # Row already has mark_text set
+    client = MagicMock()
+    client.fetch_case_status.return_value = {**_PARSED_STATUS, "raw_json": _NEW_FORMAT_RAW_JSON}
+    store_case_status("71165547", client, conn)
+    conn.commit()
+
+    n = backfill_structured_fields(conn)
+    assert n == 0
+    conn.close()
