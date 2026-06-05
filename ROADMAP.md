@@ -453,6 +453,80 @@ Phase PASSED when P1–P4 all pass. — PASSED 2026-06-05
 
 ---
 
+## Phase 17.1 — Deferred Work Sprint
+
+**Trigger:** Phase 17 complete.  
+**Scope:** Pre-Phase 18 correctness and data-quality sprint. Three work tiers: (1) code correctness bugs that produce crashes or silent data corruption; (2) scoring accuracy — `class_score` hardcoding that actively misleads multi-project candidate ranking; (3) trademark enrichment — `enrich` stores raw JSON but leaves structured columns NULL, defeating the purpose of the command as a data source. All items drawn from DEFERRED.md with confirmed trigger conditions or confirmed code gaps from the Phase 17 P3 audit.
+
+**Goal state:** No remaining crash paths for figurative marks in any historian command; `markery match --help` lists all subcommands; `project.json` configures per-project CPC class hints for scoring; `markery trademark enrich` populates structured columns. DEFERRED entries D031, D033, D035, D038, D041, D048 closed or updated to partial-close.
+
+---
+
+### P1 — Code correctness bugs
+
+Four confirmed gaps from the Phase 17 P3 audit. All are self-contained code changes with no design decisions outstanding.
+
+**D041 — historian scaffold None-guard (lines 339, 341, 354):**
+1. In `cmd_scaffold` in `historian/cli.py`, replace the three direct uses of `pair['trademark']` in the scaffold f-string with `pair['trademark'] or '(figurative)'`:
+   - Line 339: `title: "{pair['trademark'] or '(figurative)'} — {pat_no}"`
+   - Line 341: `trademark: "{pair['trademark'] or '(figurative)'}"` 
+   - Line 354: `[{pair['trademark'] or '(figurative)'}](...)`
+2. Add a test to `test_render_focus.py` or a new historian test: scaffold with `trademark=None` in confirmed pair produces YAML with `trademark: "(figurative)"`, not `trademark: "None"`.
+
+**D033 — librarian index zero-passage warning:**
+3. In `src/markery/specialist/librarian/index.py`, in `_parse_excerpts()` (or the calling loop): after parsing a work's `excerpts.md`, if the file exists and is non-empty but the parse yields 0 records, print `WARNING: <slug>/excerpts.md has content but no parseable ### passages — check heading levels`.
+4. Add a test: a work with `##`-headed excerpts.md produces a warning and 0 indexed records.
+
+**D035 — matchmaker build CSV validation:**
+5. In `src/markery/specialist/matchmaker/entities.py` `build()`: after parsing `variants.csv`, verify that every row's `source` value is in `{"patent_assignee", "trademark_owner", "trademark_search"}`. If not, print an error with the line number and the found value, then exit 1.
+6. Add a test: a `variants.csv` with an unquoted comma in the variant name (producing an invalid `source` value) is rejected with a descriptive error.
+
+**D048 — `markery match` invisible subcommands in `--help`:**
+7. In `src/markery/specialist/matchmaker/cli.py`, add `status`, `rescore`, `auto-disposition`, and `preflight` to the argparse help string or usage text for the `match` entry point — at minimum as a `{subcommands}` note in the usage line or a listed set of positional alternatives, so they appear when running `markery match --help`.
+
+---
+
+### P2 — Scoring accuracy (D031)
+
+**Context:** `PRODUCT_CLASSES = {"B42F", "B42D", "B41J", "B41L", "G06C", "G06K", "G09F"}` in `score.py` gives a 0.3 bonus to information-systems CPC classes. For every other project domain, this inverts quality ranking — confirmed with measurement in Phase 16.1 P4 (GM G09F 0.796 vs. F02B 0.43).
+
+**Fix — per-project class hints:**
+1. Add an optional `class_hints` array to `project.json` (list of CPC class strings, e.g. `["F02B", "B60C", "F04B"]`). Update `Project` dataclass and `load_project()` in `common/project.py` to read it.
+2. In `score.py` `generate_candidates()`, pass `class_hints` from the loaded project to `score_candidate()`. When `class_hints` is non-empty, use it as `PRODUCT_CLASSES` for this project. When absent, fall back to the current hardcoded set (preserving information-systems behavior unchanged).
+3. Update `projects/animal-marks-1930/project.json` with `class_hints` reflecting the animal-marks domain: `["F02B", "B60C", "F41A", "F41C", "A01B", "F04B", "B64D", "F16J"]`.
+4. Regenerate candidates for `animal-marks-1930` with `markery match animal-marks-1930 --all-serials` and verify the GM F02B engine patent now outscores the G09F Name Plate patent.
+5. Add a test: `score_candidate()` with a CPC class in the supplied hints list gets the 0.3 bonus; a class not in the list gets 0.0.
+
+---
+
+### P3 — Trademark enrichment structured fields (D038)
+
+**Context:** `markery trademark enrich <serial>` fetches TSDR JSON and stores it in `extended_marks.raw_json`, but leaves `mark_text`, `status_cd`, `goods_desc`, `owner_name` NULL. Phase 16.1 P2 qualification fell back to `statement` and `case_file` because `extended_marks` had no parsed data despite successful enrichment. D046 (pre-candidate batch enrichment) cannot be useful until the structured fields are populated.
+
+**Fix — parse on upsert:**
+1. In `src/markery/specialist/trademark/enrich.py` (or wherever `extended_marks` is written), after storing `raw_json`, parse the following TSDR JSON keys and write them to the structured columns:
+   - `mark_text`: from `markInfo.markText` (or `""` if absent — figurative marks have no text)
+   - `status_cd`: from `caseFileHeader.statusCode`
+   - `goods_desc`: from `goodsAndServices[0].goodsServicesDescription` (first GS class, truncated to 500 chars)
+   - `owner_name`: from `currentOwners[0].ownerName` (or first owner in `ownerDetails`)
+2. Verify the JSON key paths against a live TSDR response for a known serial (use `extended_marks.raw_json` for an already-enriched serial to inspect the structure).
+3. Run `markery trademark enrich` for one animal-marks-1930 serial and confirm `extended_marks.goods_desc` is populated.
+4. Add a test: mock the TSDR response JSON; after `enrich`, the structured columns in `extended_marks` match the expected parsed values.
+
+---
+
+### Phase Gate
+
+P1 PASSED when: `historian scaffold` with `trademark=None` confirmed pair writes `"(figurative)"` in YAML, not `"None"`; `markery librarian index` warns on `##`-headed excerpts.md; `markery matchmaker build` rejects unquoted-comma variants.csv with exit 1; `markery match --help` lists `status`, `rescore`, `auto-disposition`, `preflight`.
+
+P2 PASSED when: `project.json` `class_hints` read by `load_project()`; scoring passes `class_hints` through to `score_candidate()`; animal-marks-1930 F02B engine patent outscores G09F Name Plate patent after adding `class_hints`; unit test passes.
+
+P3 PASSED when: `markery trademark enrich <serial>` populates `mark_text`, `status_cd`, `goods_desc`, `owner_name` in `extended_marks`; confirmed by querying `extended_marks` after enriching a known serial; unit test passes.
+
+Phase PASSED when P1–P3 all pass. DEFERRED entries D031, D033, D035, D038, D041, D048 updated to reflect closed or partial-close status.
+
+---
+
 ## Phase 18 — Shared Data Contract: Markery-ICM Preparation for Markery-LangGraph
 
 **Trigger:** Phase 17 complete; Markery-LangGraph repo initiated.  
