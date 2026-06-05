@@ -453,7 +453,7 @@ Phase PASSED when P1–P4 all pass. — PASSED 2026-06-05
 
 ---
 
-## Phase 17.1 — Deferred Work Sprint
+## Phase 17.1 — Deferred Work Sprint — CLOSED
 
 **Trigger:** Phase 17 complete.  
 **Scope:** Pre-Phase 18 correctness and data-quality sprint. Three work tiers: (1) code correctness bugs that produce crashes or silent data corruption; (2) scoring accuracy — `class_score` hardcoding that actively misleads multi-project candidate ranking; (3) trademark enrichment — `enrich` stores raw JSON but leaves structured columns NULL, defeating the purpose of the command as a data source. All items drawn from DEFERRED.md with confirmed trigger conditions or confirmed code gaps from the Phase 17 P3 audit.
@@ -499,7 +499,7 @@ Four confirmed gaps from the Phase 17 P3 audit. All are self-contained code chan
 
 ---
 
-### P3 — Trademark enrichment structured fields (D038)
+### P3 — Trademark enrichment structured fields (D038) — CLOSED
 
 **Context:** `markery trademark enrich <serial>` fetches TSDR JSON and stores it in `extended_marks.raw_json`, but leaves `mark_text`, `status_cd`, `goods_desc`, `owner_name` NULL. Phase 16.1 P2 qualification fell back to `statement` and `case_file` because `extended_marks` had no parsed data despite successful enrichment. D046 (pre-candidate batch enrichment) cannot be useful until the structured fields are populated.
 
@@ -521,9 +521,9 @@ P1 PASSED when: `historian scaffold` with `trademark=None` confirmed pair writes
 
 P2 PASSED when: `project.json` `class_hints` read by `load_project()`; scoring passes `class_hints` through to `score_candidate()`; animal-marks-1930 F02B engine patent outscores G09F Name Plate patent after adding `class_hints`; unit test passes. — PASSED 2026-06-05 (F02B 0.7346 vs G09F 0.4964 after regenerating; 5 new unit tests; 480 total pass)
 
-P3 PASSED when: `markery trademark enrich <serial>` populates `mark_text`, `status_cd`, `goods_desc`, `owner_name` in `extended_marks`; confirmed by querying `extended_marks` after enriching a known serial; unit test passes.
+P3 PASSED when: `markery trademark enrich <serial>` populates `mark_text`, `status_cd`, `goods_desc`, `owner_name` in `extended_marks`; confirmed by querying `extended_marks` after enriching a known serial; unit test passes. — PASSED 2026-06-05 (`markery trademark reparse` backfilled 154 rows; 163/167 mark_text, 167 status_cd, 165 goods_desc, 148 owner_name; 4 NULLs are design marks; 6 new tests; 486 total pass)
 
-Phase PASSED when P1–P3 all pass. DEFERRED entries D031, D033, D035, D038, D041, D048 updated to reflect closed or partial-close status.
+Phase PASSED when P1–P3 all pass. DEFERRED entries D031, D033, D035, D038, D041, D048 updated to reflect closed or partial-close status. — PASSED 2026-06-05 (D033/D035/D048 closed; D031/D038 closed; D041 partially closed — TUI audit open)
 
 ---
 
