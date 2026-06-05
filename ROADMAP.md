@@ -441,7 +441,7 @@ These were discovered during the animal-marks-1930 entity expansion from 5 to 18
 
 ### Phase Gate
 
-P1 PASSED when: `markery site build animal-marks-1930` exits 0 with focus marks section present in trademark gallery HTML and research-question content on landing page; `markery site build information-systems` exits 0 with no regression.
+P1 PASSED when: `markery site build animal-marks-1930` exits 0 with focus marks section present in trademark gallery HTML and research-question content on landing page; `markery site build information-systems` exits 0 with no regression. — PASSED 2026-06-05 (27 focus serials in project.json; candidates.jsonl reduced from 265 to 19; trademark gallery splits into "Project Marks" / "All Entity Trademarks" sections; research-question.md rendered as intro block on landing; information-systems rebuilds cleanly with no focus styling or rq block)
 
 P2 PASSED when: all docs reviewed; instruction card gaps filed as DEFERRED or filled; publisher specialist docs updated with `focus_serials` and slug contract.
 
