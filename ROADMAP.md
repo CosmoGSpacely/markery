@@ -462,7 +462,7 @@ Phase PASSED when P1–P4 all pass. — PASSED 2026-06-05
 
 ---
 
-### P1 — Code correctness bugs
+### P1 — Code correctness bugs — CLOSED
 
 Four confirmed gaps from the Phase 17 P3 audit. All are self-contained code changes with no design decisions outstanding.
 
@@ -517,7 +517,7 @@ Four confirmed gaps from the Phase 17 P3 audit. All are self-contained code chan
 
 ### Phase Gate
 
-P1 PASSED when: `historian scaffold` with `trademark=None` confirmed pair writes `"(figurative)"` in YAML, not `"None"`; `markery librarian index` warns on `##`-headed excerpts.md; `markery matchmaker build` rejects unquoted-comma variants.csv with exit 1; `markery match --help` lists `status`, `rescore`, `auto-disposition`, `preflight`.
+P1 PASSED when: `historian scaffold` with `trademark=None` confirmed pair writes `"(figurative)"` in YAML, not `"None"`; `markery librarian index` warns on `##`-headed excerpts.md; `markery matchmaker build` rejects unquoted-comma variants.csv with exit 1; `markery match --help` lists `status`, `rescore`, `auto-disposition`, `preflight`. — PASSED 2026-06-05 (4 fixes committed 5a9d90f; 475 tests pass; D033/D035/D041/D048 closed)
 
 P2 PASSED when: `project.json` `class_hints` read by `load_project()`; scoring passes `class_hints` through to `score_candidate()`; animal-marks-1930 F02B engine patent outscores G09F Name Plate patent after adding `class_hints`; unit test passes.
 
