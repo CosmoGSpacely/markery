@@ -486,7 +486,7 @@ Four confirmed gaps from the Phase 17 P3 audit. All are self-contained code chan
 
 ---
 
-### P2 — Scoring accuracy (D031)
+### P2 — Scoring accuracy (D031) — CLOSED
 
 **Context:** `PRODUCT_CLASSES = {"B42F", "B42D", "B41J", "B41L", "G06C", "G06K", "G09F"}` in `score.py` gives a 0.3 bonus to information-systems CPC classes. For every other project domain, this inverts quality ranking — confirmed with measurement in Phase 16.1 P4 (GM G09F 0.796 vs. F02B 0.43).
 
@@ -519,7 +519,7 @@ Four confirmed gaps from the Phase 17 P3 audit. All are self-contained code chan
 
 P1 PASSED when: `historian scaffold` with `trademark=None` confirmed pair writes `"(figurative)"` in YAML, not `"None"`; `markery librarian index` warns on `##`-headed excerpts.md; `markery matchmaker build` rejects unquoted-comma variants.csv with exit 1; `markery match --help` lists `status`, `rescore`, `auto-disposition`, `preflight`. — PASSED 2026-06-05 (4 fixes committed 5a9d90f; 475 tests pass; D033/D035/D041/D048 closed)
 
-P2 PASSED when: `project.json` `class_hints` read by `load_project()`; scoring passes `class_hints` through to `score_candidate()`; animal-marks-1930 F02B engine patent outscores G09F Name Plate patent after adding `class_hints`; unit test passes.
+P2 PASSED when: `project.json` `class_hints` read by `load_project()`; scoring passes `class_hints` through to `score_candidate()`; animal-marks-1930 F02B engine patent outscores G09F Name Plate patent after adding `class_hints`; unit test passes. — PASSED 2026-06-05 (F02B 0.7346 vs G09F 0.4964 after regenerating; 5 new unit tests; 480 total pass)
 
 P3 PASSED when: `markery trademark enrich <serial>` populates `mark_text`, `status_cd`, `goods_desc`, `owner_name` in `extended_marks`; confirmed by querying `extended_marks` after enriching a known serial; unit test passes.
 
