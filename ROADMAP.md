@@ -443,7 +443,7 @@ These were discovered during the animal-marks-1930 entity expansion from 5 to 18
 
 P1 PASSED when: `markery site build animal-marks-1930` exits 0 with focus marks section present in trademark gallery HTML and research-question content on landing page; `markery site build information-systems` exits 0 with no regression. — PASSED 2026-06-05 (27 focus serials in project.json; candidates.jsonl reduced from 265 to 19; trademark gallery splits into "Project Marks" / "All Entity Trademarks" sections; research-question.md rendered as intro block on landing; information-systems rebuilds cleanly with no focus styling or rq block)
 
-P2 PASSED when: all docs reviewed; instruction card gaps filed as DEFERRED or filled; publisher specialist docs updated with `focus_serials` and slug contract.
+P2 PASSED when: all docs reviewed; instruction card gaps filed as DEFERRED or filled; publisher specialist docs updated with `focus_serials` and slug contract. — PASSED 2026-06-05 (README/CONTEXT/DESIGN/SETUP updated; LIBRARIAN added throughout; project.json/focus_serials documented; 14 new instruction cards across historian/matchmaker/patent/librarian; D045 filed for 5 remaining low-priority librarian stubs; publisher and matchmaker identity.md updated with slug contract and focus_serials; benchmarks README Phase 17 P1 section added)
 
 P3 PASSED when: `DEFERRED.md` updated with all newly discovered gaps; every open entry has a valid reopen trigger; no command in `--help` output is unimplemented without a DEFERRED entry.
 
