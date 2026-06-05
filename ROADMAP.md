@@ -445,7 +445,7 @@ P1 PASSED when: `markery site build animal-marks-1930` exits 0 with focus marks 
 
 P2 PASSED when: all docs reviewed; instruction card gaps filed as DEFERRED or filled; publisher specialist docs updated with `focus_serials` and slug contract. — PASSED 2026-06-05 (README/CONTEXT/DESIGN/SETUP updated; LIBRARIAN added throughout; project.json/focus_serials documented; 14 new instruction cards across historian/matchmaker/patent/librarian; D045 filed for 5 remaining low-priority librarian stubs; publisher and matchmaker identity.md updated with slug contract and focus_serials; benchmarks README Phase 17 P1 section added)
 
-P3 PASSED when: `DEFERRED.md` updated with all newly discovered gaps; every open entry has a valid reopen trigger; no command in `--help` output is unimplemented without a DEFERRED entry.
+P3 PASSED when: `DEFERRED.md` updated with all newly discovered gaps; every open entry has a valid reopen trigger; no command in `--help` output is unimplemented without a DEFERRED entry. — PASSED 2026-06-05 (0 grep hits for TODO/FIXME/NotImplementedError in src/; all 21 open D-numbers verified with updated triggers; 4 new entries: D046 pre-candidate enrich-project, D047 assignment table absent, D048 match invisible subcommands, D049 librarian MVO contracts untested; D041 line 219 crash patched inline; stale triggers updated across 12 entries; PHASE17-P3-REVIEW.md documents all findings)
 
 P4 PASSED when: publisher MVO contract updated; publisher focus-serials test passes; D042 updated in `DEFERRED.md` with partial-close note.
 

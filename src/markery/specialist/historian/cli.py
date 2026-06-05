@@ -216,7 +216,7 @@ def cmd_digest(args: argparse.Namespace) -> None:
             if key in seen:
                 continue
             seen.add(key)
-            tm_slug = re.sub(r'[^a-z0-9]+', '-', c["trademark"].lower()).strip('-')
+            tm_slug = re.sub(r'[^a-z0-9]+', '-', (c["trademark"] or "figurative").lower()).strip('-')
             slug    = f"{tm_slug}-{c['patent_no'].lower()}"
             if (content_dir / f"{slug}.md").exists(): essays_done += 1
             if (cards_dir   / f"{slug}.md").exists(): cards_done  += 1
