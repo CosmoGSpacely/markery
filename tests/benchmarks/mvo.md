@@ -145,6 +145,28 @@ and deterministic — no LLM inference is required.
 
 ---
 
+## publisher trademark gallery — focus_serials rendering
+
+**Test file:** `tests/specialist/publisher/test_render_focus.py`  
+**Fixture data:** synthetic trademark dicts (no DB required)
+
+| Field | Validation rule |
+|---|---|
+| With `focus_serials` — section title | `trademarks.html` contains `Project Marks` |
+| With `focus_serials` — entity section | `trademarks.html` contains `All Entity Trademarks` |
+| With `focus_serials` — card class | `class="card card--focus"` present for each focus serial |
+| With `focus_serials` — badge | `class="focus-badge"` present |
+| With `focus_serials` — ordering | Focus serials appear before `All Entity Trademarks` heading; non-focus serials appear after |
+| With `focus_serials` — stat chip | `project marks` chip present in page header |
+| With `focus_serials` — no fallback | `>All Marks<` section title absent |
+| Without `focus_serials` — section title | `trademarks.html` contains `All Marks` |
+| Without `focus_serials` — no split | `Project Marks` section title absent |
+| Without `focus_serials` — no focus class | `class="card card--focus"` absent from all card elements |
+| Without `focus_serials` — no badge | `class="focus-badge"` absent |
+| Without `focus_serials` — all serials | All trademark serial anchors present (`sn-*`) |
+
+---
+
 ## Notes
 
 - All contracts are checked against real DuckDB data — the tests must be run

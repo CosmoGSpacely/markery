@@ -310,7 +310,7 @@ Phase PASSED when P1–P6 all pass. — PASSED 2026-06-04
 
 ---
 
-## Phase 17 — Publisher Upgrade, Documentation, and Code Gap Analysis
+## Phase 17 — Publisher Upgrade, Documentation, and Code Gap Analysis — CLOSED
 
 **Trigger:** Phase 16 complete.  
 **Scope:** Publisher and matchmaker project-type sensitivity (new P1); a holistic documentation and code-quality pass covering Phases 14–17 additions (P2); code gap audit (P3); tests and close (P4). D007 (PatentsView bulk import) remains in DEFERRED — its reopen conditions have not been met and it is not the current priority. D023 and D024 have moved to Phase 16.
@@ -362,7 +362,7 @@ Review all user-facing and developer-facing documentation for staleness and gaps
 
 ---
 
-### P3 — Code gap analysis
+### P3 — Code gap analysis — CLOSED
 
 Audit the full codebase for incomplete implementation, missing test coverage, and deferred items that Phase 14–17 work may have made satisfiable.
 
@@ -431,7 +431,7 @@ These were discovered during the animal-marks-1930 entity expansion from 5 to 18
 
 ---
 
-### P4 — Tests, cleanup, and close
+### P4 — Tests, cleanup, and close — CLOSED
 
 1. Add publisher `focus_serials` rendering to `tests/benchmarks/mvo.md`: contract for `site build` with `focus_serials` set (focus marks section present in trademark gallery HTML) and without (single-list gallery, no regression).
 2. Write or extend a publisher test that verifies: (a) when `project.json` contains `focus_serials`, `get_confirmed_matches` separates focus marks from non-focus marks; (b) when `focus_serials` is absent, output is unchanged from pre-P1 behavior.
@@ -447,9 +447,9 @@ P2 PASSED when: all docs reviewed; instruction card gaps filed as DEFERRED or fi
 
 P3 PASSED when: `DEFERRED.md` updated with all newly discovered gaps; every open entry has a valid reopen trigger; no command in `--help` output is unimplemented without a DEFERRED entry. — PASSED 2026-06-05 (0 grep hits for TODO/FIXME/NotImplementedError in src/; all 21 open D-numbers verified with updated triggers; 4 new entries: D046 pre-candidate enrich-project, D047 assignment table absent, D048 match invisible subcommands, D049 librarian MVO contracts untested; D041 line 219 crash patched inline; stale triggers updated across 12 entries; PHASE17-P3-REVIEW.md documents all findings)
 
-P4 PASSED when: publisher MVO contract updated; publisher focus-serials test passes; D042 updated in `DEFERRED.md` with partial-close note.
+P4 PASSED when: publisher MVO contract updated; publisher focus-serials test passes; D042 updated in `DEFERRED.md` with partial-close note. — PASSED 2026-06-05 (13 tests in tests/specialist/publisher/test_render_focus.py — 8 with focus_serials, 5 without; all 475 suite tests pass; mvo.md updated with focus_serials gallery contract; D042 partial-close noted in P1/P2)
 
-Phase PASSED when P1–P4 all pass.
+Phase PASSED when P1–P4 all pass. — PASSED 2026-06-05
 
 ---
 
