@@ -310,24 +310,35 @@ Phase PASSED when P1–P6 all pass. — PASSED 2026-06-04
 
 ---
 
-## Phase 17 — PatentsView Bulk Import, Documentation, and Code Gap Analysis
+## Phase 17 — Publisher Upgrade, Documentation, and Code Gap Analysis
 
 **Trigger:** Phase 16 complete.  
-**Scope:** Patent data infrastructure (D007) and a holistic documentation and code-quality pass covering Phases 14–17 additions. D023 and D024 have moved to Phase 16.
+**Scope:** Publisher and matchmaker project-type sensitivity (new P1); a holistic documentation and code-quality pass covering Phases 14–17 additions (P2); code gap audit (P3); tests and close (P4). D007 (PatentsView bulk import) remains in DEFERRED — its reopen conditions have not been met and it is not the current priority. D023 and D024 have moved to Phase 16.
 
-**Goal state:** By phase close, `markery patent bulk-import` is implemented and tested; all top-level and specialist documentation reflects Phase 14–17 work; `DEFERRED.md` is fully current; D007 is closed.
+**Goal state:** By phase close, the publisher renders project-type-appropriate sites using `focus_serials` configuration; the matchmaker scopes candidate generation to focus serials when set; all top-level and specialist documentation reflects Phase 14–17 work; `DEFERRED.md` is fully current.
 
 ---
 
-### P1 — PatentsView bulk import (D007)
+### P1 — Publisher and matchmaker: project-type sensitivity
 
-Full design is in `src/markery/specialist/patent/BULK_CSV.md`. Implement as specified there.
+The `animal-marks-1930` site exposes the publisher's core limitation: every project renders identically regardless of the research question. The trademark gallery shows CADILLAC, DELCO-REMY, and seventeen non-animal Goodyear marks at the same visual weight as the three animal-mark serials the project exists to study. The research framing ("why did a technology company choose an animal mark?") is absent from the rendered output. Match essays — the primary analytical output — appear buried in a gallery alongside unrelated entity marks.
 
-1. Implement `markery patent bulk-import download --year-start YEAR --year-end YEAR --out-dir PATH`: downloads the required PatentsView `.tsv.gz` files (`g_patent`, `g_assignee_disambiguated`, `g_cpc_current`) for the specified year range. Files are large; command must show progress and resume safely if interrupted.
-2. Implement `markery patent bulk-import load --tsv-dir PATH --classes CPC [CPC ...] [--year-start YEAR] [--year-end YEAR]`: reads the `.tsv.gz` files with DuckDB `read_csv()` and predicate pushdown; constructs `patent_no` as `US{number}{kind}`; inserts into `patents` and `patent_classes` tables using insert-if-not-exists (idempotent against the existing EPO-sourced schema).
-3. Verify schema compatibility: bulk-imported rows must pass the same queries that EPO-sourced rows pass. `app_dt` will be NULL for bulk-imported rows — document this in `BULK_CSV.md` and confirm no existing query hard-requires it.
-4. Test against a narrow scope: one CPC class (`B42F`), year range 1976–1985. Confirm row counts match manual PatentsView query. Confirm no duplicate `patent_no` collisions with EPO-sourced rows in that range.
-5. Add `markery patent bulk-import status --tsv-dir PATH`: reports row counts in the `.tsv.gz` files before load (sanity check before committing to a multi-hour import).
+Fix in three layers: configuration, matchmaker, publisher.
+
+**Configuration — `focus_serials`:**
+1. Add a `focus_serials` array to `projects/<name>/project.json`. For `animal-marks-1930`, list the specific animal-mark serials identified in P1 discovery (the serials the project is about — not all entity trademarks). The field is optional; absent `focus_serials` leaves all existing behavior unchanged. Read `projects/animal-marks-1930/RESEARCH.md` and the P1 discovery query results to identify the correct serials; write them to `project.json`.
+
+**Matchmaker — focus-scoped candidate generation (partial D042):**
+2. When `focus_serials` is present in `project.json`, `markery match <project>` generates candidates only from those serials. Add `--all-serials` flag to override and generate from all entity trademarks (current behavior, now explicit). Regenerate `candidates.jsonl` for `animal-marks-1930`; confirm the candidate count drops from 265 to the focused set. Update D042 in DEFERRED to note partial close: the project-config approach replaces the originally proposed `--serials` flag.
+
+**Publisher — trademark gallery:**
+3. When `focus_serials` is set, render the trademark gallery in two sections: "Project Marks" (focus serials, shown first, visually distinct — e.g., a border or badge) and "All Entity Trademarks" (remaining entity marks, de-emphasized). Without `focus_serials`, gallery renders as a single list as before.
+
+**Publisher — landing page:**
+4. If `projects/<name>/content/research-question.md` exists, render its text as the landing page introduction above the stat cards. Write `projects/animal-marks-1930/content/research-question.md`: one or two paragraphs framing the "why animal?" question, drawn from the project's `RESEARCH.md`. Without this file, landing renders as before.
+
+**Verify and rebuild:**
+5. Run `markery site build animal-marks-1930`: confirm focus marks appear in a distinct gallery section and research-question text is on the landing page. Run `markery site build information-systems` (no `focus_serials`) and confirm no regression — single-list gallery, landing renders as before.
 
 ---
 
@@ -344,10 +355,10 @@ Review all user-facing and developer-facing documentation for staleness and gaps
 **Specialist docs:**
 5. Each specialist's `identity.md` — verify scope sections are current for any commands added in Phases 14–17.
 6. Instruction cards (`persona/instructions/`) — audit against implemented commands. Any command reachable via `markery <specialist> --help` that has no instruction card is a gap. Create stub cards; note which require full content.
-7. `src/markery/specialist/patent/BULK_CSV.md` — update with implementation decisions made during P1 (actual column mappings, `app_dt` NULL behavior, schema deviations from the design doc).
+7. Publisher specialist docs (`src/markery/specialist/publisher/`) — document the `focus_serials` field in `project.json` and the slug contract between historian and publisher (`{tm_slug}-{patent_no}` naming convention; the pre-existing silent mismatch fixed in Phase 16.1 P6 must not recur).
 
 **Benchmark docs:**
-8. `tests/benchmarks/README.md` — add a Phase 17 section noting the bulk-import command's token profile and confirming the Phase 14 baseline is still valid after bulk-import rows are added.
+8. `tests/benchmarks/README.md` — add a Phase 17 section noting any publisher rendering changes; confirm the Phase 14 token baseline is still valid.
 
 ---
 
@@ -413,31 +424,30 @@ These were discovered during the animal-marks-1930 entity expansion from 5 to 18
 5. Check `tests/benchmarks/mvo.md` — verify every contract row has a corresponding test in `tests/test_mvo.py`.
 
 **Schema and data gaps:**
-6. Document any data-quality constraints that Phase 17 P1 exposed: `app_dt` NULL for bulk-imported patents, assignee disambiguation differences between EPO OPS and PatentsView.
-7. Check whether the `assignment` table (queried during the SOUNDEX ownership research in Phase 16) is populated. If not, add a DEFERRED entry for assignment data import.
+6. Check whether the `assignment` table (queried during the SOUNDEX ownership research in Phase 16) is populated. If not, add a DEFERRED entry for assignment data import.
 
 **DEFERRED.md hygiene:**
-8. Review every open DEFERRED entry. Confirm reopen triggers are still valid; close any silently met during Phases 14–17; update stale path or command references.
+7. Review every open DEFERRED entry. Confirm reopen triggers are still valid; close any silently met during Phases 14–17; update stale path or command references.
 
 ---
 
 ### P4 — Tests, cleanup, and close
 
-1. Add `markery patent bulk-import` to `tests/benchmarks/mvo.md`: contract for `status` (prints row counts, exits 0) and `load` (idempotent on re-run — no duplicate rows on second load of same data).
-2. Write `tests/test_bulk_import.py`: test `status` against a synthetic fixture `.tsv.gz` (10-row subset); test `load` inserts expected rows and is idempotent. No real PatentsView download required.
-3. Mark D007 resolved in `DEFERRED.md` with a note on test scope and the `app_dt`-NULL constraint.
+1. Add publisher `focus_serials` rendering to `tests/benchmarks/mvo.md`: contract for `site build` with `focus_serials` set (focus marks section present in trademark gallery HTML) and without (single-list gallery, no regression).
+2. Write or extend a publisher test that verifies: (a) when `project.json` contains `focus_serials`, `get_confirmed_matches` separates focus marks from non-focus marks; (b) when `focus_serials` is absent, output is unchanged from pre-P1 behavior.
+3. Update D042 in `DEFERRED.md` to note the partial close: project-config-driven focus scoping implemented in P1; the `--serials` CLI flag remains unimplemented and deferred.
 
 ---
 
 ### Phase Gate
 
-P1 PASSED when: `markery patent bulk-import load` runs without error on B42F/1976–1985; row counts match PatentsView; no duplicate collisions with EPO-sourced rows.
+P1 PASSED when: `markery site build animal-marks-1930` exits 0 with focus marks section present in trademark gallery HTML and research-question content on landing page; `markery site build information-systems` exits 0 with no regression.
 
-P2 PASSED when: all docs reviewed; instruction card gaps filed as DEFERRED or filled; `BULK_CSV.md` updated.
+P2 PASSED when: all docs reviewed; instruction card gaps filed as DEFERRED or filled; publisher specialist docs updated with `focus_serials` and slug contract.
 
 P3 PASSED when: `DEFERRED.md` updated with all newly discovered gaps; every open entry has a valid reopen trigger; no command in `--help` output is unimplemented without a DEFERRED entry.
 
-P4 PASSED when: bulk-import MVO tests pass; D007 marked resolved in `DEFERRED.md`.
+P4 PASSED when: publisher MVO contract updated; publisher focus-serials test passes; D042 updated in `DEFERRED.md` with partial-close note.
 
 Phase PASSED when P1–P4 all pass.
 

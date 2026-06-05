@@ -148,7 +148,9 @@ def _run_project(
     full: bool = False,
     resolve: bool = False,
     auto_fetch: bool = False,
+    all_serials: bool = False,
 ) -> None:
+    import json as _json
     from markery.specialist.matchmaker.link import (
         entity_ids_for_project, generate_candidates,
         write_candidates, read_confirmed, read_rejected,
@@ -169,6 +171,12 @@ def _run_project(
         )
         return
 
+    pjson = proj.root / "project.json"
+    focus_serials: set[int] = set()
+    if not all_serials and pjson.exists():
+        pdata = _json.loads(pjson.read_text(encoding="utf-8"))
+        focus_serials = {int(s) for s in pdata.get("focus_serials", [])}
+
     entity_ids = entity_ids_for_project(proj.entities_file)
     if not entity_ids:
         print(f"No entities found at {proj.entities_file}.")
@@ -179,6 +187,12 @@ def _run_project(
     print(f"Entities in scope: {entity_ids}")
 
     candidates = generate_candidates(entity_ids, min_score=min_score)
+
+    if focus_serials:
+        before = len(candidates)
+        candidates = [c for c in candidates if c["trademark_serial"] in focus_serials]
+        print(f"  focus_serials filter: {before} → {len(candidates)} candidates "
+              f"(use --all-serials to disable)")
 
     rejected_keys = read_rejected(proj.rejected)
     if rejected_keys:
@@ -526,6 +540,8 @@ def match_main() -> None:
                         help="After generating, report uncertainty band and missing data")
     parser.add_argument("--auto-fetch", action="store_true",
                         help="With --resolve: enrich and rescore resolvable pairs automatically")
+    parser.add_argument("--all-serials", action="store_true",
+                        help="Generate from all entity trademarks, ignoring focus_serials in project.json")
     args = parser.parse_args()
 
     if args.list_entities:
@@ -542,6 +558,7 @@ def match_main() -> None:
             full=args.full,
             resolve=args.resolve,
             auto_fetch=args.auto_fetch,
+            all_serials=args.all_serials,
         )
 
 

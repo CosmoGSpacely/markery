@@ -159,6 +159,29 @@ a:hover { color: #8b5e3c; }
   flex-direction: column;
   overflow: hidden;
 }
+.card--focus {
+  border: 2px solid #5a3e28;
+  box-shadow: 0 2px 8px rgba(90,62,40,.18);
+}
+.focus-badge {
+  display: inline-block;
+  background: #5a3e28;
+  color: #f5f0e8;
+  font-size: .65em;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-top: 2px;
+  font-family: monospace;
+}
+.research-question {
+  background: #ede8de;
+  border-left: 3px solid #5a3e28;
+  padding: 18px 22px;
+  margin-bottom: 32px;
+  max-width: 700px;
+}
+.research-question p { margin-bottom: .7em; }
+.research-question p:last-child { margin-bottom: 0; }
 .card-image {
   width: 100%;
   height: 140px;
@@ -696,6 +719,7 @@ def render_landing(
     link_index: dict[str, str] | None = None,
     extra_nav: dict[str, str] | None = None,
     images_dir: Path | None = None,
+    research_question: str | None = None,
 ) -> Path:
     narrative = _read_narrative(Project(project).content / "index-narrative.md",
                                 link_index=link_index, depth=0)
@@ -754,6 +778,14 @@ def render_landing(
         f'<span class="chip">{len(matches)} confirmed pairs</span>'
     )
 
+    rq_html = ""
+    if research_question:
+        paras = "".join(
+            f'<p>{_esc(p.strip())}</p>'
+            for p in research_question.split("\n\n") if p.strip()
+        )
+        rq_html = f'<div class="research-question">{paras}</div>'
+
     body = (
         f'<div class="page-header">'
         f'<h1>{_esc(project.replace("-", " ").title())}</h1>'
@@ -761,6 +793,7 @@ def render_landing(
         f'<div class="stat-chips">{stat_chips}</div>'
         f'</div>'
         f'<div class="page-body">'
+        f'{rq_html}'
         f'<div class="narrative">{narrative}</div>'
         + (f'<p class="section-title">Confirmed Pairs</p>'
            f'<div class="match-cards">{"".join(match_cards)}</div>' if match_cards else '')
@@ -791,16 +824,17 @@ def render_trademark_gallery(
     link_index: dict[str, str] | None = None,
     extra_nav: dict[str, str] | None = None,
     images_dir: Path | None = None,
+    focus_serials: set[int] | None = None,
 ) -> Path:
     narrative = _read_narrative(Project(project).content / "trademarks-narrative.md",
                                 link_index=link_index, depth=0)
     nav = _nav_links(project, entities, extra_nav)
     match_serials = {str(m["trademark_serial"]): m["slug"] for m in matches if m.get("essay_path")}
+    focus_set = {str(s) for s in focus_serials} if focus_serials else None
 
     timeline = _timeline_svg(trademarks, "filing_dt", "mark_name", "entity_id", entity_colors)
 
-    cards = []
-    for tm in trademarks:
+    def _make_card(tm: dict, is_focus: bool = False) -> str:
         sn  = tm["serial_no"]
         src = _img_src("mark", sn, 0, images_dir) if tm.get("image_available") else None
         if src:
@@ -815,18 +849,37 @@ def render_trademark_gallery(
         filing = tm["filing_dt"].strftime("%B %d, %Y") if tm["filing_dt"] else ""
         status = _STATUS_LABELS.get(tm["status_cd"], str(tm["status_cd"]) if tm["status_cd"] else "")
         goods = (tm.get("goods") or "")[:120] + ("…" if (tm.get("goods") or "") and len(tm.get("goods", "")) > 120 else "")
+        focus_badge = '<span class="focus-badge">Project Mark</span>' if is_focus else ""
+        card_class = "card card--focus" if is_focus else "card"
 
-        cards.append(
-            f'<div class="card" id="sn-{sn}">'
+        return (
+            f'<div class="{card_class}" id="sn-{sn}">'
             f'{img_html}'
             f'<div class="card-body">'
             f'<div class="card-name">{_esc(tm["mark_name"] or "(design mark)")}</div>'
             f'<div class="card-meta">Filed {_esc(filing)} · {_esc(status)}</div>'
             f'<span class="entity-badge">{_esc(tm["entity_name"])}</span>'
+            f'{focus_badge}'
             f'<div class="card-goods">{_esc(goods)}</div>'
             f'{match_html}'
             f'<div class="card-footer">{_esc(sn)} · Draw {_esc(tm["draw_cd"])}</div>'
             f'</div></div>'
+        )
+
+    if focus_set:
+        focus_tms = [tm for tm in trademarks if tm["serial_no"] in focus_set]
+        other_tms = [tm for tm in trademarks if tm["serial_no"] not in focus_set]
+        gallery_html = (
+            f'<p class="section-title">Project Marks</p>'
+            f'<div class="card-grid">{"".join(_make_card(tm, True) for tm in focus_tms)}</div>'
+            + (f'<p class="section-title">All Entity Trademarks</p>'
+               f'<div class="card-grid">{"".join(_make_card(tm) for tm in other_tms)}</div>'
+               if other_tms else "")
+        )
+    else:
+        gallery_html = (
+            f'<p class="section-title">All Marks</p>'
+            f'<div class="card-grid">{"".join(_make_card(tm) for tm in trademarks)}</div>'
         )
 
     stat_chips = (
@@ -834,6 +887,8 @@ def render_trademark_gallery(
         f'<span class="chip">{sum(1 for t in trademarks if t["image_available"])} with images</span>'
         f'<span class="chip">{len(match_serials)} confirmed pairs</span>'
     )
+    if focus_set:
+        stat_chips += f'<span class="chip">{len([t for t in trademarks if t["serial_no"] in focus_set])} project marks</span>'
 
     body = (
         f'<div class="page-header">'
@@ -844,8 +899,7 @@ def render_trademark_gallery(
         f'<div class="page-body">'
         f'<div class="narrative">{narrative}</div>'
         f'<div class="timeline-section"><p class="section-title">Filing Timeline</p>{timeline}</div>'
-        f'<p class="section-title">All Marks</p>'
-        f'<div class="card-grid">{"".join(cards)}</div>'
+        f'{gallery_html}'
         f'</div>'
     )
 

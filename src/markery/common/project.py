@@ -73,6 +73,7 @@ class Project:
 
     name: str
     type: ProjectType | None = field(default=None)
+    focus_serials: list[int] = field(default_factory=list)
 
     def _require_type(self, required: ProjectType, attr: str) -> None:
         if self.type is not None and self.type != required:
@@ -172,7 +173,8 @@ def load_project(path: Path) -> Project:
             f"Unknown project type '{data['type']}' in {json_path}. "
             f"Known types: {known}"
         )
-    return Project(name=path.name, type=project_type)
+    focus_serials = [int(s) for s in data.get("focus_serials", [])]
+    return Project(name=path.name, type=project_type, focus_serials=focus_serials)
 
 
 def scaffold_project(root: Path, project_type: ProjectType) -> list[Path]:

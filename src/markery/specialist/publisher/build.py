@@ -7,7 +7,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from markery.common.project import Project
+from markery.common.project import Project, load_project
 from markery.specialist.publisher import queries as q
 from markery.specialist.publisher import render as r
 
@@ -63,14 +63,22 @@ def _run_pagefind(out_dir: Path) -> None:
 
 def build_site(project: str, out_dir: Path | None = None, base_url: str | None = None) -> list[Path]:
     """Render all pages for a project; return list of written paths."""
-    proj = Project(project)
+    proj = load_project(Project(project).root)
     out  = out_dir if out_dir is not None else proj.site
     out.mkdir(parents=True, exist_ok=True)
     (out / "entities").mkdir(exist_ok=True)
     (out / "matches").mkdir(exist_ok=True)
     (out / "themes").mkdir(exist_ok=True)
 
+    focus_serials: set[int] | None = set(proj.focus_serials) if proj.focus_serials else None
+    rq_path = proj.content / "research-question.md"
+    research_question: str | None = rq_path.read_text(encoding="utf-8").strip() if rq_path.exists() else None
+
     print(f"Building site for '{project}' → {out}/")
+    if focus_serials:
+        print(f"  focus_serials: {len(focus_serials)} project marks")
+    if research_question:
+        print(f"  research-question.md: {len(research_question)} chars")
 
     entity_ids = q.get_project_entity_ids(project)
     entities   = q.get_entities(entity_ids)
@@ -110,7 +118,7 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
     pages.append(r.render_landing(
         project, entities, trademarks, patents, matches, stats, out,
         base_url=base_url, link_index=link_index, extra_nav=extra_nav,
-        images_dir=images_dir,
+        images_dir=images_dir, research_question=research_question,
     ))
     print(f"  landing          → {pages[-1].name}")
     search_records.append(_build_search_record(
@@ -121,7 +129,7 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
     pages.append(r.render_trademark_gallery(
         project, entities, trademarks, matches, colors, out,
         base_url=base_url, link_index=link_index, extra_nav=extra_nav,
-        images_dir=images_dir,
+        images_dir=images_dir, focus_serials=focus_serials,
     ))
     print(f"  trademark gallery → {pages[-1].name}")
 
