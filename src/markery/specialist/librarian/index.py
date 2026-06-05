@@ -184,6 +184,8 @@ def index_works(rebuild: bool = False) -> tuple[int, int]:
                 continue
 
         parsed = _parse_excerpts(work_dir)
+        if not parsed and excerpts_path.stat().st_size > 0:
+            print(f"WARNING: {slug}/excerpts.md has content but no parseable ### passages", file=sys.stderr)
         new_records.extend(parsed)
         indexed_count += 1
 

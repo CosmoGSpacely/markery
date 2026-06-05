@@ -518,6 +518,14 @@ def match_main() -> None:
     parser = argparse.ArgumentParser(
         prog="markery match",
         description="Generate patent-trademark candidate pairs via entities.duckdb",
+        epilog=(
+            "Additional subcommands (positional, before any flags):\n"
+            "  status <project>            Show pipeline enrichment state\n"
+            "  rescore <project>           Re-score candidates with current weights\n"
+            "  auto-disposition <project>  Auto-reject low-scoring candidates\n"
+            "  preflight <project>         Run enrichment preflight checks"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("project", nargs="?",

@@ -336,9 +336,9 @@ def cmd_scaffold(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     scaffold = f"""---
-title: "{pair['trademark']} — {pat_no}"
+title: "{pair['trademark'] or '(figurative)'} — {pat_no}"
 trademark_serial: {serial_no}
-trademark: "{pair['trademark']}"
+trademark: "{pair['trademark'] or '(figurative)'}"
 tm_filing_dt: "{tm_filing}"
 tm_reg_no: "{tm_reg}"
 tm_owner: "{owner_name}"
@@ -351,7 +351,7 @@ date_gap: "{gap_str}"
 
 ## Primary Sources
 
-- USPTO Trademark Serial No. {serial_no} — [{pair['trademark']}](https://tsdr.uspto.gov/#caseNumber={serial_no}&caseType=SERIAL_NO&searchType=statusSearch)
+- USPTO Trademark Serial No. {serial_no} — [{pair['trademark'] or '(figurative)'}](https://tsdr.uspto.gov/#caseNumber={serial_no}&caseType=SERIAL_NO&searchType=statusSearch)
   - Filed: {tm_filing}  ·  Registered: {tm_reg}  ·  Owner: {owner_name}
   - Goods and services: {goods_text}
 - US Patent {pat_no} — [{pat_title}](https://patents.google.com/patent/{pat_no.replace('US','').replace('A','')})

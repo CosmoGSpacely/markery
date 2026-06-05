@@ -14,6 +14,7 @@ Entry points:
 from __future__ import annotations
 
 import csv
+import sys
 from pathlib import Path
 
 import duckdb
@@ -127,6 +128,19 @@ def build(data_dir: str | Path, db_path: str | Path | None = None) -> dict[str, 
                 [eid, row["canonical_name"], row.get("entity_type"), row.get("industry")],
             )
             added_entities += 1
+
+    _VALID_SOURCES = {"patent_assignee", "trademark_owner", "trademark_search"}
+    for i, row in enumerate(variants, start=2):
+        source = row.get("source", "")
+        if source not in _VALID_SOURCES:
+            conn.close()
+            print(
+                f"ERROR: variants.csv row {i}: source={source!r} is not in "
+                f"{sorted(_VALID_SOURCES)}. "
+                f"If variant_name contains a comma, quote the field.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
     added_variants = 0
     next_id = (
