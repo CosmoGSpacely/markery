@@ -59,9 +59,16 @@ def date_score(grant_dt: date | None, filing_dt: date | None) -> float:
         return max(-0.4, delta_years / 25.0)
 
 
-def class_score(cpc_classes: list[str]) -> float:
-    """0.3 if any CPC class is in the product signal set, else 0.0."""
-    return 0.3 if any(c in PRODUCT_CLASSES for c in cpc_classes) else 0.0
+def class_score(
+    cpc_classes: list[str],
+    product_classes: set[str] | None = None,
+) -> float:
+    """0.3 if any CPC class is in the product signal set, else 0.0.
+
+    product_classes overrides the module-level PRODUCT_CLASSES when supplied.
+    """
+    classes = product_classes if product_classes is not None else PRODUCT_CLASSES
+    return 0.3 if any(c in classes for c in cpc_classes) else 0.0
 
 
 # Bonus weights for each semantic signal component
@@ -104,13 +111,15 @@ def total_score(
     abstract_name_hit: bool = False,
     goods_title_overlap: float = 0.0,
     goods_abstract_overlap: float = 0.0,
+    class_hints: set[str] | None = None,
 ) -> float:
     """Structural + capped semantic score. All signal params default to off.
 
-    Calling total_score(grant_dt, filing_dt, cpc_classes) without signal args
-    is identical to the pre-6C behaviour.
+    class_hints overrides PRODUCT_CLASSES for the class bonus when supplied.
+    Calling total_score(grant_dt, filing_dt, cpc_classes) without extra args
+    is identical to pre-6C behaviour.
     """
-    structural = date_score(grant_dt, filing_dt) + class_score(cpc_classes)
+    structural = date_score(grant_dt, filing_dt) + class_score(cpc_classes, class_hints)
     semantic   = min(SEMANTIC_CAP, semantic_score(
         title_name_hit, abstract_name_hit,
         goods_title_overlap, goods_abstract_overlap,

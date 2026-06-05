@@ -1,5 +1,6 @@
 {
   "type": "match-review-essay",
+  "class_hints": ["F02B", "B60C", "F41A", "F41C", "A01B", "F04B", "B64D", "F16J"],
   "focus_serials": [
     71247861,
     71289592,

@@ -109,6 +109,7 @@ def trademarks_for_entity(
 def generate_candidates(
     entity_ids: list[int] | None = None,
     min_score: float = 0.0,
+    class_hints: set[str] | None = None,
 ) -> list[dict]:
     """Generate all patent-trademark candidate pairs for the given entity IDs.
 
@@ -145,7 +146,8 @@ def generate_candidates(
             tm_filing = tm["filing_dt"]
             for pat in patents:
                 cpc_classes = cpc_map.get(pat["patent_no"], [])
-                score = total_score(pat["grant_dt"], tm_filing, cpc_classes)
+                score = total_score(pat["grant_dt"], tm_filing, cpc_classes,
+                                   class_hints=class_hints)
                 if score < min_score:
                     continue
                 candidates.append({
@@ -234,13 +236,14 @@ def _parse_date(s: str | None):
         return None
 
 
-def rescore_candidates(path: Path) -> int:
+def rescore_candidates(path: Path, class_hints: set[str] | None = None) -> int:
     """Pass 3: rewrite the score field for every candidate using signal fields.
 
     Reads candidates.jsonl, recomputes score = structural + min(SEMANTIC_CAP,
     semantic_bonus), writes the file in-place. Returns count rescored.
     Candidates without signal fields are rescored with a zero semantic bonus
     (identical to their original structural score).
+    class_hints overrides PRODUCT_CLASSES for the class bonus when supplied.
     """
     if not path.exists():
         print(f"No candidates file at {path}")
@@ -252,7 +255,9 @@ def rescore_candidates(path: Path) -> int:
     for c in candidates:
         grant_dt  = _parse_date(c.get("patent_grant_dt"))
         filing_dt = _parse_date(c.get("tm_filing_dt"))
-        structural = date_score(grant_dt, filing_dt) + class_score(c.get("cpc_classes", []))
+        structural = date_score(grant_dt, filing_dt) + class_score(
+            c.get("cpc_classes", []), class_hints
+        )
         sem = min(SEMANTIC_CAP, semantic_score(
             title_name_hit=bool(c.get("title_name_hit", False)),
             abstract_name_hit=bool(c.get("abstract_name_hit", False)),

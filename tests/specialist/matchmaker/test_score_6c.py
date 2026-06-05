@@ -5,9 +5,11 @@ from __future__ import annotations
 from datetime import date
 
 from markery.specialist.matchmaker.score import (
+    class_score,
     semantic_score,
     total_score,
     SEMANTIC_CAP,
+    PRODUCT_CLASSES,
 )
 
 
@@ -109,3 +111,42 @@ def test_total_score_result_is_rounded_to_4_decimals():
     filing = date(1921, 6, 7)
     score  = total_score(grant, filing, [], goods_title_overlap=0.10)
     assert score == round(score, 4)
+
+
+# ---------------------------------------------------------------------------
+# class_score — per-project class_hints override (D031)
+# ---------------------------------------------------------------------------
+
+def test_class_score_hint_class_gets_bonus():
+    assert class_score(["F02B"], product_classes={"F02B", "B60C"}) == 0.3
+
+
+def test_class_score_non_hint_class_gets_no_bonus():
+    assert class_score(["G09F"], product_classes={"F02B", "B60C"}) == 0.0
+
+
+def test_class_score_default_product_classes_unchanged():
+    # Any class from the default info-systems set still fires without override.
+    assert class_score(["G09F"]) == 0.3
+    assert class_score(["F02B"]) == 0.0
+
+
+def test_total_score_class_hints_override_product_classes():
+    grant  = date(1918, 4, 2)
+    filing = date(1921, 6, 7)
+    # F02B not in default PRODUCT_CLASSES; with hints it should fire
+    score_default = total_score(grant, filing, ["F02B"])
+    score_hinted  = total_score(grant, filing, ["F02B"], class_hints={"F02B"})
+    assert score_default < score_hinted
+    assert round(score_hinted - score_default, 4) == 0.3
+
+
+def test_total_score_class_hints_suppress_default_class():
+    grant  = date(1918, 4, 2)
+    filing = date(1921, 6, 7)
+    # G09F is in PRODUCT_CLASSES but not in the animal-marks hints → no bonus
+    score_default = total_score(grant, filing, ["G09F"])
+    score_hinted  = total_score(grant, filing, ["G09F"],
+                                class_hints={"F02B", "B60C", "F41A"})
+    assert score_default > score_hinted
+    assert round(score_default - score_hinted, 4) == 0.3
