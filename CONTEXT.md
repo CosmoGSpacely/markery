@@ -22,7 +22,7 @@ This document defines what Markery is, how it works, and the structure of work w
 
 ## Specialist Agents
 
-Markery is structured as five specialist agents. Each owns a bounded domain: its own database, its own external API credentials, and a defined set of operations. Cross-specialist calls route through `orchestrator.py`. No specialist imports directly from another.
+Markery is structured as six specialist agents. Each owns a bounded domain: its own database, its own external API credentials, and a defined set of operations. Cross-specialist calls route through `orchestrator.py`. No specialist imports directly from another.
 
 ---
 
@@ -84,11 +84,25 @@ Markery is structured as five specialist agents. Each owns a bounded domain: its
 
 **Owns:** `site/` under each project — a rendered static site, gitignored and regenerable.
 
-**Role:** Transforms confirmed pairs and historian essays into a publishable site. Resolves figure references (`[[figure:patent_no]]`) to stored BLOBs or on-disk PNGs, enhances trademark images, pulls Wikipedia summaries for entity pages, and renders Markdown content to HTML. The build is deterministic from the project's content files and confirmed data; running it again produces the same output.
+**Role:** Transforms confirmed pairs and historian essays into a publishable site. Resolves figure references (`[[figure:patent_no]]`) to stored BLOBs or on-disk PNGs, enhances trademark images, pulls Wikipedia summaries for entity pages, and renders Markdown content to HTML. The build is deterministic from the project's content files and confirmed data; running it again produces the same output. When `focus_serials` is set in `project.json`, the trademark gallery renders project-focus marks separately from all entity trademarks; a `content/research-question.md` file renders as the landing page introduction.
 
 **Invoked:** When the project's content is ready to publish or preview.
 
 **Credentials:** None for rendering; Wikipedia API is unauthenticated.
+
+---
+
+### LIBRARIAN
+
+**Owns:** `library/` at the repository root — a shared corpus of secondary literature available to all projects.
+
+**Role:** Acquires, indexes, and retrieves secondary literature for historian sessions. Discovers sources via Wikipedia citation scraping and Internet Archive search; downloads full text; uses Claude-assisted extraction to surface relevant passages; indexes passages with embeddings for semantic search. Maintains an ILL wants queue for works not yet freely available. Delivers context to historian sessions via compact `card` output (≤300 tokens per query).
+
+**Invoked:** Before or during a historian session when domain secondary literature is needed; at project setup when the research question requires historical context beyond the patent and trademark record.
+
+**Credentials:** None (Internet Archive and Project Gutenberg are unauthenticated; Claude API key via `MARKERY_MODEL` environment variable for extraction).
+
+**Reference:** `src/markery/specialist/librarian/persona/identity.md` — LIBRARIAN specialist contract.
 
 ---
 
@@ -127,6 +141,7 @@ Each project under `projects/<name>/` is independent and defines its own workflo
 
 | Path | Purpose |
 |---|---|
+| `project.json` | Project type declaration and optional configuration (e.g. `focus_serials`) |
 | `RESEARCH-AGENDA.md` | Candidate subjects, methodology, key references |
 | `RESEARCH.md` | Scholarly framework |
 | `OBJECTIVES.md` | Project objectives — goals and scope statement |
@@ -141,7 +156,26 @@ Each project under `projects/<name>/` is independent and defines its own workflo
 | `matches/pipeline_state.json` | Match pipeline timestamps and score percentiles |
 | `references/` | Primary source reference documents (optional) |
 | `content/` | Research essays and narrative pages |
+| `content/research-question.md` | Project research question (optional) — rendered as landing page intro when present |
 | `site/` | Built static site — gitignored, regenerable |
+
+**`project.json` configuration fields:**
+
+| Field | Required | Description |
+|---|---|---|
+| `type` | Yes | Project type: `match-review-essay` or `gallery-exploration` |
+| `focus_serials` | No | List of trademark serial numbers the project is specifically about. When set, `markery match` generates candidates only for these serials; the publisher renders them in a separate "Project Marks" gallery section. Use `markery match <project> --all-serials` to override and generate from all entity trademarks. |
+
+**Shared library:**
+
+| Path | Purpose |
+|---|---|
+| `library/works/<slug>/metadata.json` | Work registry entry (bibliographic data, acquisition source) |
+| `library/works/<slug>/raw_text.txt` | Full plain text (downloaded from IA/Gutenberg) |
+| `library/works/<slug>/excerpts.md` | Curated passages (one `###` heading per passage) |
+| `library/index.jsonl` | Passage index built by `markery librarian index` |
+| `library/index.duckdb` | Embedding index for semantic search |
+| `library/wants.jsonl` | ILL queue — works requested but not yet acquired |
 
 **Gallery/exploration projects** (e.g. `monthly-image-review`) have a lighter structure — typically just `README.md`, `STATUS.md`, and `output/` galleries. They surface leads that may feed into match-review projects or stand alone as visual surveys.
 

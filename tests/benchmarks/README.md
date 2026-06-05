@@ -341,3 +341,23 @@ The Haiku essay mean (2,123 prompt tokens) is 6% higher than radio-pioneers (2,0
 - The entity-scoping limitation (D042) was the most consequential structural finding: 256 of 265 candidates were incidental entity trademarks, not the animal-mark serials under study. Future projects with serial-specific research questions need `markery match --serials`.
 - D031 (class_score domain specificity) confirmed with the clearest evidence to date: GM Name Plate patent (G09F) scored 0.796 vs. the correct Hydrocarbon-Motor patent (F02B) at 0.43 — a 0.35-point gap from a single hardcoded CPC bonus.
 - The publisher `trademark: null` crash (D041) appeared in a third code path (`queries.py`) that the P4 historian spot-fixes did not cover. D041 audit is still open.
+
+---
+
+## Phase 17 P1 — Publisher upgrade (2026-06-05)
+
+**Project:** `animal-marks-1930` (rebuild); `information-systems` (regression check)  
+**Changes:** `focus_serials` in `project.json`; trademark gallery split into "Project Marks" / "All Entity Trademarks"; `research-question.md` landing page intro; matchmaker focus filter.  
+**Token impact:** None — no API calls in Phase 17 P1. All changes are rendering and candidate-generation logic.
+
+### Matchmaker candidate scope
+
+| Project | Before | After | Method |
+|---|---|---|---|
+| animal-marks-1930 | 265 candidates | 19 candidates | `focus_serials` filter (27 serials) |
+| information-systems | unchanged | unchanged | no `focus_serials` set |
+
+### Phase 14 baseline validity
+
+The Phase 14 digest/card/scaffold token baseline remains valid after Phase 17 P1. No changes were made to historian context assembly, prompt templates, or the entities/candidates that drive digest output. The `information-systems` site rebuild (16 pages) exits 0 without any rendering regressions.
+

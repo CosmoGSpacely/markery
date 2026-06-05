@@ -77,6 +77,7 @@ The codebase is organized into five specialists under `src/markery/specialist/`.
 | `matchmaker/` | `data/entities.duckdb` | `markery match / matchmaker` |
 | `historian/` | `confirmed.jsonl`, `rejected.jsonl`, interactive review | `markery review / status` |
 | `publisher/` | Site output, image enhancement | `markery site / enhance / publisher` |
+| `librarian/` | `library/` — secondary literature corpus and embedding index | `markery librarian` |
 
 A specialist exposes three layers: a **queries module** (pure DB reads, no side effects), a **build/pipeline module** (writes or transforms), and a **CLI module** (entry point). Cross-specialist reads use DuckDB `ATTACH` where a join cannot be expressed through individual specialist APIs without multiple round trips — this is the only permitted cross-specialist coupling.
 
@@ -154,6 +155,25 @@ The three databases are shared infrastructure, not project artifacts. No project
 The practical consequence: adding a second project to Markery requires adding that project's data files and running the appropriate build commands. It does not require modifying any source code, changing any schema, or rebuilding data that existing projects depend on. Two projects can share `patents.duckdb` without interfering with each other's fetch logs or confirmed pairs.
 
 This was not always the case. Earlier versions of Markery had `DATE_START`, `DATE_END`, `CPC_CLASSES`, `SEED_PATENTS`, and `ENTITIES`/`VARIANTS` as module-level constants in the build scripts — all specific to the information-systems project. A database review pass moved all of this into per-project data files and made the build commands scope-neutral. The databases are now reusable across projects without code changes.
+
+---
+
+## Token Instrumentation
+
+Markery commands that call Claude accept a `--tokens` flag and an optional `MARKERY_TOKEN_LOG` environment variable. When set, each API call appends a JSONL record to the log file with `specialist`, `command`, `model`, `prompt_tokens`, `completion_tokens`, and `wall_ms` fields.
+
+```bash
+MARKERY_TOKEN_LOG=tests/benchmarks/my-project.jsonl \
+  markery historian digest my-project --tokens
+```
+
+The instrumentation serves two purposes: **cost tracking** (actual API spend per command per session) and **baseline enforcement** (prompt token counts for `digest` and `card` are tracked across projects to detect regressions caused by schema changes or content growth).
+
+The token baseline for each command type (established in Phase 14) is recorded in `tests/benchmarks/README.md`. Any command whose token count exceeds the baseline by >20% on a new project is a regression signal and must be investigated before the session continues.
+
+**Context budget control:** The `MARKERY_CONTEXT_BUDGET` environment variable (integer, token count) limits how much context historian commands assemble. Default 4000. Useful for running the same commands on smaller models without changing code.
+
+**LIBRARIAN extraction:** `markery librarian extract` is the highest-cost API operation — it chunks raw OCR text (~8,000 chars/chunk, 800-char overlap) and calls Claude once per chunk to extract relevant passages. Token counts for extract scale with the size of the work and are always recorded in the session benchmark log.
 
 ---
 

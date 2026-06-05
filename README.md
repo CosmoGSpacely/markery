@@ -4,7 +4,7 @@
 
 Markery is a command-line research tool for historical patent and trademark scholarship. It finds correspondences between US patents and USPTO trademark registrations — the moment when an invention became a product — and builds a documented, human-reviewed record of those pairings. The output is a static research site with sourced essays, figures, and timelines.
 
-The current research project documents the pre-computer information systems industry: filing appliances, card-index equipment, visible record systems, tabulating machines, and the phonetic coding schemes American businesses used to organize knowledge before the digital era. These technologies were patented and trademarked at scale and are almost entirely absent from the standard history of information technology.
+Active research projects include the pre-computer information systems industry (filing appliances, card-index equipment, tabulating machines), early American radio manufacturers (1920–1940), and animal imagery in technology company trademarks (pre-1931).
 
 ---
 
@@ -28,7 +28,7 @@ Full setup, credential configuration, and rebuild instructions: [**SETUP.md**](S
 
 ## How it works
 
-Markery is structured as five specialist agents, each owning one data domain:
+Markery is structured as six specialist agents, each owning one data domain:
 
 | Specialist | Owns | Role |
 |---|---|---|
@@ -37,6 +37,7 @@ Markery is structured as five specialist agents, each owning one data domain:
 | MATCHMAKER | `data/entities.duckdb` | Manages the entity registry; scores patent-trademark candidate pairs |
 | HISTORIAN | `confirmed.jsonl` per project | Guides human review; scaffolds and validates research essays |
 | PUBLISHER | `site/` per project | Renders confirmed pairs and essays into a static research site |
+| LIBRARIAN | `library/` at repo root | Acquires secondary literature; indexes passages for historian context |
 
 **Candidate generation** — The MATCHMAKER scores every patent-trademark pair for each entity in a project: how closely the trademark filing follows the patent grant date (max 0.5), whether the CPC class falls in the product signal set (0.3 binary). Maximum score: 0.80. The ceiling is intentional — a 1.0 would claim a certainty no automated process can deliver.
 
@@ -59,6 +60,7 @@ markery status
 markery patent build --classes B42F B42D --year-start 1900 --year-end 1939
 markery patent build --resume              # resume after quota interruption
 markery patent pull <patent_no>            # fetch a single patent on demand
+markery patent coverage-check --classes B42F --year-start 1900 --year-end 1939
 markery patent verify-credentials
 
 # Trademark corpus
@@ -70,13 +72,16 @@ markery trademark verify-credentials
 # Entity registry
 markery matchmaker build --data-dir projects/<project>
 markery matchmaker list
-markery matchmaker suggest-variants <project>   # suggest entity name variants from DB
-markery matchmaker auto-disposition <project> --reject-below 0.25  # batch-reject low-score candidates
-markery matchmaker preflight <project>          # pre-session signal audit
+markery matchmaker suggest-variants "<entity name>"   # rank name variants from DB
+markery matchmaker validate-variants --data-dir projects/<project>
 
 # Match pipeline
-markery match <project>                    # generate candidates
+markery match <project>                    # generate candidates (focus_serials-scoped if set)
+markery match <project> --all-serials      # generate from all entity trademarks
 markery match <project> --full             # generate + signals + rescore
+markery match auto-disposition <project> --reject-below 0.25  # batch-reject low scorers
+markery match preflight <project>          # pre-session signal and image audit
+markery match rescore <project>
 markery review <project>                   # interactive review (Y / N / Q)
 
 # Historian tools
@@ -85,6 +90,15 @@ markery historian digest <project>         # compact project state summary (~800
 markery historian card <project> <slug>    # compact candidate card (~250 tokens)
 markery historian scaffold <project> <slug>  # generate essay skeleton
 markery historian validate <project> <slug>  # validate essay against DB
+
+# Secondary literature (LIBRARIAN)
+markery librarian discover --wikipedia "<Article Name>" --add-wants
+markery librarian search-sources "<query>" --source ia
+markery librarian acquire <ia-identifier>
+markery librarian extract <slug> --topics "topic1" "topic2"
+markery librarian index --embed
+markery librarian card "<query>" --mode semantic
+markery librarian search "<query>"
 
 # Publish
 markery site build <project>
@@ -102,9 +116,10 @@ markery <subcommand> --help
 
 | Database | Contents |
 |---|---|
-| `trademarks.duckdb` | 25,473 case files, 1900–1939 (USPTO bulk) · 96 mark images · 18 enriched records |
-| `patents.duckdb` | ~40,000 US patents across B42F, B42D, B41J, B41L, G06C, G06K, G09F (1900–1939) |
-| `entities.duckdb` | 5 entities, 32 name variants (information-systems project) |
+| `trademarks.duckdb` | 25,473 case files, 1900–1939 (USPTO bulk) · 96+ mark images · enriched records via TSDR |
+| `patents.duckdb` | ~40,000+ US patents across B42F, B42D, B41J, B41L, G06C, G06K, G09F, H04B, H01J, H03F, B60C, A01B, F02B and others |
+| `entities.duckdb` | 30 entities across three projects (information-systems, radio-pioneers, animal-marks-1930) |
+| `library/` | Shared secondary literature corpus (Internet Archive / Gutenberg) — full text, indexed passages, embedding index |
 
 ---
 

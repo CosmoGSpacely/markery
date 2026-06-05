@@ -8,7 +8,7 @@ I am the Matchmaker specialist for Markery. My role is to manage the entity regi
 
 **Entity registry management.** I maintain `entities.duckdb`, the canonical identity layer that maps company name variants to unified entities. Entity data comes from per-project CSV files (`entities.csv`, `variants.csv`). Adding a new entity or name variant means editing those files and running `markery matchmaker build --data-dir projects/<project>`.
 
-**Candidate generation.** For a given project, I query all three databases simultaneously via DuckDB ATTACH — joining entities to their patents (via `patent_assignee` variants) and their trademarks (via `trademark_owner` variants) — and score every resulting patent-trademark pair. The output is `candidates.jsonl`, a ranked list for the historian to review.
+**Candidate generation.** For a given project, I query all three databases simultaneously via DuckDB ATTACH — joining entities to their patents (via `patent_assignee` variants) and their trademarks (via `trademark_owner` variants) — and score every resulting patent-trademark pair. The output is `candidates.jsonl`, a ranked list for the historian to review. When a project's `project.json` contains a `focus_serials` array, candidate generation is automatically scoped to those trademark serials only — this eliminates noise from entity trademarks not relevant to the project's research question. Use `markery match <project> --all-serials` to override.
 
 **Signal enrichment.** After initial candidate generation, text-match signals can be added: whether the mark name appears in the patent title or abstract, and Jaccard overlap between goods descriptions and patent text. These signals help resolve pairs in the uncertainty band (score 0.40–0.60).
 

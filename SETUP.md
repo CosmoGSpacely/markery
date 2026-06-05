@@ -223,6 +223,32 @@ A future route will support bulk import from sources such as PatentsView or Goog
 
 ---
 
+## 7b. Secondary literature (LIBRARIAN) — optional
+
+The LIBRARIAN specialist acquires secondary literature from Internet Archive and Project Gutenberg, extracts relevant passages using Claude, and indexes them for semantic search. This is optional — research projects can run without it, but the library improves historian session quality by providing historical context.
+
+**Dependencies:**
+
+```bash
+pip install -e ".[librarian]"
+```
+
+This installs `sentence-transformers` (for embedding generation) and `anthropic` (for Claude-assisted passage extraction). Both are optional — `markery librarian search` (keyword) and most librarian commands work without them; `markery librarian extract` and `markery librarian index --embed` require them.
+
+**Acquire and index a work:**
+
+```bash
+markery librarian search-sources "topic keywords" --source ia
+markery librarian acquire <ia-identifier>
+markery librarian extract <slug> --topics "topic1" "topic2"
+markery librarian index --embed
+markery librarian card "<query>" --mode semantic
+```
+
+The shared library lives at `library/` in the repository root and is shared across all projects.
+
+---
+
 ## 8. Run the match pipeline
 
 Generate patent-trademark candidate pairs for a project:
@@ -313,17 +339,27 @@ markery/
 │   ├── patents_fetch_log.json      Resume state for patent builds
 │   ├── trademarks.duckdb           Shared trademark corpus (USPTO)
 │   └── entities.duckdb             Canonical entity registry
+├── library/
+│   ├── works/<slug>/               One directory per acquired work
+│   │   ├── metadata.json           Bibliographic data and acquisition source
+│   │   ├── raw_text.txt            Full plain text (downloaded)
+│   │   └── excerpts.md             Curated passages (### heading per passage)
+│   ├── index.jsonl                 Passage index (built by markery librarian index)
+│   ├── index.duckdb                Embedding index for semantic search
+│   └── wants.jsonl                 ILL queue
 ├── src/markery/
 │   ├── specialist/
 │   │   ├── patent/                 Patent specialist + EPO.md
 │   │   ├── trademark/              Trademark specialist + TSDR.md
 │   │   ├── matchmaker/             Entity registry + candidate generation
 │   │   ├── historian/              Review tool + persona/
-│   │   └── publisher/              Site renderer + image enhancement
+│   │   ├── publisher/              Site renderer + image enhancement
+│   │   └── librarian/              Secondary literature acquisition + indexing
 │   ├── common/                     Config, auth, shared utilities
 │   └── cli.py                      Unified entry point
 ├── projects/
 │   └── <project>/
+│       ├── project.json            Project type and configuration (e.g. focus_serials)
 │       ├── entities.csv            Entity definitions (loaded into entities.duckdb)
 │       ├── variants.csv            Name variant definitions
 │       ├── seed_patents.json       Manually-identified seed patent records
