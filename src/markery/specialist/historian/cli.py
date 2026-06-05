@@ -159,12 +159,12 @@ def cmd_card(args: argparse.Namespace) -> None:
 
 def cmd_digest(args: argparse.Namespace) -> None:
     import json as _json
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     t0 = time.monotonic()
     proj = require_project(args.project)
 
-    lines: list[str] = [f"## DIGEST: {args.project}  [{datetime.utcnow().strftime('%Y-%m-%dT%H:%M')}Z]", ""]
+    lines: list[str] = [f"## DIGEST: {args.project}  [{datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M')}Z]", ""]
 
     # Queue summary
     candidates = []
