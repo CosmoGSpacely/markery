@@ -85,6 +85,7 @@ def cmd_add_external_link(
     url: str,
     label: str,
     summary: str,
+    yes: bool = False,
 ) -> None:
     """Append one external link to a page's External links section."""
     from markery.specialist.publisher.wikipedia.api import WikipediaClient
@@ -142,10 +143,11 @@ def cmd_add_external_link(
     print("".join(diff_lines))
     print(f"\nPage:    https://en.wikipedia.org/wiki/{page_title.replace(' ', '_')}")
     print(f"Summary: {summary}")
-    answer = input("\nSubmit to Wikipedia? [y/N] ").strip().lower()
-    if answer != "y":
-        print("Aborted.")
-        return
+    if not yes:
+        answer = input("\nSubmit to Wikipedia? [y/N] ").strip().lower()
+        if answer != "y":
+            print("Aborted.")
+            return
 
     result = client.edit_page(page_title, new_text, summary)
     if result.get("edit", {}).get("result") == "Success":
@@ -188,6 +190,7 @@ def cmd_replace(
     find: str,
     replace: str,
     summary: str,
+    yes: bool = False,
 ) -> None:
     """Targeted find-and-replace on a Wikipedia article, with diff and confirmation."""
     from markery.specialist.publisher.wikipedia.api import WikipediaClient
@@ -224,10 +227,11 @@ def cmd_replace(
     print("".join(diff_lines))
     print(f"\nPage:    https://en.wikipedia.org/wiki/{page_title.replace(' ', '_')}")
     print(f"Summary: {summary}")
-    answer = input("\nSubmit to Wikipedia? [y/N] ").strip().lower()
-    if answer != "y":
-        print("Aborted.")
-        return
+    if not yes:
+        answer = input("\nSubmit to Wikipedia? [y/N] ").strip().lower()
+        if answer != "y":
+            print("Aborted.")
+            return
 
     result = client.edit_page(page_title, new_text, summary)
     if result.get("edit", {}).get("result") == "Success":
@@ -239,7 +243,7 @@ def cmd_replace(
         sys.exit(1)
 
 
-def cmd_submit(project: str, slug: str, page_title: str | None, summary: str) -> None:
+def cmd_submit(project: str, slug: str, page_title: str | None, summary: str, yes: bool = False) -> None:
     """Show diff against current Wikipedia article and prompt before submitting."""
     from markery.specialist.publisher.wikipedia.api import WikipediaClient
 
@@ -281,10 +285,11 @@ def cmd_submit(project: str, slug: str, page_title: str | None, summary: str) ->
 
     print(f"\nPage:    https://en.wikipedia.org/wiki/{title.replace(' ', '_')}")
     print(f"Summary: {summary}")
-    answer = input("\nSubmit to Wikipedia? [y/N] ").strip().lower()
-    if answer != "y":
-        print("Aborted.")
-        return
+    if not yes:
+        answer = input("\nSubmit to Wikipedia? [y/N] ").strip().lower()
+        if answer != "y":
+            print("Aborted.")
+            return
 
     result = client.edit_page(title, new_text, summary)
     if result.get("edit", {}).get("result") == "Success":
@@ -313,6 +318,8 @@ def wikipedia_main() -> None:
     submit.add_argument("--summary", metavar="MSG",
                         default="Add primary source citations from USPTO filing record",
                         help="Edit summary")
+    submit.add_argument("--yes", "-y", action="store_true",
+                        help="Submit without interactive confirmation")
 
     fe = sub.add_parser("from-essay", help="Generate wikitext from any essay file")
     fe.add_argument("essay_path", type=Path, help="Path to markdown essay file")
@@ -335,6 +342,8 @@ def wikipedia_main() -> None:
     ael.add_argument("--summary", metavar="MSG",
                      default="Add external link",
                      help="Edit summary")
+    ael.add_argument("--yes", "-y", action="store_true",
+                     help="Submit without interactive confirmation")
 
     rep = sub.add_parser("replace",
                          help="Targeted find-and-replace with diff and confirmation")
@@ -344,18 +353,20 @@ def wikipedia_main() -> None:
     rep.add_argument("--replace", required=True, dest="replace_text", metavar="TEXT",
                      help="Replacement wikitext string")
     rep.add_argument("--summary", required=True, metavar="MSG", help="Edit summary")
+    rep.add_argument("--yes", "-y", action="store_true",
+                     help="Submit without interactive confirmation")
 
     args = parser.parse_args()
 
     if args.action == "draft":
         cmd_draft(args.project, args.slug)
     elif args.action == "submit":
-        cmd_submit(args.project, args.slug, args.title, args.summary)
+        cmd_submit(args.project, args.slug, args.title, args.summary, args.yes)
     elif args.action == "from-essay":
         cmd_from_essay(args.essay_path, args.out, args.title, args.serial, args.categories)
     elif args.action == "verify-credentials":
         cmd_verify_credentials()
     elif args.action == "add-external-link":
-        cmd_add_external_link(args.page_title, args.url, args.label, args.summary)
+        cmd_add_external_link(args.page_title, args.url, args.label, args.summary, args.yes)
     elif args.action == "replace":
-        cmd_replace(args.page_title, args.find, args.replace_text, args.summary)
+        cmd_replace(args.page_title, args.find, args.replace_text, args.summary, args.yes)
