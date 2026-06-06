@@ -18,7 +18,7 @@ from markery.common.config import ROOT
 from markery.common.tokens import TokenRecord, emit as emit_tokens
 
 _LIBRARY = ROOT / "library"
-_MODEL = os.environ.get("MARKERY_MODEL", "claude-haiku-4-5-20251001")
+_DEFAULT_MODEL = "claude-haiku-4-5-20251001"
 
 # ~8 000 chars ≈ 2 000 tokens; 800-char overlap ≈ 200 tokens
 _CHUNK_CHARS = 8_000
@@ -107,14 +107,14 @@ def _get_client():
         return None
 
 
-def _call_claude(chunk: str, topics: list[str], client) -> tuple[list[dict], int, int]:
+def _call_claude(chunk: str, topics: list[str], client, model: str) -> tuple[list[dict], int, int]:
     """Call Claude for one chunk. Returns (candidates, prompt_tokens, completion_tokens)."""
     user_msg = _USER_TMPL.format(
         topics=", ".join(f'"{t}"' for t in topics),
         chunk=chunk,
     )
     resp = client.messages.create(
-        model=_MODEL,
+        model=model,
         max_tokens=1024,
         system=_SYSTEM,
         messages=[{"role": "user", "content": user_msg}],
@@ -288,6 +288,8 @@ def extract(
         meta = json.loads(meta_path.read_text())
         title = meta.get("title", slug)
 
+    model = os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
+
     text = raw_text_path.read_text(encoding="utf-8", errors="replace")
     chunks = chunk_text(text)
     total_chunks = len(chunks)
@@ -312,7 +314,7 @@ def extract(
     for i, chunk in enumerate(chunks, 1):
         print(f"  chunk {i}/{total_chunks}…", end="\r", flush=True)
         try:
-            cands, ptok, ctok = _call_claude(chunk, topics, client)
+            cands, ptok, ctok = _call_claude(chunk, topics, client, model)
             all_candidates.extend(cands)
             total_prompt += ptok
             total_completion += ctok
@@ -333,7 +335,7 @@ def extract(
 
     if tokens_flag:
         record = TokenRecord(
-            model=_MODEL,
+            model=model,
             prompt_tokens=total_prompt,
             completion_tokens=total_completion,
             cache_read_tokens=0,
