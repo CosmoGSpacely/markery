@@ -1,6 +1,6 @@
 # information-systems — Project Status
 
-**Last updated:** 2026-05-18
+**Last updated:** 2026-06-06
 
 ---
 
@@ -35,6 +35,14 @@
 | `content/trademarks-narrative.md` | ✅ |
 | `content/patents-narrative.md` | ✅ |
 | `content/index-narrative.md` | ✅ |
+
+---
+
+## Wikipedia Edits (Phase 16 Track A)
+
+| Edit | Article | Change | Revision | Date | Status |
+|---|---|---|---|---|---|
+| D024 | Soundex | SOUNDEX trademark citation (USPTO Serial No. 71246709, March 1927, Rand Kardex Bureau) | [1358151441](https://en.wikipedia.org/w/index.php?diff=1358151441) | 2026-06-06 | Live — monitoring |
 
 ---
 

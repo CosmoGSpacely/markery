@@ -1,6 +1,6 @@
 # Monthly Image Review — Project Status
 
-**Last updated:** 2026-06-02
+**Last updated:** 2026-06-06
 
 ---
 
@@ -47,6 +47,9 @@ Marks of interest identified through gallery review that may connect to active p
 | 1/5 | Library Bureau (Stage 4b) | External link — TSDR for CP trademark | — | 2026-05-22 | Live, unreverted |
 | 2/5 | Library Bureau | Resolve `{{Citation needed}}` — office network citation (1921 catalog) | [1357391696](https://en.wikipedia.org/w/index.php?diff=1357391696) | 2026-06-02 | Live |
 | 3/5 | Library Bureau | Add absorption citation — LA Times ad, June 21, 1927, p. 23 | [1357570204](https://en.wikipedia.org/w/index.php?diff=1357570204) | 2026-06-02 | Live |
+| 4/5 | Rolodex | Wheeldex trademark citation (USPTO Serial No. 71321669) | — | 2026-06-05 | Live |
+| 5/5 | Remington Rand | Filing systems section — primary sources for filing cabinet and card index products | [1358111560](https://en.wikipedia.org/w/index.php?diff=1358111560) | 2026-06-06 | Live |
+| D023 | Chicago Pneumatic | CP monogram trademark citation (USPTO Serial No. 71299042, April 1930) | [1358151236](https://en.wikipedia.org/w/index.php?diff=1358151236) | 2026-06-06 | Live — monitoring |
 
 ---
 

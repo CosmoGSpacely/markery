@@ -56,8 +56,9 @@ markery wikipedia submit "Chicago Pneumatic" \
 ## Pre-submission checklist
 
 - [x] Stage 4b external link still present and unreverted — confirmed 2026-06-01 (live since 2026-05-22)
-- [ ] Account has ≥5 confirmed non-reverted mainspace edits — **BLOCKED**: 1 of 5 (need 4 more)
+- [x] Account has ≥5 confirmed non-reverted mainspace edits — PASSED 2026-06-06 (5 edits)
 - [x] The insertion point exists (after 1925 oil-well drilling paragraph, before 1939 impact wrench paragraph)
 - [x] Article title corrected: "Chicago Pneumatic" (not "Chicago Pneumatic Tool Company")
-- [ ] Diff reviewed before submitting
-- [ ] After submitting: monitor for 48 hours; record edit URL in STATUS.md
+- [x] Diff reviewed — inserts between 1925 Benz Diesel paragraph and 1939 impact wrench paragraph; one addition, no deletions
+- [x] Submitted 2026-06-06 — Revision 1358151236 — https://en.wikipedia.org/w/index.php?diff=1358151236
+- [ ] Monitor 48 hours; update STATUS.md on 2026-06-08 with outcome

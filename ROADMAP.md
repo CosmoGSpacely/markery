@@ -36,7 +36,7 @@ Current state: account `CosmoGSpacely` has 5 confirmed non-reverted mainspace ed
 
 ---
 
-### P2 — D023: Chicago Pneumatic inline citation
+### P2 — D023: Chicago Pneumatic inline citation — CLOSED
 
 Prerequisite: ≥5 confirmed non-reverted mainspace edits.
 
@@ -52,7 +52,7 @@ Full draft and pre-submission checklist: `projects/monthly-image-review/wikipedi
 
 ---
 
-### P3 — D024: Soundex article
+### P3 — D024: Soundex article — CLOSED
 
 Prerequisite: D023 live ≥48 hours unreverted.
 
@@ -157,9 +157,9 @@ Key works to acquire (verify IA open-access before requesting):
 
 P1 PASSED when: account `CosmoGSpacely` has ≥5 confirmed non-reverted mainspace edits; all four new edits are in articles within the research domain. — PASSED 2026-06-06 (5 total edits: Stage 4b external link 2026-05-22; Library Bureau CN fix 2026-06-02; Library Bureau absorption citation 2026-06-03; Rolodex Wheeldex trademark citation 2026-06-05; Remington Rand filing systems section 2026-06-06 rev 1358111560)
 
-P2 PASSED when: D023 live on Wikipedia ≥48 hours unreverted; edit URL recorded in `projects/monthly-image-review/STATUS.md`.
+P2 PASSED when: D023 live on Wikipedia ≥48 hours unreverted; edit URL recorded in `projects/monthly-image-review/STATUS.md`. — SUBMITTED 2026-06-06 rev 1358151236; monitoring until 2026-06-08 for revert
 
-P3 PASSED when: D024 live on Wikipedia ≥48 hours unreverted; edit URL recorded in `projects/information-systems/STATUS.md`.
+P3 PASSED when: D024 live on Wikipedia ≥48 hours unreverted; edit URL recorded in `projects/information-systems/STATUS.md`. — SUBMITTED 2026-06-06 rev 1358151441; monitoring until 2026-06-08 for revert
 
 P4 PASSED when: `projects/radio-pioneers/entities.csv`, `variants.csv`, and `RESEARCH.md` all exist. — PASSED 2026-06-02
 
