@@ -543,7 +543,7 @@ Full architecture decision and repo relationship documented in `archive/GITHUB-R
 
 ---
 
-### P1 — Contract audit
+### P1 — Contract audit — CLOSED
 
 Identify every data shape the companion repo will consume and verify each is explicitly documented somewhere in Markery-ICM.
 
@@ -555,7 +555,7 @@ Identify every data shape the companion repo will consume and verify each is exp
 
 ---
 
-### P2 — Schema hardening
+### P2 — Schema hardening — CLOSED
 
 Fix any gaps the P1 audit surfaces. No new features — only documentation, light enforcement, and stability fixes.
 
