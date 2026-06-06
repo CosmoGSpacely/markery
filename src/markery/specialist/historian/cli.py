@@ -419,6 +419,14 @@ def cmd_validate(args: argparse.Namespace) -> None:
     serial_no = fm.get("trademark_serial", "")
     patent_no = fm.get("patent_no", "").upper()
 
+    # Check 0a: title present
+    check("title_present", bool(fm.get("title", "")),
+          "title missing from frontmatter" if not fm.get("title") else "")
+
+    # Check 0b: trademark present
+    check("trademark_present", bool(fm.get("trademark", "")),
+          "trademark missing from frontmatter" if not fm.get("trademark") else "")
+
     # Check 1: serial resolves
     if serial_no:
         conn_tm = duckdb.connect(str(DB["trademarks"]), read_only=True)
@@ -448,12 +456,14 @@ def cmd_validate(args: argparse.Namespace) -> None:
         check("grant_date_matches", db_grant == fm_grant,
               f"frontmatter={fm_grant!r}  db={db_grant!r}")
 
-    # Check 4: filing date in body matches frontmatter
+    # Check 4: filing date present in frontmatter and appears in essay body
     fm_filing = fm.get("tm_filing_dt", "")
     if fm_filing:
-        filing_in_body = fm_filing[:7] in text  # at least year-month present
+        filing_in_body = fm_filing[:7] in text  # year-month must appear in body
         check("filing_date_in_body", filing_in_body,
               f"filing {fm_filing!r} not found in essay body")
+    else:
+        check("filing_date_in_body", False, "tm_filing_dt missing from frontmatter")
 
     # Check 5: entity variant recognised
     entity_name = fm.get("entity", "")

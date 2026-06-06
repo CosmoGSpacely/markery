@@ -28,19 +28,19 @@ MAX_PER_QUERY    = 2000
 
 DDL = """
 CREATE TABLE IF NOT EXISTS patents (
-    patent_no      VARCHAR PRIMARY KEY,
-    title          VARCHAR,
-    app_dt         DATE,
-    grant_dt       DATE,
-    abstract       VARCHAR,
-    assignee_name  VARCHAR,
+    patent_no      VARCHAR PRIMARY KEY,  -- contract: VARCHAR, NOT NULL, guaranteed-present
+    title          VARCHAR,              -- contract: VARCHAR, nullable
+    app_dt         DATE,                 -- contract: DATE, nullable
+    grant_dt       DATE,                 -- contract: DATE, nullable — primary scoring date
+    abstract       VARCHAR,              -- contract: VARCHAR, nullable — populated by patent signals
+    assignee_name  VARCHAR,              -- contract: VARCHAR, nullable — uppercase; may differ from entity canonical_name
     assignee_city  VARCHAR,
     assignee_state VARCHAR
 );
 
 CREATE TABLE IF NOT EXISTS patent_classes (
-    patent_no VARCHAR NOT NULL,
-    cpc_class VARCHAR,
+    patent_no VARCHAR NOT NULL,  -- contract: VARCHAR, NOT NULL
+    cpc_class VARCHAR,           -- contract: VARCHAR, nullable — 4-char CPC prefix used in scoring
     cpc_full  VARCHAR
 );
 

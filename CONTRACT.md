@@ -357,11 +357,11 @@ score = date_score(grant_dt, filing_dt)
 
 These gaps exist at the time of this audit (2026-06-06). Each is tracked in DEFERRED.md.
 
-| Gap | Impact | DEFERRED entry |
+| Gap | Impact | Status |
 |---|---|---|
-| `case_file` column set not explicitly declared in DDL (CSV-inferred) | Columns outside those listed in §2 are not guaranteed stable across USPTO dataset rebuilds | — (informational; bulk schema is external) |
-| `serial_no` BIGINT/VARCHAR split undocumented in user-facing docs | Cross-table joins silently fail if type is not cast | — (documented here) |
-| `historian validate` does not enforce `title` or `trademark` frontmatter keys | Essays missing these keys pass validate | P2 |
-| `tm_filing_dt` check in validate matches only year-month in body, not full date | Weak enforcement — any occurrence of `YYYY-MM` passes | P2 |
-| `confirmed.jsonl` `type` field values not enumerated | Only `"product"` observed; other values undocumented | — |
-| `library/wants.jsonl` shape undocumented | Not a LangGraph contract surface; informational only | — |
+| `case_file` column set not explicitly declared in DDL (CSV-inferred) | Columns outside those listed in §2 are not guaranteed stable across USPTO dataset rebuilds | Informational; bulk schema is external — documented here |
+| `serial_no` BIGINT/VARCHAR split | Cross-table joins silently fail if type is not cast | Documented here and in DDL comment |
+| `historian validate` did not enforce `title` or `trademark` frontmatter keys | Essays missing these keys would pass validate | **Fixed in Phase 18 P2** — checks `title_present` and `trademark_present` added |
+| `tm_filing_dt` absence in frontmatter was silently skipped by validate | An essay without `tm_filing_dt` passed validate | **Fixed in Phase 18 P2** — absent `tm_filing_dt` now fails `filing_date_in_body` |
+| `confirmed.jsonl` `type` field values not enumerated | Only `"product"` observed; other values undocumented | Documented here; open for extension |
+| `library/wants.jsonl` shape undocumented | Not a LangGraph contract surface | Informational only |

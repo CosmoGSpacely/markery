@@ -23,17 +23,17 @@ from markery.common.config import DB
 
 DDL = """
 CREATE TABLE IF NOT EXISTS company_entity (
-    entity_id      INTEGER PRIMARY KEY,
-    canonical_name VARCHAR NOT NULL,
+    entity_id      INTEGER PRIMARY KEY,  -- contract: INTEGER, NOT NULL
+    canonical_name VARCHAR NOT NULL,     -- contract: VARCHAR, NOT NULL — human-readable name, e.g. 'Remington Rand'
     entity_type    VARCHAR,
     industry       VARCHAR
 );
 
 CREATE TABLE IF NOT EXISTS entity_name_variant (
     variant_id   INTEGER PRIMARY KEY,
-    entity_id    INTEGER NOT NULL REFERENCES company_entity(entity_id),
-    variant_name VARCHAR NOT NULL,
-    source       VARCHAR NOT NULL
+    entity_id    INTEGER NOT NULL REFERENCES company_entity(entity_id),  -- contract: INTEGER, NOT NULL
+    variant_name VARCHAR NOT NULL,  -- contract: VARCHAR, NOT NULL — uppercase string used in assignee/owner searches
+    source       VARCHAR NOT NULL   -- contract: VARCHAR, NOT NULL — one of: patent_assignee | trademark_owner | trademark_search
 );
 """
 

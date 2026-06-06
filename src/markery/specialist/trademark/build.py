@@ -38,7 +38,7 @@ _COMPANION_TABLES = [
 # load_foreign_app() respectively. They do not appear until explicitly loaded.
 _ENRICHMENT_DDL = """
 CREATE TABLE IF NOT EXISTS mark_images (
-    serial_no    VARCHAR PRIMARY KEY,
+    serial_no    VARCHAR PRIMARY KEY,  -- contract: VARCHAR, NOT NULL — cast from BIGINT bulk serial when joining
     image_data   BLOB,
     image_format VARCHAR DEFAULT 'PNG',
     image_size   INTEGER,
@@ -46,15 +46,15 @@ CREATE TABLE IF NOT EXISTS mark_images (
 );
 
 CREATE TABLE IF NOT EXISTS extended_marks (
-    serial_no         VARCHAR PRIMARY KEY,
-    mark_text         VARCHAR,
+    serial_no         VARCHAR PRIMARY KEY,  -- contract: VARCHAR, NOT NULL — cast from BIGINT bulk serial when joining
+    mark_text         VARCHAR,              -- contract: VARCHAR, nullable — NULL for purely figurative (design-only) marks
     filing_dt         DATE,
     registration_no   VARCHAR,
     registration_dt   DATE,
-    status_cd         VARCHAR,
-    goods_desc        VARCHAR,
+    status_cd         VARCHAR,              -- contract: VARCHAR, nullable — '700'=registered, '800'=expired, '900'=cancelled
+    goods_desc        VARCHAR,              -- contract: VARCHAR, nullable — truncated at 500 chars
     intl_class        VARCHAR,
-    owner_name        VARCHAR,   -- NULL for bulk-enrichment rows; set for standalone TSDR fetches
+    owner_name        VARCHAR,   -- contract: VARCHAR, nullable — most recent TSDR owner; NULL for bulk-enrichment rows
     first_use_dt      VARCHAR,
     first_use_comm_dt VARCHAR,
     raw_json          VARCHAR,

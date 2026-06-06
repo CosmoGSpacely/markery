@@ -179,6 +179,8 @@ class TestDigest:
 @requires_dbs
 class TestValidate:
     EXPECTED_CHECKS = {
+        "title_present",
+        "trademark_present",
         "serial_resolves",
         "patent_resolves",
         "grant_date_matches",
@@ -194,10 +196,10 @@ class TestValidate:
         _, rc = self._validate()
         assert rc == 0
 
-    def test_six_check_lines(self):
+    def test_eight_check_lines(self):
         out, _ = self._validate()
         check_lines = [l for l in out.splitlines() if re.match(r"\s+(PASS|FAIL)\s+\w", l)]
-        assert len(check_lines) == 6, f"expected 6 check lines, got {len(check_lines)}"
+        assert len(check_lines) == 8, f"expected 8 check lines, got {len(check_lines)}"
 
     def test_all_check_names_present(self):
         out, _ = self._validate()

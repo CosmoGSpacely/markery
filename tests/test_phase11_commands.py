@@ -364,11 +364,13 @@ def test_scaffold_creates_essay_file(tmp_path):
 # ---------------------------------------------------------------------------
 
 def _write_essay(path: Path, pat_no: str = "US1261167A",
-                 serial_no: str = "71246709", filing: str = "1926-01-15") -> None:
+                 serial_no: str = "71246709", filing: str = "1926-01-15",
+                 trademark: str = "SOUNDEX") -> None:
     path.write_text(f"""\
 ---
+title: "{trademark} — {pat_no}"
 trademark_serial: {serial_no}
-patent_no: {pat_no}
+trademark: "{trademark}"
 tm_filing_dt: {filing}
 entity: Odell Associates
 ---
@@ -433,3 +435,200 @@ def test_validate_exits_for_missing_essay(tmp_path, capsys):
         args.essay   = None
         with pytest.raises(SystemExit):
             cmd_validate(args)
+
+
+def _validate_essay(tmp_path: Path, essay_text: str) -> list[tuple[str, bool]]:
+    """Helper: write essay_text, run validate, return (check_name, passed) pairs."""
+    root = _make_mre_project(tmp_path)
+    essay = root / "content" / "test-us1234567a.md"
+    essay.parent.mkdir(exist_ok=True)
+    essay.write_text(essay_text)
+
+    import markery.common.config as cfg_mod
+    import markery.common.project as proj_mod
+    import markery.specialist.historian.cli as _hist_cli
+
+    pat_path = _pat_db(tmp_path)
+    tm_path  = _tm_db(tmp_path)
+    import duckdb as _duckdb
+    _duckdb.connect(str(tm_path)).execute(
+        "INSERT INTO case_file (serial_no) VALUES (?)", [71246709]
+    ).close()
+
+    db_patch = {"patents": pat_path, "trademarks": tm_path,
+                "entities": cfg_mod.DB["entities"]}
+
+    captured: list[tuple[str, bool]] = []
+    original_append = list.append
+
+    with patch.object(cfg_mod, "ROOT", tmp_path), \
+         patch.object(proj_mod, "ROOT", tmp_path), \
+         patch.object(_hist_cli, "DB", db_patch):
+        args = MagicMock()
+        args.project = "test-proj"
+        args.slug    = "test-us1234567a"
+        args.essay   = None
+
+        # Monkey-patch the inner check() function by capturing its calls via capsys alternative
+        original_validate = _hist_cli.cmd_validate
+        results_ref: list = []
+
+        def _patched(a):
+            # Re-implement just enough to capture results before exit
+            import re as _re
+            text_local = essay.read_text()
+            fm: dict = {}
+            fm_match = _re.match(r'^---\n(.+?)\n---', text_local, _re.DOTALL)
+            if fm_match:
+                for line in fm_match.group(1).splitlines():
+                    if ':' in line:
+                        k, _, v = line.partition(':')
+                        fm[k.strip()] = v.strip().strip('"')
+            results_ref.append(fm)
+            try:
+                original_validate(a)
+            except SystemExit:
+                pass
+
+        _hist_cli.cmd_validate = _patched
+        try:
+            _hist_cli.cmd_validate(args)
+        finally:
+            _hist_cli.cmd_validate = original_validate
+
+    return results_ref
+
+
+def test_validate_fails_on_missing_title(tmp_path, capsys):
+    root = _make_mre_project(tmp_path)
+    essay = root / "content" / "soundex-us1261167a.md"
+    # Omit title from frontmatter
+    essay.write_text("""\
+---
+trademark_serial: 71246709
+trademark: "SOUNDEX"
+tm_filing_dt: 1927-03-31
+patent_no: US1261167A
+entity: Odell Associates
+---
+
+Filed: 1927-03-31. The mark SOUNDEX was filed in 1927.
+""")
+
+    import markery.common.config as cfg_mod
+    import markery.common.project as proj_mod
+    import markery.specialist.historian.cli as _hist_cli
+
+    pat_path = _pat_db(tmp_path)
+    tm_path  = _tm_db(tmp_path)
+    import duckdb as _duckdb
+    _duckdb.connect(str(tm_path)).execute(
+        "INSERT INTO case_file (serial_no) VALUES (?)", [71246709]
+    ).close()
+
+    db_patch = {"patents": pat_path, "trademarks": tm_path,
+                "entities": cfg_mod.DB["entities"]}
+
+    with patch.object(cfg_mod, "ROOT", tmp_path), \
+         patch.object(proj_mod, "ROOT", tmp_path), \
+         patch.object(_hist_cli, "DB", db_patch):
+        args = MagicMock()
+        args.project = "test-proj"
+        args.slug    = "soundex-us1261167a"
+        args.essay   = None
+        with pytest.raises(SystemExit):
+            _hist_cli.cmd_validate(args)
+
+    out = capsys.readouterr().out
+    assert "title_present" in out
+    assert "FAIL  title_present" in out
+
+
+def test_validate_fails_on_missing_trademark(tmp_path, capsys):
+    root = _make_mre_project(tmp_path)
+    essay = root / "content" / "soundex-us1261167a.md"
+    # Omit trademark from frontmatter
+    essay.write_text("""\
+---
+title: "SOUNDEX — US1261167A"
+trademark_serial: 71246709
+tm_filing_dt: 1927-03-31
+patent_no: US1261167A
+entity: Odell Associates
+---
+
+Filed: 1927-03-31. The mark was filed in 1927.
+""")
+
+    import markery.common.config as cfg_mod
+    import markery.common.project as proj_mod
+    import markery.specialist.historian.cli as _hist_cli
+
+    pat_path = _pat_db(tmp_path)
+    tm_path  = _tm_db(tmp_path)
+    import duckdb as _duckdb
+    _duckdb.connect(str(tm_path)).execute(
+        "INSERT INTO case_file (serial_no) VALUES (?)", [71246709]
+    ).close()
+
+    db_patch = {"patents": pat_path, "trademarks": tm_path,
+                "entities": cfg_mod.DB["entities"]}
+
+    with patch.object(cfg_mod, "ROOT", tmp_path), \
+         patch.object(proj_mod, "ROOT", tmp_path), \
+         patch.object(_hist_cli, "DB", db_patch):
+        args = MagicMock()
+        args.project = "test-proj"
+        args.slug    = "soundex-us1261167a"
+        args.essay   = None
+        with pytest.raises(SystemExit):
+            _hist_cli.cmd_validate(args)
+
+    out = capsys.readouterr().out
+    assert "trademark_present" in out
+    assert "FAIL  trademark_present" in out
+
+
+def test_validate_fails_on_missing_tm_filing_dt(tmp_path, capsys):
+    root = _make_mre_project(tmp_path)
+    essay = root / "content" / "soundex-us1261167a.md"
+    # Omit tm_filing_dt from frontmatter
+    essay.write_text("""\
+---
+title: "SOUNDEX — US1261167A"
+trademark_serial: 71246709
+trademark: "SOUNDEX"
+patent_no: US1261167A
+entity: Odell Associates
+---
+
+The mark was filed at some point.
+""")
+
+    import markery.common.config as cfg_mod
+    import markery.common.project as proj_mod
+    import markery.specialist.historian.cli as _hist_cli
+
+    pat_path = _pat_db(tmp_path)
+    tm_path  = _tm_db(tmp_path)
+    import duckdb as _duckdb
+    _duckdb.connect(str(tm_path)).execute(
+        "INSERT INTO case_file (serial_no) VALUES (?)", [71246709]
+    ).close()
+
+    db_patch = {"patents": pat_path, "trademarks": tm_path,
+                "entities": cfg_mod.DB["entities"]}
+
+    with patch.object(cfg_mod, "ROOT", tmp_path), \
+         patch.object(proj_mod, "ROOT", tmp_path), \
+         patch.object(_hist_cli, "DB", db_patch):
+        args = MagicMock()
+        args.project = "test-proj"
+        args.slug    = "soundex-us1261167a"
+        args.essay   = None
+        with pytest.raises(SystemExit):
+            _hist_cli.cmd_validate(args)
+
+    out = capsys.readouterr().out
+    assert "filing_date_in_body" in out
+    assert "FAIL  filing_date_in_body" in out
