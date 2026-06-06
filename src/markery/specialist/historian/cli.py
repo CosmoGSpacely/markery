@@ -15,6 +15,65 @@ from markery.common.project import Project, require_project
 from markery.common.tokens import TokenRecord, count_output_tokens, emit as emit_tokens
 
 
+_DEFAULT_MODEL = "claude-haiku-4-5-20251001"
+
+# ---------------------------------------------------------------------------
+# Inference system prompts
+# ---------------------------------------------------------------------------
+
+_CARD_INFER_SYSTEM = (
+    "You are a historian specializing in American commercial and industrial history, 1870–1950. "
+    "Assess whether a patent-trademark candidate pair represents a genuine historical correspondence. "
+    "A genuine correspondence requires all four criteria:\n"
+    "1. Date alignment — trademark filing within ~5 years after patent grant "
+    "(negative gap means trademark predates patent, which is a problem)\n"
+    "2. Entity continuity — same company or a documented successor\n"
+    "3. Goods-claims match — trademark goods plausibly cover what the patent describes\n"
+    "4. Historical defensibility — grounded in documented commercial activity, not coincidence\n\n"
+    "Respond with exactly this format and no other text:\n"
+    "RECOMMENDATION: confirm | reject | defer\n"
+    "SCORE: <integer 1–5; 5=strong confirm, 3=uncertain, 1=clear reject>\n"
+    "REASONING: <one to three sentences citing specific evidence from the card>"
+)
+
+_DIGEST_INFER_SYSTEM = (
+    "You are a historian specializing in American commercial and industrial history, 1870–1950. "
+    "You have been shown a project digest summarising a patent-trademark matching queue. "
+    "Your task: identify which unreviewed candidates are most worth examining first."
+)
+
+_DRAFT_SYSTEM = (
+    "You are a historian specializing in American commercial and industrial history, 1870–1950, "
+    "writing a first-draft match essay from a provided scaffold.\n\n"
+    "Rules:\n"
+    "- Preserve the YAML frontmatter (between the --- markers) exactly as written — "
+    "do not change any field values\n"
+    "- Preserve the ## Primary Sources section exactly as written\n"
+    "- Replace each <!-- ... --> placeholder with 2–4 sentences of analytical prose\n"
+    "- The year-month from tm_filing_dt in the frontmatter must appear in the essay body\n"
+    "- Do not invent dates, serial numbers, patent numbers, or assignee names "
+    "not present in the scaffold\n"
+    "- Write in specialist register: evidence-forward, primary-source grounded, "
+    "hedged where the record is incomplete\n"
+    "- Do not name the research tool or methodology — present the evidence directly\n"
+    "- Output only the complete essay markdown, starting with ---"
+)
+
+
+def _parse_infer_result(text: str) -> dict:
+    rec_m   = re.search(r'^RECOMMENDATION:\s*(confirm|reject|defer)', text,
+                        re.IGNORECASE | re.MULTILINE)
+    score_m = re.search(r'^SCORE:\s*([1-5])', text,
+                        re.IGNORECASE | re.MULTILINE)
+    reason_m = re.search(r'^REASONING:\s*(.+?)(?=\n[A-Z]+:|$)', text,
+                         re.IGNORECASE | re.MULTILINE | re.DOTALL)
+    return {
+        "recommendation": rec_m.group(1).lower() if rec_m else "defer",
+        "score":          int(score_m.group(1)) if score_m else 3,
+        "reasoning":      reason_m.group(1).strip() if reason_m else text.strip(),
+    }
+
+
 def _context_budget() -> int:
     """Return MARKERY_CONTEXT_BUDGET as int, or 0 (unlimited) if unset."""
     raw = os.environ.get("MARKERY_CONTEXT_BUDGET", "").strip()
@@ -182,6 +241,27 @@ def cmd_card(args: argparse.Namespace) -> None:
         rec.wall_ms = int((time.monotonic() - t0) * 1000)
         emit_tokens(rec, specialist="historian", command="card", tokens_flag=tokens_flag)
 
+    if getattr(args, "infer", False):
+        from markery.common.llm import call as llm_call
+        model = getattr(args, "model", None) or os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
+        user_msg = card_text + "\n\nAssess this candidate pair."
+        try:
+            resp_text, ptok, ctok = llm_call(model, _CARD_INFER_SYSTEM, user_msg, 256)
+            result = _parse_infer_result(resp_text)
+            print(f"\n[infer]  recommendation={result['recommendation']}  score={result['score']}")
+            print(f"         {result['reasoning']}")
+            infer_rec = TokenRecord(
+                model=model,
+                prompt_tokens=ptok,
+                completion_tokens=ctok,
+                cache_read_tokens=0,
+                cache_creation_tokens=0,
+                wall_ms=int((time.monotonic() - t0) * 1000),
+            )
+            emit_tokens(infer_rec, specialist="historian", command="card.infer", tokens_flag=True)
+        except Exception as exc:
+            print(f"\n[infer]  error: {exc}", file=sys.stderr)
+
 
 def cmd_digest(args: argparse.Namespace) -> None:
     import json as _json
@@ -293,6 +373,29 @@ def cmd_digest(args: argparse.Namespace) -> None:
         rec = count_output_tokens(digest_text)
         rec.wall_ms = int((time.monotonic() - t0) * 1000)
         emit_tokens(rec, specialist="historian", command="digest", tokens_flag=tokens_flag)
+
+    if getattr(args, "infer", False):
+        from markery.common.llm import call as llm_call
+        model = getattr(args, "model", None) or os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
+        user_msg = (
+            digest_text
+            + "\n\nWhich of the unreviewed candidates listed above are most worth examining "
+            "first? Rank the top three and give a one-sentence reason for each."
+        )
+        try:
+            ranked_text, ptok, ctok = llm_call(model, _DIGEST_INFER_SYSTEM, user_msg, 512)
+            print("\n" + ranked_text)
+            infer_rec = TokenRecord(
+                model=model,
+                prompt_tokens=ptok,
+                completion_tokens=ctok,
+                cache_read_tokens=0,
+                cache_creation_tokens=0,
+                wall_ms=int((time.monotonic() - t0) * 1000),
+            )
+            emit_tokens(infer_rec, specialist="historian", command="digest.infer", tokens_flag=True)
+        except Exception as exc:
+            print(f"\n[infer]  error: {exc}", file=sys.stderr)
 
 
 def cmd_scaffold(args: argparse.Namespace) -> None:
@@ -434,6 +537,66 @@ date_gap: "{gap_str}"
         emit_tokens(rec, specialist="historian", command="scaffold", tokens_flag=tokens_flag)
 
 
+def cmd_draft(args: argparse.Namespace) -> None:
+    """Call the API to produce a first-draft essay from an existing scaffold."""
+    t0 = time.monotonic()
+    proj = require_project(args.project)
+
+    scaffold_path = proj.root / "content" / f"{args.slug}.md"
+    if not scaffold_path.exists():
+        print(
+            f"No scaffold at {scaffold_path}.\n"
+            f"Run: markery historian scaffold {args.project} {args.slug}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    scaffold_text = scaffold_path.read_text(encoding="utf-8")
+    model = getattr(args, "model", None) or os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
+
+    from markery.common.llm import call as llm_call
+    print(f"Drafting '{args.slug}' with {model}…", flush=True)
+    try:
+        draft_text, ptok, ctok = llm_call(model, _DRAFT_SYSTEM, scaffold_text, 2048)
+    except RuntimeError as exc:
+        print(f"Inference error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    # Ensure output starts with frontmatter (model may prepend prose)
+    if not draft_text.startswith("---"):
+        fm_start = draft_text.find("---")
+        if fm_start >= 0:
+            draft_text = draft_text[fm_start:]
+        else:
+            print("Warning: draft response does not contain YAML frontmatter.", file=sys.stderr)
+
+    content_dir = proj.root / "content"
+    content_dir.mkdir(exist_ok=True)
+    draft_path = content_dir / f"{args.slug}-draft.md"
+    draft_path.write_text(draft_text, encoding="utf-8")
+    print(f"Draft written → {draft_path}")
+
+    wall_ms = int((time.monotonic() - t0) * 1000)
+    draft_rec = TokenRecord(
+        model=model,
+        prompt_tokens=ptok,
+        completion_tokens=ctok,
+        cache_read_tokens=0,
+        cache_creation_tokens=0,
+        wall_ms=wall_ms,
+    )
+    emit_tokens(draft_rec, specialist="historian", command="draft", tokens_flag=True)
+
+    # Validate the draft immediately
+    print("Validating draft…")
+    val_args = argparse.Namespace(project=args.project, slug=args.slug, essay=str(draft_path))
+    try:
+        cmd_validate(val_args)
+    except SystemExit as exc:
+        if exc.code and exc.code != 0:
+            sys.exit(exc.code)
+
+
 def cmd_validate(args: argparse.Namespace) -> None:
     import duckdb
     import re as _re
@@ -564,6 +727,10 @@ def historian_main() -> None:
                         help="Output path (default: matches/cards/<slug>.md); use '-' for stdout")
     card_p.add_argument("--tokens", action="store_true",
                         help="Print token count of card output to stderr")
+    card_p.add_argument("--infer", action="store_true",
+                        help="Call the API for a confirm/reject/defer recommendation")
+    card_p.add_argument("--model", default=None, metavar="MODEL",
+                        help="Override MARKERY_MODEL for this --infer call")
 
     digest_p = sub.add_parser("digest", help="Project state summary (~800-1200 tokens)")
     digest_p.add_argument("project", help="Project name")
@@ -573,6 +740,16 @@ def historian_main() -> None:
                           help="Number of next-review candidates to list (default: 5)")
     digest_p.add_argument("--tokens", action="store_true",
                           help="Print token count of digest output to stderr")
+    digest_p.add_argument("--infer", action="store_true",
+                          help="Call the API for ranked candidate prioritization")
+    digest_p.add_argument("--model", default=None, metavar="MODEL",
+                          help="Override MARKERY_MODEL for this --infer call")
+
+    draft_p = sub.add_parser("draft", help="Generate first-draft essay from scaffold via API")
+    draft_p.add_argument("project", help="Project name")
+    draft_p.add_argument("slug",    help="Confirmed pair slug, e.g. sterilamp-us2168861a")
+    draft_p.add_argument("--model", default=None, metavar="MODEL",
+                         help="Override MARKERY_MODEL for this call")
 
     scaffold_p = sub.add_parser("scaffold", help="Generate essay skeleton for a confirmed pair")
     scaffold_p.add_argument("project", help="Project name")
@@ -598,6 +775,8 @@ def historian_main() -> None:
         cmd_card(args)
     elif args.action == "digest":
         cmd_digest(args)
+    elif args.action == "draft":
+        cmd_draft(args)
     elif args.action == "scaffold":
         cmd_scaffold(args)
     elif args.action == "validate":
