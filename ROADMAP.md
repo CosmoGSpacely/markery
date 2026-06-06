@@ -6,654 +6,408 @@ Active and upcoming tool development. Items originate in `DEFERRED.md` and are p
 
 Phases 9–13 closed 2026-05-24. Archived to `archive/ROADMAP-2026-05-24.md`.
 Phases 14–15 closed 2026-06-01/2026-05-24. Archived to `archive/ROADMAP-2026-06-03.md`.
+Phases 16–18 closed 2026-06-06. Archived to `archive/ROADMAP-2026-06-06.md`.
+
+**Phase 16 Track A status note:** P2 (D023 Chicago Pneumatic, rev 1358151236) and P3 (D024 Soundex, rev 1358151441) were submitted 2026-06-06. The 48-hour monitoring window closes 2026-06-08. Phase 19 P1 closes the gates and formally passes Phase 16 Track A. See D050 in `DEFERRED.md`.
 
 ---
 
-## Phase 16 — Wikipedia Account Building and Early Radio Project
+## Phase 19 — Code Gaps and Deferred Work Sprint
 
-**Trigger:** Phase 15 complete.  
-**Scope:** Two independent workstreams. Track A closes the deferred Wikipedia Stage 4c/4d edits (D023, D024) by first building the account to five non-reverted mainspace edits — the blocking condition confirmed 2026-06-01. Track B launches `radio-pioneers`, a second research project on early American radio manufacturers (1920–1940), as a live end-to-end test of the full Markery pipeline.
+**Trigger:** Phase 18 complete.
+**Scope:** Close the Phase 16 Wikipedia gates (D050), implement the three highest-recurrence CLI gaps (D029 `matchmaker confirm`, D032 `librarian review --auto-accept`, D043 per-project model config), fix the librarian acquire slug mismatch (D044), complete the figurative-mark TUI audit (D041), add librarian MVO contract tests (D049), and close out documentation-only deferrals (D030, D040, D045).
 
-**Goal state:** D023 and D024 live on Wikipedia; `radio-pioneers` has confirmed pairs, at least one validated essay, a working site build, and radio-domain secondary literature in the LIBRARIAN corpus.
-
----
-
-### Track A — Wikipedia
+**Goal state:** Phase 16 P2/P3 gates formally PASSED; `markery matchmaker confirm` working non-interactively; `markery librarian review --auto-accept` eliminates the recurring bypass; per-project model config enforced automatically; librarian acquire accepts search-sources slugs; figurative mark TUI audited; librarian MVO tests passing; DEFERRED.md fully current with no stale trigger conditions.
 
 ---
 
-### P1 — Four mainspace edits (account threshold) — CLOSED
+### P1 — D050: Close Phase 16 Wikipedia gates
 
-Current state: account `CosmoGSpacely` has 5 confirmed non-reverted mainspace edits. Edit 3 (Rolodex/Wheeldex, 2026-06-05) and edit 4 (Remington Rand filing systems, 2026-06-06, rev 1358111560) completed the threshold.
+**Prerequisite: 2026-06-08** (48-hour window after D023/D024 submission).
 
-1. **Library Bureau — resolve `{{Citation needed}}`**: The sentence "It sold merchandise and services through a network of sales offices and distributors in the United States (46 in 1922), England (4), France (1), and Belgium." carries a `{{Citation needed|date=June 2023}}` tag. The 1921 Library Bureau catalog (Google Books, already linked in the article's References section) documents the office network. Add `<ref>{{cite book|title=Steel Card and Filing Cabinets|publisher=Library Bureau|year=1921|url=https://books.google.com/books?id=nkhIAAAAYAAJ&pg=PA1}}</ref>` after "Belgium"; remove the tag.
-
-2. **Library Bureau — add absorption citation**: The lead sentence "In 1927, it was absorbed into Remington Rand" is uncited. The Los Angeles Times advertisement of June 21, 1927 (already cited as a reference in the article) announces Remington Rand's formation and names Library Bureau among its business services. Add it as an inline `<ref>` on that sentence.
-
-3. **Rolodex — Wheeldex trademark citation**: The article states Rolodex "was an improvement to an earlier design called the *Wheeldex*" without sourcing the Wheeldex name. The USPTO trademark record for WHEELDEX (Serial No. 71321669, Scholfield Service, Inc.) is a primary source. Add one sentence: "The Wheeldex name was registered as a United States trademark by Scholfield Service, Inc. (USPTO Serial No. 71321669)." with a TSDR `<ref>`.
-
-4. **Remington Rand or another domain article — citation or housekeeping**: After completing edits 1–3, identify the single best unsourced factual claim in the Remington Rand article or another article in the domain that the USPTO record or LIBRARIAN corpus directly supports. Make a genuine improvement — do not save this slot for a strategically motivated edit.
-
----
-
-### P2 — D023: Chicago Pneumatic inline citation — CLOSED
-
-Prerequisite: ≥5 confirmed non-reverted mainspace edits.
-
-1. Confirm Stage 4b TSDR external link still live on the "Chicago Pneumatic" article.
-2. Using `markery wikipedia` tooling, fetch current wikitext, insert at confirmed insertion point (after 1925 oil-well drilling paragraph, before 1939 impact wrench paragraph):
-   ```wikitext
-   The CP monogram design trademark (USPTO Serial No. 71299042) was filed on April 18, 1930, covering pneumatic tools, air compressors, and related apparatus.<ref>{{cite web|url=https://tsdr.uspto.gov/#caseNumber=71299042&caseType=SERIAL_NO&searchType=statusSearch|title=Trademark Serial No. 71299042|publisher=USPTO Trademark Status and Document Retrieval|access-date=2026-06-01}}</ref>
-   ```
-3. Review diff; submit with summary: "Add primary source citation for CP monogram trademark (USPTO Serial 71299042, April 1930)"
-4. Monitor ≥48 hours; record edit URL in `projects/monthly-image-review/STATUS.md`.
-
-Full draft and pre-submission checklist: `projects/monthly-image-review/wikipedia/d023-inline-citation.md`.
+1. Check each of the 7 Phase 16 Track A edits for revert status:
+   - Library Bureau Stage 4b external link — 2026-05-22 (check External links section still present)
+   - Library Bureau CN fix — rev 1357391696 — `https://en.wikipedia.org/w/index.php?diff=1357391696`
+   - Library Bureau absorption citation — rev 1357570204 — `https://en.wikipedia.org/w/index.php?diff=1357570204`
+   - Rolodex Wheeldex — **revision ID not recorded** — retrieve from `https://en.wikipedia.org/w/index.php?title=Rolodex&action=history`; find the 2026-06-05 edit; record revision ID
+   - Remington Rand filing systems — rev 1358111560 — `https://en.wikipedia.org/w/index.php?diff=1358111560`
+   - D023 Chicago Pneumatic — rev 1358151236 — `https://en.wikipedia.org/w/index.php?diff=1358151236`
+   - D024 Soundex — rev 1358151441 — `https://en.wikipedia.org/w/index.php?diff=1358151441`
+2. Update `projects/monthly-image-review/STATUS.md`: record Rolodex revision ID; update D023 status from "Live — monitoring" to "Live, unreverted" or "Reverted".
+3. Update `projects/information-systems/STATUS.md`: update D024 status from "Live — monitoring" to "Live, unreverted" or "Reverted".
+4. If D023 and D024 are both unreverted: mark archived ROADMAP Phase 16 P2 and P3 gates PASSED with date (edit `archive/ROADMAP-2026-06-06.md` gate lines). Close D050 in DEFERRED.md.
+5. If either was reverted: do not close the gate. Add a new DEFERRED entry with the revert reason and resubmission strategy. D050 stays open until both edits are live and confirmed.
 
 ---
 
-### P3 — D024: Soundex article — CLOSED
+### P2 — D029 and D041: Matchmaker confirm + figurative TUI audit
 
-Prerequisite: D023 live ≥48 hours unreverted.
+**D029 — `markery matchmaker confirm` non-interactive CLI:**
 
-1. Fetch current Soundex article to confirm 1918 patent is still cited and trademark sentence is absent.
-2. Insert trademark-only sentence after the 1922 patent sentence (before "A variation, American Soundex..."):
-   ```wikitext
-   The SOUNDEX trademark (USPTO Serial No. 71246709) was filed on March 31, 1927, by Rand Kardex Bureau, Inc., covering index cards and forms for phonetic indexing systems.<ref>{{cite web|url=https://tsdr.uspto.gov/#caseNumber=71246709&caseType=SERIAL_NO&searchType=statusSearch|title=Trademark Serial No. 71246709 — SOUNDEX|publisher=USPTO Trademark Status and Document Retrieval|access-date=2026-06-01}}</ref>
-   ```
-3. Edit summary: "Add primary source citation for SOUNDEX trademark filing (USPTO 71246709, 1927, Rand Kardex Bureau)"
-4. Monitor ≥48 hours; record edit URL in `projects/information-systems/STATUS.md`.
+1. Add `confirm` subcommand to `src/markery/specialist/matchmaker/cli.py`:
+   - `markery matchmaker confirm <project> <slug> [--note TEXT]`
+   - Look up the candidate record in `candidates.jsonl` by slug (same slug-parsing logic as `historian card`)
+   - Validate the slug resolves; exit 1 with a clear message if not found
+   - Append a `confirmed.jsonl` entry in the same schema as the interactive reviewer (`patent_no`, `trademark_serial`, `trademark`, `entity`, `entity_id`, `score`, `note`)
+   - Print the appended record to stdout; non-interactive by design (no confirmation prompt)
+2. Add tests to `tests/specialist/matchmaker/`: (a) valid slug appends correct record; (b) invalid slug exits 1; (c) `--note` field appears in confirmed record; (d) running confirm twice with the same slug does not duplicate the entry.
+3. Close D029 in `DEFERRED.md`.
 
-Attribution basis: RAND KARDEX BUREAU, INC. confirmed as filing-date owner in `data/trademarks.duckdb`; see `projects/information-systems/RESEARCH.md §SOUNDEX Ownership Timeline`. Full draft: `projects/information-systems/wikipedia/d024-soundex-draft.md`.
+**D041 — Figurative mark TUI audit:**
 
----
-
-### Track B — Early Radio Project — CLOSED
-
----
-
-### P4 — Project setup: `radio-pioneers` — CLOSED
-
-Target domain: early American radio manufacturers, 1920–1940. Vacuum tube patents, receiver circuit patents, and broadcast equipment patents map cleanly to branded product names. The RCA patent pool (GE, Westinghouse, AT&T, RCA as joint licensors) means that product trademarks are the primary evidence of each company's distinct commercial activity — patent ownership was pooled and cross-licensed, but brand names were proprietary.
-
-Initial entity set:
-
-| ID | Entity | Key trademark strings |
-|---|---|---|
-| 1 | Radio Corporation of America | RADIOLA, RADIOTRON, SUPERHETERODYNE |
-| 2 | Westinghouse Electric and Manufacturing Company | RADIOPHONE, AERIOLA |
-| 3 | Atwater Kent Manufacturing Company | ATWATERKENT |
-| 4 | Zenith Radio Corporation | ZENITH |
-| 5 | De Forest Radio Company | AUDION, OSCILLION |
-
-CPC patent classes to sweep: `H04B` (radio transmission), `H01J` (vacuum tubes), `H03F` (amplifiers), `H04R` (loudspeakers, receiver components).
-
-1. Create `projects/radio-pioneers/` with standard directory structure: `entities.csv`, `variants.csv`, `matches/`, `content/`, `site/`, `references/`.
-2. Write `entities.csv` (IDs 1–5) and `variants.csv` with the trademark search strings above.
-3. Write `projects/radio-pioneers/RESEARCH.md`: central argument and scope note on the patent pool structure and why trademarks are the primary evidence of commercial identity.
-4. Write `projects/radio-pioneers/RESEARCH-AGENDA.md`: candidate confirmed pairs to investigate (De Forest AUDION vacuum tube patent + AUDION trademark; RCA transmitter patents + RADIOLA marks; Zenith early marks).
+4. In `src/markery/specialist/matchmaker/review.py` (the interactive TUI that writes `confirmed.jsonl`), audit every reference to `cand["trademark"]` or `cand.get("trademark")`. Any path that could produce `None` must use `cand.get("trademark") or "(figurative)"` or an equivalent guard.
+5. Add a test: pass a candidate dict with `trademark=None` through the TUI's confirmed-record construction function without raising `TypeError` or `AttributeError`.
+6. Update D041 in `DEFERRED.md` — mark the TUI path closed; close D041 fully if all remaining open paths from the Phase 17.1 P1 audit are now resolved.
 
 ---
 
-### P5 — Patent and trademark acquisition — CLOSED
+### P3 — D032 and D044: Librarian review auto-accept + acquire slug fix
 
-1. Run trademark sweeps for each entity's variants. Identify which serials are already in `trademarks.duckdb` and which require TSDR enrichment via `markery trademark fetch`.
-2. Run patent sweeps for CPC classes `H04B`, `H01J`, `H03F`, `H04R` over 1918–1940 via EPO OPS. If coverage is thin (radio CPC classes may be outside the current data window), document in `RESEARCH-AGENDA.md` as a scope note.
-3. Run `markery patent signals` for any unreviewed patents in the candidate pool to populate abstract text.
-4. Gate: ≥10 trademark records and ≥20 patent records in scope; no sweep errors.
+**D032 — `markery librarian review --auto-accept`:**
 
----
+1. Add `--auto-accept` flag to the `review` subcommand in `src/markery/specialist/librarian/cli.py` and the `review()` function in `extract.py`.
+   - When set: read all pending candidates from `candidates.md`; append each to `excerpts.md` (using the existing `_append_to_excerpts` helper); update each candidate's `<!-- status: pending -->` marker to `<!-- status: accepted -->` in `candidates.md`.
+   - When not set: existing interactive behavior unchanged.
+2. Add a test: `review(slug, auto_accept=True)` with a `candidates.md` containing 3 pending passages results in all 3 appended to `excerpts.md` and `candidates.md` showing `accepted` status — without any call to `input()`.
+3. Update the `review.md` instruction card (from D045 stubs, written in P5) to document both the interactive and `--auto-accept` paths.
+4. Close D032 in `DEFERRED.md`.
 
-### P6 — Candidate generation, first review cycle, and token baseline — CLOSED
+**D044 — `markery librarian acquire` slug resolution:**
 
-1. Run `markery matchmaker generate radio-pioneers` to populate `candidates.jsonl`.
-2. Run historian commands with token logging enabled:
-   ```
-   MARKERY_TOKEN_LOG=tests/benchmarks/radio-pioneers-p6.jsonl \
-     markery historian digest radio-pioneers --tokens
-   ```
-   Then for each card reviewed:
-   ```
-   MARKERY_TOKEN_LOG=tests/benchmarks/radio-pioneers-p6.jsonl \
-     markery historian card radio-pioneers <slug> --tokens
-   ```
-3. Review top-scoring candidates. Target ≥3 confirmed pairs across ≥2 entities.
-4. **Haiku simulation:** after reviewing at least 3 candidates, run the Phase 14 P4 test harness against radio-pioneers data — load the digest + cards as context and send to `claude-haiku-4-5-20251001`. Verify: no hallucinated serial or patent numbers; response is structurally coherent. Record pass/fail and token counts in `tests/benchmarks/radio-pioneers-p6.jsonl`.
-5. Aggregate the log: record mean prompt tokens for digest and card in `tests/benchmarks/README.md` alongside the Phase 14 baseline (digest=251, card=188 post-P3). Flag any command whose radio-pioneers count exceeds the baseline by >20% — that is a regression signal, not a gate failure, but it must be investigated before P8.
-6. For each confirmed pair: `markery historian scaffold radio-pioneers <slug>`, expand manually, then `markery historian validate radio-pioneers <slug>`. All confirmed essays must pass validate.
+5. In the IA source module (`src/markery/specialist/librarian/sources/ia.py`), when `acquire` is passed an identifier that fails the initial IA lookup, attempt to resolve it by checking `library/works/<identifier>/metadata.json` for a previously acquired work with that slug. If found, re-use the existing metadata and skip re-download.
+6. If the identifier is not an IA identifier and not a known slug, print: `"Identifier '<slug>' not found. Use the raw IA identifier from 'markery librarian search-sources' output (e.g. 'historydevelopme0000fran')."` — not a traceback.
+7. Add a test: `acquire` with an unresolvable slug prints the helpful error message and exits 1.
+8. Close D044 in `DEFERRED.md`.
 
 ---
 
-### P7 — LIBRARIAN: secondary literature for radio domain — CLOSED
+### P4 — D043 and D049: Per-project model config + librarian MVO contracts
 
-Key works to acquire (verify IA open-access before requesting):
+**D043 — Per-project `model` in `project.json`:**
 
-| Work | Notes |
-|---|---|
-| Gleason Archer, *History of Radio to 1926* (1938) | Contemporary account covering RCA formation and patent pool |
-| W. Rupert Maclaurin, *Invention and Innovation in the Radio Industry* (1949) | Business history of the patent-to-product pipeline; directly relevant to confirmed-pair methodology |
-| Erik Barnouw, *A Tower in Babel* (1966) | Standard scholarly history of American broadcasting |
+1. Add optional `"model"` field to the `Project` dataclass in `src/markery/common/project.py`. Update `load_project()` to read it (default: `None`).
+2. In `src/markery/cli.py`, after any project is loaded and before dispatching to a specialist, if `project.model` is set and `MARKERY_MODEL` is not already in the environment, set `os.environ["MARKERY_MODEL"] = project.model`. Explicit env var always wins.
+3. Add `"model": "claude-haiku-4-5-20251001"` to `projects/animal-marks-1930/project.json` to mechanically enforce the Phase 16.1 Haiku commitment.
+4. Add tests: (a) `load_project()` returns `project.model = "claude-haiku-4-5-20251001"` when set in `project.json`; (b) `project.model = None` when absent; (c) when env already has `MARKERY_MODEL`, the project config does not override it.
+5. Close D043 in `DEFERRED.md`.
 
-1. Run `markery librarian discover --wikipedia "Radio Corporation of America" --add-wants` to surface citations.
-2. Run `markery librarian search-sources "radio history" --source ia` to find open-access texts.
-3. Acquire confirmed open-access works with `markery librarian acquire`.
-4. Run `markery librarian extract <slug> --topics "RCA" "RADIOLA" "patent pool" "vacuum tube" --tokens` on acquired texts. `extract` calls `claude-haiku-4-5-20251001` directly — record the prompt and completion token counts. Append results to `tests/benchmarks/radio-pioneers-p6.jsonl`. Run `markery librarian review` to accept relevant passages.
-5. Run `markery librarian index --embed`.
-6. Load a context card in the first historian session: `markery librarian card "radio receiver patents" --mode semantic`.
+**D049 — Librarian MVO contract tests:**
+
+6. Add a `TestLibrarian` class to `tests/test_mvo.py` covering the four contracts in `tests/benchmarks/mvo.md`. Use the same `requires_dbs` / `requires_library` skip markers as existing test classes.
+   - `librarian index`: exits 0; output contains a work count line
+   - `librarian search <query>`: exits 0; output lines conform to the search result format
+   - `librarian list`: exits 0; output lists known works with slugs
+   - `librarian card <query>`: exits 0; output contains `## Card:` header and at least one passage block
+7. Close D049 in `DEFERRED.md`.
 
 ---
 
-### P8 — Site build, Haiku essay test, and phase close — CLOSED
+### P5 — Deferred triage: D030, D040, D045
 
-1. **Haiku essay test:** Take the scaffold for one confirmed pair and attempt a complete draft using `claude-haiku-4-5-20251001` as the session model. Run `markery historian validate radio-pioneers <slug>` on the result. Record: pass/fail, any fields that required manual correction, and completion token count. This is the open question left from Phase 14 P4 — Haiku was validated for card/digest but not for full essay generation.
-2. Write at least one full validated essay (Haiku draft or manual expansion — whichever passes validate).
-3. Run `markery site build radio-pioneers` and verify the site renders without error.
-4. Create `projects/radio-pioneers/wikipedia/` with a draft file for the strongest Wikipedia contribution identified during the review cycle. Do not submit — save for a future phase.
-5. Append a `radio-pioneers` section to `tests/benchmarks/README.md`: token summary table (digest, card, extract, essay), Haiku simulation result, and comparison to Phase 14 baseline.
+**D030 — Deprecate `historian simulate` in favour of `--infer` commands:**
+
+Phase 18 P5 added `historian card --infer`, `historian digest --infer`, and `historian draft`. These three commands together supersede the D030 simulation script: `--infer` calls are more granular, CLI-first, tested, and token-logged. Update D030 in `DEFERRED.md` to note the supersession by Phase 18 P5 and close it.
+
+**D040 — Patent signals spec ordering — documentation fix:**
+
+Add a note to `src/markery/specialist/historian/persona/instructions/candidate-refresh.md` (or the closest equivalent instruction card for `markery patent signals`): "`markery patent signals <project>` reads from `candidates.jsonl` and enriches no records when called before `markery match`. Call it as step 1 of P4, immediately after `markery match` generates candidates." Close D040 in `DEFERRED.md`.
+
+**D045 — Librarian instruction card stubs:**
+
+Write 5 stub instruction cards in `src/markery/specialist/librarian/persona/instructions/`:
+- `review.md` — notes interactive vs. `--auto-accept` paths; references D032 fix
+- `raw-text.md` — prints path to `raw_text.txt`; use for debugging acquisition issues
+- `enter.md` — manual ILL registration when `acquire` is not applicable
+- `wants-update.md` — update status on an ILL wants-queue entry
+- `list.md` — list all acquired works with slug, title, and passage count
+
+Stubs need one paragraph describing when to use the command and the basic invocation form. Close D045 in `DEFERRED.md`.
 
 ---
 
 ### Phase Gate
 
-P1 PASSED when: account `CosmoGSpacely` has ≥5 confirmed non-reverted mainspace edits; all four new edits are in articles within the research domain. — PASSED 2026-06-06 (5 total edits: Stage 4b external link 2026-05-22; Library Bureau CN fix 2026-06-02; Library Bureau absorption citation 2026-06-03; Rolodex Wheeldex trademark citation 2026-06-05; Remington Rand filing systems section 2026-06-06 rev 1358111560)
+P1 PASSED when: all 7 Phase 16 Wikipedia edits confirmed live or revert documented; Rolodex revision ID recorded; Phase 16 P2 and P3 gates updated in `archive/ROADMAP-2026-06-06.md`; D050 closed (or new D-entry filed for resubmission).
 
-P2 PASSED when: D023 live on Wikipedia ≥48 hours unreverted; edit URL recorded in `projects/monthly-image-review/STATUS.md`. — SUBMITTED 2026-06-06 rev 1358151236; monitoring until 2026-06-08 for revert
+P2 PASSED when: `markery matchmaker confirm <project> <slug>` appends a correct record to `confirmed.jsonl`; all D029 tests pass. Figurative TUI audit complete; D041 test passes; D041 updated/closed.
 
-P3 PASSED when: D024 live on Wikipedia ≥48 hours unreverted; edit URL recorded in `projects/information-systems/STATUS.md`. — SUBMITTED 2026-06-06 rev 1358151441; monitoring until 2026-06-08 for revert
+P3 PASSED when: `markery librarian review --auto-accept` accepts all pending candidates without calling `input()`; D032 test passes; D032 closed. `markery librarian acquire` with unresolvable slug prints helpful error (not traceback); D044 test passes; D044 closed.
 
-P4 PASSED when: `projects/radio-pioneers/entities.csv`, `variants.csv`, and `RESEARCH.md` all exist. — PASSED 2026-06-02
+P4 PASSED when: `project.json` `"model"` field loaded and auto-sets `MARKERY_MODEL`; `animal-marks-1930/project.json` updated; D043 tests pass; D043 closed. Librarian MVO contract tests pass; D049 closed.
 
-P5 PASSED when: ≥10 trademark records and ≥20 patent records in scope; sweep complete without errors. — PASSED 2026-06-03 (10 TM records: RCA 3, Zenith 7; 2,885+ radio patents for RCA alone; 2,748 candidates generated; CPC coverage gaps for Zenith/De Forest documented in RESEARCH-AGENDA.md)
+P5 PASSED when: D030 closed with Phase 18 P5 supersession note; D040 closed with doc fix applied; D045 closed with 5 stub cards written.
 
-P6 PASSED when: ≥3 confirmed pairs in `confirmed.jsonl`; all pass `historian validate`; token counts recorded in `tests/benchmarks/radio-pioneers-p6.jsonl`; Haiku simulation pass/fail recorded. — PASSED 2026-06-03 (3 pairs: STERILAMP/Westinghouse, MINALITE/Westinghouse, VICTOR/RCA; all validate PASS; digest=249, card=195 tokens avg — within 5% of P14 baseline; Haiku simulation PASS, no hallucinations)
-
-P7 PASSED when: ≥2 radio secondary works indexed; `markery librarian card "radio receiver" --mode semantic` returns at least one passage; `extract` token counts recorded. — PASSED 2026-06-03 (3 works acquired: Archer 1939 9 passages, Barnouw 1966 5 passages, Taussig 1922 4 passages; 25 total indexed passages, 18 new embeddings; card returns 5 passages; extract tokens: Archer 26,001p/2,986c, Barnouw 45,127p/3,595c, Taussig 64,981p/3,128c)
-
-P8 PASSED when: `markery site build radio-pioneers` exits 0; one Wikipedia draft written; Haiku essay test result recorded; `tests/benchmarks/README.md` updated with radio-pioneers section. — PASSED 2026-06-03 (site build: 12 pages; Haiku essay: sterilamp-us2168861a PASS 6/6, 2,006p/922c tokens; Wikipedia draft: rca-patent-pool-manufacturing-split.md; README updated with full radio-pioneers token summary)
-
-Phase PASSED when P1–P8 all pass.
+Phase PASSED when P1–P5 all pass. `DEFERRED.md` is fully current: all closed entries are marked done; all open entries have valid reopen triggers and accurate path references.
 
 ---
 
-## Phase 16.1 — Animal Marks: Second Example Project
+## Phase 20 — Scoring and Data Quality
 
-**Trigger:** Phase 16 Track B complete. Track A (P1–P3) continues in parallel.  
-**Scope:** A second end-to-end example project, purpose-built to surface further CLI bypasses, harden Haiku-native operation, and test project structure flexibility. The research domain — early American technology company trademarks containing animal imagery, filed 1930 or earlier — was chosen to differ structurally from radio-pioneers in three ways: (1) trademark-first discovery using design search codes rather than entity-first setup; (2) targeted per-assignee patent retrieval rather than broad CPC sweeps; (3) a richer research question (why did an engineering company put an animal in its mark?) that drives both the LIBRARIAN corpus and the Wikipedia contribution.
+**Trigger:** Phase 19 complete.
+**Scope:** Three independent tracks addressing scoring accuracy, ownership-chain data, and discovery tooling.
 
-**Goal state:** A fully working `animal-marks-1930` project with confirmed pairs, validated essays, a site build, and secondary literature indexed. All API operations run on `claude-haiku-4-5-20251001` as the primary model — not as a test but as operational practice. Every CLI bypass encountered is logged to DEFERRED; every new D-entry updates Phase 17 P3.
+Track 1 — Scoring: fix the negative-gap penalty for pre-patent trademarks (the Colt/P&W problem confirmed in Phase 16.1 P4: trademark registered before specific technical patents were filed is a valid historical pattern, not a scoring failure).
 
-**Haiku-native commitment:** Set `MARKERY_MODEL=claude-haiku-4-5-20251001` at the start of P1 and leave it set for the entire phase. There is no separate "Haiku simulation" step — Haiku is the model, Sonnet is not used. If a step fails on Haiku, document the failure mode and the minimum model tier, then continue.
+Track 2 — Data: assignment table import (D047), visual-element discovery command (D034), mark-status reporting (D036), matchmaker clear (D037).
 
-**Known anticipated gap (D034):** No `markery trademark design-search` CLI command exists. Mark discovery in P1 will require a direct DuckDB query against the `design_search` table. Log as D034 on first occurrence.
+Track 3 — Enrichment: pre-candidate batch enrichment path (D046), `suggest-variants` title display (D039).
 
----
-
-### P1 — Animal marks discovery and project setup
-
-The discovery path here is trademark-first: find the marks, then identify the entities — the reverse of how `radio-pioneers` was set up. This tests whether the matchmaker's entity-first assumption is a bottleneck for a different class of research question.
-
-1. Query `trademarks.duckdb` directly: join `design_search` (codes beginning `03.` — USPTO animal category), `case_file` (filing date ≤ 1930-12-31), and `statement` (goods text containing technology keywords: electrical, motor, engine, apparatus, machine, radio, telephone, automobile, tool). Identify 4–6 entities with the most research-worthy animal-mark / technology-goods correspondence. Note the direct DB query as a D034 bypass — there is no `markery trademark design-search` command.
-2. For each selected entity, identify which assignee name variants to use in `variants.csv`. Run `markery matchmaker suggest-variants` for each.
-3. Run `markery project init animal-marks-1930` if the command exists (D027); otherwise scaffold manually and log the bypass.
-4. Write `projects/animal-marks-1930/entities.csv`, `variants.csv`, `RESEARCH.md` (central argument: what does an animal communicate in a technology brand, and what does it tell us about the company's market positioning?), `RESEARCH-AGENDA.md` (candidate pairs to investigate; open questions about specific animal choices).
-5. Set `MARKERY_MODEL=claude-haiku-4-5-20251001` — record it here as the operational model for all subsequent steps.
-
-**Conclusions:** The trademark-first discovery path (design code → serial → owner → entity) worked but required two bypasses logged on the first day: D034 (no `markery trademark design-search` command, raw DuckDB used) and D027 (third project triggered the reopen condition — `markery project init` crashes non-interactively, scaffolded manually). Expanding from 5 to 18 entities surfaced D035: `markery matchmaker build` silently accepts CSV rows where an unquoted comma in a variant name corrupts the `source` field — entity 16 (Pathé) built with a malformed record, `validate-variants` reported "All variants matched" but never displayed entity 16, and discovery required checking record counts manually. Recovery required raw DuckDB DELETE (D037). Five structurally distinct "why animal" models were identified for the original five entities and extended to twelve models across eighteen; these form the analytical spine of the project's research question. Dead-mark / public-domain status was confirmed for all 18 drawings via CONTEXT.md's copyright rule (works published 1930 or earlier are unconditionally in the US public domain as of January 1, 2026).
+**Goal state:** Colt and Pratt & Whitney candidates appear in `animal-marks-1930` with scores ≥ 0.5 after regeneration; ownership-transfer chain queryable via CLI for any trademark serial; dead/live/PD status reportable per project without raw SQL; visual-element-first project discovery feasible via CLI; batch enrichment works before candidates exist; `suggest-variants` includes example patent titles for disambiguation.
 
 ---
 
-### P2 — Trademark enrichment and entity qualification
+### P1 — Negative-gap scoring for pre-patent trademark sequences
 
-1. Run `markery trademark enrich-project animal-marks-1930` (or `markery trademark fetch <serial>` for each in-scope serial) to populate `extended_marks` with goods descriptions and mark images.
-2. Run `markery matchmaker build --data-dir projects/animal-marks-1930` to load entities and variants.
-3. Run `markery matchmaker validate-variants --data-dir projects/animal-marks-1930` to confirm all variant strings match actual DB records. Fix any zero-match variants before proceeding.
-4. Qualify each entity: must have ≥1 animal-mark serial with technology goods in `extended_marks`. Entities that fail this check are removed from `entities.csv` — document the removal in `RESEARCH-AGENDA.md`.
+**Context:** `class_hints` (Phase 17.1 P2) fixed the CPC bonus hardcoding. The remaining flaw: a negative date gap (trademark filed before patent grant) currently scores near-zero, excluding companies like Colt and Pratt & Whitney whose iconic marks predate their specific technical patents. This is a documented historical pattern, not a data error.
 
-**Conclusions:** `markery trademark enrich` stored raw TSDR JSON in `raw_json` but left all structured columns (`mark_text`, `status_cd`, `goods_desc`, `owner_name`) NULL — D038. Qualification fell back to the bulk `statement` table for goods descriptions and `case_file.cfh_status_cd` for status, which worked but defeats the purpose of enrichment as a structured data source. The `enrich-project` command cannot be used at P2 because it reads from `confirmed.jsonl` or `candidates.jsonl`, neither of which exists before P4 — a pre-candidate enrichment gap logged in Phase 17 P3. All 18 entities qualified: technology goods confirmed for all 18 serials, including three with very short goods strings ("MOTOR TRUCKS", "AUTOMOBILES", "MOTOR CARS") that a length-threshold filter initially excluded. No entities were removed.
-
----
-
-### P3 — Targeted patent acquisition
-
-The CPC sweep approach used in `radio-pioneers` returned +0 for pre-1940 patents in several classes. Here, use a narrower per-assignee strategy:
-
-1. For each entity: run a targeted query to see what patents are already in `patents.duckdb` for that assignee name. Many large pre-1930 manufacturers will have some coverage from earlier sweeps.
-2. For any entity with zero patents in DB: use `markery patent pull <patent_no>` for 2–3 known patents sourced from Google Patents or TSDR filing cross-references. Avoid broad CPC sweeps unless `markery patent coverage-check` returns > 0 for a class.
-3. Run `markery patent signals animal-marks-1930` to populate abstract text for any candidates in the DB.
-4. Gate: ≥5 patents total across all entities; ≥1 patent per entity that has a confirmed trademark in scope.
-
-**Conclusions:** Seven targeted CPC sweeps (B60C, F41A/C, A01B, F04B, B64D, F02B, F16J) yielded 66 unique patents across 6 of 18 entities. Twelve entities have no EPO coverage — they require targeted `markery patent pull` with specific patent numbers from an external source, which was not available during this session. Three false-positive name collisions required raw patent-title inspection to reject: CASE RES LAB INC (photo-electric devices, not J.I. Case tractors), SHAW WALKER CO (filing cabinets, not James Walker gaskets), GILLETTE SAFETY RAZOR CO (razors, not Gillette Tire) — D039 logged for `suggest-variants` title display. `suggest-variants` should be re-run after each sweep to discover newly-arrived assignee strings; instead raw ILIKE queries were used (workflow bypass, not a missing command). `patent signals` was called per the spec but enriched 0 candidates — signals requires candidates (P4); the spec ordering is wrong and D040 was logged. The D031 class_score issue was anticipated but not yet measurable without candidates.
+1. In `src/markery/specialist/matchmaker/score.py`, identify the gap penalty logic. Add `prior_brand_serials` support to `Project` (optional list of serial number strings). When a candidate's `trademark_serial` is in `prior_brand_serials`, substitute a neutral gap score (0.0) in place of any negative raw gap value — treating the pair as "indeterminate date order" rather than "wrong order."
+2. Add an optional `"prior_brand_serials"` array to `project.json`. Update `Project` dataclass and `load_project()` in `common/project.py` to read it.
+3. Identify the correct Colt and Pratt & Whitney animal-mark serial numbers from `trademarks.duckdb` (`case_file` WHERE `mark_id_char LIKE '%COLT%'` or design code lookup). Add them to `projects/animal-marks-1930/project.json` under `prior_brand_serials`.
+4. Regenerate candidates: `markery match animal-marks-1930 --all-serials`. Verify Colt and P&W candidates now appear with scores ≥ 0.5.
+5. Add a unit test: `score_candidate()` with a negative date gap and a serial in `prior_brand_serials` returns gap_score ≥ 0.0.
 
 ---
 
-### P4 — Candidate generation and Haiku-native review
+### P2 — Assignment table and design-search command
 
-1. Run `markery matchmaker generate animal-marks-1930`.
-2. Run `MARKERY_TOKEN_LOG=tests/benchmarks/animal-marks-p4.jsonl markery historian digest animal-marks-1930 --tokens`. Haiku is the operational model — no special framing.
-3. Run `markery historian card animal-marks-1930 <slug> --tokens` for the top candidates. Target ≥3 confirmed pairs across ≥2 entities.
-4. Note: the D031 `class_score` domain-specificity issue applies here too. Document whether the top-scoring candidates are genuinely strong or coincidental temporal proximity (as in radio-pioneers). Log any new scoring anomalies.
-5. Write `confirmed.jsonl` entries. Note whether D029 (`markery matchmaker confirm`) is triggered.
-6. `markery historian scaffold animal-marks-1930 <slug>` for each confirmed pair; expand essays (using Haiku as the drafting model — i.e., test `historian draft` preview if Phase 18 P5 is not yet implemented, note D030 bypass); run `markery historian validate animal-marks-1930 <slug>`.
-7. Record all token counts. Flag any operation that Haiku cannot complete correctly.
+**D047 — Assignment table import:**
 
-**Conclusions:** The generate command is `markery match`, not `markery matchmaker generate` — the ROADMAP spec had the wrong command name (a lighter model would crash on step 1). `markery match` generated 265 candidates from 4 of 6 patent-covered entities; Colt and Pratt & Whitney produced zero candidates because their trademark filings predated their patent grants, yielding negative scores excluded by the default min_score=0.0 threshold. This reversed commercial timeline — a long-standing brand name registered before specific technical patents were filed — is a historically real pattern that the scoring model penalises rather than recognises. Two crashes from figurative marks with `null` trademark fields — D041 logged for a systematic None audit. D031 confirmed with measurement: the GM Name Plate patent (G09F) scored 0.796 solely from the PRODUCT_CLASSES bonus, while the historically correct Hydrocarbon-Motor engine patent (F02B) scored 0.43; without manual intervention the wrong pair would have been confirmed. Only 9 of 265 candidates matched the specific animal-mark serials under study — the other 256 were incidental entity trademarks (CADILLAC, DELCO-REMY, various non-eagle Goodyear marks) — D042 logged for `markery match --serials` scoping. Haiku drafted all three essays cleanly at 2,060–2,169 prompt tokens with no hallucinated identifiers; all three validated PASS. D029 (confirm bypass) and D030 (draft inline script) recurred as expected.
+1. Locate the USPTO trademark assignment bulk data format (available from USPTO bulk data site alongside `case_file.zip`). Implement `markery trademark load-assignment --file <path>` following the same pattern as `load-events` and `load-foreign`. Minimum schema: `serial_no INTEGER`, `reel_no VARCHAR`, `frame_no VARCHAR`, `assignor_name VARCHAR`, `assignee_name VARCHAR`, `assignment_date DATE`, `recorded_date DATE`, `conveyance_text VARCHAR`.
+2. Add `-- contract:` DDL comments to the columns most likely to be queried in ownership-chain research (`serial_no`, `assignor_name`, `assignee_name`, `assignment_date`).
+3. Verify: `SELECT assignor_name, assignee_name, assignment_date FROM assignment WHERE serial_no = 71246709 ORDER BY assignment_date` returns the Rand Kardex Bureau → Remington Rand chain.
+4. Close D047 in `DEFERRED.md`.
 
-**Analysis:**
+**D034 — `markery trademark design-search` command:**
 
-Goal 1 — Bypasses and code gaps: Two actual crashes (not just bypasses) — D041 for figurative-mark None in historian CLI. The D029 `markery matchmaker confirm` bypass occurred again. The D030 historian draft inline script recurred. The ROADMAP spec had the wrong command name (`markery matchmaker generate` vs `markery match`). Total new entries: D041, D042.
-
-Goal 2 — Haiku-native: Clean success. All three essays drafted on Haiku at 2,060–2,169 prompt tokens, all validate PASS, no hallucinated identifiers. The figurative GM essay was the hardest case — Haiku correctly described the heraldic shield without inventing visual details from outside the scaffold.
-
-Goal 3 — Project structure flexibility: The entity-scoping assumption is now visibly limiting. 256 of 265 candidates were from non-animal trademarks of the same entities. The research question targets specific serials; the tool targets entities. D042 captures this gap.
-
-Goal 4 — Scoring domain specificity (D031): The most concrete evidence yet. GM's Name Plate patent (G09F, +0.3 class bonus) was the top-scoring candidate at 0.796. The historically correct pair — the engine patent — scored 0.43. The gap is not noise; it is the difference between confirming the right pair and the wrong one. Colt and P&W add a second scoring failure mode: the model penalizes trademark-before-patent sequences, but many iconic animal marks (the Colt horse, the P&W eagle) were registered before specific technical patents were filed.
+5. Implement `markery trademark design-search <code-prefix> [--filing-before YEAR] [--goods-contains TEXT]`.
+   - Queries `design_search` JOIN `case_file` JOIN `statement`. Returns: serial_no, mark_id_char (or "figurative"), own_name, filing_dt, goods description (first 100 chars).
+   - `<code-prefix>`: e.g., `03.` matches all animal marks; `01.` matches celestial; exact codes also accepted.
+   - `--filing-before YEAR`: filters `filing_dt < YEAR-01-01`.
+   - `--goods-contains TEXT`: case-insensitive substring match on `statement_text`.
+6. Add a test verifying the command produces output rows with the expected column structure.
+7. Close D034 in `DEFERRED.md`.
 
 ---
 
-### P5 — LIBRARIAN: secondary literature on animal imagery in American trademarks
+### P3 — Mark-status command and matchmaker clear
 
-The research question — why did a technology company choose an animal mark? — requires historical context that the patent/trademark DBs cannot provide.
+**D036 — `markery trademark mark-status`:**
 
-1. Run `markery librarian discover --wikipedia "trademark" --add-wants` and `--wikipedia "Brand management"` to surface citation leads.
-2. Run `markery librarian search-sources "trademark history" --source ia` and `"American advertising history" --source ia`. Target at least one open-access work covering pre-1930 American brand design or trademark practice.
-3. Acquire confirmed open-access works with `markery librarian acquire`.
-4. Run `markery librarian extract <slug> --topics "animal" "trademark" "brand" "advertising" "symbol" --tokens`. If using `--auto-accept`, note D032 bypass; if using interactive `review`, note terminal requirement.
-5. Run `markery librarian index --embed`.
-6. Load a context card before any essay session: `markery librarian card "animal trademark technology" --mode semantic`.
+1. Implement `markery trademark mark-status <project> [--dead-only] [--pd-only]`.
+   - For each trademark serial associated with the project's entity variants, join `case_file.cfh_status_cd` and derive: `live` (status codes 1xx–6xx), `dead` (700+), `public_domain` (filing_dt year ≤ current year − 95).
+   - Output: one row per serial — serial_no, mark_text, filing_dt, status_cd, live/dead, public_domain boolean.
+   - `--dead-only`: filter to dead marks only.
+   - `--pd-only`: filter to public_domain = True.
+2. Add a test verifying correct live/dead classification for a known serial.
+3. Close D036 in `DEFERRED.md`.
 
-**Analysis:**
+**D037 — `markery matchmaker clear`:**
 
-Goal 1 — Bypasses and code gaps: D032 (`--auto-accept`) recurred as expected — `markery librarian review` is terminal-bound and no non-interactive path exists. `markery librarian acquire <slug>` fails when passed the slug suggested by `search-sources`; the IA identifier (`historydevelopme0000fran`) must be used directly — a usability gap not yet in DEFERRED. The standard `discover` path was ineffective: Wikipedia citations for "trademark" and "Brand management" returned no acquirable IA sources. Source identification required targeted `search-sources "history development advertising Presbrey"` — the discovery workflow assumes a heavily-cited Wikipedia article; niche research domains require manual author search instead.
-
-Goal 2 — Haiku-native: `markery librarian extract` ran successfully on Haiku at 37,654p / 2,868c tokens across 248 chunks, early-stopping at chunk 15 after 32 raw candidates (10 after dedup). All 10 passages are on-topic; no hallucinated content. The card returned 4 directly relevant passages on first query.
-
-Goal 3 — Project structure flexibility: The same niche-domain limitation observed in P4 (entity-scoping vs. serial-scoping) recurs here: the discovery workflow is optimized for well-documented domains with dense Wikipedia citation graphs. Animal marks in American technology trademarks is too narrow a topic for the automated path. The effective strategy was to identify canonical scholarship by author name and acquire directly.
-
-Goal 4 — Passage quality and research fit: The 10 Presbrey passages document animal imagery from Roman Pompeii through medieval England — the painted cow signifying dairy, mule signifying bakery, goat signifying dairy from first-century Pompeii is the direct historical ancestor of the Mack bulldog and Goodyear eagle as commercial identifiers. The passages provide essential historical depth for the "why animal?" framing but predate the 1920s-1930s period by 1,900 years. A contemporaneous source — an advertising trade publication from the 1920s — would strengthen the direct-era argument; `advertising-age` (1930) is already in the library with 0 excerpts and could serve this role if raw text is available.
+4. Implement `markery matchmaker clear <project> [--dry-run] [--yes]`.
+   - Reads entity IDs from `projects/<name>/entities.csv`.
+   - Deletes matching rows from `entity_name_variant` and `company_entity` in `entities.duckdb`.
+   - `--dry-run`: print row counts that would be deleted; do not delete.
+   - Without `--yes`: require interactive confirmation ("Delete N entity rows and M variant rows? [y/N]"). With `--yes`: proceed without prompting (for non-interactive use).
+5. Add tests: (a) `--dry-run` reports correct row count and does not delete; (b) `--yes` deletes the rows; (c) running `clear` on a project with no entities in DB is a no-op with a clear message.
+6. Close D037 in `DEFERRED.md`.
 
 ---
 
-### P6 — Publisher, Wikipedia contribution, and phase close
+### P4 — Pre-candidate enrichment and suggest-variants titles
 
-1. Run `markery site build animal-marks-1930` and verify exit 0.
-2. Identify the strongest Wikipedia contribution. The "why animal" angle is well-suited to adding cited context to a company or trademark article that currently lacks it. Write the draft to `projects/animal-marks-1930/wikipedia/`.
-3. Append an `animal-marks-1930` section to `tests/benchmarks/README.md`: token summary (digest, card, extract, essay), confirmation that Haiku completed all steps, and a note on any steps that required fallback or correction.
-4. D-number audit: list every new CLI bypass found during this phase. Verify each is in DEFERRED with a reopen trigger. Update Phase 17 P3 "Known gaps" section.
+**D046 — Pre-candidate batch enrichment:**
 
-**Analysis:**
+1. Add `markery trademark enrich-project <project> --from-variants` mode to `src/markery/specialist/trademark/cli.py`.
+   - Instead of reading serials from `candidates.jsonl` or `confirmed.jsonl`, derive serials from the project's entity variant strings: join `entity_name_variant` (where `entity_id` matches any entity in `entities.csv`) → `case_file.own_name` ILIKE variant → `serial_no`.
+   - Enrich each discovered serial via the existing `enrich` path.
+2. Verify on a new project: `extended_marks.goods_desc` is populated before `markery match` is run.
+3. Add a test verifying `--from-variants` enriches at least one serial for a project whose `candidates.jsonl` does not exist.
+4. Close D046 in `DEFERRED.md`.
 
-Goal 1 — Bypasses and code gaps: Site build crashed immediately with `AttributeError: 'NoneType' object has no attribute 'lower'` in `publisher/queries.py` line 199 — the D041 figurative-mark None audit surfacing in a third code path that the two P4 historian spot-fixes did not cover. Fixed inline: slug computation now uses `re.sub(r'[^a-z0-9]+', '-', (m["trademark"] or "figurative").lower()).strip('-')` with patent number appended, which also corrected a pre-existing mismatch between the slug format and historian's essay naming convention (essays were silently unfound on the site in all prior projects). Second fix: `build.py` search record label now uses `match['trademark'] or '(figurative)'`. No new DEFERRED entry — D041 covers the audit. D044 (acquire slug) already logged from P5. Total new code changes: 2 files, 3 lines.
+**D039 — `suggest-variants` title display:**
 
-Goal 2 — Haiku-native: Full phase completed on Haiku with no Sonnet fallback. Site build, Wikipedia draft, and README were not API calls and are model-agnostic. All API-calling steps (digest, card, essay, extract) ran on Haiku. The only non-CLI step was the D030 essay-draft bypass (inline script). No step failed on Haiku.
+5. In `src/markery/specialist/matchmaker/cli.py`, update the `suggest-variants` output for each candidate assignee string: append 1–2 example patent titles in parentheses — `N× ASSIGNEE_NAME  (e.g. "Patent Title" (year))`.
+   - Use `SELECT title, YEAR(grant_dt) FROM patents WHERE UPPER(assignee_name) = UPPER(?) LIMIT 2`.
+6. Add a test verifying that patent titles appear in `suggest-variants` output for a known assignee.
+7. Close D039 in `DEFERRED.md`.
 
-Goal 3 — Project structure flexibility: The Wikipedia draft required manual identification of the strongest animal-mark serial — the CLI has no command to filter confirmed pairs by trademark character (animal vs. text). The Objective 7 dead-mark priority check required a direct DuckDB query (`cfh_status_cd = 900` for all three confirmed pairs). Both are gaps observable in prior phases; neither is new.
+---
 
-Goal 4 — Scoring domain specificity (D031): Not directly tested in P6, but the site build materialized the scoring consequence: the confirmed essays cover Goodyear and John Deere (clean patent-trademark correspondence) and GM (manually corrected from the top-scoring wrong pair). The site's match gallery therefore reflects researcher intervention, not the scorer's output. This is the correct result — but it underlines that D031 is not a minor calibration issue; without manual review, the animal-marks site would have confirmed a GM name-plate/engine pair with no historical support.
+### P5 — Cross-project data quality audit
+
+1. Run `markery historian validate` on every confirmed essay in `information-systems`, `radio-pioneers`, and `animal-marks-1930`. All must pass 8/8. Document any failures.
+2. Run `markery site build` for all three projects. All must exit 0. Any crash is a blocker.
+3. Run `markery matchmaker validate-variants` for all three projects. Flag any zero-match variants.
+4. Query `extended_marks` for all project-scope serials across all three projects. Identify NULLs in `goods_desc` or `mark_text` that are not design marks (unexplained NULLs are a data gap to document).
+5. Record results in a Phase 20 section of `tests/benchmarks/README.md`.
 
 ---
 
 ### Phase Gate
 
-P1 PASSED when: `projects/animal-marks-1930/` scaffolded; ≥4 entities identified via design-search query; `MARKERY_MODEL` set to Haiku; D034 logged if design-search CLI is absent. — PASSED 2026-06-03 (5 entities: Mack Trucks/bulldog, Pratt&Whitney/eagle, Eagle Electric/eagle, Pathé/rooster, Albert Setzer MULE/mule; D034 logged — design_search queried via raw DuckDB; D027 triggered — project init crashes non-interactively, scaffolded manually; MARKERY_MODEL=claude-haiku-4-5-20251001 committed in RESEARCH.md)
+P1 PASSED when: `prior_brand_serials` implemented and tested; Colt and P&W candidates appear in `animal-marks-1930` with scores ≥ 0.5 after regeneration.
 
-P2 PASSED when: `validate-variants` exits 0 for all entities in scope; each entity has ≥1 animal-mark serial with technology goods in `extended_marks`. — PASSED 2026-06-04 (18/18 entities enriched via `markery trademark enrich`; all 18 qualify with technology goods confirmed from `statement` table; D038 logged — `enrich` stores raw JSON only, structured fields remain NULL; `enrich-project` inapplicable pre-candidates)
+P2 PASSED when: `load-assignment` imports and the Rand Kardex ownership chain is queryable; `design-search` exits 0 with correct columns; D047 and D034 closed.
 
-P3 PASSED when: ≥5 patents in `patents.duckdb` for animal-marks-1930 entities; `patent signals` run. — PASSED 2026-06-04 (66 patents across 6 entities via sweeps of B60C, F41A/C, A01B, F04B, B64D, F02B, F16J; 12/18 entities have no EPO coverage — need targeted pulls with specific numbers; patent signals deferred to P4 post-candidate-generation; 12 false-positive assignee strings excluded)
+P3 PASSED when: `mark-status` exits 0 with correct live/dead/PD output; `matchmaker clear --dry-run` reports correct row count without deleting; D036 and D037 closed.
 
-P4 PASSED when: ≥3 confirmed pairs in `confirmed.jsonl`; all pass `historian validate`; token counts in `tests/benchmarks/animal-marks-p4.jsonl`; all operations completed on Haiku (or failures documented). — PASSED 2026-06-04 (3 pairs: Deere/JOHN DEERE/plow, Goodyear/DOUBLE EAGLE/tire, GM/figurative-heraldic/engine; all validate PASS 6/6; Haiku drafts 2169p/980c, 2141p/945c, 2060p/667c; 2 code bugs fixed: None-trademark crash in digest formatter and card slug matcher)
+P4 PASSED when: `enrich-project --from-variants` populates `extended_marks` before candidates exist; `suggest-variants` output includes example patent titles; D046 and D039 closed.
 
-P5 PASSED when: ≥1 secondary work indexed with passages relevant to animal mark symbolism; `markery librarian card "animal trademark" --mode semantic` returns ≥1 passage. — PASSED 2026-06-04 (Presbrey 1929 acquired from IA, 10 passages extracted with Haiku 37,654p/2,868c tokens, --auto-accept bypass (D032); card returns 4 passages on animal imagery in Roman/medieval advertising; passages on painted cow, mule, goat signboards and sheep advertising directly support "why animal?" research question)
+P5 PASSED when: all confirmed essays validate 8/8 across all three projects; all three site builds exit 0; data quality results recorded in benchmarks README.
 
-P6 PASSED when: `markery site build animal-marks-1930` exits 0; Wikipedia draft written; `tests/benchmarks/README.md` updated; all new DEFERRED entries confirmed present with reopen triggers. — PASSED 2026-06-04 (25 pages; site crashed on `trademark: null` in publisher/queries.py — fixed inline (D041 manifesting in third code path); Wikipedia draft: goodyear-double-eagle.md (DOUBLE EAGLE serial 71273140, dead mark, patent US1645089A); README updated with full token summary; D044 in DEFERRED)
-
-Phase PASSED when P1–P6 all pass. — PASSED 2026-06-04
+Phase PASSED when P1–P5 all pass. All D-numbers in this phase closed in `DEFERRED.md`.
 
 ---
 
-## Phase 17 — Publisher Upgrade, Documentation, and Code Gap Analysis — CLOSED
+## Phase 21 — Architectural Work
 
-**Trigger:** Phase 16 complete.  
-**Scope:** Publisher and matchmaker project-type sensitivity (new P1); a holistic documentation and code-quality pass covering Phases 14–17 additions (P2); code gap audit (P3); tests and close (P4). D007 (PatentsView bulk import) remains in DEFERRED — its reopen conditions have not been met and it is not the current priority. D023 and D024 have moved to Phase 16.
+**Trigger:** Phase 20 complete.
+**Scope:** Two tracks:
+1. **Markery-LangGraph**: Stand up the companion repo and build the automated review workflow using Phase 18's `--infer` commands and Phase 19's `matchmaker confirm`.
+2. **Project infrastructure**: D027 `project onboard` command (D042 `match --serials` ad-hoc flag as a parallel deliverable).
 
-**Goal state:** By phase close, the publisher renders project-type-appropriate sites using `focus_serials` configuration; the matchmaker scopes candidate generation to focus serials when set; all top-level and specialist documentation reflects Phase 14–17 work; `DEFERRED.md` is fully current.
-
----
-
-### P1 — Publisher and matchmaker: project-type sensitivity
-
-The `animal-marks-1930` site exposes the publisher's core limitation: every project renders identically regardless of the research question. The trademark gallery shows CADILLAC, DELCO-REMY, and seventeen non-animal Goodyear marks at the same visual weight as the three animal-mark serials the project exists to study. The research framing ("why did a technology company choose an animal mark?") is absent from the rendered output. Match essays — the primary analytical output — appear buried in a gallery alongside unrelated entity marks.
-
-Fix in three layers: configuration, matchmaker, publisher.
-
-**Configuration — `focus_serials`:**
-1. Add a `focus_serials` array to `projects/<name>/project.json`. For `animal-marks-1930`, list the specific animal-mark serials identified in P1 discovery (the serials the project is about — not all entity trademarks). The field is optional; absent `focus_serials` leaves all existing behavior unchanged. Read `projects/animal-marks-1930/RESEARCH.md` and the P1 discovery query results to identify the correct serials; write them to `project.json`.
-
-**Matchmaker — focus-scoped candidate generation (partial D042):**
-2. When `focus_serials` is present in `project.json`, `markery match <project>` generates candidates only from those serials. Add `--all-serials` flag to override and generate from all entity trademarks (current behavior, now explicit). Regenerate `candidates.jsonl` for `animal-marks-1930`; confirm the candidate count drops from 265 to the focused set. Update D042 in DEFERRED to note partial close: the project-config approach replaces the originally proposed `--serials` flag.
-
-**Publisher — trademark gallery:**
-3. When `focus_serials` is set, render the trademark gallery in two sections: "Project Marks" (focus serials, shown first, visually distinct — e.g., a border or badge) and "All Entity Trademarks" (remaining entity marks, de-emphasized). Without `focus_serials`, gallery renders as a single list as before.
-
-**Publisher — landing page:**
-4. If `projects/<name>/content/research-question.md` exists, render its text as the landing page introduction above the stat cards. Write `projects/animal-marks-1930/content/research-question.md`: one or two paragraphs framing the "why animal?" question, drawn from the project's `RESEARCH.md`. Without this file, landing renders as before.
-
-**Verify and rebuild:**
-5. Run `markery site build animal-marks-1930`: confirm focus marks appear in a distinct gallery section and research-question text is on the landing page. Run `markery site build information-systems` (no `focus_serials`) and confirm no regression — single-list gallery, landing renders as before.
+**Goal state:** `markery-langgraph` repo is live with a working LangGraph review graph that processes a project's candidate queue via `historian card --infer` and writes to `confirmed.jsonl` via `matchmaker confirm`; `markery project onboard` guides new project setup end-to-end; `markery match --serials` enables ad-hoc serial-scoped generation.
 
 ---
 
-### P2 — Documentation pass
+### P1 — markery-langgraph repo setup
 
-Review all user-facing and developer-facing documentation for staleness and gaps introduced across Phases 14–17. Update only what has drifted or is missing.
-
-**Top-level docs:**
-1. `README.md` — verify it reflects current capabilities; update the command inventory if any commands added in Phases 14–17 are absent; confirm the setup instructions still work end-to-end.
-2. `DESIGN.md` — check whether the model-agnosticism section accurately describes the Phase 14 token instrumentation, Phase 15 LIBRARIAN embedding approach, and Phase 16 radio project structure; add any new architectural patterns.
-3. `SETUP.md` — confirm all new optional dependencies (`sentence-transformers`, `anthropic`) are documented with install instructions and purpose.
-4. `CONTEXT.md` — update the "what exists" summary to reflect the LIBRARIAN specialist, bulk-import capability, and `radio-pioneers` project.
-
-**Specialist docs:**
-5. Each specialist's `identity.md` — verify scope sections are current for any commands added in Phases 14–17.
-6. Instruction cards (`persona/instructions/`) — audit against implemented commands. Any command reachable via `markery <specialist> --help` that has no instruction card is a gap. Create stub cards; note which require full content.
-7. Publisher specialist docs (`src/markery/specialist/publisher/`) — document the `focus_serials` field in `project.json` and the slug contract between historian and publisher (`{tm_slug}-{patent_no}` naming convention; the pre-existing silent mismatch fixed in Phase 16.1 P6 must not recur).
-
-**Benchmark docs:**
-8. `tests/benchmarks/README.md` — add a Phase 17 section noting any publisher rendering changes; confirm the Phase 14 token baseline is still valid.
+1. Create the `markery-langgraph` GitHub repo. Initialise with `pyproject.toml` (`langgraph>=0.2`, `anthropic>=0.40`, `duckdb>=1.0`), `src/langgraph_markery/`, `README.md`.
+2. Write `src/langgraph_markery/config.py`:
+   - `MARKERY_ROOT` from `MARKERY_ROOT` env var (required)
+   - `check_contract(root)`: reads `MANIFEST.json`, asserts `contract_version == "1.0"`, raises `RuntimeError` if mismatch
+3. Write `src/langgraph_markery/state.py`: `ResearchState` TypedDict with fields `project: str`, `queue: list[dict]`, `confirmed_this_session: list[str]`, `current_slug: str | None`, `infer_result: dict | None`, `session_log: list[str]`.
+4. Write `src/langgraph_markery/tools.py`: subprocess wrappers that call Markery CLI and parse stdout/stderr:
+   - `run_digest(project) -> str` — runs `markery historian digest <project>`
+   - `run_card_infer(project, slug, model=None) -> dict` — runs `markery historian card <project> <slug> --infer --out -`; parses `[infer]` line from stderr into `{"recommendation", "score", "reasoning", "card_text"}`
+   - `run_confirm(project, slug, note=None)` — runs `markery matchmaker confirm <project> <slug>`
+   - `run_draft(project, slug) -> tuple[str, bool]` — runs `markery historian draft <project> <slug>`; returns (stdout, validate_passed)
+5. Gate: `python -c "from langgraph_markery import state, tools, config; config.check_contract('$MARKERY_ROOT')"` exits 0.
 
 ---
 
-### P3 — Code gap analysis — CLOSED
+### P2 — LangGraph workflow graph
 
-Audit the full codebase for incomplete implementation, missing test coverage, and deferred items that Phase 14–17 work may have made satisfiable.
-
-**Known gaps from Phase 16 P5 (address first):**
-These were discovered during the radio-pioneers live-test and implemented as immediate hardening; verify they are complete and tested before broader audit.
-- `matchmaker build` entity ID collision detection — silent skip when ID exists with different name was the root cause of radio-pioneers data corruption
-- `markery matchmaker validate-variants <project>` — zero-match variant detection against actual DB strings
-- `markery patent coverage-check` — dry-run EPO query to surface zero-coverage CPC classes before committing to a full sweep
-- D027 (`project onboard`) and D028 (`trademark search-tsdr`) are in DEFERRED; promote here if a third project setup hits the same gaps
-
-**Known gaps from Phase 16 P6 (verify and test):**
-These were discovered during the radio-pioneers candidate review and Haiku simulation.
-- D029 (`matchmaker confirm`): Phase 16 P6 wrote to `confirmed.jsonl` directly because no non-interactive CLI path exists — `markery review` requires a raw-mode terminal. Verify D029 is in DEFERRED with correct reopen trigger.
-- D030 (`historian simulate`): Phase 16 P6 ran the Haiku simulation as an inline Python script (`/tmp/radio_haiku_sim.py`) rather than a CLI command. Verify D030 is in DEFERRED. No P6-equivalent test should be hand-scripted again.
-- D031 (`class_score` domain specificity): `PRODUCT_CLASSES` in `score.py` hardcodes information-systems CPC classes. For radio-pioneers, G09F (display/advertising) patents scored 0.3 higher than H01J (vacuum tubes) and H04B (radio) patents with identical date proximity — the top-scoring candidates were cross-product-line coincidences, not genuine matches. Fix design is in D031; verify it is correctly specified before audit is complete.
-
-**Known gaps from Phase 16 P7 (verify and test):**
-These were discovered during the radio-pioneers secondary literature acquisition.
-- D032 (`librarian review --auto-accept`): Phase 16 P7 wrote `excerpts.md` directly for all three acquired works because `markery librarian review` is interactive (terminal-bound) and `--auto-accept` only exists on `extract` (which would repeat expensive API calls). No CLI path exists to accept an already-generated `candidates.md` non-interactively. Verify D032 is in DEFERRED.
-- D033 (`librarian index` format validation): Phase 16 P7 initially wrote `excerpts.md` with `##` headings; the indexer requires `###`. `markery librarian index --rebuild` reported success ("8 work(s)") with zero new passages and gave no warning. The mismatch was discovered only by manually checking record counts. Verify D033 is in DEFERRED.
-
-**Known gaps from Phase 16.1 P1 expansion (verify and test):**
-These were discovered during the animal-marks-1930 entity expansion from 5 to 18 entities.
-- D035 (CSV comma-in-name mis-parse): `markery matchmaker build` silently accepted a malformed `variants.csv` row where an unquoted comma in the variant name was parsed as a field delimiter; entity 16 (Pathé) appeared to build successfully but was never displayed by `validate-variants`. The "All variants matched" summary was misleading. Verify D035 is in DEFERRED with the corrected description.
-- D036 (`trademark mark-status`): finding dead marks required two raw `case_file.cfh_status_cd` DuckDB queries — one to filter the candidate pool, one to verify the final 15-dead/3-live breakdown. No CLI command can report trademark status for marks in a project's scope. Verify D036 is in DEFERRED.
-- D037 (`matchmaker clear`): after the D035 CSV bug corrupted entity 16, recovery required raw DuckDB `DELETE` statements. The `build` command is idempotent-add-only; there is no remove path. Verify D037 is in DEFERRED.
-
-**Known gaps from Phase 16.1 P4:**
-- D041 (figurative mark None crash): `historian digest` and `historian card` crash on `trademark: null` candidates. GM serial 71199224 is a purely figurative mark; two spot-fixes applied inline but a systematic audit of all `c['trademark']` references in historian/cli.py is needed. Verify D041 in DEFERRED.
-- D042 (`match --serials`): `markery match` generates candidates for ALL entity trademarks, not just the specific animal-mark serials under study. Phase 16.1 P4 generated 265 candidates of which 9 were animal-mark-specific; the other 256 were noise from CADILLAC, DELCO-REMY, Chevrolet, non-eagle Goodyear marks. Verify D042 in DEFERRED.
-- Spec error: ROADMAP P4 step 1 says `markery matchmaker generate` — the correct command is `markery match`. A lighter model would crash on step 1. Fix the ROADMAP template.
-- D031 confirmed again: GM Name Plate patent (G09F) scored 0.796 — highest in project — while the better Hydrocarbon-Motor pair (F02B) scored 0.43. Score ordering is actively misleading for this project.
-- Colt and P&W excluded entirely: trademark filed before patent grant → negative scores → zero candidates. The reversed commercial timeline (long-standing brand name predating specific technical patents) is a real historical pattern not captured by the current scoring model.
-
-**Known gaps from Phase 16.1 P3:**
-- D039 (`suggest-variants` false positives): Phase 16.1 P3 found three false-positive assignee matches (CASE RES LAB ≠ J.I. Case; SHAW WALKER ≠ James Walker; GILLETTE SAFETY RAZOR ≠ Gillette Tire) that required raw patent-title inspection to reject. `suggest-variants` shows counts only — no titles — making name-collision disambiguation impossible without leaving the CLI. Verify D039 is in DEFERRED.
-- D040 (`patent signals` spec ordering): `patent signals` was called at P3 per the spec and returned "0 candidates enriched" — correct but useless, since candidates don't exist until P4. Signals belongs as step 1 of P4 post-`generate`, not in P3. Verify D040 is in DEFERRED.
-- Workflow gap (not a new command): after CPC sweeps, `suggest-variants` should be re-run for each entity to discover newly-arrived assignee strings. Instead, raw DuckDB ILIKE queries were used to find the correct patent assignee names. The CLI path existed (`suggest-variants`) but was bypassed. Document in P3 template that `suggest-variants` must be re-run after each sweep.
-
-**Known gaps from Phase 16.1 P2:**
-- D038 (`enrich` structured-fields): `markery trademark enrich` stores raw TSDR JSON but leaves `mark_text`, `status_cd`, `goods_desc`, `owner_name` NULL. P2 qualification fell back to `statement` table (goods) and `case_file.cfh_status_cd` (status) because `extended_marks` had no parsed data despite successful enrichment. Verify D038 is in DEFERRED.
-- `enrich-project` reads from `confirmed.jsonl` or `candidates.jsonl` — neither exists at P2 stage. No CLI path to batch-enrich project-scoped marks before candidate generation. Logged here; promote to DEFERRED if recurs in a third project.
-
-**Known gaps from Phase 16.1 P5:**
-- D032 (`librarian review --auto-accept`) recurred: `--auto-accept` used on `extract` because `markery librarian review` is terminal-bound. Verify D032 is in DEFERRED.
-- D044 (`librarian acquire` slug mismatch): `markery librarian search-sources` prints a suggested slug that `markery librarian acquire` rejects — the raw IA identifier must be used. Phase 16.1 P5 used `historydevelopme0000fran` after `presbrey-history-and-development-of-advertising` failed. Verify D044 is in DEFERRED with reopen trigger pointing to Phase 17 P2/P3.
-
-**Known gaps from Phase 16.1 P6:**
-- D041 (figurative mark None crash) in publisher: `publisher/queries.py` crashed with `AttributeError` on `trademark: null` — a third code path not covered by the two P4 historian spot-fixes. Fixed inline with `re.sub` slug + `"figurative"` fallback. D041 audit is still open for `scaffold`, `validate`, and `confirmed.jsonl` writer. Verify D041 is in DEFERRED with audit scope updated.
-- Slug mismatch (pre-existing, not a crash): `publisher/queries.py` derived essay slugs as `trademark.lower().replace(" ", "-")`, which did not match historian's `{tm_slug}-{patent_no}` convention. Essays were silently unfound in all prior projects' site builds. Fixed inline in the same patch. Not a new DEFERRED entry — the fix is in place; mention in Phase 17 P2 documentation pass as a note on the slug contract between historian and publisher.
-
-**Implementation gaps:**
-1. Grep for `TODO`, `FIXME`, `HACK`, `raise NotImplementedError`, and `pass` in `src/`. Classify each as: (a) intentional stub, (b) known gap already in `DEFERRED.md`, or (c) newly discovered. Add (c) items to `DEFERRED.md` with a reopen trigger.
-2. Cross-reference all subcommands in every specialist's `--help` output against `cli.py`. Any subcommand registered but not dispatched is a gap.
-3. Check `markery historian prepare` — verify instruction cards reflect the current output format.
-
-**Test coverage gaps:**
-4. Run `python -m pytest --co -q` and compare collected tests against the full command inventory. Any command with zero test coverage gets a DEFERRED entry.
-5. Check `tests/benchmarks/mvo.md` — verify every contract row has a corresponding test in `tests/test_mvo.py`.
-
-**Schema and data gaps:**
-6. Check whether the `assignment` table (queried during the SOUNDEX ownership research in Phase 16) is populated. If not, add a DEFERRED entry for assignment data import.
-
-**DEFERRED.md hygiene:**
-7. Review every open DEFERRED entry. Confirm reopen triggers are still valid; close any silently met during Phases 14–17; update stale path or command references.
+1. Write `src/langgraph_markery/graph.py`:
+   - **Nodes:** `load_digest` (parse digest into queue), `pick_next` (select next unreviewed slug), `generate_card` (write card file), `infer_card` (call `run_card_infer`, store `infer_result` in state), `route_recommendation` (conditional routing), `write_confirmed` (call `run_confirm`, trigger `run_draft`), `write_rejected` (append to rejected.jsonl), `append_defer` (add slug to deferred list for later review), `human_gate` (interrupt — surface card + recommendation for human approval before writing confirmed)
+   - **Edges:** After `infer_card` → `route_recommendation`; routes: `"confirm"` → `human_gate` → `write_confirmed`, `"reject"` → `write_rejected`, `"defer"` → `append_defer`. After any write node → `pick_next`. `pick_next` terminates when queue is empty.
+   - `human_gate` uses LangGraph's `interrupt()`. The graph can be resumed with an override recommendation (`"confirm"` / `"reject"`) injected by the caller.
+2. Write an integration test that runs the graph on `radio-pioneers` against 3 unreviewed candidates (mocked tool calls — no live API). Verify: state contains 3 `infer_result` records; routing fires correctly; `run_confirm` was called for any "confirm" result.
+3. Document in `README.md`: `MARKERY_ROOT` env setup, running `python -m langgraph_markery.graph <project>`, and how to inject a human override when the graph is interrupted.
 
 ---
 
-### P4 — Tests, cleanup, and close — CLOSED
+### P3 — D027: `markery project onboard`
 
-1. Add publisher `focus_serials` rendering to `tests/benchmarks/mvo.md`: contract for `site build` with `focus_serials` set (focus marks section present in trademark gallery HTML) and without (single-list gallery, no regression).
-2. Write or extend a publisher test that verifies: (a) when `project.json` contains `focus_serials`, `get_confirmed_matches` separates focus marks from non-focus marks; (b) when `focus_serials` is absent, output is unchanged from pre-P1 behavior.
-3. Update D042 in `DEFERRED.md` to note the partial close: project-config-driven focus scoping implemented in P1; the `--serials` CLI flag remains unimplemented and deferred.
+1. Implement `markery project onboard <project>` — a wrapper command that runs the full new-project validation sequence and prints a per-step PASS/FAIL summary:
+   - **Step 1 — Entity ID uniqueness:** Check that no entity ID in `entities.csv` already exists in `entities.duckdb` for a different project. Print the conflicting IDs if any.
+   - **Step 2 — Variant suggestions:** Run `suggest-variants` for each entity and print the top 5 candidate assignee strings with example patent titles.
+   - **Step 3 — Variant validation:** Run `validate-variants`; flag zero-match variants. Exit 1 if any variant matches zero DB records.
+   - **Step 4 — Coverage counts:** Report trademark and patent counts for all confirmed variants.
+   - **Step 5 — Patent coverage check:** For each CPC class in `project.json`, run `coverage-check`; warn if any class returns 0.
+   - Print: `Onboarding PASSED` (all steps pass) or `Onboarding FAILED` (any step fails) with per-step detail.
+2. Runnable after `entities.csv` and `variants.csv` exist but before `markery match`.
+3. Add a test: `project onboard` exits 0 for a correctly configured project; exits 1 with an actionable message when variants have zero matches.
+4. Close D027 in `DEFERRED.md`.
+
+---
+
+### P4 — D042: `markery match --serials` ad-hoc flag
+
+1. Add `--serials <serial> [<serial>...]` to `markery match <project>` CLI.
+   - Overrides `focus_serials` from `project.json` for this run only (does not modify `project.json`).
+   - Generates candidates only for the listed serials against all project entities.
+   - When `--serials` is set alongside `--all-serials`, `--serials` takes precedence.
+2. Use case: exploratory generation for one or two serials without editing project configuration.
+3. Add a test: `markery match <project> --serials 71299042` generates candidates only for serial 71299042.
+4. Fully close D042 in `DEFERRED.md` (project-config approach from Phase 17 P1 handles persistent focus; this adds the one-off CLI override that completes the original request).
 
 ---
 
 ### Phase Gate
 
-P1 PASSED when: `markery site build animal-marks-1930` exits 0 with focus marks section present in trademark gallery HTML and research-question content on landing page; `markery site build information-systems` exits 0 with no regression. — PASSED 2026-06-05 (27 focus serials in project.json; candidates.jsonl reduced from 265 to 19; trademark gallery splits into "Project Marks" / "All Entity Trademarks" sections; research-question.md rendered as intro block on landing; information-systems rebuilds cleanly with no focus styling or rq block)
+P1 PASSED when: `markery-langgraph` repo initialised; `config.py`, `state.py`, `tools.py` all importable; `check_contract` passes against `MARKERY_ROOT`.
 
-P2 PASSED when: all docs reviewed; instruction card gaps filed as DEFERRED or filled; publisher specialist docs updated with `focus_serials` and slug contract. — PASSED 2026-06-05 (README/CONTEXT/DESIGN/SETUP updated; LIBRARIAN added throughout; project.json/focus_serials documented; 14 new instruction cards across historian/matchmaker/patent/librarian; D045 filed for 5 remaining low-priority librarian stubs; publisher and matchmaker identity.md updated with slug contract and focus_serials; benchmarks README Phase 17 P1 section added)
+P2 PASSED when: LangGraph graph integration test passes with mocked tools; routing logic verified; `README.md` documents setup and usage.
 
-P3 PASSED when: `DEFERRED.md` updated with all newly discovered gaps; every open entry has a valid reopen trigger; no command in `--help` output is unimplemented without a DEFERRED entry. — PASSED 2026-06-05 (0 grep hits for TODO/FIXME/NotImplementedError in src/; all 21 open D-numbers verified with updated triggers; 4 new entries: D046 pre-candidate enrich-project, D047 assignment table absent, D048 match invisible subcommands, D049 librarian MVO contracts untested; D041 line 219 crash patched inline; stale triggers updated across 12 entries; PHASE17-P3-REVIEW.md documents all findings)
+P3 PASSED when: `markery project onboard` exits 0 on a correctly configured project and exits 1 with actionable errors on a misconfigured one; D027 closed.
 
-P4 PASSED when: publisher MVO contract updated; publisher focus-serials test passes; D042 updated in `DEFERRED.md` with partial-close note. — PASSED 2026-06-05 (13 tests in tests/specialist/publisher/test_render_focus.py — 8 with focus_serials, 5 without; all 475 suite tests pass; mvo.md updated with focus_serials gallery contract; D042 partial-close noted in P1/P2)
+P4 PASSED when: `markery match --serials` generates candidates only for the listed serials; test passes; D042 fully closed.
 
-Phase PASSED when P1–P4 all pass. — PASSED 2026-06-05
-
----
-
-## Phase 17.1 — Deferred Work Sprint — CLOSED
-
-**Trigger:** Phase 17 complete.  
-**Scope:** Pre-Phase 18 correctness and data-quality sprint. Three work tiers: (1) code correctness bugs that produce crashes or silent data corruption; (2) scoring accuracy — `class_score` hardcoding that actively misleads multi-project candidate ranking; (3) trademark enrichment — `enrich` stores raw JSON but leaves structured columns NULL, defeating the purpose of the command as a data source. All items drawn from DEFERRED.md with confirmed trigger conditions or confirmed code gaps from the Phase 17 P3 audit.
-
-**Goal state:** No remaining crash paths for figurative marks in any historian command; `markery match --help` lists all subcommands; `project.json` configures per-project CPC class hints for scoring; `markery trademark enrich` populates structured columns. DEFERRED entries D031, D033, D035, D038, D041, D048 closed or updated to partial-close.
+Phase PASSED when P1–P4 all pass.
 
 ---
 
-### P1 — Code correctness bugs — CLOSED
+## Phase 22 — New Projects and Publisher Quality Pass
 
-Four confirmed gaps from the Phase 17 P3 audit. All are self-contained code changes with no design decisions outstanding.
+**Trigger:** Phase 21 complete.
+**Scope:** Two new research projects — D025 (photographic equipment) and D026 (precision tools) — run end-to-end through the full pipeline including LangGraph-assisted review. Alongside the projects, a publisher quality pass delivers specific site rendering improvements identified across Phases 16–21.
 
-**D041 — historian scaffold None-guard (lines 339, 341, 354):**
-1. In `cmd_scaffold` in `historian/cli.py`, replace the three direct uses of `pair['trademark']` in the scaffold f-string with `pair['trademark'] or '(figurative)'`:
-   - Line 339: `title: "{pair['trademark'] or '(figurative)'} — {pat_no}"`
-   - Line 341: `trademark: "{pair['trademark'] or '(figurative)'}"` 
-   - Line 354: `[{pair['trademark'] or '(figurative)'}](...)`
-2. Add a test to `test_render_focus.py` or a new historian test: scaffold with `trademark=None` in confirmed pair produces YAML with `trademark: "(figurative)"`, not `trademark: "None"`.
-
-**D033 — librarian index zero-passage warning:**
-3. In `src/markery/specialist/librarian/index.py`, in `_parse_excerpts()` (or the calling loop): after parsing a work's `excerpts.md`, if the file exists and is non-empty but the parse yields 0 records, print `WARNING: <slug>/excerpts.md has content but no parseable ### passages — check heading levels`.
-4. Add a test: a work with `##`-headed excerpts.md produces a warning and 0 indexed records.
-
-**D035 — matchmaker build CSV validation:**
-5. In `src/markery/specialist/matchmaker/entities.py` `build()`: after parsing `variants.csv`, verify that every row's `source` value is in `{"patent_assignee", "trademark_owner", "trademark_search"}`. If not, print an error with the line number and the found value, then exit 1.
-6. Add a test: a `variants.csv` with an unquoted comma in the variant name (producing an invalid `source` value) is rejected with a descriptive error.
-
-**D048 — `markery match` invisible subcommands in `--help`:**
-7. In `src/markery/specialist/matchmaker/cli.py`, add `status`, `rescore`, `auto-disposition`, and `preflight` to the argparse help string or usage text for the `match` entry point — at minimum as a `{subcommands}` note in the usage line or a listed set of positional alternatives, so they appear when running `markery match --help`.
+**Goal state:** `photographic-equipment` and `precision-tools` both have ≥3 confirmed pairs, validated essays, and clean site builds; publisher renders patent figures inline, provides entity cross-links, and lists confirmed pairs on the landing page; LangGraph handles the initial review cycle for both projects; Wikipedia contributions submitted for both domains; all five project site builds meet a consistent quality standard.
 
 ---
 
-### P2 — Scoring accuracy (D031) — CLOSED
+### P1 — Publisher quality pass
 
-**Context:** `PRODUCT_CLASSES = {"B42F", "B42D", "B41J", "B41L", "G06C", "G06K", "G09F"}` in `score.py` gives a 0.3 bonus to information-systems CPC classes. For every other project domain, this inverts quality ranking — confirmed with measurement in Phase 16.1 P4 (GM G09F 0.796 vs. F02B 0.43).
+Four targeted improvements to the publisher, in priority order:
 
-**Fix — per-project class hints:**
-1. Add an optional `class_hints` array to `project.json` (list of CPC class strings, e.g. `["F02B", "B60C", "F04B"]`). Update `Project` dataclass and `load_project()` in `common/project.py` to read it.
-2. In `score.py` `generate_candidates()`, pass `class_hints` from the loaded project to `score_candidate()`. When `class_hints` is non-empty, use it as `PRODUCT_CLASSES` for this project. When absent, fall back to the current hardcoded set (preserving information-systems behavior unchanged).
-3. Update `projects/animal-marks-1930/project.json` with `class_hints` reflecting the animal-marks domain: `["F02B", "B60C", "F41A", "F41C", "A01B", "F04B", "B64D", "F16J"]`.
-4. Regenerate candidates for `animal-marks-1930` with `markery match animal-marks-1930 --all-serials` and verify the GM F02B engine patent now outscores the G09F Name Plate patent.
-5. Add a test: `score_candidate()` with a CPC class in the supplied hints list gets the 0.3 bonus; a class not in the list gets 0.0.
+1. **Patent figure embedding.** When a patent's figure PNG is in `patent_figures`, render it as an inline `<img>` in the match essay HTML, below the "The Invention" section heading. The `publisher/queries.py` already loads figure BLOBs; add the HTML rendering step to the match-essay template.
 
----
+2. **Entity cross-links.** Add bidirectional cross-links between match essay pages and entity summary pages. Each match essay should link to `entity-<entity-slug>.html`; each entity summary page should list and link to all confirmed pairs for that entity. The data is already in `confirmed.jsonl`; this is a rendering change only.
 
-### P3 — Trademark enrichment structured fields (D038) — CLOSED
+3. **Landing page confirmed-pair listing.** Below the stat cards on the landing page, add a compact linked list of confirmed pairs: trademark name, entity name, date gap, and a link to the essay. Replaces the bare confirmed-pair count with navigable content.
 
-**Context:** `markery trademark enrich <serial>` fetches TSDR JSON and stores it in `extended_marks.raw_json`, but leaves `mark_text`, `status_cd`, `goods_desc`, `owner_name` NULL. Phase 16.1 P2 qualification fell back to `statement` and `case_file` because `extended_marks` had no parsed data despite successful enrichment. D046 (pre-candidate batch enrichment) cannot be useful until the structured fields are populated.
+4. **Research question block styling.** Wrap the `research-question.md` block (introduced in Phase 17 P1) in a visually distinct HTML element (bordered card or highlighted block via inline style or a dedicated CSS class) so it reads as a project framing section rather than plain body text.
 
-**Fix — parse on upsert:**
-1. In `src/markery/specialist/trademark/enrich.py` (or wherever `extended_marks` is written), after storing `raw_json`, parse the following TSDR JSON keys and write them to the structured columns:
-   - `mark_text`: from `markInfo.markText` (or `""` if absent — figurative marks have no text)
-   - `status_cd`: from `caseFileHeader.statusCode`
-   - `goods_desc`: from `goodsAndServices[0].goodsServicesDescription` (first GS class, truncated to 500 chars)
-   - `owner_name`: from `currentOwners[0].ownerName` (or first owner in `ownerDetails`)
-2. Verify the JSON key paths against a live TSDR response for a known serial (use `extended_marks.raw_json` for an already-enriched serial to inspect the structure).
-3. Run `markery trademark enrich` for one animal-marks-1930 serial and confirm `extended_marks.goods_desc` is populated.
-4. Add a test: mock the TSDR response JSON; after `enrich`, the structured columns in `extended_marks` match the expected parsed values.
+5. Run `markery site build` for all existing projects (information-systems, radio-pioneers, animal-marks-1930). All must exit 0. Any regression from the new rendering is a blocker.
 
 ---
 
-### Phase Gate
+### P2 — D025: Photographic equipment project
 
-P1 PASSED when: `historian scaffold` with `trademark=None` confirmed pair writes `"(figurative)"` in YAML, not `"None"`; `markery librarian index` warns on `##`-headed excerpts.md; `markery matchmaker build` rejects unquoted-comma variants.csv with exit 1; `markery match --help` lists `status`, `rescore`, `auto-disposition`, `preflight`. — PASSED 2026-06-05 (4 fixes committed 5a9d90f; 475 tests pass; D033/D035/D041/D048 closed)
+**Target entities:** Eastman Kodak Company, Ansco (Ansco Company / General Aniline & Film), Graflex Inc., Blair Camera Company.
+**CPC classes:** `G03B` (photographic apparatus), `G03C` (photosensitive materials), `G03D` (photographic processing).
 
-P2 PASSED when: `project.json` `class_hints` read by `load_project()`; scoring passes `class_hints` through to `score_candidate()`; animal-marks-1930 F02B engine patent outscores G09F Name Plate patent after adding `class_hints`; unit test passes. — PASSED 2026-06-05 (F02B 0.7346 vs G09F 0.4964 after regenerating; 5 new unit tests; 480 total pass)
-
-P3 PASSED when: `markery trademark enrich <serial>` populates `mark_text`, `status_cd`, `goods_desc`, `owner_name` in `extended_marks`; confirmed by querying `extended_marks` after enriching a known serial; unit test passes. — PASSED 2026-06-05 (`markery trademark reparse` backfilled 154 rows; 163/167 mark_text, 167 status_cd, 165 goods_desc, 148 owner_name; 4 NULLs are design marks; 6 new tests; 486 total pass)
-
-Phase PASSED when P1–P3 all pass. DEFERRED entries D031, D033, D035, D038, D041, D048 updated to reflect closed or partial-close status. — PASSED 2026-06-05 (D033/D035/D048 closed; D031/D038 closed; D041 partially closed — TUI audit open)
-
----
-
-## Phase 18 — Shared Data Contract: Markery-ICM Preparation for Markery-LangGraph
-
-**Trigger:** Phase 17 complete; Markery-LangGraph repo initiated.  
-**Scope:** Any changes Markery-ICM requires to make the shared data contract between the two repos formal, stable, and documented. This phase exists entirely in service of the companion repo. No new specialist features; no new research capabilities. If Phase 17's code gap analysis (P3) surfaces contract-relevant gaps, they are promoted here.
-
-**What Markery-LangGraph depends on (the contract):**
-- DuckDB schemas for `patents.duckdb`, `trademarks.duckdb`, `entities.duckdb`
-- JSONL record shapes for `candidates.jsonl`, `confirmed.jsonl`, `rejected.jsonl`
-- Essay frontmatter keys in `projects/<name>/content/*.md`
-- `library/index.jsonl` passage record shape and `library/index.duckdb` embedding schema (Phase 15)
-- Score field semantics (structural + semantic ceiling; 0.80 cap)
-
-Full architecture decision and repo relationship documented in `archive/GITHUB-REVIEW-2026-05-25.md`; `CONTRACT.md` supersedes that document as the authoritative interface definition once written.
+1. Run `markery project onboard photographic-equipment` (Phase 21 P3). Confirm PASSED before proceeding.
+2. Run trademark sweeps for each entity's variants. Target: ≥8 trademark records across all four entities.
+3. Run `markery patent build` for CPC classes G03B, G03C, G03D over 1890–1940 via EPO OPS.
+4. Run `markery match photographic-equipment`. Run `markery patent signals photographic-equipment` immediately after.
+5. Use the LangGraph graph (Phase 21 P2) for the initial review cycle: run the graph against the candidate queue. Confirm that `human_gate` interrupts work correctly for borderline cases. Target: ≥3 confirmed pairs.
+6. Run `markery historian draft` for each confirmed pair; run `markery historian validate` on each draft. All must pass 8/8.
+7. Acquire Reese Jenkins, *Images and Enterprise: Technology and the American Photographic Industry, 1839–1925* (1975) from IA (`markery librarian acquire`). Run `markery librarian extract` with topics `"Kodak" "trademark" "patent" "camera"`.
+8. Run `markery site build photographic-equipment`. Exit 0 required.
+9. Identify the strongest Wikipedia contribution target: an article with a genuine citation gap that a USPTO primary source (from confirmed pairs) would fill. Write a draft to `projects/photographic-equipment/wikipedia/`.
 
 ---
 
-### P1 — Contract audit — CLOSED
+### P3 — D026: Precision tools project
 
-Identify every data shape the companion repo will consume and verify each is explicitly documented somewhere in Markery-ICM.
+**Target entities:** Snap-on Tools Company, L.S. Starrett Company, Brown & Sharpe Manufacturing, Illinois Tool Works.
+**CPC classes:** `B25B` (tools for tightening/loosening), `B23B` (turning and boring), `G01B` (measuring instruments).
 
-1. Enumerate all files the contract covers (DuckDB tables, JSONL records, markdown frontmatter, library index). For each: locate the existing documentation (schema DDL, identity.md scope, README, or inline comment). Flag any shape with no authoritative documentation.
-2. Review DuckDB schemas for runtime stability: any column that a query outside Markery-ICM might depend on must have a documented type and nullable constraint. Columns used only internally can remain undocumented.
-3. Review JSONL record shapes: `candidates.jsonl` and `confirmed.jsonl` field sets have grown organically. Document the canonical field list and mark which fields are guaranteed-present vs. optional.
-4. Review essay frontmatter: verify the seven required keys (`title`, `trademark_serial`, `trademark`, `tm_filing_dt`, `patent_no`, `patent_grant_dt`, `entity`) are enforced by `historian validate` and documented as the stable interface.
-5. Output: a `CONTRACT.md` at repo root listing each contract surface, its format, and a pointer to the authoritative schema definition.
+Same workflow as P2. Secondary literature is thinner for precision tools — use `markery librarian discover --wikipedia` on company article pages to surface available IA sources. Acquire what is available; note any dry-run gaps in `RESEARCH-AGENDA.md`.
 
----
-
-### P2 — Schema hardening — CLOSED
-
-Fix any gaps the P1 audit surfaces. No new features — only documentation, light enforcement, and stability fixes.
-
-1. For any undocumented DuckDB column that the companion repo will need: add a `-- contract: <type>, <nullable>` comment to the DDL or a schema note in the relevant specialist's design doc.
-2. For any JSONL field that is present in some records but not others without documentation: add it to the canonical field list with `optional: true` and document the condition under which it appears.
-3. For any essay frontmatter key that `historian scaffold` does not currently write: either add it to scaffold output or remove it from the contract.
-4. Verify `historian validate` enforces all seven required frontmatter keys. If any key passes validate despite being absent or malformed, fix the check.
+Target: ≥3 confirmed pairs, validated essays, site build exit 0, Wikipedia draft written.
 
 ---
 
-### P3 — CONTRACT.md and version marker — CLOSED
+### P4 — Wikipedia submissions for new domains
 
-1. Write `CONTRACT.md` at repo root: one section per contract surface (DuckDB tables, JSONL files, essay frontmatter, library index). Each section: field name, type, nullable, guaranteed-present or optional, example value, and a one-line description of its purpose for a Markery-LangGraph node consuming it.
-2. Add a `contract_version` field to `data/` or a `MANIFEST.json` at repo root (e.g., `{"contract_version": "1.0", "markery_version": "0.3.0"}`). Markery-LangGraph reads this at startup to verify compatibility. Increment on any breaking contract change.
-
----
-
-### P4 — Integration smoke test — CLOSED
-
-Verify that a minimal Markery-LangGraph node can read all contract surfaces without error.
-
-1. Write `tests/test_contract.py`: for each contract surface, assert the expected fields are present in a real data record from the `information-systems` project. This test does not depend on LangGraph — it validates that Markery-ICM's output matches what `CONTRACT.md` promises.
-2. Run against `information-systems` corpus. All assertions pass.
-3. Add `test_contract` to the MVO job in `ci.yml` (runs under `workflow_dispatch` only, same as `test_mvo`).
-
----
-
----
-
-### P5 — Shared API client and historian inference mode — CLOSED
-
-**Prerequisite:** P1–P4 complete.
-
-**Why infrastructure first:** P5 originally put historian inference before the shared client abstraction. That ordering would add a third `anthropic.Anthropic()` construction site immediately before P6 refactors them all. Instead: establish `common/llm.py` first so inference commands use it natively.
-
-**Part A — Shared API client and model consistency (prerequisite for Part B):**
-
-1. Write `common/llm.py`: `get_client() -> client`, `call(model, system, user, max_tokens) -> (text, prompt_tokens, completion_tokens)`. Implementation calls Anthropic; interface is generic enough that a second provider (OpenAI-compatible, Gemini) could be added by swapping one file. Do not implement any second provider — define the abstraction only.
-2. Refactor `tokens.py` and `extract.py` to construct the Anthropic client via `common.llm.get_client()` rather than inline. After this step there is exactly one client construction site in the codebase.
-3. Add `MARKERY_CONTEXT_BUDGET` env var (integer, token count). When set, `historian digest` and `historian card` truncate their assembled context to stay within the budget. Default: unset (current behaviour unchanged). Verify: `MARKERY_CONTEXT_BUDGET=2000 markery historian digest radio-pioneers` fits the budget; `MARKERY_CONTEXT_BUDGET=8000` includes more candidates.
-
-**Part B — Historian inference (uses `common/llm.py` from Part A):**
-
-**Goal:** Give historian commands the ability to call Claude directly with `--infer`, so the full card-review and candidate-assessment workflow can run without a human-driven Claude Code session. This is the bridge to Markery-LangGraph.
-
-**Design constraint:** `--infer` mode must work with any model reachable via `MARKERY_MODEL`. It must not assume Claude-specific output formatting. The existing `--tokens` flag applies automatically to all `--infer` calls.
-
-4. Add `--infer [--model MODEL]` to `markery historian card <project> <slug>`:
-   - Load the card context document (existing output)
-   - Send to the API via `common.llm.call()`: system prompt = `persona/identity.md` (condensed); user prompt = card context + assessment request
-   - Parse response into a structured result: `{"recommendation": "confirm|reject|defer", "score": 1–5, "reasoning": "..."}`
-   - Print result; append token record to `MARKERY_TOKEN_LOG` if set
-   - `--model` overrides `MARKERY_MODEL` for this call only
-
-5. Add `--infer` to `markery historian digest <project>`:
-   - After generating the digest document, send it to the API with the question: "Which candidates are most worth reviewing first and why?"
-   - Append the model's ranked recommendation list below the digest output
-   - Token count appended to log
-
-6. Add `markery historian draft <project> <slug> [--model MODEL]`:
-   - New command: takes an existing scaffold and calls the API to produce a first-draft essay
-   - Output written to `content/<slug>-draft.md` (distinct from the final `<slug>.md` to avoid overwriting human work)
-   - Immediately run `historian validate` on the draft; print PASS/FAIL alongside token counts
-
-7. Verify on radio-pioneers: run `historian card --infer` on ≥3 candidates with `MARKERY_MODEL=claude-haiku-4-5-20251001`; run `historian draft` on one confirmed pair; record validate result.
-
----
-
-### P6 — Prompt caching and multi-model validation — CLOSED
-
-**Goal:** With inference infrastructure from P5 in place, reduce per-call cost and prove model-agnosticism is a tested property, not just a design claim.
-
-**Prompt caching** (highest ROI):
-1. Add `cache_control: {"type": "ephemeral"}` to the system prompt block in `librarian extract` and the historian inference calls added in P5. Persona content (`identity.md`) is identical across all calls in a session — it is the canonical cache candidate. Measure the cache hit rate via `cache_read_tokens` in `MARKERY_TOKEN_LOG`. Target: ≥80% cache hit rate on repeated calls within a session.
-2. Document the caching behaviour in `DESIGN.md`: what is cached, what is not, and why (cache TTL is 5 minutes — sessions longer than 5 minutes between calls will miss).
-
-**Multi-model MVO validation**:
-3. Extend the existing MVO test job in `ci.yml` with a `model-matrix` step: run all MVO contracts with `MARKERY_MODEL=claude-haiku-4-5-20251001` and `MARKERY_MODEL=claude-sonnet-4-6`. Both must pass. This is the continuous proof that the output contracts are model-agnostic, not just token-efficient.
-4. Record the first multi-model MVO run results in `tests/benchmarks/README.md`: a model-comparison table (command, Haiku tokens, Sonnet tokens, both pass/fail).
+1. For photographic equipment: review the draft from P2 step 9. Submit via `markery wikipedia replace --yes` after diff review. Use summary: "Add primary source citation from USPTO filing record."
+2. For precision tools: identify and draft a citation addition for the strongest underserved Wikipedia article in the domain. Submit via `markery wikipedia replace --yes` after diff review.
+3. Monitor both new edits for 48 hours. Record revision IDs in each project's `STATUS.md`.
+4. Add DEFERRED entries (D051, D052) for both new edits following the D050 pattern — one monitoring entry per article edit.
 
 ---
 
 ### Phase Gate
 
-P1 PASSED when: every contract surface has located documentation; gaps are listed. — PASSED 2026-06-06 (CONTRACT.md written; 9 surfaces documented: patents.duckdb (4 tables), trademarks.duckdb (7 tables), entities.duckdb (2 tables), candidates.jsonl, confirmed.jsonl, rejected.jsonl, essay frontmatter, library/index.jsonl, library/index.duckdb; 6 gaps listed; PHASE17-P3-REVIEW.md archived)
+P1 PASSED when: patent figures render inline in match essays; entity cross-links present; landing page lists confirmed pairs; research-question block styled distinctly; all three existing site builds exit 0 without regressions.
 
-P2 PASSED when: all documented gaps are resolved; `historian validate` enforces all required frontmatter keys. — PASSED 2026-06-06 (`title_present` and `trademark_present` checks added to validate; absent `tm_filing_dt` now fails rather than silently skipping; `-- contract:` comments added to patents, extended_marks, company_entity, entity_name_variant DDL; CONTRACT.md gaps table updated; 3 new tests; 489 total pass)
+P2 PASSED when: `photographic-equipment` has ≥3 confirmed pairs, all essays validate 8/8, site build exits 0, Wikipedia draft written to `projects/photographic-equipment/wikipedia/`.
 
-P3 PASSED when: `CONTRACT.md` exists at repo root; `MANIFEST.json` has `contract_version`. — PASSED 2026-06-06 (CONTRACT.md rewritten with example values and LangGraph-consumer purpose descriptions on every field across all 9 surfaces; P2 gaps resolved in document; MANIFEST.json written with contract_version=1.0, markery_version=0.3.0)
+P3 PASSED when: `precision-tools` has ≥3 confirmed pairs, all essays validate 8/8, site build exits 0, Wikipedia draft written to `projects/precision-tools/wikipedia/`.
 
-P4 PASSED when: `tests/test_contract.py` passes against `information-systems`; test added to CI mvo job. — PASSED 2026-06-06 (34 tests across all 9 contract surfaces; all pass; passage_id range-only check (not work_slug join) since index.duckdb is stable-until-rebuild; ci.yml mvo job updated; 523 total tests pass)
+P4 PASSED when: at least one Wikipedia edit submitted per domain; revision IDs recorded in STATUS.md files; D051 and D052 DEFERRED entries filed.
 
-P5 PASSED when: `common/llm.py` exists with `get_client()` and `call()`; `tokens.py` and `extract.py` use it; `MARKERY_CONTEXT_BUDGET` respected by digest and card; `historian card --infer` returns structured recommendation on radio-pioneers data with Haiku; `historian draft` produces an essay that passes `historian validate` (or fails with a documented reason); token counts logged. — PASSED 2026-06-06 (see Part A and Part B notes above)
-
-Part A PASSED 2026-06-06: `common/llm.py` written with `get_client()` and `call()`; single `anthropic.Anthropic()` construction site confirmed (one grep hit); `tokens.py` and `extract.py` refactored to `common.llm.get_client()`; `_get_client()` removed from extract.py; `MARKERY_CONTEXT_BUDGET` added to `historian digest` (limits next_review candidates) and `historian card` (truncates abstract/goods); 523 tests pass; test_librarian.py mock updated to patch `markery.common.llm.get_client`.
-
-Part B PASSED 2026-06-06: `historian card --infer` added (RECOMMENDATION/SCORE/REASONING structured output, `--model` override, token log always emits); `historian digest --infer` added (ranked prioritization appended below digest); `historian draft` command added (reads scaffold, writes `<slug>-draft.md`, runs validate immediately, always logs tokens). Verified on radio-pioneers with Haiku: card --infer produced defer/confirm/reject across 3 candidates with sound reasoning (STERILAMP/Display Device=defer goods mismatch, VISICODE/Display Device=confirm, MICARTA/sodium lamp=reject); digest --infer ranked top 3 with domain-aware rationale; minalite-us1829460a-draft.md validate 8/8 PASS (1,346p/1,233c tokens, 9.5s wall).
-
-P6 PASSED when: prompt cache hit rate ≥80% on repeated extract calls; MVO contracts pass on both Haiku and Sonnet; multi-model comparison table in `tests/benchmarks/README.md`. — PASSED 2026-06-06 (`cache_control: {"type": "ephemeral"}` added to all system prompts in `common.llm.call()` and `librarian extract._call_claude()`; identity.md loaded at runtime for all inference system prompts — all above 1,024-token minimum (card=2,093, digest=1,841, draft=1,960, extract=2,255); Sonnet caching confirmed active: cache_read_input_tokens=2,087 on card calls 2 and 3; Haiku caching not activating on this account (inference_geo='not_available' — account/regional limitation, not a code issue); extract would achieve >93% hit rate on 15-chunk runs with Sonnet; MVO contracts pass on both models with same confirm/reject/defer outcomes and validate 8/8 PASS; multi-model comparison table in tests/benchmarks/README.md; CI mvo job updated with model-matrix strategy running both models)
-
-Phase PASSED when P1–P6 all pass. Markery-LangGraph repo may begin after this gate. — PASSED 2026-06-06
+Phase PASSED when P1–P4 all pass. `DEFERRED.md` updated with all new bypasses discovered during the two new projects.
