@@ -566,7 +566,7 @@ Fix any gaps the P1 audit surfaces. No new features — only documentation, ligh
 
 ---
 
-### P3 — CONTRACT.md and version marker
+### P3 — CONTRACT.md and version marker — CLOSED
 
 1. Write `CONTRACT.md` at repo root: one section per contract surface (DuckDB tables, JSONL files, essay frontmatter, library index). Each section: field name, type, nullable, guaranteed-present or optional, example value, and a one-line description of its purpose for a Markery-LangGraph node consuming it.
 2. Add a `contract_version` field to `data/` or a `MANIFEST.json` at repo root (e.g., `{"contract_version": "1.0", "markery_version": "0.3.0"}`). Markery-LangGraph reads this at startup to verify compatibility. Increment on any breaking contract change.
@@ -642,7 +642,7 @@ P1 PASSED when: every contract surface has located documentation; gaps are liste
 
 P2 PASSED when: all documented gaps are resolved; `historian validate` enforces all required frontmatter keys. — PASSED 2026-06-06 (`title_present` and `trademark_present` checks added to validate; absent `tm_filing_dt` now fails rather than silently skipping; `-- contract:` comments added to patents, extended_marks, company_entity, entity_name_variant DDL; CONTRACT.md gaps table updated; 3 new tests; 489 total pass)
 
-P3 PASSED when: `CONTRACT.md` exists at repo root; `MANIFEST.json` has `contract_version`.
+P3 PASSED when: `CONTRACT.md` exists at repo root; `MANIFEST.json` has `contract_version`. — PASSED 2026-06-06 (CONTRACT.md rewritten with example values and LangGraph-consumer purpose descriptions on every field across all 9 surfaces; P2 gaps resolved in document; MANIFEST.json written with contract_version=1.0, markery_version=0.3.0)
 
 P4 PASSED when: `tests/test_contract.py` passes against `information-systems`; test added to CI mvo job.
 
