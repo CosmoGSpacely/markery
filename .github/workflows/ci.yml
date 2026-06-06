@@ -36,4 +36,4 @@ jobs:
       - name: Install
         run: pip install -e ".[dev]"
       - name: MVO contracts
-        run: python -m pytest tests/test_mvo.py -v
+        run: python -m pytest tests/test_mvo.py tests/test_contract.py -v

@@ -573,7 +573,7 @@ Fix any gaps the P1 audit surfaces. No new features — only documentation, ligh
 
 ---
 
-### P4 — Integration smoke test
+### P4 — Integration smoke test — CLOSED
 
 Verify that a minimal Markery-LangGraph node can read all contract surfaces without error.
 
@@ -644,7 +644,7 @@ P2 PASSED when: all documented gaps are resolved; `historian validate` enforces 
 
 P3 PASSED when: `CONTRACT.md` exists at repo root; `MANIFEST.json` has `contract_version`. — PASSED 2026-06-06 (CONTRACT.md rewritten with example values and LangGraph-consumer purpose descriptions on every field across all 9 surfaces; P2 gaps resolved in document; MANIFEST.json written with contract_version=1.0, markery_version=0.3.0)
 
-P4 PASSED when: `tests/test_contract.py` passes against `information-systems`; test added to CI mvo job.
+P4 PASSED when: `tests/test_contract.py` passes against `information-systems`; test added to CI mvo job. — PASSED 2026-06-06 (34 tests across all 9 contract surfaces; all pass; passage_id range-only check (not work_slug join) since index.duckdb is stable-until-rebuild; ci.yml mvo job updated; 523 total tests pass)
 
 P5 PASSED when: `historian card --infer` returns structured recommendation on radio-pioneers data with Haiku; `historian draft` produces an essay that passes `historian validate` (or fails with a documented reason); token counts logged.
 
