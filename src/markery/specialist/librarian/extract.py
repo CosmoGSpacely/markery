@@ -92,20 +92,6 @@ Text:
 {chunk}"""
 
 
-def _get_client():
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-    if not api_key:
-        from dotenv import load_dotenv
-        load_dotenv()
-        api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-    if not api_key:
-        return None
-    try:
-        import anthropic
-        return anthropic.Anthropic(api_key=api_key)
-    except ImportError:
-        return None
-
 
 def _call_claude(chunk: str, topics: list[str], client, model: str) -> tuple[list[dict], int, int]:
     """Call Claude for one chunk. Returns (candidates, prompt_tokens, completion_tokens)."""
@@ -294,7 +280,8 @@ def extract(
     chunks = chunk_text(text)
     total_chunks = len(chunks)
 
-    client = _get_client()
+    from markery.common.llm import get_client
+    client = get_client()
     if client is None:
         print(
             "ANTHROPIC_API_KEY not set or anthropic package not installed.\n"

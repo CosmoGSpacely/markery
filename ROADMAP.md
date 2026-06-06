@@ -585,7 +585,7 @@ Verify that a minimal Markery-LangGraph node can read all contract surfaces with
 
 ---
 
-### P5 — Shared API client and historian inference mode
+### P5 — Shared API client and historian inference mode — CLOSED (Part A)
 
 **Prerequisite:** P1–P4 complete.
 
@@ -649,6 +649,8 @@ P3 PASSED when: `CONTRACT.md` exists at repo root; `MANIFEST.json` has `contract
 P4 PASSED when: `tests/test_contract.py` passes against `information-systems`; test added to CI mvo job. — PASSED 2026-06-06 (34 tests across all 9 contract surfaces; all pass; passage_id range-only check (not work_slug join) since index.duckdb is stable-until-rebuild; ci.yml mvo job updated; 523 total tests pass)
 
 P5 PASSED when: `common/llm.py` exists with `get_client()` and `call()`; `tokens.py` and `extract.py` use it; `MARKERY_CONTEXT_BUDGET` respected by digest and card; `historian card --infer` returns structured recommendation on radio-pioneers data with Haiku; `historian draft` produces an essay that passes `historian validate` (or fails with a documented reason); token counts logged.
+
+Part A PASSED 2026-06-06: `common/llm.py` written with `get_client()` and `call()`; single `anthropic.Anthropic()` construction site confirmed (one grep hit); `tokens.py` and `extract.py` refactored to `common.llm.get_client()`; `_get_client()` removed from extract.py; `MARKERY_CONTEXT_BUDGET` added to `historian digest` (limits next_review candidates) and `historian card` (truncates abstract/goods); 523 tests pass; test_librarian.py mock updated to patch `markery.common.llm.get_client`.
 
 P6 PASSED when: prompt cache hit rate ≥80% on repeated extract calls; MVO contracts pass on both Haiku and Sonnet; multi-model comparison table in `tests/benchmarks/README.md`.
 

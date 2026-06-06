@@ -449,7 +449,8 @@ class TestExtract:
 
         mock_client = MagicMock()
         mock_client.messages.create.return_value = self._mock_response()
-        monkeypatch.setattr(ext, "_get_client", lambda: mock_client)
+        import markery.common.llm as llm_mod
+        monkeypatch.setattr(llm_mod, "get_client", lambda: mock_client)
 
         out_path = ext.extract("test-work", topics=["card index"], max_passages=5)
         assert out_path.exists()
@@ -472,7 +473,8 @@ class TestExtract:
         monkeypatch.setattr(ext, "_LIBRARY", tmp_path / "library")
         mock_client = MagicMock()
         mock_client.messages.create.return_value = self._mock_response()
-        monkeypatch.setattr(ext, "_get_client", lambda: mock_client)
+        import markery.common.llm as llm_mod
+        monkeypatch.setattr(llm_mod, "get_client", lambda: mock_client)
 
         out_path = ext.extract("test-work", topics=["card index"], max_passages=5)
         assert out_path.name == "candidates.md"
@@ -491,7 +493,8 @@ class TestExtract:
         monkeypatch.setattr(ext, "_LIBRARY", tmp_path / "library")
         mock_client = MagicMock()
         mock_client.messages.create.return_value = self._mock_response()
-        monkeypatch.setattr(ext, "_get_client", lambda: mock_client)
+        import markery.common.llm as llm_mod
+        monkeypatch.setattr(llm_mod, "get_client", lambda: mock_client)
 
         out_path = ext.extract("test-work", topics=["card index"], max_passages=5, auto_accept=True)
         assert out_path.name == "excerpts.md"

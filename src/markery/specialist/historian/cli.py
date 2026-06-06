@@ -15,6 +15,19 @@ from markery.common.project import Project, require_project
 from markery.common.tokens import TokenRecord, count_output_tokens, emit as emit_tokens
 
 
+def _context_budget() -> int:
+    """Return MARKERY_CONTEXT_BUDGET as int, or 0 (unlimited) if unset."""
+    raw = os.environ.get("MARKERY_CONTEXT_BUDGET", "").strip()
+    try:
+        return max(0, int(raw)) if raw else 0
+    except ValueError:
+        return 0
+
+
+def _est_tokens(text: str) -> int:
+    return max(1, int(len(text.split()) * 0.75))
+
+
 def _parse_slug(slug: str) -> tuple[str, str]:
     """Return (trademark_slug, patent_no) from a slug like 'soundex-us1261167a'."""
     m = re.match(r'^(.+)-(us\d+[a-z]+)$', slug.lower())
@@ -142,6 +155,19 @@ def cmd_card(args: argparse.Namespace) -> None:
     ]
     card_text = "\n".join(lines)
 
+    budget = _context_budget()
+    if budget and _est_tokens(card_text) > budget:
+        # Trim the most variable fields (abstract, goods) to fit budget
+        for i, ln in enumerate(lines):
+            if ln.startswith("abstract:") or ln.startswith("goods:"):
+                words = ln.split()
+                while _est_tokens("\n".join(lines)) > budget and len(words) > 3:
+                    words.pop()
+                    lines[i] = " ".join(words) + "…"
+                if _est_tokens("\n".join(lines)) <= budget:
+                    break
+        card_text = "\n".join(lines)
+
     if args.out == "-":
         print(card_text)
     else:
@@ -192,8 +218,26 @@ def cmd_digest(args: argparse.Namespace) -> None:
 
     lines.append(f"queue:  confirmed={len(confirmed_pairs)}  rejected={len(rejected_set)}  unreviewed≥{args.min_score}={len(unreviewed)}  total_candidates={len(candidates)}")
 
-    # Next-review candidates (top by score)
-    top = sorted(unreviewed, key=lambda c: -c["score"])[:args.top_n]
+    # Next-review candidates (top by score), capped by MARKERY_CONTEXT_BUDGET
+    budget = _context_budget()
+    all_sorted = sorted(unreviewed, key=lambda c: -c["score"])[:args.top_n]
+    if budget:
+        fixed_tokens = _est_tokens("\n".join(lines))
+        remaining = budget - fixed_tokens
+        top: list[dict] = []
+        for c in all_sorted:
+            sig = ""
+            if c.get("title_name_hit"):    sig += "T"
+            if c.get("abstract_name_hit"): sig += "A"
+            if c.get("goods_title_overlap", 0) > 0.05: sig += "G"
+            tm = c['trademark'] or '(figurative)'
+            candidate_line = f"  {c['score']:.3f}  {tm:<28}  {c['patent_no']:<14}  {c['entity']:<20}  sig={sig or '-'}"
+            if _est_tokens(candidate_line) > remaining:
+                break
+            remaining -= _est_tokens(candidate_line)
+            top.append(c)
+    else:
+        top = all_sorted
     if top:
         lines.append("")
         lines.append(f"next_review (top {len(top)}):")

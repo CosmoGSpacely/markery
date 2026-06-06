@@ -41,11 +41,10 @@ def count_output_tokens(text: str, model: str | None = None) -> TokenRecord:
     """
     if model is None:
         model = os.environ.get("MARKERY_MODEL", "claude-haiku-4-5-20251001")
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-    if api_key:
+    from markery.common.llm import get_client
+    client = get_client()
+    if client is not None:
         try:
-            import anthropic
-            client = anthropic.Anthropic(api_key=api_key)
             resp = client.messages.count_tokens(
                 model=model,
                 messages=[{"role": "user", "content": text}],
