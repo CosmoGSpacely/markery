@@ -638,7 +638,7 @@ Verify that a minimal Markery-LangGraph node can read all contract surfaces with
 
 ### Phase Gate
 
-P1 PASSED when: every contract surface has located documentation; gaps are listed.
+P1 PASSED when: every contract surface has located documentation; gaps are listed. — PASSED 2026-06-06 (CONTRACT.md written; 9 surfaces documented: patents.duckdb (4 tables), trademarks.duckdb (7 tables), entities.duckdb (2 tables), candidates.jsonl, confirmed.jsonl, rejected.jsonl, essay frontmatter, library/index.jsonl, library/index.duckdb; 6 gaps listed; PHASE17-P3-REVIEW.md archived)
 
 P2 PASSED when: all documented gaps are resolved; `historian validate` enforces all required frontmatter keys.
 
