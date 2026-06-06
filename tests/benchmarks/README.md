@@ -361,3 +361,60 @@ The Haiku essay mean (2,123 prompt tokens) is 6% higher than radio-pioneers (2,0
 
 The Phase 14 digest/card/scaffold token baseline remains valid after Phase 17 P1. No changes were made to historian context assembly, prompt templates, or the entities/candidates that drive digest output. The `information-systems` site rebuild (16 pages) exits 0 without any rendering regressions.
 
+
+---
+
+## Phase 18 P6 — Multi-Model Inference Comparison — 2026-06-06
+
+**Project:** `radio-pioneers`
+**Commands tested:** `historian card --infer`, `historian digest --infer`, `historian draft`
+**Models:** `claude-haiku-4-5-20251001` (Haiku), `claude-sonnet-4-6` (Sonnet)
+**Log file:** `/tmp/p6-multimodel.jsonl` (local session; not committed)
+
+### System prompt sizes (Phase 18 P6 identity-based prompts)
+
+| Command | System prompt tokens |
+|---|---|
+| `card --infer` | 2,093 |
+| `digest --infer` | 1,841 |
+| `draft` | 1,960 |
+| `librarian extract` | 2,255 |
+
+All above the 1,024-token minimum for prompt caching.
+
+### Token comparison: Haiku vs Sonnet
+
+| Command | Haiku prompt | Haiku compl. | Sonnet prompt | Sonnet compl. | Cache read (Sonnet) | Both PASS |
+|---|---|---|---|---|---|---|
+| `card --infer` (call 1) | 2,292 | 133 | 206 | 176 | 0 | ✓ |
+| `card --infer` (call 2) | 2,278 | 105 | 192 | 157 | 2,087 | ✓ |
+| `card --infer` (call 3) | 2,285 | 180 | 199 | 253 | 2,087 | ✓ |
+| `digest --infer` | 2,126 | 369 | 292 | 512 | 0 | ✓ |
+| `draft` | 3,185 | 1,083 | 1,232 | 1,402 | 0 | ✓ |
+
+`historian validate` on draft: **8/8 PASS for both Haiku and Sonnet.**
+
+### Recommendations vs ground truth
+
+All three cards were the same pairs (STERILAMP/Display-Device, MICARTA/sodium-lamp, VISICODE/Display-Device):
+
+| Slug | Ground truth | Haiku | Sonnet |
+|---|---|---|---|
+| sterilamp-us2169022a | reject (G09F/goods mismatch) | reject (score 2) | reject (score 2) |
+| micarta-us2084772a | reject (goods mismatch) | reject (score 1) | reject (score 1) |
+| visicode-us2169022a | confirm (G09F switchboard, correct entity) | confirm (score 5) | confirm (score 4) |
+
+Both models produce the same confirm/reject/defer outcome. Sonnet's reasoning is more detailed.
+
+### Prompt caching observations
+
+Sonnet exhibits caching on calls 2 and 3 of the card session: `cache_read_input_tokens=2,087` — matching the historian identity block (2,093 tokens). Haiku shows `cache_read_input_tokens=0` throughout, which is consistent with an account-level or regional routing limitation, not a code issue. See `DESIGN.md` § Prompt Caching for details.
+
+### Conclusion
+
+Output contracts are model-agnostic. Both Haiku and Sonnet produce:
+- Structured `RECOMMENDATION/SCORE/REASONING` from `card --infer`
+- `validate 8/8 PASS` from `draft`
+- Comparable prioritisation logic from `digest --infer`
+
+Sonnet is approximately 2× slower and benefits from caching (effective cost lower on repeated calls). Haiku is faster and cheaper per token. Model choice is a runtime decision via `MARKERY_MODEL`; no code changes required.

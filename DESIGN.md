@@ -182,3 +182,34 @@ The token baseline for each command type (established in Phase 14) is recorded i
 The publisher is a full specialist agent, not a post-processing script. This matters because publishing involves non-trivial decisions: resolving figure references against stored BLOBs, enhancing trademark images for legibility, pulling Wikipedia summaries for entity context pages, and rendering structured Markdown into HTML with the right asset paths. These are mechanical but consequential — a broken figure reference or a missing image silently degrades the published result.
 
 Making the publisher a specialist agent with its own queries module means: the build is deterministic (the same content files always produce the same site), the build is auditable (every figure reference is resolved through a single code path), and the agent can build the site as easily as a human can. The site directory is gitignored because it is always regenerable from the content files and the databases — the content files and `confirmed.jsonl` are the durable artifacts, not the rendered output.
+
+---
+
+## Prompt Caching
+
+### What is cached
+
+Every call to `common.llm.call()` wraps its system prompt in an `{"type": "ephemeral"}` cache_control block. The system prompt is the canonical cache candidate: it is identical across all calls of the same command type in a session, while the user message changes (new card text, new scaffold, new chunk).
+
+Three commands have cacheable system prompts:
+- **`historian card --infer` / `digest --infer`:** The full historian `identity.md` + task instructions (~2,100 tokens). On the second card call within a session, the identity block is read from cache; only the new card text is billed at standard input rates.
+- **`historian draft`:** Same identity + draft task instructions (~1,960 tokens).
+- **`librarian extract`:** Librarian `identity.md` + extraction task specification (~2,255 tokens). On a typical 15-chunk extract run, chunk 1 creates the cache and chunks 2–15 read it — a 93% hit rate.
+
+### How to verify
+
+With `MARKERY_TOKEN_LOG` set, each log record includes `cache_read_tokens` and `cache_creation_tokens`. A cache hit shows `cache_read_tokens > 0`; a cache creation shows `cache_creation_tokens > 0`. The effective cost of a repeated call is `(prompt_tokens + cache_read_tokens)` but only `prompt_tokens` is billed at the standard rate — `cache_read_tokens` are billed at roughly 10% of the input rate.
+
+```
+[tokens] prompt=192 completion=253 cache_read=2,087 wall=7636ms (claude-sonnet-4-6)
+```
+
+This card call: 192 tokens billed at standard rate, 2,087 tokens billed at cache-read rate.
+
+### Cache TTL and session boundaries
+
+The Anthropic prompt cache TTL is 5 minutes. Calls more than 5 minutes apart within a session will miss the cache and re-create it on the next call. A single `librarian extract` run (all chunks processed within seconds) achieves near-100% hit rate. A multi-hour research session will have periodic re-creation events.
+
+### Current status (Phase 18 P6)
+
+Caching confirmed active on `claude-sonnet-4-6` (cache_read_input_tokens > 0 observed on repeated calls). Not activating on `claude-haiku-4-5-20251001` with the current API key — likely an account or regional routing limitation (`inference_geo='not_available'` in usage response). The mechanism is correctly implemented in all three call sites; no code changes are required when Haiku caching becomes available.

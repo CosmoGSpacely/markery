@@ -66,15 +66,87 @@ def chunk_text(text: str,
 
 
 # ---------------------------------------------------------------------------
-# Claude API call
+# Claude API call — system prompt (cached)
 # ---------------------------------------------------------------------------
 
-_SYSTEM = (
-    "You are a research librarian extracting relevant passages from historical texts. "
-    "Your task is to identify verbatim quotations that are directly relevant to the "
-    "specified research topics. Only quote text that appears verbatim in the source. "
-    "Do not paraphrase or invent text."
+# Load librarian identity at module init; append detailed extraction task to
+# push the combined prompt above the 1024-token minimum for Anthropic caching.
+_PERSONA_DIR = Path(__file__).parent / "persona"
+_LIBRARIAN_IDENTITY: str = (
+    (_PERSONA_DIR / "identity.md").read_text(encoding="utf-8")
+    if (_PERSONA_DIR / "identity.md").exists() else ""
 )
+
+_EXTRACT_TASK = """\
+---
+
+## Your Task: Extracting Verbatim Passages from Historical Texts
+
+You receive one chunk of text at a time from a digitized historical work — a business \
+history, trade journal, industrial catalog, advertising treatise, or government survey \
+typically published between 1870 and 1950. Your task is to identify verbatim quotations \
+directly relevant to the research topics specified in the user message.
+
+### What Makes a Passage Worth Extracting
+
+A passage is extractable when it is:
+
+**Verbatim and quotable.** The exact words from the source — not paraphrased, summarised, \
+or corrected. OCR artifacts (broken hyphens from line breaks, spacing irregularities, \
+ligature failures such as "ﬁ" for "fi") should be preserved as they appear. \
+Faithfulness to the source text is more important than readability.
+
+**Substantive and specific.** A passage should state a specific fact, name a specific \
+product, company, date, or describe a specific commercial activity. Generic observations \
+("business was important in this era") are not extractable. Named evidence \
+("The SOUNDEX filing system, introduced by Rand Kardex Bureau in 1927, employed a \
+phonetic coding scheme derived from Odell's 1918 patent") is extractable.
+
+**Directly relevant to the stated topics.** The passage must address the research topics \
+in a way that contributes to a historical analysis. A keyword appearing in passing within \
+an otherwise unrelated sentence does not qualify. Evaluate whether a historian studying \
+this topic would want to quote this passage.
+
+**Self-contained or contextualizable.** The passage should be comprehensible with only \
+the CONTEXT note for support. If it requires three paragraphs of surrounding text to \
+make sense, it is not suitable for extraction.
+
+### Handling OCR Artifacts
+
+Djvu and microfilm OCR sources produce predictable artifacts. Preserve these in extracted \
+passages rather than correcting them, so the extracted text remains verifiably verbatim:
+- Broken hyphens from line wraps: "manu-\\nfacturing" should be read as "manufacturing" \
+  but extracted with the break preserved
+- Merged words: "filingsystem" appears — extract as found
+- Extra spacing: "the  card  index" — extract as found
+- Character substitutions: "1" for "l" and vice versa
+
+When an artifact would confuse the reader, note it in the CONTEXT line.
+
+### Estimating Page Numbers
+
+Page numbers in djvu OCR often appear as isolated numerals at the top or bottom of a \
+page break — a line containing only "42" or "PAGE 42". Roman numerals indicate front \
+matter (e.g. "xiv"). Use format "p. 42" for a single page, "pp. 42-43" when a passage \
+visibly spans a break, and "?" when no page marker is apparent near the passage.
+
+### Output Format
+
+For each relevant passage, use exactly this format:
+
+PASSAGE: <exact verbatim text, as it appears in the source>
+PAGE: <p. N, pp. N-M, or ?>
+CONTEXT: <one sentence explaining why this passage is relevant to the research topics>
+---
+
+Extract up to 3 passages per chunk. If no relevant passages exist in this excerpt, \
+respond with exactly: NO_PASSAGES
+
+Do not add commentary outside the PASSAGE/PAGE/CONTEXT blocks. If fewer than 3 passages \
+qualify, that is the correct result — do not pad with weak extractions.\
+"""
+
+_SYSTEM = (_LIBRARIAN_IDENTITY + "\n\n" + _EXTRACT_TASK).strip()
 
 _USER_TMPL = """\
 From the following passage, extract up to 3 verbatim quotations relevant to: {topics}.
@@ -93,8 +165,13 @@ Text:
 
 
 
-def _call_claude(chunk: str, topics: list[str], client, model: str) -> tuple[list[dict], int, int]:
-    """Call Claude for one chunk. Returns (candidates, prompt_tokens, completion_tokens)."""
+def _call_claude(chunk: str, topics: list[str], client, model: str) -> tuple[list[dict], int, int, int, int]:
+    """Call Claude for one chunk.
+
+    Returns (candidates, prompt_tokens, completion_tokens, cache_read, cache_creation).
+    The system prompt is sent as an ephemeral cache block; on the second+ chunk in a
+    session the cache_read value will be > 0 if the prompt meets the 1024-token minimum.
+    """
     user_msg = _USER_TMPL.format(
         topics=", ".join(f'"{t}"' for t in topics),
         chunk=chunk,
@@ -102,14 +179,16 @@ def _call_claude(chunk: str, topics: list[str], client, model: str) -> tuple[lis
     resp = client.messages.create(
         model=model,
         max_tokens=1024,
-        system=_SYSTEM,
+        system=[{"type": "text", "text": _SYSTEM, "cache_control": {"type": "ephemeral"}}],
         messages=[{"role": "user", "content": user_msg}],
     )
     text = resp.content[0].text.strip()
-    prompt_tok = resp.usage.input_tokens
+    prompt_tok     = resp.usage.input_tokens
     completion_tok = resp.usage.output_tokens
+    cache_read     = getattr(resp.usage, "cache_read_input_tokens",   0) or 0
+    cache_create   = getattr(resp.usage, "cache_creation_input_tokens", 0) or 0
     candidates = _parse_response(text)
-    return candidates, prompt_tok, completion_tok
+    return candidates, prompt_tok, completion_tok, cache_read, cache_create
 
 
 def _parse_response(text: str) -> list[dict]:
@@ -296,15 +375,19 @@ def extract(
     all_candidates: list[dict] = []
     total_prompt = 0
     total_completion = 0
+    total_cache_read = 0
+    total_cache_create = 0
     errors = 0
 
     for i, chunk in enumerate(chunks, 1):
         print(f"  chunk {i}/{total_chunks}…", end="\r", flush=True)
         try:
-            cands, ptok, ctok = _call_claude(chunk, topics, client, model)
+            cands, ptok, ctok, cread, ccreate = _call_claude(chunk, topics, client, model)
             all_candidates.extend(cands)
             total_prompt += ptok
             total_completion += ctok
+            total_cache_read += cread
+            total_cache_create += ccreate
             # Stop early if we already have plenty of candidates
             if len(all_candidates) >= max_passages * 3:
                 print(f"\n  stopping early ({len(all_candidates)} candidates found)")
@@ -320,17 +403,17 @@ def extract(
 
     wall_ms = int((time.monotonic() - t0) * 1000)
 
-    if tokens_flag:
+    if tokens_flag or os.environ.get("MARKERY_TOKEN_LOG"):
         record = TokenRecord(
             model=model,
             prompt_tokens=total_prompt,
             completion_tokens=total_completion,
-            cache_read_tokens=0,
-            cache_creation_tokens=0,
+            cache_read_tokens=total_cache_read,
+            cache_creation_tokens=total_cache_create,
             wall_ms=wall_ms,
         )
         emit_tokens(record, specialist="librarian", command="extract",
-                    tokens_flag=True)
+                    tokens_flag=tokens_flag)
 
     if not deduped:
         print("No relevant passages found.", file=sys.stderr)

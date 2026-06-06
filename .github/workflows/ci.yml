@@ -26,6 +26,11 @@ jobs:
   mvo:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        model:
+          - claude-haiku-4-5-20251001
+          - claude-sonnet-4-6
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,5 +40,7 @@ jobs:
           python-version: "3.11"
       - name: Install
         run: pip install -e ".[dev]"
-      - name: MVO contracts
+      - name: MVO contracts (${{ matrix.model }})
+        env:
+          MARKERY_MODEL: ${{ matrix.model }}
         run: python -m pytest tests/test_mvo.py tests/test_contract.py -v

@@ -19,45 +19,135 @@ _DEFAULT_MODEL = "claude-haiku-4-5-20251001"
 
 # ---------------------------------------------------------------------------
 # Inference system prompts
+# Identity loaded at module init; task suffixes appended to push above the
+# 1024-token minimum required for Anthropic prompt caching.
 # ---------------------------------------------------------------------------
 
-_CARD_INFER_SYSTEM = (
-    "You are a historian specializing in American commercial and industrial history, 1870–1950. "
-    "Assess whether a patent-trademark candidate pair represents a genuine historical correspondence. "
-    "A genuine correspondence requires all four criteria:\n"
-    "1. Date alignment — trademark filing within ~5 years after patent grant "
-    "(negative gap means trademark predates patent, which is a problem)\n"
-    "2. Entity continuity — same company or a documented successor\n"
-    "3. Goods-claims match — trademark goods plausibly cover what the patent describes\n"
-    "4. Historical defensibility — grounded in documented commercial activity, not coincidence\n\n"
-    "Respond with exactly this format and no other text:\n"
-    "RECOMMENDATION: confirm | reject | defer\n"
-    "SCORE: <integer 1–5; 5=strong confirm, 3=uncertain, 1=clear reject>\n"
-    "REASONING: <one to three sentences citing specific evidence from the card>"
+_PERSONA_DIR = Path(__file__).parent / "persona"
+_HISTORIAN_IDENTITY: str = (
+    (_PERSONA_DIR / "identity.md").read_text(encoding="utf-8")
+    if (_PERSONA_DIR / "identity.md").exists() else ""
 )
 
-_DIGEST_INFER_SYSTEM = (
-    "You are a historian specializing in American commercial and industrial history, 1870–1950. "
-    "You have been shown a project digest summarising a patent-trademark matching queue. "
-    "Your task: identify which unreviewed candidates are most worth examining first."
-)
+_CARD_TASK = """\
+---
 
-_DRAFT_SYSTEM = (
-    "You are a historian specializing in American commercial and industrial history, 1870–1950, "
-    "writing a first-draft match essay from a provided scaffold.\n\n"
-    "Rules:\n"
-    "- Preserve the YAML frontmatter (between the --- markers) exactly as written — "
-    "do not change any field values\n"
-    "- Preserve the ## Primary Sources section exactly as written\n"
-    "- Replace each <!-- ... --> placeholder with 2–4 sentences of analytical prose\n"
-    "- The year-month from tm_filing_dt in the frontmatter must appear in the essay body\n"
-    "- Do not invent dates, serial numbers, patent numbers, or assignee names "
-    "not present in the scaffold\n"
-    "- Write in specialist register: evidence-forward, primary-source grounded, "
-    "hedged where the record is incomplete\n"
-    "- Do not name the research tool or methodology — present the evidence directly\n"
-    "- Output only the complete essay markdown, starting with ---"
-)
+## Assessment Task: Confirm or Reject a Patent-Trademark Pair
+
+You will be given a compact candidate card. Assess whether the pair represents a genuine \
+historical correspondence — that a specific patent describes the technical invention \
+underlying the trademarked product.
+
+A genuine correspondence requires all four criteria to be satisfied:
+
+**1. Date alignment.** The trademark filing date should follow the patent grant date, \
+typically within five years. A negative date gap (trademark predates patent) is a \
+strong signal against confirmation unless the entity had continuous prior use. A gap \
+of zero days to two years is the strongest positive signal.
+
+**2. Entity continuity.** The assignee named in the patent and the owner named in the \
+trademark filing should be the same legal entity or a documented successor. Name variants \
+(abbreviations, "& Co." vs. "Company") are acceptable when the entity is clearly the same \
+organisation. A gap in entity continuity — different companies, no documented acquisition — \
+is disqualifying unless other evidence compensates.
+
+**3. Goods-claims match.** The trademark's goods description (the "G&S" field) should \
+plausibly cover the product the patent describes. CPC class alone is insufficient — \
+a patent in class H01J (vacuum tubes) paired with a trademark for "office furniture" \
+fails this test. Where goods descriptions are absent or truncated, rely on the patent title \
+and CPC class to assess plausibility.
+
+**4. Historical defensibility.** The correspondence must be explicable as deliberate \
+commercial strategy, not coincidental proximity. A company routinely filed trademarks \
+for products enabled by their patent portfolio; a pair is defensible when that logic \
+applies. Pairs that are coincidental — same assignee, adjacent dates, unrelated goods — \
+should be rejected or deferred.
+
+**Scoring:**
+- 5 — all four criteria clearly met; strong historical case
+- 4 — three criteria met; one minor gap that doesn't undermine the case
+- 3 — two criteria met or significant uncertainty on one key criterion; defer for review
+- 2 — only one criterion met; likely reject but warrants a second look
+- 1 — two or more criteria clearly fail; reject
+
+Respond with exactly this format and no other text:
+RECOMMENDATION: confirm | reject | defer
+SCORE: <integer 1–5>
+REASONING: <one to three sentences citing specific evidence from the card>\
+"""
+
+_DIGEST_TASK = """\
+---
+
+## Prioritisation Task: Rank the Next-Review Candidates
+
+You have been shown a project digest summarising the current state of a patent-trademark \
+matching queue. Your task is to identify which unreviewed candidates are most worth \
+examining first and explain why.
+
+Prioritisation criteria, in descending weight:
+
+1. **Signal strength.** Candidates with title_hit (T) or abstract_hit (A) in the signals \
+field have name-level evidence of correspondence — these are higher-priority than \
+signal-free candidates at the same score.
+
+2. **Score and date gap.** Higher scores indicate stronger temporal and entity alignment. \
+Within the same score band, prefer candidates with smaller date gaps (patent grant to \
+trademark filing).
+
+3. **Entity diversity.** Reviewing candidates from multiple entities in one session gives \
+a broader picture of the project. If the top candidates all belong to the same entity, \
+note which other entities have high-scoring candidates worth including.
+
+4. **Research question fit.** If you can infer the project's research question from the \
+trademark names and entity list, flag candidates that seem most directly relevant — even \
+if their score is not the absolute highest.
+
+Rank the top three candidates. For each, give one sentence explaining why it is a priority.\
+"""
+
+_DRAFT_TASK = """\
+---
+
+## Essay Drafting Task
+
+You will be given a match essay scaffold — a Markdown file with YAML frontmatter and \
+section headers, but with placeholder comments (<!-- ... -->) in place of prose. \
+Your task is to replace those placeholders with analytical prose grounded in the evidence \
+already present in the scaffold.
+
+Drafting rules:
+
+- **Preserve the YAML frontmatter exactly.** Do not change any field values, add fields, \
+or reformat the block. The frontmatter is a data record; altering it breaks downstream \
+validation.
+
+- **Preserve the ## Primary Sources section exactly.** The primary sources section lists \
+the specific USPTO and patent records; it must not be changed.
+
+- **Replace each placeholder with 2–4 sentences of prose.** Each section has a comment \
+indicating what it should cover. Write to that specification without expanding scope.
+
+- **The trademark filing date must appear in the essay body.** The year-month from \
+tm_filing_dt in the frontmatter (e.g. "1931-11") must appear somewhere in the written prose. \
+This is a validation requirement.
+
+- **Do not invent identifiers.** Every serial number, patent number, date, and assignee \
+name in the prose must come directly from the scaffold. Do not introduce identifiers not \
+present in the scaffold, even if you believe them to be accurate.
+
+- **Write in specialist register.** Evidence-forward, primary-source grounded, hedged \
+where the record is incomplete. Do not write in general-reader register for match essays.
+
+- **Do not reference the tool or methodology.** Do not mention DuckDB, Markery, \
+candidates.jsonl, or any internal tooling. Present the evidence as historical analysis.
+
+Output only the complete essay markdown, starting with the opening ---\
+"""
+
+_CARD_INFER_SYSTEM  = (_HISTORIAN_IDENTITY + "\n\n" + _CARD_TASK).strip()
+_DIGEST_INFER_SYSTEM = (_HISTORIAN_IDENTITY + "\n\n" + _DIGEST_TASK).strip()
+_DRAFT_SYSTEM       = (_HISTORIAN_IDENTITY + "\n\n" + _DRAFT_TASK).strip()
 
 
 def _parse_infer_result(text: str) -> dict:
@@ -246,7 +336,8 @@ def cmd_card(args: argparse.Namespace) -> None:
         model = getattr(args, "model", None) or os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
         user_msg = card_text + "\n\nAssess this candidate pair."
         try:
-            resp_text, ptok, ctok = llm_call(model, _CARD_INFER_SYSTEM, user_msg, 256)
+            resp_text, ptok, ctok, cache_read, cache_create = llm_call(
+                model, _CARD_INFER_SYSTEM, user_msg, 256)
             result = _parse_infer_result(resp_text)
             print(f"\n[infer]  recommendation={result['recommendation']}  score={result['score']}")
             print(f"         {result['reasoning']}")
@@ -254,8 +345,8 @@ def cmd_card(args: argparse.Namespace) -> None:
                 model=model,
                 prompt_tokens=ptok,
                 completion_tokens=ctok,
-                cache_read_tokens=0,
-                cache_creation_tokens=0,
+                cache_read_tokens=cache_read,
+                cache_creation_tokens=cache_create,
                 wall_ms=int((time.monotonic() - t0) * 1000),
             )
             emit_tokens(infer_rec, specialist="historian", command="card.infer", tokens_flag=True)
@@ -383,14 +474,15 @@ def cmd_digest(args: argparse.Namespace) -> None:
             "first? Rank the top three and give a one-sentence reason for each."
         )
         try:
-            ranked_text, ptok, ctok = llm_call(model, _DIGEST_INFER_SYSTEM, user_msg, 512)
+            ranked_text, ptok, ctok, cache_read, cache_create = llm_call(
+                model, _DIGEST_INFER_SYSTEM, user_msg, 512)
             print("\n" + ranked_text)
             infer_rec = TokenRecord(
                 model=model,
                 prompt_tokens=ptok,
                 completion_tokens=ctok,
-                cache_read_tokens=0,
-                cache_creation_tokens=0,
+                cache_read_tokens=cache_read,
+                cache_creation_tokens=cache_create,
                 wall_ms=int((time.monotonic() - t0) * 1000),
             )
             emit_tokens(infer_rec, specialist="historian", command="digest.infer", tokens_flag=True)
@@ -557,7 +649,8 @@ def cmd_draft(args: argparse.Namespace) -> None:
     from markery.common.llm import call as llm_call
     print(f"Drafting '{args.slug}' with {model}…", flush=True)
     try:
-        draft_text, ptok, ctok = llm_call(model, _DRAFT_SYSTEM, scaffold_text, 2048)
+        draft_text, ptok, ctok, cache_read, cache_create = llm_call(
+            model, _DRAFT_SYSTEM, scaffold_text, 2048)
     except RuntimeError as exc:
         print(f"Inference error: {exc}", file=sys.stderr)
         sys.exit(1)
@@ -581,8 +674,8 @@ def cmd_draft(args: argparse.Namespace) -> None:
         model=model,
         prompt_tokens=ptok,
         completion_tokens=ctok,
-        cache_read_tokens=0,
-        cache_creation_tokens=0,
+        cache_read_tokens=cache_read,
+        cache_creation_tokens=cache_create,
         wall_ms=wall_ms,
     )
     emit_tokens(draft_rec, specialist="historian", command="draft", tokens_flag=True)

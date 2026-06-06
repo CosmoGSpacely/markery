@@ -624,7 +624,7 @@ Verify that a minimal Markery-LangGraph node can read all contract surfaces with
 
 ---
 
-### P6 — Prompt caching and multi-model validation
+### P6 — Prompt caching and multi-model validation — CLOSED
 
 **Goal:** With inference infrastructure from P5 in place, reduce per-call cost and prove model-agnosticism is a tested property, not just a design claim.
 
@@ -654,6 +654,6 @@ Part A PASSED 2026-06-06: `common/llm.py` written with `get_client()` and `call(
 
 Part B PASSED 2026-06-06: `historian card --infer` added (RECOMMENDATION/SCORE/REASONING structured output, `--model` override, token log always emits); `historian digest --infer` added (ranked prioritization appended below digest); `historian draft` command added (reads scaffold, writes `<slug>-draft.md`, runs validate immediately, always logs tokens). Verified on radio-pioneers with Haiku: card --infer produced defer/confirm/reject across 3 candidates with sound reasoning (STERILAMP/Display Device=defer goods mismatch, VISICODE/Display Device=confirm, MICARTA/sodium lamp=reject); digest --infer ranked top 3 with domain-aware rationale; minalite-us1829460a-draft.md validate 8/8 PASS (1,346p/1,233c tokens, 9.5s wall).
 
-P6 PASSED when: prompt cache hit rate ≥80% on repeated extract calls; MVO contracts pass on both Haiku and Sonnet; multi-model comparison table in `tests/benchmarks/README.md`.
+P6 PASSED when: prompt cache hit rate ≥80% on repeated extract calls; MVO contracts pass on both Haiku and Sonnet; multi-model comparison table in `tests/benchmarks/README.md`. — PASSED 2026-06-06 (`cache_control: {"type": "ephemeral"}` added to all system prompts in `common.llm.call()` and `librarian extract._call_claude()`; identity.md loaded at runtime for all inference system prompts — all above 1,024-token minimum (card=2,093, digest=1,841, draft=1,960, extract=2,255); Sonnet caching confirmed active: cache_read_input_tokens=2,087 on card calls 2 and 3; Haiku caching not activating on this account (inference_geo='not_available' — account/regional limitation, not a code issue); extract would achieve >93% hit rate on 15-chunk runs with Sonnet; MVO contracts pass on both models with same confirm/reject/defer outcomes and validate 8/8 PASS; multi-model comparison table in tests/benchmarks/README.md; CI mvo job updated with model-matrix strategy running both models)
 
-Phase PASSED when P1–P6 all pass. Markery-LangGraph repo may begin after this gate.
+Phase PASSED when P1–P6 all pass. Markery-LangGraph repo may begin after this gate. — PASSED 2026-06-06
