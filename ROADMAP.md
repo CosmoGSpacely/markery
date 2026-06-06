@@ -22,9 +22,9 @@ Phases 14–15 closed 2026-06-01/2026-05-24. Archived to `archive/ROADMAP-2026-0
 
 ---
 
-### P1 — Four mainspace edits (account threshold)
+### P1 — Four mainspace edits (account threshold) — CLOSED
 
-Current state: account `CosmoGSpacely` has 3 confirmed non-reverted mainspace edits (Stage 4b external link 2026-05-22; Library Bureau CN fix 2026-06-02; Library Bureau absorption citation 2026-06-03). Two more required before D023 can be submitted. Edits must be spaced across days — one per day minimum.
+Current state: account `CosmoGSpacely` has 5 confirmed non-reverted mainspace edits. Edit 3 (Rolodex/Wheeldex, 2026-06-05) and edit 4 (Remington Rand filing systems, 2026-06-06, rev 1358111560) completed the threshold.
 
 1. **Library Bureau — resolve `{{Citation needed}}`**: The sentence "It sold merchandise and services through a network of sales offices and distributors in the United States (46 in 1922), England (4), France (1), and Belgium." carries a `{{Citation needed|date=June 2023}}` tag. The 1921 Library Bureau catalog (Google Books, already linked in the article's References section) documents the office network. Add `<ref>{{cite book|title=Steel Card and Filing Cabinets|publisher=Library Bureau|year=1921|url=https://books.google.com/books?id=nkhIAAAAYAAJ&pg=PA1}}</ref>` after "Belgium"; remove the tag.
 
@@ -155,7 +155,7 @@ Key works to acquire (verify IA open-access before requesting):
 
 ### Phase Gate
 
-P1 PASSED when: account `CosmoGSpacely` has ≥5 confirmed non-reverted mainspace edits; all four new edits are in articles within the research domain.
+P1 PASSED when: account `CosmoGSpacely` has ≥5 confirmed non-reverted mainspace edits; all four new edits are in articles within the research domain. — PASSED 2026-06-06 (5 total edits: Stage 4b external link 2026-05-22; Library Bureau CN fix 2026-06-02; Library Bureau absorption citation 2026-06-03; Rolodex Wheeldex trademark citation 2026-06-05; Remington Rand filing systems section 2026-06-06 rev 1358111560)
 
 P2 PASSED when: D023 live on Wikipedia ≥48 hours unreverted; edit URL recorded in `projects/monthly-image-review/STATUS.md`.
 
