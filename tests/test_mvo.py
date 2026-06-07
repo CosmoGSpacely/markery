@@ -19,9 +19,11 @@ from pathlib import Path
 
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-DB_TM     = REPO_ROOT / "data" / "trademarks.duckdb"
-DB_PAT    = REPO_ROOT / "data" / "patents.duckdb"
+REPO_ROOT    = Path(__file__).resolve().parents[1]
+DB_TM        = REPO_ROOT / "data" / "trademarks.duckdb"
+DB_PAT       = REPO_ROOT / "data" / "patents.duckdb"
+LIBRARY_DIR  = REPO_ROOT / "library"
+LIBRARY_IDX  = LIBRARY_DIR / "index.jsonl"
 
 PROJECT   = "information-systems"
 SLUG_CONF = "soundex-us1261167a"       # confirmed pair with human essay
@@ -30,6 +32,17 @@ SLUG_CAND = "remington-us2168802a"     # unreviewed candidate
 requires_dbs = pytest.mark.skipif(
     not DB_TM.exists() or not DB_PAT.exists(),
     reason="data DBs not present",
+)
+
+_library_works = LIBRARY_DIR / "works"
+requires_library = pytest.mark.skipif(
+    not _library_works.exists() or not any(_library_works.iterdir()),
+    reason="library/works not present or empty",
+)
+
+requires_library_index = pytest.mark.skipif(
+    not LIBRARY_IDX.exists(),
+    reason="library/index.jsonl absent; run: markery librarian index",
 )
 
 
@@ -296,3 +309,75 @@ class TestScaffold:
         self._scaffold()
         text = self.ESSAY_PATH.read_text(encoding="utf-8")
         assert section in text, f"section '{section}' missing from scaffold"
+
+
+# ---------------------------------------------------------------------------
+# librarian
+# ---------------------------------------------------------------------------
+
+@requires_library
+class TestLibrarian:
+    """MVO contracts for librarian commands (mvo.md §librarian)."""
+
+    SEARCH_QUERY = "trademark"
+
+    def test_index_exits_0(self):
+        out, rc = _run("markery", "librarian", "index")
+        assert rc == 0, f"librarian index exited {rc}:\n{out}"
+
+    def test_index_output_contains_work_count(self):
+        out, rc = _run("markery", "librarian", "index")
+        assert rc == 0
+        assert re.search(r"Indexed \d+ work\(s\)", out), \
+            "output does not contain 'Indexed N work(s)' line"
+
+    def test_list_exits_0(self):
+        out, rc = _run("markery", "librarian", "list")
+        assert rc == 0, f"librarian list exited {rc}:\n{out}"
+
+    def test_list_output_contains_slug(self):
+        out, rc = _run("markery", "librarian", "list")
+        assert rc == 0
+        works_dir = LIBRARY_DIR / "works"
+        known_slug = next(p.name for p in works_dir.iterdir() if p.is_dir())
+        assert known_slug in out, f"slug '{known_slug}' not found in list output"
+
+    @requires_library_index
+    def test_search_exits_0(self):
+        out, rc = _run("markery", "librarian", "search", self.SEARCH_QUERY)
+        assert rc == 0, f"librarian search exited {rc}:\n{out}"
+
+    @requires_library_index
+    def test_search_output_has_header_line(self):
+        out, rc = _run("markery", "librarian", "search", self.SEARCH_QUERY)
+        assert rc == 0
+        # The header line contains AUTHOR, SECTION, PASSAGE PREVIEW
+        assert "AUTHOR" in out and "SECTION" in out, \
+            "search output header line missing expected columns"
+
+    @requires_library_index
+    def test_card_exits_0(self):
+        out, rc = _run(
+            "markery", "librarian", "card", self.SEARCH_QUERY,
+            "--out", "-", "--mode", "keyword",
+        )
+        assert rc == 0, f"librarian card exited {rc}:\n{out}"
+
+    @requires_library_index
+    def test_card_output_contains_header(self):
+        out, rc = _run(
+            "markery", "librarian", "card", self.SEARCH_QUERY,
+            "--out", "-", "--mode", "keyword",
+        )
+        assert rc == 0
+        assert "# Library card:" in out, "card output missing '# Library card:' header"
+
+    @requires_library_index
+    def test_card_output_contains_passage(self):
+        out, rc = _run(
+            "markery", "librarian", "card", self.SEARCH_QUERY,
+            "--out", "-", "--mode", "keyword",
+        )
+        assert rc == 0
+        # Each passage line contains a quoted excerpt
+        assert '"' in out, "card output contains no quoted passage lines"

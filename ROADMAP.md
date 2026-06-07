@@ -85,7 +85,7 @@ Phases 16–18 closed 2026-06-06. Archived to `archive/ROADMAP-2026-06-06.md`.
 
 ---
 
-### P4 — D043 and D049: Per-project model config + librarian MVO contracts
+### P4 — D043 and D049: Per-project model config + librarian MVO contracts — CLOSED
 
 **D043 — Per-project `model` in `project.json`:**
 
@@ -137,7 +137,9 @@ P2 PASSED when: `markery matchmaker confirm <project> <slug>` appends a correct 
 
 P3 PASSED when: `markery librarian review --auto-accept` accepts all pending candidates without calling `input()`; D032 test passes; D032 closed. `markery librarian acquire` with unresolvable slug prints helpful error (not traceback); D044 test passes; D044 closed. — PASSED 2026-06-07 (8 tests; D032 and D044 both closed in DEFERRED.md; 538 total tests passing)
 
-P4 PASSED when: `project.json` `"model"` field loaded and auto-sets `MARKERY_MODEL`; `animal-marks-1930/project.json` updated; D043 tests pass; D043 closed. Librarian MVO contract tests pass; D049 closed.
+P4 PASSED when: `project.json` `"model"` field loaded and auto-sets `MARKERY_MODEL`; `animal-marks-1930/project.json` updated; D043 tests pass; D043 closed. Librarian MVO contract tests pass; D049 closed. — PASSED 2026-06-07 (13 tests; D043 and D049 both closed in DEFERRED.md; 551 total tests passing)
+
+Results 2026-06-07: Both D043 and D049 implemented and tested. `model: str | None` field added to `Project` dataclass; `load_project()` reads it from `project.json`. `_try_inject_project_model(rest)` in `src/markery/cli.py` scans the `rest` argument list for a known project directory name, reads its `project.json`, and sets `os.environ["MARKERY_MODEL"]` before dispatch — only when `MARKERY_MODEL` is not already set (explicit env var wins). `animal-marks-1930/project.json` now includes `"model": "claude-haiku-4-5-20251001"`, mechanically enforcing the Haiku commitment without a shell prefix. The injection function scans all `rest` args (not just `rest[0]`) so historian commands (`historian card <project> <slug>`) work correctly — `rest[0]` is the subcommand ("card"), `rest[1]` is the project. 4 tests in `tests/test_project_model.py`. D049: `TestLibrarian` class added to `tests/test_mvo.py` with 9 tests across `librarian index`, `librarian list`, `librarian search`, and `librarian card --mode keyword`; `requires_library` and `requires_library_index` skip markers gate each class correctly. 9 tests passing against the local library (10 works, 35 indexed passages). 551 total tests passing.
 
 P5 PASSED when: D030 closed with Phase 18 P5 supersession note; D040 closed with doc fix applied; D045 closed with 5 stub cards written.
 

@@ -23,6 +23,31 @@ from __future__ import annotations
 
 import sys
 
+
+def _try_inject_project_model(rest: list[str]) -> None:
+    """Set MARKERY_MODEL from project.json if the project specifies one and env doesn't."""
+    import json
+    import os
+    from pathlib import Path
+
+    if "MARKERY_MODEL" in os.environ:
+        return
+    from markery.common.config import ROOT
+    projects_dir = ROOT / "projects"
+    for arg in rest:
+        if arg.startswith("-"):
+            continue
+        pjson = projects_dir / arg / "project.json"
+        if pjson.exists():
+            try:
+                data = json.loads(pjson.read_text(encoding="utf-8"))
+                m = data.get("model")
+                if m:
+                    os.environ["MARKERY_MODEL"] = m
+            except Exception:
+                pass
+            return
+
 _SUBCOMMANDS = {
     "match":       "Generate patent-trademark candidate pairs",
     "review":      "Interactive candidate pair review",
@@ -154,6 +179,8 @@ def main() -> None:
 
     cmd  = sys.argv[1]
     rest = sys.argv[2:]
+
+    _try_inject_project_model(rest)
 
     if cmd not in _SUBCOMMANDS:
         print(f"markery: unknown subcommand '{cmd}'")
