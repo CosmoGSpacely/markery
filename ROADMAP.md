@@ -59,6 +59,8 @@ Phases 16–18 closed 2026-06-06. Archived to `archive/ROADMAP-2026-06-06.md`.
 5. Add a test: pass a candidate dict with `trademark=None` through the TUI's confirmed-record construction function without raising `TypeError` or `AttributeError`.
 6. Update D041 in `DEFERRED.md` — mark the TUI path closed; close D041 fully if all remaining open paths from the Phase 17.1 P1 audit are now resolved.
 
+**Results 2026-06-07:** Both D029 and D041 implemented and tested. `markery matchmaker confirm` is now a real CLI command under `markery matchmaker`; it parses the slug to `(tm_slug, patent_no)`, finds the matching candidate in `candidates.jsonl`, guards against duplicate confirmation with an exit-0 message, handles figurative marks via `cand.get("trademark")`, and writes through the same `write_confirmed()` path as the interactive TUI. Invalid slugs exit 1 with a specific message. The TUI audit found two crash sites in `historian/review.py`: `mark = cand["trademark"]` in `display()` (would crash on any figurative candidate in the TUI queue) and `c["trademark"].upper()` in the queue-building filter (would crash when `--mark` is used with figurative candidates in scope). Both fixed with None-safe guards. D041 is now fully closed across all six code paths documented in DEFERRED. 7 tests in `tests/specialist/matchmaker/test_confirm.py`. 530 tests passing.
+
 ---
 
 ### P3 — D032 and D044: Librarian review auto-accept + acquire slug fix
@@ -78,6 +80,8 @@ Phases 16–18 closed 2026-06-06. Archived to `archive/ROADMAP-2026-06-06.md`.
 6. If the identifier is not an IA identifier and not a known slug, print: `"Identifier '<slug>' not found. Use the raw IA identifier from 'markery librarian search-sources' output (e.g. 'historydevelopme0000fran')."` — not a traceback.
 7. Add a test: `acquire` with an unresolvable slug prints the helpful error message and exits 1.
 8. Close D044 in `DEFERRED.md`.
+
+**Results 2026-06-07:** Both D032 and D044 implemented and tested. `review()` in `extract.py` now accepts `auto_accept: bool = False`; when True it loops over pending blocks, calls `_append_to_excerpts()` for each, replaces `<!-- status: pending -->` with `<!-- status: accepted -->`, and writes back without any `input()` call. The `--auto-accept` flag is wired into `librarian review` via `cli.py`. For D044, the fix landed in `cli.py` rather than `sources/ia.py` — the slug check belongs in the acquire command where user intent is interpreted, not in the IA adapter. Two fixes: before hitting IA, check if `library/works/<identifier>/metadata.json` already exists and exit 0 with "Already acquired" if so; after a failed IA lookup, print a specific hint pointing to the IDENTIFIER column in `search-sources` output. Step 3 (update `review.md` instruction card) deferred to P5 where the D045 stub cards are written. 8 tests in `tests/test_librarian_p3.py`. 538 tests passing.
 
 ---
 
@@ -129,9 +133,9 @@ Stubs need one paragraph describing when to use the command and the basic invoca
 
 P1 PASSED when: all 7 Phase 16 Wikipedia edits confirmed live or revert documented; Rolodex revision ID recorded; Phase 16 P2 and P3 gates updated in `archive/ROADMAP-2026-06-06.md`; D050 closed (or new D-entry filed for resubmission).
 
-P2 PASSED when: `markery matchmaker confirm <project> <slug>` appends a correct record to `confirmed.jsonl`; all D029 tests pass. Figurative TUI audit complete; D041 test passes; D041 updated/closed.
+P2 PASSED when: `markery matchmaker confirm <project> <slug>` appends a correct record to `confirmed.jsonl`; all D029 tests pass. Figurative TUI audit complete; D041 test passes; D041 updated/closed. — PASSED 2026-06-07 (7 tests; D029 and D041 both closed in DEFERRED.md; 530 total tests passing)
 
-P3 PASSED when: `markery librarian review --auto-accept` accepts all pending candidates without calling `input()`; D032 test passes; D032 closed. `markery librarian acquire` with unresolvable slug prints helpful error (not traceback); D044 test passes; D044 closed.
+P3 PASSED when: `markery librarian review --auto-accept` accepts all pending candidates without calling `input()`; D032 test passes; D032 closed. `markery librarian acquire` with unresolvable slug prints helpful error (not traceback); D044 test passes; D044 closed. — PASSED 2026-06-07 (8 tests; D032 and D044 both closed in DEFERRED.md; 538 total tests passing)
 
 P4 PASSED when: `project.json` `"model"` field loaded and auto-sets `MARKERY_MODEL`; `animal-marks-1930/project.json` updated; D043 tests pass; D043 closed. Librarian MVO contract tests pass; D049 closed.
 
