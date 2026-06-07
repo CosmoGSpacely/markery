@@ -42,7 +42,7 @@
 
 | Edit | Article | Change | Revision | Date | Status |
 |---|---|---|---|---|---|
-| D024 | Soundex | SOUNDEX trademark citation (USPTO Serial No. 71246709, March 1927, Rand Kardex Bureau) | [1358151441](https://en.wikipedia.org/w/index.php?diff=1358151441) | 2026-06-06 | Live — monitoring |
+| D024 | Soundex | SOUNDEX trademark citation (USPTO Serial No. 71246709, March 1927, Rand Kardex Bureau) | [1358151441](https://en.wikipedia.org/w/index.php?diff=1358151441) | 2026-06-06 | Live, unreverted (confirmed 2026-06-07) |
 
 ---
 

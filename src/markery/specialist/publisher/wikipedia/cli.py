@@ -13,7 +13,38 @@ import json
 import sys
 from pathlib import Path
 
+from markery.common.config import ROOT
 from markery.common.project import Project
+
+
+def _record_submission(
+    project_name: str,
+    revision_id: int | None,
+    article: str,
+    description: str,
+    submitted_at: str,
+    serial_no: str | None = None,
+    status: str = "live",
+) -> None:
+    """Append one submission record to projects/<project>/wikipedia/submissions.jsonl."""
+    wiki_dir = ROOT / "projects" / project_name / "wikipedia"
+    wiki_dir.mkdir(parents=True, exist_ok=True)
+    record = {
+        "revision_id": revision_id,
+        "article": article,
+        "description": description,
+        "serial_no": serial_no,
+        "submitted_at": submitted_at,
+        "status": status,
+        "diff_url": (
+            f"https://en.wikipedia.org/w/index.php?diff={revision_id}"
+            if revision_id else None
+        ),
+    }
+    path = wiki_dir / "submissions.jsonl"
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(record) + "\n")
+    print(f"  Recorded → {path}")
 
 
 def _load_match(project: str, slug: str) -> dict:
@@ -86,6 +117,7 @@ def cmd_add_external_link(
     label: str,
     summary: str,
     yes: bool = False,
+    project: str | None = None,
 ) -> None:
     """Append one external link to a page's External links section."""
     from markery.specialist.publisher.wikipedia.api import WikipediaClient
@@ -151,8 +183,18 @@ def cmd_add_external_link(
 
     result = client.edit_page(page_title, new_text, summary)
     if result.get("edit", {}).get("result") == "Success":
-        print(f"Submitted. Revision: {result['edit'].get('newrevid')}")
+        revid = result["edit"].get("newrevid")
+        print(f"Submitted. Revision: {revid}")
         print(f"View: https://en.wikipedia.org/wiki/{page_title.replace(' ', '_')}")
+        if project:
+            from datetime import datetime, timezone
+            _record_submission(
+                project_name=project,
+                revision_id=revid,
+                article=page_title,
+                description=summary,
+                submitted_at=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            )
     else:
         print(f"Unexpected API response: {result}", file=sys.stderr)
         sys.exit(1)
@@ -191,6 +233,7 @@ def cmd_replace(
     replace: str,
     summary: str,
     yes: bool = False,
+    project: str | None = None,
 ) -> None:
     """Targeted find-and-replace on a Wikipedia article, with diff and confirmation."""
     from markery.specialist.publisher.wikipedia.api import WikipediaClient
@@ -238,6 +281,15 @@ def cmd_replace(
         revid = result["edit"].get("newrevid")
         print(f"Submitted. Revision: {revid}")
         print(f"View: https://en.wikipedia.org/w/index.php?diff={revid}")
+        if project:
+            from datetime import datetime, timezone
+            _record_submission(
+                project_name=project,
+                revision_id=revid,
+                article=page_title,
+                description=summary,
+                submitted_at=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            )
     else:
         print(f"Unexpected API response: {result}", file=sys.stderr)
         sys.exit(1)
@@ -293,7 +345,16 @@ def cmd_submit(project: str, slug: str, page_title: str | None, summary: str, ye
 
     result = client.edit_page(title, new_text, summary)
     if result.get("edit", {}).get("result") == "Success":
-        print(f"Submitted. New revision: {result['edit'].get('newrevid')}")
+        revid = result["edit"].get("newrevid")
+        print(f"Submitted. New revision: {revid}")
+        from datetime import datetime, timezone
+        _record_submission(
+            project_name=project,
+            revision_id=revid,
+            article=title,
+            description=summary,
+            submitted_at=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        )
     else:
         print(f"Unexpected response: {result}", file=sys.stderr)
         sys.exit(1)
@@ -344,6 +405,8 @@ def wikipedia_main() -> None:
                      help="Edit summary")
     ael.add_argument("--yes", "-y", action="store_true",
                      help="Submit without interactive confirmation")
+    ael.add_argument("--project", metavar="NAME", default=None,
+                     help="Project name — records submission in wikipedia/submissions.jsonl")
 
     rep = sub.add_parser("replace",
                          help="Targeted find-and-replace with diff and confirmation")
@@ -355,6 +418,8 @@ def wikipedia_main() -> None:
     rep.add_argument("--summary", required=True, metavar="MSG", help="Edit summary")
     rep.add_argument("--yes", "-y", action="store_true",
                      help="Submit without interactive confirmation")
+    rep.add_argument("--project", metavar="NAME", default=None,
+                     help="Project name — records submission in wikipedia/submissions.jsonl")
 
     args = parser.parse_args()
 
@@ -367,6 +432,12 @@ def wikipedia_main() -> None:
     elif args.action == "verify-credentials":
         cmd_verify_credentials()
     elif args.action == "add-external-link":
-        cmd_add_external_link(args.page_title, args.url, args.label, args.summary, args.yes)
+        cmd_add_external_link(
+            args.page_title, args.url, args.label, args.summary, args.yes,
+            project=args.project,
+        )
     elif args.action == "replace":
-        cmd_replace(args.page_title, args.find, args.replace_text, args.summary, args.yes)
+        cmd_replace(
+            args.page_title, args.find, args.replace_text, args.summary, args.yes,
+            project=args.project,
+        )

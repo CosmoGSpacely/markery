@@ -145,7 +145,60 @@ P4 PASSED when: `project.json` `"model"` field loaded and auto-sets `MARKERY_MOD
 
 P5 PASSED when: D030 closed with Phase 18 P5 supersession note; D040 closed with doc fix applied; D045 closed with 5 stub cards written. — PASSED 2026-06-07 (documentation only; no new tests; 551 tests still passing)
 
-Phase PASSED when P1–P5 all pass. `DEFERRED.md` is fully current: all closed entries are marked done; all open entries have valid reopen triggers and accurate path references. — P2–P5 PASSED 2026-06-07; P1 pending D050 trigger (2026-06-08).
+Phase PASSED when P1–P6 all pass. `DEFERRED.md` is fully current: all closed entries are marked done; all open entries have valid reopen triggers and accurate path references. — P1–P5 PASSED 2026-06-07; P6 PASSED 2026-06-07.
+
+---
+
+### P6 — Wikipedia submission registry
+
+**Motivation:** Revision IDs for submitted Wikipedia edits were recorded only as prose rows in project `STATUS.md` files. There is no structured, machine-readable record that a future `check-revision` command (Phase 21) can query. All three submission commands (`submit`, `replace`, `add-external-link`) silently discard the `newrevid` after printing it.
+
+**Schema — `projects/<name>/wikipedia/submissions.jsonl`:**
+
+Each line is one submitted edit:
+```json
+{
+  "revision_id": 1357391696,
+  "article": "Library Bureau",
+  "description": "Resolve {{Citation needed}} — office network citation",
+  "serial_no": null,
+  "submitted_at": "2026-06-02",
+  "status": "live",
+  "diff_url": "https://en.wikipedia.org/w/index.php?diff=1357391696"
+}
+```
+
+`revision_id` is `null` for edits submitted before this registry existed and whose revision ID was not captured. `status` is one of `live`, `monitoring`, `reverted`.
+
+**Steps:**
+
+1. Add `_record_submission(project_root, revision_id, article, description, submitted_at, serial_no=None, status="live")` helper to `src/markery/specialist/publisher/wikipedia/cli.py`. Appends one JSONL line to `projects/<project>/wikipedia/submissions.jsonl`, creating the file if absent. `revision_id` may be `None`.
+2. Wire into `cmd_submit()` — project is always available. Write on `result == "Success"`.
+3. Add optional `--project` flag to `cmd_replace()` and `cmd_add_external_link()` argparse entries. When `--project` is provided, write the submission record on success.
+4. Update `wikipedia_main()` dispatch to pass `args.project` where added.
+5. Backfill the seven existing Phase 16 Track A edits into their project files:
+   - `projects/monthly-image-review/wikipedia/submissions.jsonl` — edits 1/5 through D023 (6 entries; 1/5 and 4/5 have `revision_id: null`)
+   - `projects/information-systems/wikipedia/submissions.jsonl` — D024 (1 entry)
+6. Manually check all seven edits for revert status; update `status` fields in the backfilled entries accordingly.
+7. Update D050 in `DEFERRED.md` and STATUS.md files with confirmed revert/live status.
+
+Results 2026-06-07: `_record_submission()` helper added to `src/markery/specialist/publisher/wikipedia/cli.py`; wired into `cmd_submit()` (always writes, project arg always present) and `cmd_replace()` / `cmd_add_external_link()` (writes when `--project` is provided, added as optional arg to both). Seven edits backfilled into `projects/monthly-image-review/wikipedia/submissions.jsonl` (6 entries) and `projects/information-systems/wikipedia/submissions.jsonl` (1 entry). MediaWiki API check on all 5 tracked revision IDs: all live, no `mw-reverted` tag. Rolodex revision ID retrieved from article history: **1357918452** (not previously recorded). Library Bureau Stage 4b external link (edit 1/5, planned 2026-05-22) confirmed **not submitted** — no CosmoGSpacely edit in Library Bureau history on that date and TSDR link is absent from the current article; status set to `not_submitted` in submissions.jsonl and STATUS.md updated. D023 (rev 1358151236) and D024 (rev 1358151441) confirmed live; Phase 16 archive P2 and P3 gates marked PASSED 2026-06-07; D050 closed in DEFERRED.md. `markery wikipedia check-revision` command added to Phase 21 P5 roadmap. 551 tests passing (no new tests — no testable logic added; submission recording is a side-effect path exercised in live submissions only).
+
+---
+
+### Phase Gate (updated)
+
+P1 PASSED when: all 7 Phase 16 Wikipedia edits confirmed live or revert documented; Rolodex revision ID recorded; Phase 16 P2 and P3 gates updated in `archive/ROADMAP-2026-06-06.md`; D050 closed (or new D-entry filed for resubmission). — PASSED 2026-06-07 (5/6 tracked revisions confirmed live; edit 1/5 Library Bureau external link confirmed not submitted; Rolodex rev 1357918452 recorded; archive gates PASSED; D050 closed)
+
+P2 PASSED when: `markery matchmaker confirm <project> <slug>` appends a correct record to `confirmed.jsonl`; all D029 tests pass. Figurative TUI audit complete; D041 test passes; D041 updated/closed. — PASSED 2026-06-07 (7 tests; D029 and D041 both closed in DEFERRED.md; 530 total tests passing)
+
+P3 PASSED when: `markery librarian review --auto-accept` accepts all pending candidates without calling `input()`; D032 test passes; D032 closed. `markery librarian acquire` with unresolvable slug prints helpful error (not traceback); D044 test passes; D044 closed. — PASSED 2026-06-07 (8 tests; D032 and D044 both closed in DEFERRED.md; 538 total tests passing)
+
+P4 PASSED when: `project.json` `"model"` field loaded and auto-sets `MARKERY_MODEL`; `animal-marks-1930/project.json` updated; D043 tests pass; D043 closed. Librarian MVO contract tests pass; D049 closed. — PASSED 2026-06-07 (13 tests; D043 and D049 both closed in DEFERRED.md; 551 total tests passing)
+
+P5 PASSED when: D030 closed with Phase 18 P5 supersession note; D040 closed with doc fix applied; D045 closed with 5 stub cards written. — PASSED 2026-06-07 (documentation only; no new tests; 551 tests still passing)
+
+P6 PASSED when: `submissions.jsonl` written on every successful `submit`, `replace` (with `--project`), and `add-external-link` (with `--project`) call; seven backfilled entries present in correct project files; all seven edits confirmed live or revert documented; D050 closed or new entry filed. — PASSED 2026-06-07
 
 ---
 
@@ -332,6 +385,24 @@ Phase PASSED when P1–P5 all pass. All D-numbers in this phase closed in `DEFER
 
 ---
 
+### P5 — `markery wikipedia check-revision`
+
+**Motivation:** Phase 19 P6 introduced `projects/<name>/wikipedia/submissions.jsonl` as the structured record of Wikipedia edits. Checking revert status currently requires manual browser lookups. A CLI command that reads `submissions.jsonl` and queries the MediaWiki API for each entry would close the monitoring loop without leaving the tool.
+
+1. Add `get_revision_status(revid: int) -> dict` to `src/markery/specialist/publisher/wikipedia/api.py`:
+   - Calls `action=query&prop=revisions&revids=<revid>&rvprop=ids|timestamp|tags|comment&format=json`
+   - Returns `{"exists": bool, "reverted": bool, "tags": list, "timestamp": str}`. A revision is considered reverted if `"mw-reverted"` is in its tags.
+2. Implement `markery wikipedia check-revision <project>`:
+   - Reads `projects/<project>/wikipedia/submissions.jsonl`
+   - For each entry with a non-null `revision_id`, calls `get_revision_status()`
+   - Prints a per-entry status table: revision_id, article, submitted_at, API status (live / reverted / unknown)
+   - Updates `status` field in `submissions.jsonl` for any entry whose status has changed (live → reverted)
+   - Exits 0 if all checked revisions are live; exits 1 if any is reverted
+3. Add `check-revision` to argparse in `wikipedia_main()`.
+4. Add a test: `check-revision` exits 0 when all submissions have live status (mock API response); exits 1 when one is reverted.
+
+---
+
 ### Phase Gate
 
 P1 PASSED when: `markery-langgraph` repo initialised; `config.py`, `state.py`, `tools.py` all importable; `check_contract` passes against `MARKERY_ROOT`.
@@ -342,7 +413,9 @@ P3 PASSED when: `markery project onboard` exits 0 on a correctly configured proj
 
 P4 PASSED when: `markery match --serials` generates candidates only for the listed serials; test passes; D042 fully closed.
 
-Phase PASSED when P1–P4 all pass.
+P5 PASSED when: `markery wikipedia check-revision <project>` reads `submissions.jsonl`, queries MediaWiki API for each revision, prints status table, updates changed statuses, exits 1 on revert; test passes.
+
+Phase PASSED when P1–P5 all pass.
 
 ---
 
