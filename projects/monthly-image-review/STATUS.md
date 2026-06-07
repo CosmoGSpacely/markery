@@ -44,7 +44,7 @@ Marks of interest identified through gallery review that may connect to active p
 
 | # | Article | Change | Revision | Date | Status |
 |---|---|---|---|---|---|
-| 1/5 | Library Bureau (Stage 4b) | External link — TSDR for CP trademark | — | 2026-05-22 | Not submitted — no edit found in article history; TSDR link absent from current article |
+| 1/5 | Chicago Pneumatic (Stage 4b) | Add TSDR external link for CP trademark (USPTO Serial No. 71299042) | [1355562959](https://en.wikipedia.org/w/index.php?diff=1355562959) | 2026-05-22 | Live, unreverted (confirmed 2026-06-07) — STATUS.md previously mislabeled as "Library Bureau" |
 | 2/5 | Library Bureau | Resolve `{{Citation needed}}` — office network citation (1921 catalog) | [1357391696](https://en.wikipedia.org/w/index.php?diff=1357391696) | 2026-06-02 | Live, unreverted (confirmed 2026-06-07) |
 | 3/5 | Library Bureau | Add absorption citation — LA Times ad, June 21, 1927, p. 23 | [1357570204](https://en.wikipedia.org/w/index.php?diff=1357570204) | 2026-06-02 | Live, unreverted (confirmed 2026-06-07) |
 | 4/5 | Rolodex | Wheeldex trademark citation (USPTO Serial No. 71321669) | [1357918452](https://en.wikipedia.org/w/index.php?diff=1357918452) | 2026-06-05 | Live, unreverted (confirmed 2026-06-07) |
