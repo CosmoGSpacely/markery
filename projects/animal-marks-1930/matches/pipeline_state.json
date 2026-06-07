@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-05T07:52:38",
+  "generated_at": "2026-06-05T14:52:09",
   "enriched_at": null,
   "rescored_at": null,
-  "candidate_count": 19,
+  "candidate_count": 27,
   "enriched_count": null,
-  "score_p50": 0.46,
-  "score_p90": 0.4925
+  "score_p50": 0.7346,
+  "score_p90": 0.7749
 }
