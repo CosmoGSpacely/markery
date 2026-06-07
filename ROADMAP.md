@@ -106,7 +106,7 @@ Phases 16–18 closed 2026-06-06. Archived to `archive/ROADMAP-2026-06-06.md`.
 
 ---
 
-### P5 — Deferred triage: D030, D040, D045
+### P5 — Deferred triage: D030, D040, D045 — CLOSED
 
 **D030 — Deprecate `historian simulate` in favour of `--infer` commands:**
 
@@ -141,9 +141,11 @@ P4 PASSED when: `project.json` `"model"` field loaded and auto-sets `MARKERY_MOD
 
 Results 2026-06-07: Both D043 and D049 implemented and tested. `model: str | None` field added to `Project` dataclass; `load_project()` reads it from `project.json`. `_try_inject_project_model(rest)` in `src/markery/cli.py` scans the `rest` argument list for a known project directory name, reads its `project.json`, and sets `os.environ["MARKERY_MODEL"]` before dispatch — only when `MARKERY_MODEL` is not already set (explicit env var wins). `animal-marks-1930/project.json` now includes `"model": "claude-haiku-4-5-20251001"`, mechanically enforcing the Haiku commitment without a shell prefix. The injection function scans all `rest` args (not just `rest[0]`) so historian commands (`historian card <project> <slug>`) work correctly — `rest[0]` is the subcommand ("card"), `rest[1]` is the project. 4 tests in `tests/test_project_model.py`. D049: `TestLibrarian` class added to `tests/test_mvo.py` with 9 tests across `librarian index`, `librarian list`, `librarian search`, and `librarian card --mode keyword`; `requires_library` and `requires_library_index` skip markers gate each class correctly. 9 tests passing against the local library (10 works, 35 indexed passages). 551 total tests passing.
 
-P5 PASSED when: D030 closed with Phase 18 P5 supersession note; D040 closed with doc fix applied; D045 closed with 5 stub cards written.
+P5 PASSED when: D030 closed with Phase 18 P5 supersession note; D040 closed with doc fix applied; D045 closed with 5 stub cards written. — PASSED 2026-06-07 (documentation only; no new tests; 551 tests still passing)
 
-Phase PASSED when P1–P5 all pass. `DEFERRED.md` is fully current: all closed entries are marked done; all open entries have valid reopen triggers and accurate path references.
+Results 2026-06-07: All three deferrals closed. D030 closed with supersession note: `historian card --infer`, `historian digest --infer`, and `historian draft` (Phase 18 P5) together replace the simulation script — more granular, CLI-first, tested, and token-logged. D040 doc fix applied to `src/markery/specialist/historian/persona/instructions/patent-signals.md` § "When to use": ordering constraint paragraph added stating that `markery patent signals` reads from `candidates.jsonl` and enriches nothing when called before `markery match`; should be called as step 1 of P4 immediately after match. D045: five stub instruction cards written in `src/markery/specialist/librarian/persona/instructions/`: `review.md` (interactive vs `--auto-accept`, post-D032 paths), `raw-text.md` (path lookup, absent-file guidance), `enter.md` (manual ILL registration, excerpts.md format note), `wants-update.md` (status lifecycle wanted→in-progress→acquired), `list.md` (compact and verbose modes, excerpt-count interpretation). All 13 librarian instruction cards are now present.
+
+Phase PASSED when P1–P5 all pass. `DEFERRED.md` is fully current: all closed entries are marked done; all open entries have valid reopen triggers and accurate path references. — P2–P5 PASSED 2026-06-07; P1 pending D050 trigger (2026-06-08).
 
 ---
 

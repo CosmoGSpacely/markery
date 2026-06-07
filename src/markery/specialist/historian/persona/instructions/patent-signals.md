@@ -4,6 +4,8 @@
 
 When a confirmed patent lacks abstract text and that text would strengthen the correspondence analysis — for example, when `abstract_name_hit` or `goods_abstract_overlap` would change the scoring or the essay argument.
 
+**Ordering constraint:** `markery patent signals <project>` reads from `candidates.jsonl` and enriches no records when called before `markery match`. Call it as step 1 of P4, immediately after `markery match` generates candidates. Calling it during P3 or earlier produces "0 candidates enriched" — technically correct but a no-op.
+
 Check BRIEF.md `signals_available` first. If the patent is already listed there, the abstract is in the database and no fetch is needed.
 
 ## What this produces
