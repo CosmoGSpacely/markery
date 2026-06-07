@@ -244,9 +244,26 @@ def cmd_acquire(args: argparse.Namespace) -> None:
     _ensure_library()
 
     if source == "ia":
+        # Check if the identifier matches an already-acquired slug before hitting IA.
+        # search-sources outputs friendly slugs (e.g. 'presbrey-history-...') but
+        # acquire requires the raw IA identifier (e.g. 'historydevelopme0000fran').
+        # If the user passes a friendly slug that already exists in the library, redirect
+        # them there instead of returning a cryptic IA error.
+        existing_by_slug = _works_dir(identifier) / "metadata.json"
+        if existing_by_slug.exists():
+            print(f"Already acquired as '{identifier}'")
+            print(f"  {_works_dir(identifier)}")
+            sys.exit(0)
+
         meta = _ia.fetch_metadata(identifier)
         if not meta.get("metadata", {}).get("title"):
             print(f"IA identifier '{identifier}' not found.", file=sys.stderr)
+            print(
+                f"  If '{identifier}' is a slug from 'markery librarian search-sources', "
+                f"use the raw IA identifier from the IDENTIFIER column instead "
+                f"(e.g. 'historydevelopme0000fran').",
+                file=sys.stderr,
+            )
             sys.exit(1)
         ia_meta = meta["metadata"]
         author = ia_meta.get("creator", "") or ""
@@ -402,7 +419,7 @@ def cmd_extract(args: argparse.Namespace) -> None:
 
 def cmd_review(args: argparse.Namespace) -> None:
     from markery.specialist.librarian.extract import review
-    review(slug=args.slug)
+    review(slug=args.slug, auto_accept=args.auto_accept)
 
 
 # ---------------------------------------------------------------------------
@@ -670,6 +687,8 @@ def librarian_main() -> None:
         help="Interactively accept/reject candidates from candidates.md",
     )
     p_rev.add_argument("slug", help="Library slug")
+    p_rev.add_argument("--auto-accept", action="store_true",
+                       help="Accept all pending candidates without interactive prompts")
 
     # index
     p_idx = sub.add_parser(

@@ -456,8 +456,12 @@ def _append_to_excerpts(work_dir: Path, candidates: list[dict]) -> Path:
 # Interactive review
 # ---------------------------------------------------------------------------
 
-def review(slug: str) -> None:
-    """Interactively review candidates.md, appending accepted passages to excerpts.md."""
+def review(slug: str, auto_accept: bool = False) -> None:
+    """Review candidates.md, appending accepted passages to excerpts.md.
+
+    With auto_accept=True, accepts all pending candidates without prompting.
+    Without it, opens the interactive accept/reject/skip/quit loop.
+    """
     work_dir = _LIBRARY / "works" / slug
     candidates_path = work_dir / "candidates.md"
 
@@ -473,6 +477,23 @@ def review(slug: str) -> None:
     pending = [b for b in blocks if _get_status(b) == "pending"]
     if not pending:
         print("No pending candidates to review.")
+        return
+
+    if auto_accept:
+        accepted_count = 0
+        for block in pending:
+            heading, passage, page, context = _parse_block(block)
+            if passage:
+                _append_to_excerpts(work_dir, [{"passage": passage, "page": page,
+                                                "context": context}])
+                raw = raw.replace(
+                    block,
+                    block.replace("<!-- status: pending -->", "<!-- status: accepted -->"),
+                    1,
+                )
+                accepted_count += 1
+        candidates_path.write_text(raw, encoding="utf-8")
+        print(f"Auto-accepted {accepted_count} of {len(pending)} pending passage(s).")
         return
 
     print(f"Reviewing {len(pending)} candidate(s) for '{slug}'.")
