@@ -39,7 +39,16 @@ Every DEFERRED entry requires: a unique ID (`Dnnn`), a one-line description, and
 - Do not use strikethrough markup (`~~`) in ROADMAP — it obscures content for future reference
 - Body text is preserved as written; only the heading status tag changes
 
-When a full ROADMAP is complete, archive it to `archive/ROADMAP-<date>.md` and remove it from `ROADMAP.md`.
+**ROADMAP results placement:**
+- Write the results paragraph immediately after the last numbered step of the phase, before the closing `---` separator
+- Never write results inside the Phase Gate block — gate lines hold only the criterion and its `— PASSED` tag inline on the same line
+- Format: `Results YYYY-MM-DD: <what was built, what deviated from the plan, test count, total tests passing>`
+
+**ROADMAP archive procedure (when a phase group is complete):**
+1. Create `archive/ROADMAP-<date>.md` containing only the completed phase content
+2. In `ROADMAP.md`, delete the completed phase body entirely — every line from the `## Phase N` heading through the closing `---`
+3. Add one line to the archive index at the top of `ROADMAP.md`: `Phase N closed YYYY-MM-DD. Archived to archive/ROADMAP-<date>.md.`
+4. The archive index lines are the only trace of completed phases in the active ROADMAP — no headings, no summaries, no status notes
 
 ---
 
