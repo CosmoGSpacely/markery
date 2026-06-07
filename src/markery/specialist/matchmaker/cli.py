@@ -589,6 +589,76 @@ def match_main() -> None:
 # markery matchmaker
 # ---------------------------------------------------------------------------
 
+def cmd_confirm(args: argparse.Namespace) -> None:
+    """Non-interactive pair confirmation: look up slug in candidates.jsonl and append to confirmed.jsonl."""
+    import re
+    import json as _json
+
+    from markery.specialist.historian.review import write_confirmed
+
+    proj = require_project(args.project)
+
+    if not proj.candidates.exists():
+        print(f"No candidates.jsonl for '{args.project}'. Run 'markery match {args.project}' first.",
+              file=sys.stderr)
+        sys.exit(1)
+
+    # Parse slug → (tm_slug, patent_no)
+    slug = args.slug.lower()
+    m = re.match(r'^(.+)-(us\d+[a-z]+)$', slug)
+    if not m:
+        print(f"Cannot parse slug '{args.slug}'. Expected format: <trademark>-<patent_no> "
+              f"(e.g. soundex-us1261167a)", file=sys.stderr)
+        sys.exit(1)
+    tm_slug = m.group(1)
+    pat_no  = m.group(2).upper()
+
+    def _slug_matches(slug_part: str, trademark: str | None) -> bool:
+        if trademark is None:
+            return slug_part == "figurative"
+        normalised = re.sub(r'[^a-z0-9]+', '-', trademark.lower()).strip('-')
+        return slug_part == normalised or slug_part in normalised
+
+    # Find matching candidate
+    cand = None
+    for line in proj.candidates.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        c = _json.loads(line)
+        if c["patent_no"].upper() == pat_no and _slug_matches(tm_slug, c.get("trademark")):
+            cand = c
+            break
+
+    if cand is None:
+        print(f"No candidate matching '{args.slug}' in {proj.candidates}.", file=sys.stderr)
+        print(f"  Expected: trademark slug '{tm_slug}' + patent '{pat_no}'", file=sys.stderr)
+        sys.exit(1)
+
+    # Check for duplicate
+    if proj.confirmed.exists():
+        for line in proj.confirmed.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            existing = _json.loads(line)
+            if (existing["patent_no"] == cand["patent_no"]
+                    and str(existing["trademark_serial"]) == str(cand["trademark_serial"])):
+                print(f"Already confirmed: {args.slug} is already in {proj.confirmed}.")
+                sys.exit(0)
+
+    entry = {
+        "patent_no":        cand["patent_no"],
+        "trademark_serial": cand["trademark_serial"],
+        "trademark":        cand.get("trademark"),
+        "entity_id":        cand["entity_id"],
+        "entity":           cand["entity"],
+        "type":             "product",
+        "note":             args.note or "",
+    }
+    write_confirmed(proj.confirmed, entry)
+    print(f"Confirmed: {args.slug}")
+    print(f"  Written to {proj.confirmed.relative_to(proj.root.parent.parent)}")
+
+
 def cmd_suggest_variants(args: argparse.Namespace) -> None:
     import re
     import duckdb
@@ -769,6 +839,13 @@ def matchmaker_main() -> None:
                              help="Directory containing entities.csv and variants.csv")
     sub.add_parser("list",   help="List all entities with IDs and names")
     sub.add_parser("status", help="Row counts for entity registry tables")
+    p_cf = sub.add_parser("confirm",
+                          help="Non-interactively confirm a candidate pair and append to confirmed.jsonl")
+    p_cf.add_argument("project", help="Project name under projects/")
+    p_cf.add_argument("slug",    help="Candidate slug, e.g. soundex-us1261167a")
+    p_cf.add_argument("--note",  default="", metavar="TEXT",
+                      help="Optional curation note appended to the confirmed record")
+
     p_sv = sub.add_parser("suggest-variants",
                           help="Rank patent assignee and trademark owner strings matching a canonical name")
     p_sv.add_argument("name", help="Canonical entity name to match against")
@@ -783,6 +860,7 @@ def matchmaker_main() -> None:
     args = ap.parse_args()
     {
         "build":              cmd_build,
+        "confirm":            cmd_confirm,
         "list":               cmd_list,
         "status":             cmd_status,
         "suggest-variants":   cmd_suggest_variants,

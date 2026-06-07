@@ -158,7 +158,7 @@ def display(cand: dict, tm: dict, pat: dict, idx: int, total: int,
     W = 74
     rule = "─" * W
 
-    mark = cand["trademark"]
+    mark = cand.get("trademark") or "(figurative)"
     is_company = any(
         n.upper() in mark.upper() or mark.upper() in n.upper()
         for n in entity_names
@@ -279,12 +279,13 @@ def main() -> None:
     seen, queue = set(), []
     for c in sorted(all_cands, key=lambda x: -x["score"]):
         key = (c["patent_no"], c["trademark_serial"])
+        tm_text = c.get("trademark") or ""
         if (
             key not in seen
             and key not in already_confirmed
             and key not in already_rejected
             and c["score"] >= args.min_score
-            and (args.mark is None or args.mark.upper() in c["trademark"].upper())
+            and (args.mark is None or args.mark.upper() in tm_text.upper())
         ):
             seen.add(key)
             queue.append(c)
