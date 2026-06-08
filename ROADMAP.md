@@ -171,6 +171,8 @@ Results 2026-06-08: `MANIFEST.json` created at Markery repo root declaring `cont
 
 ### P2 — LangGraph workflow graph
 
+0. Write `markery-langgraph/CLAUDE.md` covering: no Claude attribution in commits; `MARKERY_ROOT` must be set before running any workflow; the subprocess interface contract (`check_contract()` must pass before invoking any Markery CLI command); tests live in `tests/` and run with `pytest`.
+
 1. Write `src/langgraph_markery/graph.py`:
    - **Nodes:** `load_digest` (parse digest into queue), `pick_next` (select next unreviewed slug), `generate_card` (write card file), `infer_card` (call `run_card_infer`, store `infer_result` in state), `route_recommendation` (conditional routing), `write_confirmed` (call `run_confirm`, trigger `run_draft`), `write_rejected` (append to rejected.jsonl), `append_defer` (add slug to deferred list for later review), `human_gate` (interrupt — surface card + recommendation for human approval before writing confirmed)
    - **Edges:** After `infer_card` → `route_recommendation`; routes: `"confirm"` → `human_gate` → `write_confirmed`, `"reject"` → `write_rejected`, `"defer"` → `append_defer`. After any write node → `pick_next`. `pick_next` terminates when queue is empty.
