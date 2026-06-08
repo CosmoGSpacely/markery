@@ -165,6 +165,8 @@ Phase PASSED when P1–P5 all pass. All D-numbers in this phase closed in `DEFER
    - `run_draft(project, slug) -> tuple[str, bool]` — runs `markery historian draft <project> <slug>`; returns (stdout, validate_passed)
 5. Gate: `python -c "from langgraph_markery import state, tools, config; config.check_contract('$MARKERY_ROOT')"` exits 0.
 
+Results 2026-06-08: `MANIFEST.json` created at Markery repo root declaring `contract_version: "1.0"` and four subprocess commands. `markery-langgraph` repo created at `github.com/CosmoGSpacely/markery-langgraph`. `config.py` implements `check_contract()` reading `MANIFEST.json` and asserting version. `state.py` defines `ResearchState` TypedDict. `tools.py` implements `run_digest()`, `run_card_infer()` (parses `[infer]` block from stdout), `run_confirm()`, `run_draft()` (returns stdout+stderr, validate_passed bool). Gate verified: all three modules import and `check_contract(MARKERY_ROOT)` exits 0.
+
 ---
 
 ### P2 — LangGraph workflow graph
@@ -225,7 +227,7 @@ Phase PASSED when P1–P5 all pass. All D-numbers in this phase closed in `DEFER
 
 ### Phase Gate
 
-P1 PASSED when: `markery-langgraph` repo initialised; `config.py`, `state.py`, `tools.py` all importable; `check_contract` passes against `MARKERY_ROOT`.
+P1 PASSED when: `markery-langgraph` repo initialised; `config.py`, `state.py`, `tools.py` all importable; `check_contract` passes against `MARKERY_ROOT`. — PASSED
 
 P2 PASSED when: LangGraph graph integration test passes with mocked tools; routing logic verified; `README.md` documents setup and usage.
 
