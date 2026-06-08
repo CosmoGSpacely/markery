@@ -1,5 +1,6 @@
 {
   "contract_version": "1.0",
+  "markery_version": "0.3.0",
   "subprocess_commands": [
     "markery historian card <project> <slug> [--infer] [--out PATH] [--model MODEL]",
     "markery historian digest <project> [--infer]",
