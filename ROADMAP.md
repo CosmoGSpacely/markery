@@ -152,6 +152,7 @@ Phase PASSED when P1–P5 all pass. All D-numbers in this phase closed in `DEFER
 
 ### P1 — markery-langgraph repo setup
 
+0. Create `MANIFEST.json` at the Markery repo root declaring `contract_version: "1.0"` and the four subprocess commands the companion repo depends on. This is the machine-checkable contract boundary — `check_contract()` in the companion repo reads it and raises `RuntimeError` if the version does not match.
 1. Create the `markery-langgraph` GitHub repo. Initialise with `pyproject.toml` (`langgraph>=0.2`, `anthropic>=0.40`, `duckdb>=1.0`), `src/langgraph_markery/`, `README.md`.
 2. Write `src/langgraph_markery/config.py`:
    - `MARKERY_ROOT` from `MARKERY_ROOT` env var (required)

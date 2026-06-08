@@ -1,4 +1,10 @@
 {
   "contract_version": "1.0",
-  "markery_version": "0.3.1"
+  "subprocess_commands": [
+    "markery historian card <project> <slug> [--infer] [--out PATH] [--model MODEL]",
+    "markery historian digest <project> [--infer]",
+    "markery historian draft <project> <slug> [--model MODEL]",
+    "markery matchmaker confirm <project> <slug> [--note TEXT]"
+  ],
+  "description": "Markery CLI subprocess interface contract. Companion repos must call check_contract() against MARKERY_ROOT before invoking these commands. Bump contract_version when any command signature or output format changes."
 }
