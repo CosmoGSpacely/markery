@@ -170,6 +170,53 @@ def build(data_dir: str | Path, db_path: str | Path | None = None) -> dict[str, 
     return {"entities": added_entities, "variants": added_variants}
 
 
+def clear(
+    data_dir: str | Path,
+    db_path: str | Path | None = None,
+    dry_run: bool = False,
+) -> dict[str, int]:
+    """Delete company_entity and entity_name_variant rows for entity IDs in entities.csv.
+
+    Reads entity_id values from data_dir/entities.csv.
+    Returns {"entities": n, "variants": n} — rows deleted (or that would be deleted on dry_run).
+    The FK constraint on entity_name_variant requires variants to be deleted before entities.
+    """
+    data_dir = Path(data_dir)
+    entities_csv = data_dir / "entities.csv"
+    if not entities_csv.exists():
+        raise FileNotFoundError(f"entities.csv not found at {entities_csv}")
+
+    entity_ids = [int(r["entity_id"]) for r in _read_csv(entities_csv)]
+    if not entity_ids:
+        return {"entities": 0, "variants": 0}
+
+    conn = open_db(db_path)
+    placeholders = ",".join("?" * len(entity_ids))
+
+    n_variants = conn.execute(
+        f"SELECT count(*) FROM entity_name_variant WHERE entity_id IN ({placeholders})",
+        entity_ids,
+    ).fetchone()[0]
+    n_entities = conn.execute(
+        f"SELECT count(*) FROM company_entity WHERE entity_id IN ({placeholders})",
+        entity_ids,
+    ).fetchone()[0]
+
+    if not dry_run:
+        conn.execute(
+            f"DELETE FROM entity_name_variant WHERE entity_id IN ({placeholders})",
+            entity_ids,
+        )
+        conn.execute(
+            f"DELETE FROM company_entity WHERE entity_id IN ({placeholders})",
+            entity_ids,
+        )
+        conn.commit()
+
+    conn.close()
+    return {"entities": n_entities, "variants": n_variants}
+
+
 def list_entities(conn: duckdb.DuckDBPyConnection) -> list[dict]:
     """Return all entities ordered by entity_id."""
     rows = conn.execute(

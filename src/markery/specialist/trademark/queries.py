@@ -231,6 +231,66 @@ def search_by_design_code(
     ]
 
 
+def mark_status_report(
+    conn: duckdb.DuckDBPyConnection,
+    tm_variants: list[str],
+    dead_only: bool = False,
+    pd_only: bool = False,
+    pd_threshold_year: int | None = None,
+) -> list[dict]:
+    """Return live/dead/public-domain status for all serials matching tm_variants.
+
+    tm_variants: owner names from variants.csv (trademark_owner / trademark_search sources).
+    Returns a list of dicts: serial_no, mark_text, filing_dt, status_cd, live_dead, public_domain.
+    Applies dead_only / pd_only filters when set.
+    pd_threshold_year defaults to current year - 95.
+    """
+    from datetime import date as _date
+    if not tm_variants:
+        return []
+    if pd_threshold_year is None:
+        pd_threshold_year = _date.today().year - 95
+
+    placeholders = ",".join("?" * len(tm_variants))
+    rows = conn.execute(
+        f"SELECT DISTINCT cf.serial_no, cf.mark_id_char, cf.filing_dt, cf.cfh_status_cd "
+        f"FROM owner o JOIN case_file cf ON o.serial_no = cf.serial_no "
+        f"WHERE o.own_name IN ({placeholders}) "
+        f"ORDER BY cf.filing_dt",
+        tm_variants,
+    ).fetchall()
+
+    def _is_dead(status_cd) -> bool:
+        try:
+            return int(status_cd) >= 700
+        except (TypeError, ValueError):
+            return False
+
+    def _is_pd(filing_dt) -> bool:
+        if filing_dt is None:
+            return False
+        year = filing_dt.year if hasattr(filing_dt, "year") else int(str(filing_dt)[:4])
+        return year <= pd_threshold_year
+
+    results = []
+    for serial_no, mark_id_char, filing_dt, cfh_status_cd in rows:
+        dead   = _is_dead(cfh_status_cd)
+        pd_flag = _is_pd(filing_dt)
+        if dead_only and not dead:
+            continue
+        if pd_only and not pd_flag:
+            continue
+        results.append({
+            "serial_no":     serial_no,
+            "mark_text":     mark_id_char or "(figurative)",
+            "filing_dt":     str(filing_dt)[:10] if filing_dt else None,
+            "status_cd":     cfh_status_cd,
+            "live_dead":     "dead" if dead else "live",
+            "public_domain": pd_flag,
+        })
+    return results
+
+
 def get_missing_enrichment(
     conn: duckdb.DuckDBPyConnection,
     serial_nos: list[str],

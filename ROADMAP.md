@@ -85,6 +85,8 @@ Results 2026-06-08: `load_assignment(file_path, conn)` added to `trademark/build
 5. Add tests: (a) `--dry-run` reports correct row count and does not delete; (b) `--yes` deletes the rows; (c) running `clear` on a project with no entities in DB is a no-op with a clear message.
 6. Close D037 in `DEFERRED.md`.
 
+Results 2026-06-08: `mark_status_report(conn, tm_variants, dead_only, pd_only, pd_threshold_year)` added to `trademark/queries.py`; `markery trademark mark-status <project> [--dead-only] [--pd-only]` registered. Reads `variants.csv` for trademark_owner/trademark_search names, queries `owner JOIN case_file`, derives live/dead (cfh_status_cd ≥ 700 = dead) and public_domain (filing year ≤ current year − 95). `clear(data_dir, db_path, dry_run)` added to `matchmaker/entities.py`; `markery matchmaker clear <project> [--dry-run] [--yes]` registered. Without `--yes`: interactive confirmation. Without rows: no-op with message. D036 and D037 closed. 7 tests for mark_status_report, 4 tests for clear, 577 total passing.
+
 ---
 
 ### P4 — Pre-candidate enrichment and suggest-variants titles
@@ -123,7 +125,7 @@ P1 PASSED when: `prior_brand_serials` implemented and tested; Colt and P&W candi
 
 P2 PASSED when: `load-assignment` imports and the Rand Kardex ownership chain is queryable; `design-search` exits 0 with correct columns; D047 and D034 closed. — PASSED
 
-P3 PASSED when: `mark-status` exits 0 with correct live/dead/PD output; `matchmaker clear --dry-run` reports correct row count without deleting; D036 and D037 closed.
+P3 PASSED when: `mark-status` exits 0 with correct live/dead/PD output; `matchmaker clear --dry-run` reports correct row count without deleting; D036 and D037 closed. — PASSED
 
 P4 PASSED when: `enrich-project --from-variants` populates `extended_marks` before candidates exist; `suggest-variants` output includes example patent titles; D046 and D039 closed.
 

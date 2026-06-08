@@ -176,6 +176,56 @@ def cmd_load_assignment(args: argparse.Namespace) -> None:
     print(f"assignment: {n:,} rows loaded.")
 
 
+def cmd_mark_status(args: argparse.Namespace) -> None:
+    import csv as _csv
+    import duckdb
+    from markery.common.config import DB
+    from markery.common.project import require_project
+    from markery.specialist.trademark.queries import mark_status_report
+
+    proj = require_project(args.project)
+    variants_path = proj.root / "variants.csv"
+    if not variants_path.exists():
+        print(f"No variants.csv found at {variants_path}.", file=sys.stderr)
+        sys.exit(1)
+
+    with variants_path.open(newline="", encoding="utf-8") as f:
+        rows = list(_csv.DictReader(f))
+    tm_variants = list({
+        r["variant_name"] for r in rows
+        if r.get("source") in ("trademark_owner", "trademark_search")
+    })
+    if not tm_variants:
+        print("No trademark_owner or trademark_search variants found in variants.csv.")
+        return
+
+    conn = duckdb.connect(str(DB["trademarks"]), read_only=True)
+    results = mark_status_report(
+        conn, tm_variants,
+        dead_only=args.dead_only,
+        pd_only=args.pd_only,
+    )
+    conn.close()
+
+    if not results:
+        print("No marks match the specified filters.")
+        return
+
+    hdr = (
+        f"{'serial_no':<12}  {'mark_text':<35}  "
+        f"{'filing_dt':<12}  {'status_cd':<10}  {'live_dead':<6}  public_domain"
+    )
+    print(hdr)
+    print("-" * len(hdr))
+    for r in results:
+        print(
+            f"  {r['serial_no']:<12}  {(r['mark_text'] or '')[:35]:<35}  "
+            f"{(r['filing_dt'] or ''):<12}  {(r['status_cd'] or ''):<10}  "
+            f"{r['live_dead']:<6}  {'yes' if r['public_domain'] else 'no'}"
+        )
+    print(f"\n{len(results)} mark(s).")
+
+
 def cmd_design_search(args: argparse.Namespace) -> None:
     from markery.specialist.trademark.build import open_db
     from markery.specialist.trademark.queries import search_by_design_code
@@ -283,6 +333,16 @@ def main() -> None:
     p_ef.add_argument("--after-year", type=int, default=1939, metavar="YEAR",
                       help="Show marks filed after this year (default: 1939)")
 
+    # mark-status
+    p_ms = sub.add_parser("mark-status",
+                          help="Report live/dead and public-domain status for project-scope trademarks")
+    p_ms.add_argument("project", metavar="PROJECT",
+                      help="Project name under projects/")
+    p_ms.add_argument("--dead-only", action="store_true",
+                      help="Show only dead marks (cfh_status_cd >= 700)")
+    p_ms.add_argument("--pd-only", action="store_true",
+                      help="Show only marks with filing_dt year <= current year - 95")
+
     # load-assignment
     p_las = sub.add_parser("load-assignment",
                            help="Load an assignment CSV into the assignment table")
@@ -321,6 +381,7 @@ def main() -> None:
         "load-foreign":        cmd_load_foreign,
         "fetch":               cmd_fetch,
         "entity-forward":      cmd_entity_forward,
+        "mark-status":         cmd_mark_status,
         "load-assignment":     cmd_load_assignment,
         "design-search":       cmd_design_search,
         "reparse":             cmd_reparse,

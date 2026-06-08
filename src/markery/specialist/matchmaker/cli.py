@@ -801,6 +801,46 @@ def cmd_validate_variants(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def cmd_clear(args: argparse.Namespace) -> None:
+    from markery.specialist.matchmaker.entities import clear
+    from markery.common.project import require_project
+
+    proj = require_project(args.project)
+    data_dir = proj.root
+
+    counts = clear(data_dir, dry_run=True)
+
+    if args.dry_run:
+        if counts["entities"] == 0 and counts["variants"] == 0:
+            print(f"Project '{args.project}': no entity rows in entities.duckdb — nothing to delete.")
+        else:
+            print(
+                f"Would delete {counts['variants']} variant row(s) and "
+                f"{counts['entities']} entity row(s) for project '{args.project}'."
+            )
+        return
+
+    if counts["entities"] == 0 and counts["variants"] == 0:
+        print(f"Project '{args.project}': no entity rows in entities.duckdb — nothing to delete.")
+        return
+
+    if not args.yes:
+        prompt = (
+            f"Delete {counts['variants']} variant row(s) and "
+            f"{counts['entities']} entity row(s) for '{args.project}'? [y/N] "
+        )
+        answer = input(prompt).strip().lower()
+        if answer != "y":
+            print("Aborted.")
+            return
+
+    clear(data_dir, dry_run=False)
+    print(
+        f"Deleted {counts['variants']} variant row(s) and "
+        f"{counts['entities']} entity row(s) for project '{args.project}'."
+    )
+
+
 def cmd_build(args: argparse.Namespace) -> None:
     from markery.specialist.matchmaker.entities import build
     try:
@@ -849,6 +889,14 @@ def matchmaker_main() -> None:
                              help="Directory containing entities.csv and variants.csv")
     sub.add_parser("list",   help="List all entities with IDs and names")
     sub.add_parser("status", help="Row counts for entity registry tables")
+
+    p_clr = sub.add_parser("clear",
+                           help="Remove a project's entities and variants from entities.duckdb")
+    p_clr.add_argument("project", help="Project name under projects/")
+    p_clr.add_argument("--dry-run", action="store_true",
+                       help="Report row counts that would be deleted without deleting")
+    p_clr.add_argument("--yes", action="store_true",
+                       help="Proceed without interactive confirmation")
     p_cf = sub.add_parser("confirm",
                           help="Non-interactively confirm a candidate pair and append to confirmed.jsonl")
     p_cf.add_argument("project", help="Project name under projects/")
@@ -870,6 +918,7 @@ def matchmaker_main() -> None:
     args = ap.parse_args()
     {
         "build":              cmd_build,
+        "clear":              cmd_clear,
         "confirm":            cmd_confirm,
         "list":               cmd_list,
         "status":             cmd_status,

@@ -244,3 +244,117 @@ def test_get_missing_enrichment_preserves_input_order():
     result = get_missing_enrichment(conn, serials)
     assert result == serials
     conn.close()
+
+
+# ---------------------------------------------------------------------------
+# mark_status_report (D036)
+# ---------------------------------------------------------------------------
+
+def _db_with_mark_status_data():
+    """In-memory DB with case_file + owner for mark_status_report tests."""
+    conn = open_db(":memory:")
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS case_file "
+        "(serial_no BIGINT, mark_id_char VARCHAR, filing_dt DATE, "
+        " mark_draw_cd VARCHAR, registration_no VARCHAR, cfh_status_cd VARCHAR)"
+    )
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS owner "
+        "(serial_no BIGINT, own_name VARCHAR, own_seq BIGINT)"
+    )
+    # Live mark, filed 1929 (public domain as of 2026: 2026-95=1931, so yes)
+    conn.execute(
+        "INSERT INTO case_file VALUES (71040001, 'EAGLE BRAND', '1929-06-01', '1', NULL, '600')"
+    )
+    conn.execute(
+        "INSERT INTO owner VALUES (71040001, 'Eagle Mfg Co.', 1)"
+    )
+    # Dead mark, filed 1935 (not public domain: 1935 > 1931)
+    conn.execute(
+        "INSERT INTO case_file VALUES (71040002, 'FALCON', '1935-03-10', '1', NULL, '800')"
+    )
+    conn.execute(
+        "INSERT INTO owner VALUES (71040002, 'Falcon Industries', 1)"
+    )
+    # Live mark from different owner — not in variant set
+    conn.execute(
+        "INSERT INTO case_file VALUES (71040003, 'RAVEN', '1930-01-01', '1', NULL, '400')"
+    )
+    conn.execute(
+        "INSERT INTO owner VALUES (71040003, 'Raven Co.', 1)"
+    )
+    return conn
+
+
+def test_mark_status_live_classification():
+    from markery.specialist.trademark.queries import mark_status_report
+    conn = _db_with_mark_status_data()
+    results = mark_status_report(conn, ["Eagle Mfg Co."])
+    assert len(results) == 1
+    assert results[0]["serial_no"] == 71040001
+    assert results[0]["live_dead"] == "live"
+    conn.close()
+
+
+def test_mark_status_dead_classification():
+    from markery.specialist.trademark.queries import mark_status_report
+    conn = _db_with_mark_status_data()
+    results = mark_status_report(conn, ["Falcon Industries"])
+    assert len(results) == 1
+    assert results[0]["live_dead"] == "dead"
+    conn.close()
+
+
+def test_mark_status_public_domain_flag():
+    from markery.specialist.trademark.queries import mark_status_report
+    conn = _db_with_mark_status_data()
+    # Use explicit threshold so test is stable regardless of current year
+    results = mark_status_report(conn, ["Eagle Mfg Co."], pd_threshold_year=1930)
+    assert results[0]["public_domain"] is True
+
+    results_not_pd = mark_status_report(conn, ["Eagle Mfg Co."], pd_threshold_year=1928)
+    assert results_not_pd[0]["public_domain"] is False
+    conn.close()
+
+
+def test_mark_status_dead_only_filter():
+    from markery.specialist.trademark.queries import mark_status_report
+    conn = _db_with_mark_status_data()
+    results = mark_status_report(conn, ["Eagle Mfg Co.", "Falcon Industries"], dead_only=True)
+    assert all(r["live_dead"] == "dead" for r in results)
+    serials = {r["serial_no"] for r in results}
+    assert 71040001 not in serials
+    assert 71040002 in serials
+    conn.close()
+
+
+def test_mark_status_pd_only_filter():
+    from markery.specialist.trademark.queries import mark_status_report
+    conn = _db_with_mark_status_data()
+    # Threshold 1930: 1929 <= 1930 (Eagle PD=True), 1935 <= 1930 (Falcon PD=False)
+    results = mark_status_report(
+        conn, ["Eagle Mfg Co.", "Falcon Industries"],
+        pd_only=True, pd_threshold_year=1930,
+    )
+    assert all(r["public_domain"] for r in results)
+    assert any(r["serial_no"] == 71040001 for r in results)
+    conn.close()
+
+
+def test_mark_status_empty_variants_returns_empty():
+    from markery.specialist.trademark.queries import mark_status_report
+    conn = _db_with_mark_status_data()
+    assert mark_status_report(conn, []) == []
+    conn.close()
+
+
+def test_mark_status_figurative_mark_label():
+    from markery.specialist.trademark.queries import mark_status_report
+    conn = _db_with_mark_status_data()
+    conn.execute(
+        "INSERT INTO case_file VALUES (71040099, NULL, '1928-06-01', '2', NULL, '600')"
+    )
+    conn.execute("INSERT INTO owner VALUES (71040099, 'Design Only Corp', 1)")
+    results = mark_status_report(conn, ["Design Only Corp"])
+    assert results[0]["mark_text"] == "(figurative)"
+    conn.close()

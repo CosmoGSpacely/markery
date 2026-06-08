@@ -7,6 +7,7 @@ from pathlib import Path
 from markery.specialist.matchmaker.entities import (
     open_db,
     build,
+    clear,
     list_entities,
 )
 
@@ -95,6 +96,70 @@ def test_list_entities_has_expected_fields(tmp_path):
     assert set(first.keys()) == {"entity_id", "canonical_name", "entity_type", "industry"}
     assert first["canonical_name"] == "Remington Rand"
     assert first["industry"] == "office-systems"
+
+
+# ---------------------------------------------------------------------------
+# clear (D037)
+# ---------------------------------------------------------------------------
+
+def test_clear_dry_run_reports_counts_without_deleting(tmp_path):
+    _write_csvs(tmp_path, _ENTITIES, _VARIANTS)
+    db_path = tmp_path / "entities.duckdb"
+    build(tmp_path, db_path)
+
+    counts = clear(tmp_path, db_path, dry_run=True)
+    assert counts["entities"] == len(_ENTITIES)
+    assert counts["variants"] == len(_VARIANTS)
+
+    # Rows must still be present
+    conn = open_db(db_path)
+    n = conn.execute("SELECT count(*) FROM company_entity").fetchone()[0]
+    conn.close()
+    assert n == len(_ENTITIES)
+
+
+def test_clear_yes_deletes_rows(tmp_path):
+    _write_csvs(tmp_path, _ENTITIES, _VARIANTS)
+    db_path = tmp_path / "entities.duckdb"
+    build(tmp_path, db_path)
+
+    counts = clear(tmp_path, db_path, dry_run=False)
+    assert counts["entities"] == len(_ENTITIES)
+    assert counts["variants"] == len(_VARIANTS)
+
+    conn = open_db(db_path)
+    n_ent  = conn.execute("SELECT count(*) FROM company_entity").fetchone()[0]
+    n_var  = conn.execute("SELECT count(*) FROM entity_name_variant").fetchone()[0]
+    conn.close()
+    assert n_ent == 0
+    assert n_var == 0
+
+
+def test_clear_no_entities_is_noop(tmp_path):
+    _write_csvs(tmp_path, _ENTITIES, _VARIANTS)
+    db_path = tmp_path / "entities.duckdb"
+    # Build with empty entity list in a different dir
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+    _write_csvs(empty_dir, [], [])
+    build(tmp_path, db_path)
+
+    counts = clear(empty_dir, db_path, dry_run=False)
+    assert counts["entities"] == 0
+    assert counts["variants"] == 0
+
+    conn = open_db(db_path)
+    n = conn.execute("SELECT count(*) FROM company_entity").fetchone()[0]
+    conn.close()
+    assert n == len(_ENTITIES)
+
+
+def test_clear_missing_entities_csv_raises(tmp_path):
+    import pytest
+    db_path = tmp_path / "entities.duckdb"
+    open_db(db_path).close()
+    with pytest.raises(FileNotFoundError, match="entities.csv"):
+        clear(tmp_path, db_path)
 
 
 def test_migrate_drops_notes_column(tmp_path):
