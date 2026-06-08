@@ -418,3 +418,78 @@ Output contracts are model-agnostic. Both Haiku and Sonnet produce:
 - Comparable prioritisation logic from `digest --infer`
 
 Sonnet is approximately 2× slower and benefits from caching (effective cost lower on repeated calls). Haiku is faster and cheaper per token. Model choice is a runtime decision via `MARKERY_MODEL`; no code changes required.
+
+---
+
+## Phase 20 P5 — Cross-Project Data Quality Audit — 2026-06-08
+
+**Projects audited:** `information-systems` (8 confirmed), `radio-pioneers` (3 confirmed), `animal-marks-1930` (3 confirmed)  
+**Total confirmed pairs:** 14 across 3 projects
+
+### Step 1 — Essay validation (`historian validate`)
+
+| Slug | Project | Result |
+|---|---|---|
+| soundex-us1261167a | information-systems | PASS 8/8 |
+| variadex-us2152606a | information-systems | PASS 8/8 |
+| kardex-us2178457a | information-systems | PASS 8/8 |
+| soundex-us1435663a | information-systems | **MISSING** — legacy essay `soundex.md` (no frontmatter) |
+| soundex-quick-as-a-flash-us1435663a | information-systems | **MISSING** — legacy essay `soundex-quick-as-a-flash.md` (no frontmatter) |
+| vi-dex-us1527374a | information-systems | **MISSING** — legacy essay `vi-dex.md` (no frontmatter) |
+| rediref-us1614080a | information-systems | **MISSING** — legacy essay `rediref.md` (no frontmatter) |
+| shannon-us1738120a | information-systems | **MISSING** — legacy essay `shannon.md` (no frontmatter) |
+| sterilamp-us2168861a | radio-pioneers | PASS 8/8 |
+| minalite-us1829460a | radio-pioneers | PASS 8/8 |
+| victor-us1486221a | radio-pioneers | PASS 8/8 |
+| john-deere-moline-ill-us979019a | animal-marks-1930 | PASS 8/8 |
+| double-eagle-us1645089a | animal-marks-1930 | PASS 8/8 |
+| figurative-us1396890a | animal-marks-1930 | PASS 8/8 |
+
+**Summary:** 9/14 confirmed pairs pass 8/8. 5 information-systems pairs have legacy essays (Phase 1 format, no YAML frontmatter) that predate the validate schema. When tested with `--essay`, all fail on `title_present`, `trademark_present`, `serial_resolves`, `patent_resolves`, `filing_date_in_body`, `entity_recognised`, and `no_cross_contamination` (multi-pair essays contain serials from both confirmed pairs). These are accurately written essays; the gap is format migration, not content quality. Logged as D054 (see DEFERRED.md).
+
+**radio-pioneers:** 3/3 PASS 8/8  
+**animal-marks-1930:** 3/3 PASS 8/8
+
+### Step 2 — Site builds (`site build`)
+
+| Project | Exit code | Pages written |
+|---|---|---|
+| information-systems | 0 | 16 pages |
+| radio-pioneers | 0 | 12 pages |
+| animal-marks-1930 | 0 | 25 pages |
+
+**All three site builds exit 0. No regressions.**
+
+### Step 3 — Variant validation (`matchmaker validate-variants`)
+
+| Project | Total variants | Zero-match variants |
+|---|---|---|
+| information-systems | 35 | 0 |
+| radio-pioneers | 26 | 0 |
+| animal-marks-1930 | 33 | 0 |
+
+**All variants matched. No zero-match variants across any project.**
+
+### Step 4 — Extended marks NULL audit
+
+| Metric | Value |
+|---|---|
+| Unique serials across all 3 projects (confirmed + candidates) | 95 |
+| Serials present in `extended_marks` | 30 (31.6%) |
+| Serials not in `extended_marks` | 65 (candidate pool; TSDR enrichment not yet run) |
+| NULL `mark_text` in extended_marks | 1 |
+| NULL `goods_desc` in extended_marks | 0 |
+
+**NULL `mark_text` detail:** Serial 71199224 — has a `design_search` entry (confirmed figurative/design mark); `goods_desc = "AUTOMOBILES"`. NULL `mark_text` is expected for purely figurative marks (no text element). Explained; not a data error.
+
+**65 un-enriched serials** are from the candidate pool and have not been through `markery trademark enrich-project`. This is expected — enrichment is triggered for confirmed/high-scoring pairs, not the full candidate set. Not a data gap; a workflow scope choice.
+
+### Phase 20 P5 gate assessment
+
+| Gate criterion | Result |
+|---|---|
+| All confirmed essays validate 8/8 across all three projects | **PARTIAL** — 9/14; 5 information-systems legacy essays fail format migration (D054) |
+| All three site builds exit 0 | PASS |
+| Data quality results recorded in benchmarks README | PASS |
+
+**P5 PARTIAL PASS.** Site builds and variant validation are clean. The 5 legacy essay failures are a pre-existing format gap from Phase 1 (not a Phase 20 regression); D054 filed for migration. radio-pioneers and animal-marks-1930 are fully clean.

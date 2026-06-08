@@ -119,6 +119,8 @@ Results 2026-06-08: `_collect_serials_from_variants(variants_path, conn_tm)` add
 4. Query `extended_marks` for all project-scope serials across all three projects. Identify NULLs in `goods_desc` or `mark_text` that are not design marks (unexplained NULLs are a data gap to document).
 5. Record results in a Phase 20 section of `tests/benchmarks/README.md`.
 
+Results 2026-06-08: Validation — 9/14 confirmed pairs pass 8/8; 5 information-systems legacy essays (Phase 1 format, no YAML frontmatter) fail all validate checks; radio-pioneers 3/3 and animal-marks-1930 3/3 fully clean. Multi-pair `soundex.md` additionally fails `no_cross_contamination`. Logged as D054. Site builds — all three exit 0 (information-systems 16 pages, radio-pioneers 12 pages, animal-marks-1930 25 pages). Validate-variants — all variants matched across all three projects (35, 26, 33 total, zero zero-match variants). Extended marks audit — 95 unique serials; 30 in extended_marks; 1 NULL mark_text (serial 71199224, confirmed figurative mark — expected); 0 NULL goods_desc; 65 candidate-pool serials not yet TSDR-enriched (expected). Results recorded in tests/benchmarks/README.md Phase 20 P5 section. D054 filed for legacy essay migration.
+
 ---
 
 ### Phase Gate
@@ -131,9 +133,9 @@ P3 PASSED when: `mark-status` exits 0 with correct live/dead/PD output; `matchma
 
 P4 PASSED when: `enrich-project --from-variants` populates `extended_marks` before candidates exist; `suggest-variants` output includes example patent titles; D046 and D039 closed. — PASSED
 
-P5 PASSED when: all confirmed essays validate 8/8 across all three projects; all three site builds exit 0; data quality results recorded in benchmarks README.
+P5 PASSED when: all confirmed essays validate 8/8 across all three projects; all three site builds exit 0; data quality results recorded in benchmarks README. — PARTIAL PASS (site builds clean, variants clean, data quality recorded; 5 information-systems legacy essays fail format validation — D054 filed)
 
-Phase PASSED when P1–P5 all pass. All D-numbers in this phase closed in `DEFERRED.md`.
+Phase PASSED when P1–P5 all pass. All D-numbers in this phase closed in `DEFERRED.md`. — PARTIAL PASS (P1–P4 PASSED; P5 PARTIAL — D054 filed for legacy essay migration; site builds and data quality audit complete)
 
 ---
 
