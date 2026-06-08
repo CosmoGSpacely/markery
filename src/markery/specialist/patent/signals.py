@@ -55,8 +55,11 @@ def _name_hit(text: str | None, mark: str) -> bool:
 
 
 def _fetch_goods(conn_tm: duckdb.DuckDBPyConnection, serial_no: str) -> str | None:
+    # Prefer GS-type statements (goods and services descriptions) over other statement types
     row = conn_tm.execute(
-        "SELECT statement_text FROM statement WHERE serial_no = ? LIMIT 1", [serial_no]
+        "SELECT statement_text FROM statement "
+        "WHERE serial_no = ? AND statement_type_cd LIKE 'GS%' LIMIT 1",
+        [serial_no],
     ).fetchone()
     if row and row[0]:
         return row[0]

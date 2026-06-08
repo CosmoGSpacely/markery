@@ -135,13 +135,18 @@ def _run_rescore(rest: list[str]) -> None:
 
     pjson = proj.root / "project.json"
     class_hints_set: set[str] | None = None
+    prior_brand_set: set[str] | None = None
     if pjson.exists():
         pdata = _json.loads(pjson.read_text(encoding="utf-8"))
         raw_hints = pdata.get("class_hints", [])
         if raw_hints:
             class_hints_set = set(raw_hints)
+        raw_prior = pdata.get("prior_brand_serials", [])
+        if raw_prior:
+            prior_brand_set = {str(s) for s in raw_prior}
 
-    n = rescore_candidates(proj.candidates, class_hints=class_hints_set)
+    n = rescore_candidates(proj.candidates, class_hints=class_hints_set,
+                           prior_brand_serials=prior_brand_set)
     if n:
         mark_rescored(proj.pipeline_state)
         print("Pipeline state updated (rescored_at set).")
@@ -183,6 +188,7 @@ def _run_project(
     pjson = proj.root / "project.json"
     focus_serials: set[int] = set()
     class_hints_set: set[str] | None = None
+    prior_brand_set: set[str] | None = None
     if pjson.exists():
         pdata = _json.loads(pjson.read_text(encoding="utf-8"))
         if not all_serials:
@@ -190,6 +196,9 @@ def _run_project(
         raw_hints = pdata.get("class_hints", [])
         if raw_hints:
             class_hints_set = set(raw_hints)
+        raw_prior = pdata.get("prior_brand_serials", [])
+        if raw_prior:
+            prior_brand_set = {str(s) for s in raw_prior}
 
     entity_ids = entity_ids_for_project(proj.entities_file)
     if not entity_ids:
@@ -201,7 +210,8 @@ def _run_project(
     print(f"Entities in scope: {entity_ids}")
 
     candidates = generate_candidates(entity_ids, min_score=min_score,
-                                     class_hints=class_hints_set)
+                                     class_hints=class_hints_set,
+                                     prior_brand_serials=prior_brand_set)
 
     if focus_serials:
         before = len(candidates)

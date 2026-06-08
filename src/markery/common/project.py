@@ -76,6 +76,7 @@ class Project:
     focus_serials: list[int] = field(default_factory=list)
     class_hints: list[str] = field(default_factory=list)
     model: str | None = field(default=None)
+    prior_brand_serials: list[str] = field(default_factory=list)
 
     def _require_type(self, required: ProjectType, attr: str) -> None:
         if self.type is not None and self.type != required:
@@ -178,8 +179,10 @@ def load_project(path: Path) -> Project:
     focus_serials = [int(s) for s in data.get("focus_serials", [])]
     class_hints = [str(c) for c in data.get("class_hints", [])]
     model = data.get("model") or None
+    prior_brand_serials = [str(s) for s in data.get("prior_brand_serials", [])]
     return Project(name=path.name, type=project_type, focus_serials=focus_serials,
-                   class_hints=class_hints, model=model)
+                   class_hints=class_hints, model=model,
+                   prior_brand_serials=prior_brand_serials)
 
 
 def scaffold_project(root: Path, project_type: ProjectType) -> list[Path]:

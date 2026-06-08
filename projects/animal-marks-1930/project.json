@@ -2,6 +2,7 @@
   "type": "match-review-essay",
   "model": "claude-haiku-4-5-20251001",
   "class_hints": ["F02B", "B60C", "F41A", "F41C", "A01B", "F04B", "B64D", "F16J"],
+  "prior_brand_serials": ["71164631", "71289592"],
   "focus_serials": [
     71247861,
     71289592,

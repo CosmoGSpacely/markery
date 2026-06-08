@@ -110,6 +110,7 @@ def generate_candidates(
     entity_ids: list[int] | None = None,
     min_score: float = 0.0,
     class_hints: set[str] | None = None,
+    prior_brand_serials: set[str] | None = None,
 ) -> list[dict]:
     """Generate all patent-trademark candidate pairs for the given entity IDs.
 
@@ -146,8 +147,10 @@ def generate_candidates(
             tm_filing = tm["filing_dt"]
             for pat in patents:
                 cpc_classes = cpc_map.get(pat["patent_no"], [])
+                is_prior = (prior_brand_serials is not None
+                            and str(tm["serial_no"]) in prior_brand_serials)
                 score = total_score(pat["grant_dt"], tm_filing, cpc_classes,
-                                   class_hints=class_hints)
+                                   class_hints=class_hints, prior_brand=is_prior)
                 if score < min_score:
                     continue
                 candidates.append({
@@ -236,7 +239,11 @@ def _parse_date(s: str | None):
         return None
 
 
-def rescore_candidates(path: Path, class_hints: set[str] | None = None) -> int:
+def rescore_candidates(
+    path: Path,
+    class_hints: set[str] | None = None,
+    prior_brand_serials: set[str] | None = None,
+) -> int:
     """Pass 3: rewrite the score field for every candidate using signal fields.
 
     Reads candidates.jsonl, recomputes score = structural + min(SEMANTIC_CAP,
@@ -255,7 +262,9 @@ def rescore_candidates(path: Path, class_hints: set[str] | None = None) -> int:
     for c in candidates:
         grant_dt  = _parse_date(c.get("patent_grant_dt"))
         filing_dt = _parse_date(c.get("tm_filing_dt"))
-        structural = date_score(grant_dt, filing_dt) + class_score(
+        is_prior = (prior_brand_serials is not None
+                    and str(c.get("trademark_serial", "")) in prior_brand_serials)
+        structural = date_score(grant_dt, filing_dt, prior_brand=is_prior) + class_score(
             c.get("cpc_classes", []), class_hints
         )
         sem = min(SEMANTIC_CAP, semantic_score(

@@ -36,6 +36,8 @@ Track 3 — Enrichment: pre-candidate batch enrichment path (D046), `suggest-var
 4. Regenerate candidates: `markery match animal-marks-1930 --all-serials`. Verify Colt and P&W candidates now appear with scores ≥ 0.5.
 5. Add a unit test: `score_candidate()` with a negative date gap and a serial in `prior_brand_serials` returns gap_score ≥ 0.0.
 
+Results 2026-06-08: `prior_brand: bool` parameter added to `date_score()` and `total_score()` in score.py; `prior_brand_serials: list[str]` added to `Project` dataclass and `load_project()`; `generate_candidates()` and `rescore_candidates()` in link.py accept and apply `prior_brand_serials`; threaded through `_run_project` and `_run_rescore` in cli.py. Colt serial 71164631 and P&W serial 71289592 added to `prior_brand_serials` in `animal-marks-1930/project.json`. Fixed pre-existing bug in `_fetch_goods` (signals.py): was returning first statement row (a D00000 disclaimer) instead of GS-type goods statement, suppressing goods_title_overlap. After regeneration with --all-serials and enrichment: Colt appears (2 candidates, score 0.40, up from excluded at < 0.10); P&W appears (score 0.55, up from 0.18). Colt did not reach 0.50 — EPO lacks abstracts for US1638068A and US1692277A (1920s patents), so abstract_name_hit and goods_abstract_overlap signals cannot fire. Phase gate note: P&W ≥ 0.5 ✓; Colt 0.40 (below threshold due to missing EPO abstracts, not a scoring implementation failure). 5 tests added, 556 total passing.
+
 ---
 
 ### P2 — Assignment table and design-search command

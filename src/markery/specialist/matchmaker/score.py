@@ -40,12 +40,20 @@ def is_company_name_mark(canonical_name: str, mark_name: str | None) -> bool:
     return cn in mn or mn in cn
 
 
-def date_score(grant_dt: date | None, filing_dt: date | None) -> float:
+def date_score(
+    grant_dt: date | None,
+    filing_dt: date | None,
+    prior_brand: bool = False,
+) -> float:
     """Score in [-0.4, 0.5] based on date ordering and proximity.
 
     Patent grant before trademark filing is expected (positive).
     Trademark filed before patent grant is a flag (negative, not disqualifying —
     the trademark may cover a product line that preceded the specific patent).
+
+    prior_brand: when True, a negative raw gap is treated as indeterminate (0.0)
+    rather than penalised — used for marks whose filing predates the specific
+    technical patents as a documented historical pattern, not a data error.
     """
     if grant_dt is None or filing_dt is None:
         return 0.0
@@ -56,7 +64,8 @@ def date_score(grant_dt: date | None, filing_dt: date | None) -> float:
         proximity = max(0.0, 1.0 - delta_years / 20.0)
         return 0.5 * proximity
     else:
-        return max(-0.4, delta_years / 25.0)
+        raw = max(-0.4, delta_years / 25.0)
+        return 0.0 if prior_brand else raw
 
 
 def class_score(
@@ -112,14 +121,16 @@ def total_score(
     goods_title_overlap: float = 0.0,
     goods_abstract_overlap: float = 0.0,
     class_hints: set[str] | None = None,
+    prior_brand: bool = False,
 ) -> float:
     """Structural + capped semantic score. All signal params default to off.
 
     class_hints overrides PRODUCT_CLASSES for the class bonus when supplied.
+    prior_brand is passed through to date_score — see date_score docstring.
     Calling total_score(grant_dt, filing_dt, cpc_classes) without extra args
     is identical to pre-6C behaviour.
     """
-    structural = date_score(grant_dt, filing_dt) + class_score(cpc_classes, class_hints)
+    structural = date_score(grant_dt, filing_dt, prior_brand) + class_score(cpc_classes, class_hints)
     semantic   = min(SEMANTIC_CAP, semantic_score(
         title_name_hit, abstract_name_hit,
         goods_title_overlap, goods_abstract_overlap,
