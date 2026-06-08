@@ -163,6 +163,50 @@ def cmd_status(args: argparse.Namespace) -> None:
     conn.close()
 
 
+def cmd_load_assignment(args: argparse.Namespace) -> None:
+    from markery.specialist.trademark.build import open_db, load_assignment
+    conn = open_db()
+    try:
+        n = load_assignment(args.file, conn)
+    except FileNotFoundError as e:
+        print(str(e))
+        sys.exit(1)
+    finally:
+        conn.close()
+    print(f"assignment: {n:,} rows loaded.")
+
+
+def cmd_design_search(args: argparse.Namespace) -> None:
+    from markery.specialist.trademark.build import open_db
+    from markery.specialist.trademark.queries import search_by_design_code
+
+    conn = open_db()
+    try:
+        rows = search_by_design_code(
+            conn,
+            code_prefix=args.code_prefix,
+            filing_before=args.filing_before,
+            goods_contains=args.goods_contains,
+            limit=args.limit,
+        )
+    finally:
+        conn.close()
+
+    if not rows:
+        print("No marks found.")
+        return
+
+    print(f"{'serial_no':<12}  {'mark_text':<35}  {'own_name':<30}  {'filing_dt':<12}  goods_desc")
+    print("-" * 115)
+    for r in rows:
+        mark   = (r["mark_text"] or "")[:35]
+        owner  = (r["own_name"]  or "")[:30]
+        filing = r["filing_dt"] or ""
+        goods  = (r["goods_desc"] or "")[:50]
+        print(f"  {r['serial_no']:<12}  {mark:<35}  {owner:<30}  {filing:<12}  {goods}")
+    print(f"\n{len(rows)} row(s).")
+
+
 def cmd_reparse(args: argparse.Namespace) -> None:
     from markery.specialist.trademark.build import open_db
     from markery.specialist.trademark.enrich import backfill_structured_fields
@@ -239,6 +283,24 @@ def main() -> None:
     p_ef.add_argument("--after-year", type=int, default=1939, metavar="YEAR",
                       help="Show marks filed after this year (default: 1939)")
 
+    # load-assignment
+    p_las = sub.add_parser("load-assignment",
+                           help="Load an assignment CSV into the assignment table")
+    p_las.add_argument("--file", metavar="PATH", required=True,
+                       help="Path to assignment CSV file")
+
+    # design-search
+    p_ds = sub.add_parser("design-search",
+                          help="Discover marks by USPTO visual design code prefix")
+    p_ds.add_argument("code_prefix", metavar="CODE_PREFIX",
+                      help="Design code prefix (e.g. '03' for animals, '01' for celestial)")
+    p_ds.add_argument("--filing-before", metavar="YEAR", default=None,
+                      help="Restrict to filing_dt before YEAR-01-01")
+    p_ds.add_argument("--goods-contains", metavar="TEXT", default=None,
+                      help="Case-insensitive substring filter on goods/services description")
+    p_ds.add_argument("--limit", type=int, default=200, metavar="N",
+                      help="Maximum rows returned (default: 200)")
+
     # reparse
     sub.add_parser("reparse",
                    help="Re-parse stored raw_json to fill NULL structured fields (no API calls)")
@@ -259,6 +321,8 @@ def main() -> None:
         "load-foreign":        cmd_load_foreign,
         "fetch":               cmd_fetch,
         "entity-forward":      cmd_entity_forward,
+        "load-assignment":     cmd_load_assignment,
+        "design-search":       cmd_design_search,
         "reparse":             cmd_reparse,
         "verify-credentials":  cmd_verify_credentials,
         "status":              cmd_status,

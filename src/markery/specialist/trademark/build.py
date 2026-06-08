@@ -143,6 +143,68 @@ def load_foreign_app(
     return n
 
 
+_ASSIGNMENT_DDL = """
+CREATE TABLE IF NOT EXISTS assignment (
+    serial_no        BIGINT,   -- contract: BIGINT, NOT NULL — FK to case_file.serial_no (ownership chain anchor)
+    reel_no          VARCHAR,
+    frame_no         VARCHAR,
+    assignor_name    VARCHAR,  -- contract: VARCHAR, nullable — entity transferring trademark rights
+    assignee_name    VARCHAR,  -- contract: VARCHAR, nullable — entity receiving trademark rights; most recent = current chain endpoint
+    assignment_date  DATE,     -- contract: DATE, nullable — date of the transfer event; ORDER BY this for chronological chain
+    recorded_date    DATE,
+    conveyance_text  VARCHAR
+)
+"""
+
+
+def load_assignment(
+    file_path: str | Path,
+    conn: duckdb.DuckDBPyConnection | None = None,
+    db_path: str | Path | None = None,
+) -> int:
+    """Load an assignment CSV into the assignment table (filtered to case_file serials).
+
+    Drops and recreates the assignment table from the given file each call.
+    Expected CSV columns: serial_no, reel_no, frame_no, assignor_name,
+    assignee_name, assignment_date, recorded_date, conveyance_text.
+    Returns the row count loaded.
+    """
+    file_path = Path(file_path)
+    if not file_path.exists():
+        raise FileNotFoundError(f"Assignment file not found: {file_path}")
+    _own = conn is None
+    if _own:
+        conn = open_db(db_path)
+    try:
+        conn.execute("DROP TABLE IF EXISTS assignment")
+        conn.execute(_ASSIGNMENT_DDL)
+        conn.execute(f"""
+            INSERT INTO assignment
+            SELECT
+                CAST(a.serial_no AS BIGINT),
+                a.reel_no,
+                a.frame_no,
+                a.assignor_name,
+                a.assignee_name,
+                TRY_CAST(a.assignment_date AS DATE),
+                TRY_CAST(a.recorded_date   AS DATE),
+                a.conveyance_text
+            FROM read_csv_auto('{file_path}', header=true, nullstr='',
+                               quote='"', sample_size=-1) a
+            JOIN (SELECT serial_no FROM case_file) t
+            ON CAST(a.serial_no AS BIGINT) = t.serial_no
+        """)
+        conn.execute("CREATE INDEX idx_asgn_serial   ON assignment(serial_no)")
+        conn.execute("CREATE INDEX idx_asgn_assignor ON assignment(assignor_name)")
+        conn.execute("CREATE INDEX idx_asgn_assignee ON assignment(assignee_name)")
+        conn.execute("CREATE INDEX idx_asgn_date     ON assignment(assignment_date)")
+        n = conn.execute("SELECT count(*) FROM assignment").fetchone()[0]
+    finally:
+        if _own:
+            conn.close()
+    return n
+
+
 def _rc(csv_dir: Path, name: str) -> str:
     """Return a read_csv_auto() expression for the named CSV file."""
     path = csv_dir / f"{name}.csv"

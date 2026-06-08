@@ -160,6 +160,77 @@ def get_foreign_apps(
     ]
 
 
+def search_by_design_code(
+    conn: duckdb.DuckDBPyConnection,
+    code_prefix: str,
+    filing_before: str | None = None,
+    goods_contains: str | None = None,
+    limit: int = 200,
+) -> list[dict]:
+    """Return marks matching a design code prefix.
+
+    code_prefix: e.g. "03" matches all animal marks (030101, 031701, …).
+      Trailing dots are stripped so "03." works identically to "03".
+    filing_before: restrict to filing_dt < YEAR-01-01.
+    goods_contains: case-insensitive substring match on GS-type statement_text.
+
+    Returns a list of dicts with keys:
+      serial_no, mark_text, own_name, filing_dt, goods_desc (first 100 chars).
+    Rows are ordered by filing_dt. Deduplicates on serial_no.
+    """
+    prefix = code_prefix.rstrip(".") + "%"
+    wheres = ["ds.design_search_cd LIKE ?"]
+    params: list = [prefix]
+
+    if filing_before:
+        wheres.append("cf.filing_dt < ?")
+        params.append(f"{filing_before}-01-01")
+    if goods_contains:
+        wheres.append("LOWER(fg.statement_text) LIKE ?")
+        params.append(f"%{goods_contains.lower()}%")
+
+    where_clause = " AND ".join(wheres)
+    params.append(limit)
+
+    sql = f"""
+        WITH first_owner AS (
+            SELECT serial_no, own_name,
+                   ROW_NUMBER() OVER (PARTITION BY serial_no ORDER BY own_seq) AS rn
+            FROM owner
+        ),
+        first_goods AS (
+            SELECT serial_no, statement_text,
+                   ROW_NUMBER() OVER (PARTITION BY serial_no) AS rn
+            FROM statement
+            WHERE statement_type_cd LIKE 'GS%'
+        )
+        SELECT DISTINCT
+            ds.serial_no,
+            COALESCE(cf.mark_id_char, '(figurative)') AS mark_text,
+            fo.own_name,
+            cf.filing_dt,
+            LEFT(fg.statement_text, 100) AS goods_desc
+        FROM design_search ds
+        JOIN case_file cf ON ds.serial_no = cf.serial_no
+        LEFT JOIN first_owner fo ON ds.serial_no = fo.serial_no AND fo.rn = 1
+        LEFT JOIN first_goods fg ON ds.serial_no = fg.serial_no AND fg.rn = 1
+        WHERE {where_clause}
+        ORDER BY cf.filing_dt
+        LIMIT ?
+    """
+    rows = conn.execute(sql, params).fetchall()
+    return [
+        {
+            "serial_no": r[0],
+            "mark_text": r[1],
+            "own_name":  r[2],
+            "filing_dt": str(r[3]) if r[3] else None,
+            "goods_desc": r[4],
+        }
+        for r in rows
+    ]
+
+
 def get_missing_enrichment(
     conn: duckdb.DuckDBPyConnection,
     serial_nos: list[str],

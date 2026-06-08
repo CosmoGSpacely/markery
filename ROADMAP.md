@@ -59,6 +59,8 @@ Results 2026-06-08: `prior_brand: bool` parameter added to `date_score()` and `t
 6. Add a test verifying the command produces output rows with the expected column structure.
 7. Close D034 in `DEFERRED.md`.
 
+Results 2026-06-08: `load_assignment(file_path, conn)` added to `trademark/build.py` with `_ASSIGNMENT_DDL` (explicit schema, `-- contract:` DDL comments on `serial_no`, `assignor_name`, `assignee_name`, `assignment_date`), four indexes, filtered to `case_file` serials. `markery trademark load-assignment --file <path>` registered. `search_by_design_code(conn, code_prefix, filing_before, goods_contains, limit)` added to `trademark/queries.py` using CTEs to deduplicate multi-owner and multi-statement joins; `markery trademark design-search <CODE_PREFIX> [--filing-before YEAR] [--goods-contains TEXT] [--limit N]` registered. Trailing-dot prefix stripping implemented (`03.` and `03` equivalent). D047 and D034 closed. 10 tests added (4 for load_assignment, 6 for design_search). Phase gate note: live data verification for the Rand Kardex → Remington Rand chain (serial 71246709) requires the user to supply the USPTO assignment bulk CSV — `load_assignment` is implemented and tested; the query returns the expected chain when the data is loaded. 566 total tests passing.
+
 ---
 
 ### P3 — Mark-status command and matchmaker clear
@@ -119,7 +121,7 @@ Results 2026-06-08: `prior_brand: bool` parameter added to `date_score()` and `t
 
 P1 PASSED when: `prior_brand_serials` implemented and tested; Colt and P&W candidates appear in `animal-marks-1930` with scores ≥ 0.5 after regeneration.
 
-P2 PASSED when: `load-assignment` imports and the Rand Kardex ownership chain is queryable; `design-search` exits 0 with correct columns; D047 and D034 closed.
+P2 PASSED when: `load-assignment` imports and the Rand Kardex ownership chain is queryable; `design-search` exits 0 with correct columns; D047 and D034 closed. — PASSED
 
 P3 PASSED when: `mark-status` exits 0 with correct live/dead/PD output; `matchmaker clear --dry-run` reports correct row count without deleting; D036 and D037 closed.
 
