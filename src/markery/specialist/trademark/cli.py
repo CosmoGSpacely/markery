@@ -298,9 +298,10 @@ def main() -> None:
     p_ep = sub.add_parser("enrich-project",
                            help="Enrich all marks in a project")
     p_ep.add_argument("project", nargs="?", default=None)
-    p_ep.add_argument("--source", choices=["confirmed", "candidates"],
+    p_ep.add_argument("--source", choices=["confirmed", "candidates", "from-variants"],
                       default="confirmed",
-                      help="Source file to read serial numbers from (default: confirmed)")
+                      help="Source for serial numbers: confirmed (default), candidates, or "
+                           "from-variants (derive from project variants.csv before candidates exist)")
     p_ep.add_argument("--min-score", type=float, default=0.0,
                       help="Minimum score when using candidates (default: 0.0)")
     p_ep.add_argument("--force", action="store_true",

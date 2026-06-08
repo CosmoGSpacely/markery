@@ -132,7 +132,10 @@ def enrich_project(
     Returns {"images": n_stored, "status": n_stored}.
     """
     proj = Project(project)
-    serial_nos = _collect_serial_nos(proj, source, min_score)
+    if source == "from-variants":
+        serial_nos = _collect_serials_from_variants(proj.root / "variants.csv", conn)
+    else:
+        serial_nos = _collect_serial_nos(proj, source, min_score)
 
     if not serial_nos:
         return {"images": 0, "status": 0}
@@ -217,3 +220,38 @@ def _collect_serial_nos(
             seen.add(sno)
             serial_nos.append(sno)
     return serial_nos
+
+
+def _collect_serials_from_variants(
+    variants_path: Path,
+    conn_tm: duckdb.DuckDBPyConnection,
+) -> list[str]:
+    """Return serial_nos for all owner names matching trademark variants.
+
+    Reads trademark_owner and trademark_search variant names from variants_path,
+    looks them up case-insensitively in the owner table, and returns the
+    distinct serial_nos as strings. Returns [] if variants_path does not exist.
+    """
+    import csv as _csv
+
+    if not variants_path.exists():
+        return []
+
+    with variants_path.open(newline="", encoding="utf-8") as f:
+        rows = list(_csv.DictReader(f))
+
+    variant_names = list({
+        r["variant_name"] for r in rows
+        if r.get("source") in ("trademark_owner", "trademark_search")
+    })
+    if not variant_names:
+        return []
+
+    placeholders = ",".join("?" * len(variant_names))
+    upper_names = [v.upper() for v in variant_names]
+    serial_rows = conn_tm.execute(
+        f"SELECT DISTINCT CAST(serial_no AS VARCHAR) FROM owner "
+        f"WHERE UPPER(own_name) IN ({placeholders})",
+        upper_names,
+    ).fetchall()
+    return [r[0] for r in serial_rows]

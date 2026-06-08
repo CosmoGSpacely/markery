@@ -15,6 +15,7 @@ from markery.specialist.trademark.enrich import (
     enrich_project,
     backfill_structured_fields,
     _collect_serial_nos,
+    _collect_serials_from_variants,
 )
 from contextlib import contextmanager
 from unittest.mock import patch as _patch
@@ -310,4 +311,84 @@ def test_backfill_skips_already_populated_rows():
 
     n = backfill_structured_fields(conn)
     assert n == 0
+    conn.close()
+
+
+# ---------------------------------------------------------------------------
+# _collect_serials_from_variants (D046)
+# ---------------------------------------------------------------------------
+
+def _tm_conn_with_owner_table():
+    """In-memory trademark DB with a minimal owner table."""
+    conn = _in_memory_db()
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS owner "
+        "(serial_no BIGINT, own_name VARCHAR, own_seq BIGINT)"
+    )
+    conn.execute("INSERT INTO owner VALUES (71246709, 'Rand Kardex Bureau, Inc.', 1)")
+    conn.execute("INSERT INTO owner VALUES (71164631, 'COLT S PT F A MFG CO', 1)")
+    conn.execute("INSERT INTO owner VALUES (71299042, 'Chicago Pneumatic Tool Co', 1)")
+    return conn
+
+
+def _write_variants_csv(path: Path, rows: list[dict]) -> None:
+    import csv
+    with path.open("w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["entity_id", "variant_name", "source"])
+        w.writeheader()
+        w.writerows(rows)
+
+
+def test_collect_serials_from_variants_returns_matching_serials(tmp_path):
+    conn = _tm_conn_with_owner_table()
+    variants_path = tmp_path / "variants.csv"
+    _write_variants_csv(variants_path, [
+        {"entity_id": 1, "variant_name": "Rand Kardex Bureau, Inc.", "source": "trademark_owner"},
+        {"entity_id": 2, "variant_name": "COLT S PT F A MFG CO",     "source": "trademark_owner"},
+    ])
+    serials = _collect_serials_from_variants(variants_path, conn)
+    assert set(serials) == {"71246709", "71164631"}
+    conn.close()
+
+
+def test_collect_serials_from_variants_case_insensitive(tmp_path):
+    conn = _tm_conn_with_owner_table()
+    variants_path = tmp_path / "variants.csv"
+    _write_variants_csv(variants_path, [
+        {"entity_id": 1, "variant_name": "rand kardex bureau, inc.", "source": "trademark_owner"},
+    ])
+    serials = _collect_serials_from_variants(variants_path, conn)
+    assert "71246709" in serials
+    conn.close()
+
+
+def test_collect_serials_from_variants_ignores_patent_assignee_source(tmp_path):
+    conn = _tm_conn_with_owner_table()
+    variants_path = tmp_path / "variants.csv"
+    _write_variants_csv(variants_path, [
+        {"entity_id": 1, "variant_name": "Rand Kardex Bureau, Inc.", "source": "patent_assignee"},
+    ])
+    serials = _collect_serials_from_variants(variants_path, conn)
+    assert serials == []
+    conn.close()
+
+
+def test_collect_serials_from_variants_empty_when_file_missing(tmp_path):
+    conn = _tm_conn_with_owner_table()
+    serials = _collect_serials_from_variants(tmp_path / "nonexistent.csv", conn)
+    assert serials == []
+    conn.close()
+
+
+def test_collect_serials_from_variants_no_candidates_file_needed(tmp_path):
+    """Verify serials are found even when candidates.jsonl does not exist."""
+    conn = _tm_conn_with_owner_table()
+    variants_path = tmp_path / "variants.csv"
+    _write_variants_csv(variants_path, [
+        {"entity_id": 1, "variant_name": "Chicago Pneumatic Tool Co", "source": "trademark_search"},
+    ])
+    # No candidates.jsonl in tmp_path — it must not be needed
+    assert not (tmp_path / "candidates.jsonl").exists()
+    serials = _collect_serials_from_variants(variants_path, conn)
+    assert "71299042" in serials
     conn.close()

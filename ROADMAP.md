@@ -107,6 +107,8 @@ Results 2026-06-08: `mark_status_report(conn, tm_variants, dead_only, pd_only, p
 6. Add a test verifying that patent titles appear in `suggest-variants` output for a known assignee.
 7. Close D039 in `DEFERRED.md`.
 
+Results 2026-06-08: `_collect_serials_from_variants(variants_path, conn_tm)` added to `trademark/enrich.py`; `enrich_project` dispatches to it when `source="from-variants"`; `--source from-variants` added to `markery trademark enrich-project` CLI. `_get_example_titles(conn_pat, assignee_name, limit=2)` added to `matchmaker/cli.py`; `cmd_suggest_variants` caches titles before closing connection and appends `(e.g. "Title" (year))` to each patent assignee line. D046 and D039 closed. 5 tests for `_collect_serials_from_variants`, 3 tests for `_get_example_titles`, 585 total passing.
+
 ---
 
 ### P5 — Cross-project data quality audit
@@ -127,7 +129,7 @@ P2 PASSED when: `load-assignment` imports and the Rand Kardex ownership chain is
 
 P3 PASSED when: `mark-status` exits 0 with correct live/dead/PD output; `matchmaker clear --dry-run` reports correct row count without deleting; D036 and D037 closed. — PASSED
 
-P4 PASSED when: `enrich-project --from-variants` populates `extended_marks` before candidates exist; `suggest-variants` output includes example patent titles; D046 and D039 closed.
+P4 PASSED when: `enrich-project --from-variants` populates `extended_marks` before candidates exist; `suggest-variants` output includes example patent titles; D046 and D039 closed. — PASSED
 
 P5 PASSED when: all confirmed essays validate 8/8 across all three projects; all three site builds exit 0; data quality results recorded in benchmarks README.
 

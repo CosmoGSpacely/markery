@@ -195,6 +195,53 @@ def test_suggest_variants_strips_punctuation():
 
 
 # ---------------------------------------------------------------------------
+# 3b. suggest-variants — _get_example_titles (D039)
+# ---------------------------------------------------------------------------
+
+def _pat_conn_with_assignee(assignee_name: str, title: str, grant_year: int):
+    """In-memory patents DB with one patent for testing title lookup."""
+    from markery.specialist.patent.build import open_db, insert_patent
+    conn = open_db(":memory:")
+    insert_patent(conn, {
+        "patent_no":     "US9999001A",
+        "title":         title,
+        "grant_dt":      f"{grant_year}-06-01",
+        "assignee_name": assignee_name,
+        "abstract":      None,
+        "app_dt":        f"{grant_year - 1}-01-01",
+        "inventors":     [],
+        "cpc":           [],
+    })
+    return conn
+
+
+def test_get_example_titles_returns_title_and_year():
+    from markery.specialist.matchmaker.cli import _get_example_titles
+    conn = _pat_conn_with_assignee("Remington Rand Inc.", "Typewriter Mechanism", 1932)
+    results = _get_example_titles(conn, "Remington Rand Inc.")
+    assert len(results) == 1
+    assert results[0][0] == "Typewriter Mechanism"
+    assert results[0][1] == 1932
+    conn.close()
+
+
+def test_get_example_titles_case_insensitive():
+    from markery.specialist.matchmaker.cli import _get_example_titles
+    conn = _pat_conn_with_assignee("REMINGTON RAND INC", "Card Index", 1930)
+    results = _get_example_titles(conn, "remington rand inc")
+    assert len(results) == 1
+    conn.close()
+
+
+def test_get_example_titles_returns_empty_for_unknown_assignee():
+    from markery.specialist.matchmaker.cli import _get_example_titles
+    conn = _pat_conn_with_assignee("Known Co", "Some Patent", 1928)
+    results = _get_example_titles(conn, "Unknown Corp")
+    assert results == []
+    conn.close()
+
+
+# ---------------------------------------------------------------------------
 # 4. card
 # ---------------------------------------------------------------------------
 

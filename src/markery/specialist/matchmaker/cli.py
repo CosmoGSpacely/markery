@@ -669,6 +669,21 @@ def cmd_confirm(args: argparse.Namespace) -> None:
     print(f"  Written to {proj.confirmed.relative_to(proj.root.parent.parent)}")
 
 
+def _get_example_titles(
+    conn_pat,
+    assignee_name: str,
+    limit: int = 2,
+) -> list[tuple[str, int | None]]:
+    """Return up to `limit` (title, year) tuples for the given assignee name."""
+    rows = conn_pat.execute(
+        "SELECT title, YEAR(grant_dt) FROM patents "
+        "WHERE UPPER(assignee_name) = UPPER(?) AND title IS NOT NULL "
+        "LIMIT ?",
+        [assignee_name, limit],
+    ).fetchall()
+    return [(r[0], r[1]) for r in rows]
+
+
 def cmd_suggest_variants(args: argparse.Namespace) -> None:
     import re
     import duckdb
@@ -699,28 +714,9 @@ def cmd_suggest_variants(args: argparse.Namespace) -> None:
         if not cand_tokens:
             return 0.0
         overlap = query_tokens & cand_tokens
-        # Jaccard on normalised tokens
         return len(overlap) / len(query_tokens | cand_tokens)
 
     query_tokens = set(_normalise(canonical).split())
-
-    # Patent assignees
-    conn_pat = duckdb.connect(str(DB["patents"]), read_only=True)
-    pat_rows = conn_pat.execute(
-        "SELECT assignee_name, COUNT(*) AS n FROM patents "
-        "WHERE assignee_name IS NOT NULL AND assignee_name != '' "
-        "GROUP BY assignee_name ORDER BY n DESC"
-    ).fetchall()
-    conn_pat.close()
-
-    # Trademark owners
-    conn_tm = duckdb.connect(str(DB["trademarks"]), read_only=True)
-    tm_rows = conn_tm.execute(
-        "SELECT own_name, COUNT(*) AS n FROM owner "
-        "WHERE own_name IS NOT NULL AND own_name != '' "
-        "GROUP BY own_name ORDER BY n DESC"
-    ).fetchall()
-    conn_tm.close()
 
     def _rank(rows: list[tuple], min_score: float = 0.3) -> list[tuple]:
         scored = [
@@ -732,14 +728,45 @@ def cmd_suggest_variants(args: argparse.Namespace) -> None:
             key=lambda x: (-x[2], -x[1]),
         )[:top_n]
 
+    # Patent assignees — keep connection open to fetch example titles
+    conn_pat = duckdb.connect(str(DB["patents"]), read_only=True)
+    pat_rows = conn_pat.execute(
+        "SELECT assignee_name, COUNT(*) AS n FROM patents "
+        "WHERE assignee_name IS NOT NULL AND assignee_name != '' "
+        "GROUP BY assignee_name ORDER BY n DESC"
+    ).fetchall()
     pat_ranked = _rank(pat_rows)
-    tm_ranked  = _rank(tm_rows)
+    pat_titles: dict[str, list[tuple]] = {
+        name: _get_example_titles(conn_pat, name)
+        for name, _count, _score in pat_ranked
+    }
+    conn_pat.close()
+
+    # Trademark owners
+    conn_tm = duckdb.connect(str(DB["trademarks"]), read_only=True)
+    tm_rows = conn_tm.execute(
+        "SELECT own_name, COUNT(*) AS n FROM owner "
+        "WHERE own_name IS NOT NULL AND own_name != '' "
+        "GROUP BY own_name ORDER BY n DESC"
+    ).fetchall()
+    conn_tm.close()
+    tm_ranked = _rank(tm_rows)
+
+    def _title_suffix(titles: list[tuple]) -> str:
+        if not titles:
+            return ""
+        examples = ", ".join(
+            f'"{t}" ({y})' if y else f'"{t}"'
+            for t, y in titles
+        )
+        return f'  (e.g. {examples})'
 
     print(f"Variant suggestions for: {canonical!r}\n")
     print("Patent assignees:")
     if pat_ranked:
         for name, count, score in pat_ranked:
-            print(f"  {score:.2f}  {count:>5}×  {name}")
+            suffix = _title_suffix(pat_titles.get(name, []))
+            print(f"  {score:.2f}  {count:>5}×  {name}{suffix}")
     else:
         print("  (none above threshold)")
 
