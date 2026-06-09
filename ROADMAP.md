@@ -215,7 +215,7 @@ Results 2026-06-09: `--serials SERIAL [SERIAL ...]` added to `match_main()` argp
 
 ---
 
-### P5 — `markery wikipedia check-revision`
+### P5 — `markery wikipedia check-revision` — CLOSED
 
 **Motivation:** Phase 19 P6 introduced `projects/<name>/wikipedia/submissions.jsonl` as the structured record of Wikipedia edits. Checking revert status currently requires manual browser lookups. A CLI command that reads `submissions.jsonl` and queries the MediaWiki API for each entry would close the monitoring loop without leaving the tool.
 
@@ -231,6 +231,8 @@ Results 2026-06-09: `--serials SERIAL [SERIAL ...]` added to `match_main()` argp
 3. Add `check-revision` to argparse in `wikipedia_main()`.
 4. Add a test: `check-revision` exits 0 when all submissions have live status (mock API response); exits 1 when one is reverted.
 
+Results 2026-06-09: `get_revision_status(revid)` added to `WikipediaClient` in `api.py` — queries `action=query&prop=revisions&revids=<revid>&rvprop=ids|timestamp|tags|comment`, returns `{exists, reverted, tags, timestamp}`; detects revert via `"mw-reverted"` in tags; handles `badrevids` as `exists=False`. `cmd_check_revision(project)` added to `cli.py` as `markery wikipedia check-revision <project>` — reads `submissions.jsonl`, checks each entry with a `revision_id`, prints tabular status, updates `status` field in-place only when it changes (live→reverted), exits 1 if any reverted. Entries with null `revision_id` are skipped. 12 tests in `tests/specialist/publisher/wikipedia/test_check_revision.py`: exits 0 (all live), exits 1 (any reverted), REVERTED label in output, status field updated in file, file not touched when all live, unknown revision shows "unknown", null revision_id skipped, missing file exits 1, mixed live+reverted exits 1; plus 3 unit tests for `get_revision_status` response parsing. 609 total tests passing.
+
 ---
 
 ### Phase Gate
@@ -243,9 +245,9 @@ P3 PASSED when: `markery project onboard` exits 0 on a correctly configured proj
 
 P4 PASSED when: `markery match --serials` generates candidates only for the listed serials; test passes; D042 fully closed. — PASSED
 
-P5 PASSED when: `markery wikipedia check-revision <project>` reads `submissions.jsonl`, queries MediaWiki API for each revision, prints status table, updates changed statuses, exits 1 on revert; test passes.
+P5 PASSED when: `markery wikipedia check-revision <project>` reads `submissions.jsonl`, queries MediaWiki API for each revision, prints status table, updates changed statuses, exits 1 on revert; test passes. — PASSED
 
-Phase PASSED when P1–P5 all pass.
+Phase PASSED when P1–P5 all pass. — PASSED
 
 ---
 

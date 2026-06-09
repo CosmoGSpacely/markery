@@ -66,6 +66,78 @@ def _draft_path(project: str, slug: str) -> Path:
     return wiki_dir / f"{slug}.wiki"
 
 
+def cmd_check_revision(project: str) -> None:
+    """Check MediaWiki API status for every revision_id in submissions.jsonl.
+
+    Prints a per-entry table and updates the `status` field in-place for any
+    entry that has changed (live → reverted). Exits 1 if any revision is reverted.
+    """
+    from markery.specialist.publisher.wikipedia.api import WikipediaClient
+
+    submissions_path = ROOT / "projects" / project / "wikipedia" / "submissions.jsonl"
+    if not submissions_path.exists():
+        print(f"No submissions.jsonl found at {submissions_path}.", file=sys.stderr)
+        sys.exit(1)
+
+    rows: list[dict] = []
+    with submissions_path.open(encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if line:
+                rows.append(json.loads(line))
+
+    checkable = [r for r in rows if r.get("revision_id")]
+    if not checkable:
+        print("No revision IDs to check (all entries have null revision_id).")
+        return
+
+    client = WikipediaClient()
+    any_reverted = False
+    updated = False
+
+    col_w = 42
+    print(f"\n{'revision_id':<14}  {'article':<{col_w}}  {'submitted_at':<12}  status")
+    print("-" * (14 + 2 + col_w + 2 + 12 + 2 + 12))
+
+    for row in rows:
+        revid = row.get("revision_id")
+        if not revid:
+            print(f"{'(none)':<14}  {row.get('article',''):<{col_w}}  "
+                  f"{row.get('submitted_at',''):<12}  skipped (no revision_id)")
+            continue
+
+        api_status = client.get_revision_status(revid)
+        if not api_status["exists"]:
+            label = "unknown"
+        elif api_status["reverted"]:
+            label = "REVERTED"
+            any_reverted = True
+        else:
+            label = "live"
+
+        print(f"{revid:<14}  {row.get('article',''):<{col_w}}  "
+              f"{row.get('submitted_at',''):<12}  {label}")
+
+        # Update status field when it has changed
+        prev = row.get("status", "live")
+        if api_status["exists"] and api_status["reverted"] and prev != "reverted":
+            row["status"] = "reverted"
+            updated = True
+
+    if updated:
+        with submissions_path.open("w", encoding="utf-8") as fh:
+            for row in rows:
+                fh.write(json.dumps(row) + "\n")
+        print(f"\nUpdated {submissions_path.name} with new status.")
+
+    print()
+    if any_reverted:
+        print("FAIL — one or more revisions have been reverted.")
+        sys.exit(1)
+    else:
+        print("All checked revisions are live.")
+
+
 def cmd_draft(project: str, slug: str) -> None:
     """Generate a wikitext draft from the match essay and save it."""
     from markery.specialist.publisher.wikipedia.wikitext import build_draft_wikitext
@@ -395,6 +467,10 @@ def wikipedia_main() -> None:
 
     sub.add_parser("verify-credentials", help="Test Wikipedia authentication")
 
+    cr = sub.add_parser("check-revision",
+                        help="Check MediaWiki API status for all project submissions")
+    cr.add_argument("project", help="Project name")
+
     ael = sub.add_parser("add-external-link",
                          help="Append one link to the External links section")
     ael.add_argument("page_title", help="Wikipedia article title")
@@ -441,3 +517,5 @@ def wikipedia_main() -> None:
             args.page_title, args.find, args.replace_text, args.summary, args.yes,
             project=args.project,
         )
+    elif args.action == "check-revision":
+        cmd_check_revision(args.project)

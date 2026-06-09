@@ -110,6 +110,45 @@ class WikipediaClient:
         resp.raise_for_status()
         return resp.json()
 
+    def get_revision_status(self, revid: int) -> dict:
+        """Query the MediaWiki API for a single revision's status.
+
+        Returns::
+            {
+                "exists":    bool,   # False when the revision ID is unknown
+                "reverted":  bool,   # True when "mw-reverted" is in tags
+                "tags":      list,   # raw tags list from the API
+                "timestamp": str,    # ISO 8601 or "" when unknown
+            }
+        """
+        resp = self._session.get(_API_URL, params={
+            "action":  "query",
+            "prop":    "revisions",
+            "revids":  str(revid),
+            "rvprop":  "ids|timestamp|tags|comment",
+            "format":  "json",
+        })
+        resp.raise_for_status()
+        data = resp.json()
+
+        # A missing revision appears under query.badrevids
+        if "badrevids" in data.get("query", {}):
+            return {"exists": False, "reverted": False, "tags": [], "timestamp": ""}
+
+        pages = data.get("query", {}).get("pages", {})
+        for page in pages.values():
+            for rev in page.get("revisions", []):
+                if rev.get("revid") == revid:
+                    tags = rev.get("tags", [])
+                    return {
+                        "exists":    True,
+                        "reverted":  "mw-reverted" in tags,
+                        "tags":      tags,
+                        "timestamp": rev.get("timestamp", ""),
+                    }
+
+        return {"exists": False, "reverted": False, "tags": [], "timestamp": ""}
+
     def append_section(self, title: str, section_title: str, content: str, summary: str) -> dict:
         """Append a new section to an existing page."""
         self.login()
