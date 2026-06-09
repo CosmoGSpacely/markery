@@ -201,7 +201,7 @@ Results 2026-06-09: `cmd_onboard` added to `project_cli.py` as `markery project 
 
 ---
 
-### P4 — D042: `markery match --serials` ad-hoc flag
+### P4 — D042: `markery match --serials` ad-hoc flag — CLOSED
 
 1. Add `--serials <serial> [<serial>...]` to `markery match <project>` CLI.
    - Overrides `focus_serials` from `project.json` for this run only (does not modify `project.json`).
@@ -210,6 +210,8 @@ Results 2026-06-09: `cmd_onboard` added to `project_cli.py` as `markery project 
 2. Use case: exploratory generation for one or two serials without editing project configuration.
 3. Add a test: `markery match <project> --serials 71299042` generates candidates only for serial 71299042.
 4. Fully close D042 in `DEFERRED.md` (project-config approach from Phase 17 P1 handles persistent focus; this adds the one-off CLI override that completes the original request).
+
+Results 2026-06-09: `--serials SERIAL [SERIAL ...]` added to `match_main()` argparse and threaded into `_run_project()` as a new `serials: list[int] | None` parameter. When provided, populates `focus_serials` from CLI values regardless of `project.json` or `--all-serials`; prints `--serials override:` confirmation. When `project.json` is absent, serials are applied directly. 5 tests covering: filter to single serial, override project.json focus_serials, override --all-serials, keep multiple serials, fall back to project.json when absent. D042 closed. 597 total tests passing.
 
 ---
 
@@ -239,7 +241,7 @@ P2 PASSED when: LangGraph graph integration test passes with mocked tools; routi
 
 P3 PASSED when: `markery project onboard` exits 0 on a correctly configured project and exits 1 with actionable errors on a misconfigured one; D027 closed. — PASSED
 
-P4 PASSED when: `markery match --serials` generates candidates only for the listed serials; test passes; D042 fully closed.
+P4 PASSED when: `markery match --serials` generates candidates only for the listed serials; test passes; D042 fully closed. — PASSED
 
 P5 PASSED when: `markery wikipedia check-revision <project>` reads `submissions.jsonl`, queries MediaWiki API for each revision, prints status table, updates changed statuses, exits 1 on revert; test passes.
 

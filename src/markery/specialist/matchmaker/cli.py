@@ -163,6 +163,7 @@ def _run_project(
     resolve: bool = False,
     auto_fetch: bool = False,
     all_serials: bool = False,
+    serials: list[int] | None = None,
 ) -> None:
     import json as _json
     from markery.specialist.matchmaker.link import (
@@ -191,7 +192,11 @@ def _run_project(
     prior_brand_set: set[str] | None = None
     if pjson.exists():
         pdata = _json.loads(pjson.read_text(encoding="utf-8"))
-        if not all_serials:
+        if serials:
+            # --serials overrides project.json and --all-serials
+            focus_serials = {int(s) for s in serials}
+            print(f"  --serials override: {sorted(focus_serials)} (ignores focus_serials in project.json)")
+        elif not all_serials:
             focus_serials = {int(s) for s in pdata.get("focus_serials", [])}
         raw_hints = pdata.get("class_hints", [])
         if raw_hints:
@@ -199,6 +204,9 @@ def _run_project(
         raw_prior = pdata.get("prior_brand_serials", [])
         if raw_prior:
             prior_brand_set = {str(s) for s in raw_prior}
+    elif serials:
+        focus_serials = {int(s) for s in serials}
+        print(f"  --serials override: {sorted(focus_serials)}")
 
     entity_ids = entity_ids_for_project(proj.entities_file)
     if not entity_ids:
@@ -575,6 +583,9 @@ def match_main() -> None:
                         help="With --resolve: enrich and rescore resolvable pairs automatically")
     parser.add_argument("--all-serials", action="store_true",
                         help="Generate from all entity trademarks, ignoring focus_serials in project.json")
+    parser.add_argument("--serials", nargs="+", type=int, metavar="SERIAL",
+                        help="Ad-hoc serial filter: generate only for these serials this run "
+                             "(overrides focus_serials in project.json and --all-serials)")
     args = parser.parse_args()
 
     if args.list_entities:
@@ -592,6 +603,7 @@ def match_main() -> None:
             resolve=args.resolve,
             auto_fetch=args.auto_fetch,
             all_serials=args.all_serials,
+            serials=args.serials,
         )
 
 

@@ -242,6 +242,88 @@ def test_get_example_titles_returns_empty_for_unknown_assignee():
 
 
 # ---------------------------------------------------------------------------
+# D042 — markery match --serials ad-hoc flag
+# ---------------------------------------------------------------------------
+
+_CANDIDATE_A = {
+    "patent_no": "US1111111A", "trademark_serial": 71299042,
+    "trademark": "ALPHA", "score": 0.75, "entity": "Alpha Co", "entity_id": 1,
+}
+_CANDIDATE_B = {
+    "patent_no": "US2222222A", "trademark_serial": 71000099,
+    "trademark": "BETA", "score": 0.65, "entity": "Alpha Co", "entity_id": 1,
+}
+
+
+class TestSerialsFlag:
+    def _make_project(self, tmp_path: Path, focus_serials: list[int] | None = None) -> Path:
+        root = tmp_path / "projects" / "test-proj"
+        (root / "matches").mkdir(parents=True)
+        pdata: dict = {"type": "match-review-essay"}
+        if focus_serials is not None:
+            pdata["focus_serials"] = focus_serials
+        (root / "project.json").write_text(json.dumps(pdata))
+        for f in ("candidates.jsonl", "confirmed.jsonl", "rejected.jsonl"):
+            (root / "matches" / f).write_text("")
+        return root
+
+    def _run(self, tmp_path: Path, serials: list[int] | None = None,
+             all_serials: bool = False, candidates: list[dict] | None = None):
+        import markery.common.config as cfg_mod
+        import markery.common.project as proj_mod
+        from markery.specialist.matchmaker.cli import _run_project
+        from markery.specialist.matchmaker.pipeline import mark_generated
+
+        mock_cands = candidates if candidates is not None else [_CANDIDATE_A, _CANDIDATE_B]
+
+        with (
+            patch.object(cfg_mod, "ROOT", tmp_path),
+            patch.object(proj_mod, "ROOT", tmp_path),
+            patch("markery.specialist.matchmaker.link.generate_candidates",
+                  return_value=mock_cands),
+            patch("markery.specialist.matchmaker.link.entity_ids_for_project",
+                  return_value=[1]),
+            patch("markery.specialist.matchmaker.pipeline.is_enriched", return_value=False),
+        ):
+            _run_project("test-proj", min_score=0.1,
+                         serials=serials, all_serials=all_serials)
+
+        root = tmp_path / "projects" / "test-proj" / "matches"
+        written = [json.loads(l) for l in (root / "candidates.jsonl").read_text().splitlines() if l]
+        return written
+
+    def test_serials_filters_to_specified_serial(self, tmp_path):
+        self._make_project(tmp_path)
+        written = self._run(tmp_path, serials=[71299042])
+        assert len(written) == 1
+        assert written[0]["trademark_serial"] == 71299042
+
+    def test_serials_overrides_focus_serials_in_project_json(self, tmp_path):
+        # project.json has focus_serials=[71000099]; --serials overrides to 71299042
+        self._make_project(tmp_path, focus_serials=[71000099])
+        written = self._run(tmp_path, serials=[71299042])
+        assert all(c["trademark_serial"] == 71299042 for c in written)
+
+    def test_serials_overrides_all_serials_flag(self, tmp_path):
+        # --all-serials would return both; --serials takes precedence
+        self._make_project(tmp_path)
+        written = self._run(tmp_path, serials=[71299042], all_serials=True)
+        assert len(written) == 1
+        assert written[0]["trademark_serial"] == 71299042
+
+    def test_serials_multiple_values_kept(self, tmp_path):
+        self._make_project(tmp_path)
+        written = self._run(tmp_path, serials=[71299042, 71000099])
+        serials_out = {c["trademark_serial"] for c in written}
+        assert serials_out == {71299042, 71000099}
+
+    def test_no_serials_uses_project_focus_serials(self, tmp_path):
+        self._make_project(tmp_path, focus_serials=[71000099])
+        written = self._run(tmp_path, serials=None)
+        assert all(c["trademark_serial"] == 71000099 for c in written)
+
+
+# ---------------------------------------------------------------------------
 # 4. card
 # ---------------------------------------------------------------------------
 
