@@ -366,17 +366,25 @@ The bulldog became Mack's enduring symbol of toughness and pulling power precise
 
 Mack Trucks is already entity_id 13 in the project with variants `MACK TRUCKS, INC.`, `INTERNATIONAL MOTOR COMPANY`, and `MACK MANUFACTURING CORPORATION`. No patent candidates exist yet because no Mack-aligned CPC class has been fetched. This phase builds that data from scratch.
 
-1. **Verify project state.** Run `markery project onboard animal-marks-1930`. Confirm entity 13 (Mack Trucks) passes variant validation and coverage checks. Note any coverage gaps in the project's `RESEARCH.md`.
+**Model:** All markery CLI calls in this phase use `claude-haiku-4-5-20251001`. This is already set in `projects/animal-marks-1930/project.json` via the `"model"` field, which `cli.py` injects into `MARKERY_MODEL` at startup. The markery-langgraph subprocess calls inherit this via the project's `project.json` (tools.py passes `--model` only when explicitly overridden; otherwise the CLI resolves the model through the project file). No additional configuration is needed.
 
-2. **Build Mack Trucks patents.** Run `markery patent build` for CPC class B62D (motor vehicles, trailer, cycle engineering) over 1905–1932 via EPO OPS. B62D is the primary CPC class for truck frames, load bodies, steering gear, and transmission patents. Mack Trucks' core technical advances — the chain-drive transmission, the underslung worm-drive rear axle — fall here. Target: ≥10 patent records assigned to Mack Trucks assignee variants in the DB.
+**Token tracking:** Before running any LLM-backed command in this phase, set `MARKERY_TOKEN_LOG` to a project-local path: `export MARKERY_TOKEN_LOG=projects/animal-marks-1930/mack-run-tokens.jsonl`. Every `markery historian` and `markery librarian` call will append a JSONL record (timestamp, specialist, command, prompt_tokens, completion_tokens, cache_read_tokens, model, wall_ms). After the phase completes, review the log to understand total API cost. A proper `markery tokens report` command is tracked as D059; for now, the log is the source of truth.
 
-3. **Generate candidates for the bulldog mark.** Run `markery match animal-marks-1930 --serials 71247861` to generate candidates specific to the bulldog serial. The `--serials` flag (Phase 21 P4) restricts matching to this single trademark, isolating the figurative mark's candidate queue from the rest of the project. Run `markery patent signals animal-marks-1930` immediately after to populate signal columns.
+1. **Prepare project.json.** `project.json` lists `class_hints: [F02B, B60C, F41A, F41C, A01B, F04B, B64D, F16J]` but is missing B62D. Add `"B62D"` to the `class_hints` array. Also add `"MACK TRUCKS INC"` or `"INTERNATIONAL MOTOR CO"` as a `patent_assignee` variant in `variants.csv` — the onboard check (run 2026-06-09) confirmed that Mack has no `patent_assignee` variant, causing Step 5 of onboard to skip it. Without a patent assignee variant, `markery patent build` cannot attribute fetched patents to this entity.
 
-4. **Run markery-langgraph against the Mack candidate queue.** Set `MARKERY_ROOT` and run the Phase 21 P2 graph against the animal-marks-1930 project, restricted to the bulldog mark's candidates. Because the mark has no text component, scores will cluster in borderline territory (0.35–0.60); the `human_gate` should interrupt on most candidates. For each interrupted candidate: review the patent title, grant date, assignee, and temporal gap; confirm or reject. Target: ≥1 confirmed pair. Record the session in a brief note in `RESEARCH.md`.
+2. **Verify project state.** Run `markery project onboard animal-marks-1930`. Confirm entity 13 (Mack Trucks) now shows ≥1 patent_assignee variant in Step 3 and is not skipped in Step 5. Note any remaining coverage gaps in the project's `RESEARCH.md`.
 
-5. **Validate confirmed pairs.** For each confirmed Mack pair, run `markery historian draft` then `markery historian validate`. The essay for a figurative mark must explain the animal imagery choice, the wartime origin of the "bulldog Mack" epithet, and the temporal relationship between the specific technology patent and the brand registration. All drafts must pass 8/8.
+3. **Build Mack Trucks patents.** Set `MARKERY_TOKEN_LOG` (see above). Run `markery patent build` for CPC class B62D (motor vehicles, trailer, cycle engineering) over 1905–1932 via EPO OPS. B62D covers truck frames, load bodies, steering gear, and transmission patents — the classes where Mack's chain-drive and worm-drive rear axle innovations appear. Target: ≥10 patent records assigned to Mack Trucks assignee variants in the DB.
 
-6. **Rebuild the site.** Run `markery site build animal-marks-1930`. Exit 0 required. The Mack Trucks entity page must list the confirmed pair(s) with the enriched card layout from P1. The match essay must render the bulldog mark image (has `img: True` in the DB, reg. 231645) inline.
+4. **Generate candidates for the bulldog mark.** Run `markery match animal-marks-1930 --serials 71247861` to generate candidates specific to the bulldog serial. The `--serials` flag restricts matching to this single trademark. Run `markery patent signals animal-marks-1930` immediately after to populate signal columns.
+
+5. **Run markery-langgraph against the Mack candidate queue.** Export `MARKERY_ROOT` and run the Phase 21 P2 graph against the animal-marks-1930 project, restricted to the bulldog mark's candidates. Because the mark has no text component, scores will cluster in borderline territory (0.35–0.60); `human_gate` should interrupt on most candidates. For each interrupted candidate: review the patent title, grant date, assignee, and temporal gap; confirm or reject. Target: ≥1 confirmed pair. Record the session rationale in `RESEARCH.md`.
+
+6. **Draft and validate.** For each confirmed Mack pair, run `markery historian draft` then `markery historian validate`. The essay must explain the animal imagery choice, the wartime origin of the "bulldog Mack" epithet, and the temporal relationship between the specific patent and the brand registration. All drafts must pass 8/8.
+
+7. **Rebuild the site.** Run `markery site build animal-marks-1930`. Exit 0 required. The Mack Trucks entity page must list the confirmed pair(s) with the enriched card layout from P1. The match essay must render the bulldog mark image (has image data in DB, reg. 231645) inline.
+
+8. **Review token log.** Read `projects/animal-marks-1930/mack-run-tokens.jsonl`. Sum prompt_tokens, completion_tokens, and cache_read_tokens across all records. Record the totals in `RESEARCH.md` under a "Build cost" heading. This establishes a per-project cost baseline for Haiku-driven runs.
 
 ---
 
@@ -397,7 +405,7 @@ P2 PASSED when: `photographic-equipment` has ≥3 confirmed pairs (G03B patents 
 
 P3 PASSED when: `precision-tools` has ≥3 confirmed pairs (G01B patents only), all essays validate 8/8, site build exits 0, Wikipedia draft written to `projects/precision-tools/wikipedia/`.
 
-P4 PASSED when: ≥10 Mack B62D patents in DB; ≥1 confirmed pair for bulldog mark (serial 71247861); essay validates 8/8; `markery site build animal-marks-1930` exits 0 with Mack bulldog essay and mark image rendered; markery-langgraph `human_gate` exercised on ≥1 candidate.
+P4 PASSED when: B62D added to `class_hints` and Mack patent_assignee variant added to `variants.csv`; `markery project onboard animal-marks-1930` shows Mack in Step 5 (not skipped); ≥10 Mack B62D patents in DB; ≥1 confirmed pair for bulldog mark (serial 71247861) confirmed via markery-langgraph `human_gate`; essay validates 8/8 with model=claude-haiku-4-5-20251001; `markery site build animal-marks-1930` exits 0 with Mack bulldog essay and mark image rendered; token log reviewed and build cost totals recorded in `RESEARCH.md`.
 
 P5 PASSED when: at least one Wikipedia edit submitted per domain; revision IDs recorded in STATUS.md files; D051 and D052 DEFERRED entries filed.
 
