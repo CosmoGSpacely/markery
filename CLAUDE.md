@@ -78,12 +78,16 @@ Specialist identity files:
 
 ## Use the CLI — Do Not Bypass It
 
-Markery's CLI is the product being tested. Prefer CLI commands over direct file creation or database writes at all times. This is not a convenience preference — it is how the tool validates its own correctness.
+Markery's CLI is the product being tested. Prefer CLI commands over direct file creation, database writes, **and database reads** at all times. This is not a convenience preference — it is how the tool validates its own correctness.
 
-Before creating project files, directories, or data manually, run `markery --help` and check whether a command exists for the task. If one does, use it.
+**The rule applies to inspection as much as to creation.** Before querying any DuckDB database directly or reading project CSV/JSONL files to understand current state, run `markery --help` and check whether a command surfaces that information. Raw DuckDB queries and direct file reads bypass the same validation paths as raw writes.
+
+Before any operation — read or write — run `markery --help` and check whether a command exists for the task. If one does, use it.
 
 | Task | Use this | Not this |
 |---|---|---|
+| Inspect project entity/variant/coverage state | `markery project onboard <name>` | Direct DuckDB queries, reading `entities.csv` / `variants.csv` |
+| Check candidate queue | `markery match <project>` (dry-run or review output) | Reading `candidates.jsonl` by hand |
 | Start a new project | `markery project init <name>` | `mkdir` + `Write` files by hand |
 | Add trademark data | `markery trademark build` / `enrich` | Direct DuckDB writes |
 | Add patent data | `markery patent build` | Direct DuckDB writes |
@@ -91,6 +95,8 @@ Before creating project files, directories, or data manually, run `markery --hel
 | Build the site | `markery site build <project>` | Writing HTML directly |
 
 **When ROADMAP steps describe file outcomes** ("create `entities.csv`", "populate `variants.csv`"), that means populate the file *after* scaffolding via the CLI — not skip the CLI entirely. Steps that describe what should exist are not permission to create it by hand if a command does the job.
+
+**When planning work that involves a project**, run `markery project onboard <name>` first. The onboard command is the canonical source of truth for entity state, variant coverage, and patent coverage. Do not substitute raw DB queries or file inspection for it.
 
 The only exception: research documents (`RESEARCH.md`, `RESEARCH-AGENDA.md`, `BRIEF.md`) have no CLI command and must be written by hand.
 
