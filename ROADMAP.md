@@ -169,7 +169,7 @@ Results 2026-06-08: `MANIFEST.json` created at Markery repo root declaring `cont
 
 ---
 
-### P2 — LangGraph workflow graph
+### P2 — LangGraph workflow graph — CLOSED
 
 0. Write `markery-langgraph/CLAUDE.md` covering: no Claude attribution in commits; `MARKERY_ROOT` must be set before running any workflow; the subprocess interface contract (`check_contract()` must pass before invoking any Markery CLI command); tests live in `tests/` and run with `pytest`.
 
@@ -179,6 +179,8 @@ Results 2026-06-08: `MANIFEST.json` created at Markery repo root declaring `cont
    - `human_gate` uses LangGraph's `interrupt()`. The graph can be resumed with an override recommendation (`"confirm"` / `"reject"`) injected by the caller.
 2. Write an integration test that runs the graph on `radio-pioneers` against 3 unreviewed candidates (mocked tool calls — no live API). Verify: state contains 3 `infer_result` records; routing fires correctly; `run_confirm` was called for any "confirm" result.
 3. Document in `README.md`: `MARKERY_ROOT` env setup, running `python -m langgraph_markery.graph <project>`, and how to inject a human override when the graph is interrupted.
+
+Results 2026-06-08: `CLAUDE.md` written to `markery-langgraph/` covering commit attribution, `MARKERY_ROOT` requirement, contract check, and test conventions. `ResearchState` updated with `recommendation_override: str | None` field. `graph.py` implemented with 8 nodes (`load_digest`, `pick_next`, `generate_card`, `infer_card`, `human_gate`, `write_confirmed`, `write_rejected`, `append_defer`), 3 conditional edge routers, and `build_graph(checkpointer)` factory. `human_gate` uses `interrupt()` — pauses before the node via `interrupt_before=["human_gate"]`; resumes via `graph.update_state(thread, {"recommendation_override": "confirm"|"reject"})`. CLI entry point (`__main__`) handles interactive input. `README.md` updated with running instructions, human gate API, and test instructions. 11 tests in `tests/test_graph.py` covering: interrupt fires at correct slug, confirm path calls `run_confirm`, reject path writes `rejected.jsonl`, defer path logs to session_log, empty queue terminates cleanly, pre-confirmed slugs excluded from queue, human reject override suppresses `run_confirm`. 4 slug helper tests.
 
 ---
 
@@ -231,7 +233,7 @@ Results 2026-06-08: `MANIFEST.json` created at Markery repo root declaring `cont
 
 P1 PASSED when: `markery-langgraph` repo initialised; `config.py`, `state.py`, `tools.py` all importable; `check_contract` passes against `MARKERY_ROOT`. — PASSED
 
-P2 PASSED when: LangGraph graph integration test passes with mocked tools; routing logic verified; `README.md` documents setup and usage.
+P2 PASSED when: LangGraph graph integration test passes with mocked tools; routing logic verified; `README.md` documents setup and usage. — PASSED
 
 P3 PASSED when: `markery project onboard` exits 0 on a correctly configured project and exits 1 with actionable errors on a misconfigured one; D027 closed.
 
