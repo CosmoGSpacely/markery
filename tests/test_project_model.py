@@ -1,13 +1,17 @@
 """Tests for Phase 19 P4: D043 (per-project model field in project.json).
 Tests for Phase 20 P1: prior_brand_serials gap-neutralisation.
+Tests for Phase 21 P3: project onboard command.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 from pathlib import Path
+from unittest.mock import patch
 
+import duckdb
 import pytest
 from datetime import date
 
@@ -126,3 +130,169 @@ class TestPriorBrandSerials:
         score_prior = total_score(grant, filing, ["F41A"], prior_brand=True)
         assert score_prior > score_normal
         assert score_prior >= 0.0
+
+
+# ---------------------------------------------------------------------------
+# Phase 21 P3 — D027: markery project onboard
+# ---------------------------------------------------------------------------
+
+def _setup_onboard_dbs(tmp_path: Path, pat_assignee: str = "TEST CORP") -> dict:
+    """Create minimal DuckDB files for onboard tests. Returns {key: path}."""
+    pat_db = tmp_path / "patents.duckdb"
+    tm_db  = tmp_path / "trademarks.duckdb"
+    ent_db = tmp_path / "entities.duckdb"
+
+    conn = duckdb.connect(str(pat_db))
+    conn.execute(
+        "CREATE TABLE patents (patent_no VARCHAR, title VARCHAR, app_dt DATE, "
+        "grant_dt DATE, abstract VARCHAR, assignee_name VARCHAR, "
+        "assignee_city VARCHAR, assignee_state VARCHAR)"
+    )
+    if pat_assignee:
+        conn.execute(
+            "INSERT INTO patents VALUES ('US1234567A', 'Widget', NULL, NULL, NULL, ?, NULL, NULL)",
+            [pat_assignee],
+        )
+    conn.close()
+
+    conn = duckdb.connect(str(tm_db))
+    conn.execute(
+        "CREATE TABLE owner (serial_no INTEGER, own_name VARCHAR, own_seq INTEGER)"
+    )
+    conn.close()
+
+    conn = duckdb.connect(str(ent_db))
+    conn.execute(
+        "CREATE TABLE company_entity (entity_id INTEGER PRIMARY KEY, "
+        "canonical_name VARCHAR, entity_type VARCHAR, industry VARCHAR)"
+    )
+    conn.execute(
+        "CREATE TABLE entity_name_variant (variant_id INTEGER PRIMARY KEY, "
+        "entity_id INTEGER, variant_name VARCHAR, source VARCHAR)"
+    )
+    conn.close()
+
+    return {"patents": pat_db, "trademarks": tm_db, "entities": ent_db}
+
+
+def _make_project(proj_root: Path, entity_name: str = "Test Corp",
+                   variant_name: str = "TEST CORP", source: str = "patent_assignee") -> None:
+    proj_root.mkdir(parents=True, exist_ok=True)
+    (proj_root / "entities.csv").write_text(
+        "entity_id,canonical_name,entity_type,industry\n"
+        f"1,{entity_name},manufacturer,test\n",
+        encoding="utf-8",
+    )
+    (proj_root / "variants.csv").write_text(
+        "entity_id,variant_name,source\n"
+        f"1,{variant_name},{source}\n",
+        encoding="utf-8",
+    )
+    (proj_root / "project.json").write_text(
+        json.dumps({"type": "match-review-essay", "class_hints": ["H01J"]}),
+        encoding="utf-8",
+    )
+
+
+def _run_onboard(project_name: str, proj_root: Path, db_paths: dict):
+    from markery.common import project_cli
+    import markery.common.config as cfg_mod
+    import markery.common.project as proj_mod
+
+    # ROOT needs to be the parent of projects/<name>
+    fake_root = proj_root.parent.parent
+
+    args = argparse.Namespace(project=project_name)
+    with (
+        patch.object(cfg_mod, "ROOT", fake_root),
+        patch.object(proj_mod, "ROOT", fake_root),
+        patch.object(project_cli, "ROOT", fake_root),
+        patch.dict(cfg_mod.DB, db_paths),
+    ):
+        project_cli.cmd_onboard(args)
+
+
+class TestOnboard:
+    def test_passes_for_correctly_configured_project(self, tmp_path, capsys):
+        db_paths = _setup_onboard_dbs(tmp_path)
+        proj_root = tmp_path / "projects" / "test-proj"
+        _make_project(proj_root)
+
+        _run_onboard("test-proj", proj_root, db_paths)
+
+        out = capsys.readouterr().out
+        assert "Onboarding PASSED" in out
+        assert "FAIL" not in out
+
+    def test_fails_when_variant_has_zero_matches(self, tmp_path):
+        db_paths = _setup_onboard_dbs(tmp_path, pat_assignee="REAL CORP")
+        proj_root = tmp_path / "projects" / "test-proj"
+        _make_project(proj_root, variant_name="MISSING CORP")
+
+        with pytest.raises(SystemExit) as exc:
+            _run_onboard("test-proj", proj_root, db_paths)
+        assert exc.value.code == 1
+
+    def test_fail_message_mentions_zero_match_variant(self, tmp_path, capsys):
+        db_paths = _setup_onboard_dbs(tmp_path, pat_assignee="REAL CORP")
+        proj_root = tmp_path / "projects" / "test-proj"
+        _make_project(proj_root, variant_name="MISSING CORP")
+
+        with pytest.raises(SystemExit):
+            _run_onboard("test-proj", proj_root, db_paths)
+
+        out = capsys.readouterr().out
+        assert "NO MATCH" in out
+        assert "Onboarding FAILED" in out
+
+    def test_fails_when_entity_id_conflicts_with_different_canonical(self, tmp_path, capsys):
+        db_paths = _setup_onboard_dbs(tmp_path)
+        # Pre-populate entities DB with entity_id=1 under a different name
+        conn = duckdb.connect(str(db_paths["entities"]))
+        conn.execute("INSERT INTO company_entity VALUES (1, 'Other Corp', NULL, NULL)")
+        conn.close()
+
+        proj_root = tmp_path / "projects" / "test-proj"
+        _make_project(proj_root, entity_name="Test Corp")
+
+        with pytest.raises(SystemExit) as exc:
+            _run_onboard("test-proj", proj_root, db_paths)
+        assert exc.value.code == 1
+        out = capsys.readouterr().out
+        assert "ID conflict" in out
+
+    def test_passes_when_entity_id_matches_same_canonical(self, tmp_path, capsys):
+        db_paths = _setup_onboard_dbs(tmp_path)
+        # Same entity already in DB (re-onboarding same project)
+        conn = duckdb.connect(str(db_paths["entities"]))
+        conn.execute("INSERT INTO company_entity VALUES (1, 'Test Corp', NULL, NULL)")
+        conn.close()
+
+        proj_root = tmp_path / "projects" / "test-proj"
+        _make_project(proj_root, entity_name="Test Corp")
+
+        _run_onboard("test-proj", proj_root, db_paths)
+
+        out = capsys.readouterr().out
+        assert "Onboarding PASSED" in out
+
+    def test_fails_when_entities_csv_missing(self, tmp_path):
+        db_paths = _setup_onboard_dbs(tmp_path)
+        proj_root = tmp_path / "projects" / "test-proj"
+        proj_root.mkdir(parents=True)
+        # No entities.csv
+
+        with pytest.raises(SystemExit) as exc:
+            _run_onboard("test-proj", proj_root, db_paths)
+        assert exc.value.code == 1
+
+    def test_coverage_counts_shown_in_output(self, tmp_path, capsys):
+        db_paths = _setup_onboard_dbs(tmp_path, pat_assignee="TEST CORP")
+        proj_root = tmp_path / "projects" / "test-proj"
+        _make_project(proj_root)
+
+        _run_onboard("test-proj", proj_root, db_paths)
+
+        out = capsys.readouterr().out
+        assert "patents=" in out
+        assert "trademarks=" in out

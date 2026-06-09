@@ -184,7 +184,7 @@ Results 2026-06-08: `CLAUDE.md` written to `markery-langgraph/` covering commit 
 
 ---
 
-### P3 — D027: `markery project onboard`
+### P3 — D027: `markery project onboard` — CLOSED
 
 1. Implement `markery project onboard <project>` — a wrapper command that runs the full new-project validation sequence and prints a per-step PASS/FAIL summary:
    - **Step 1 — Entity ID uniqueness:** Check that no entity ID in `entities.csv` already exists in `entities.duckdb` for a different project. Print the conflicting IDs if any.
@@ -196,6 +196,8 @@ Results 2026-06-08: `CLAUDE.md` written to `markery-langgraph/` covering commit 
 2. Runnable after `entities.csv` and `variants.csv` exist but before `markery match`.
 3. Add a test: `project onboard` exits 0 for a correctly configured project; exits 1 with an actionable message when variants have zero matches.
 4. Close D027 in `DEFERRED.md`.
+
+Results 2026-06-09: `cmd_onboard` added to `project_cli.py` as `markery project onboard <project>`. Five steps: (1) entity ID uniqueness — queries `company_entity` for ID conflicts; (2) variant suggestions — top-5 per entity from both DBs, informational; (3) variant validation — zero-match variants flagged, exit 1; (4) coverage counts — patent/trademark totals per entity; (5) patent coverage — local patent count per entity variant, exit 1 with `markery patent build` suggestion if zero. Step 5 uses local DB counts rather than live EPO `coverage-check` API calls to keep onboarding fast and credential-free. Smoke-tested against `radio-pioneers`: PASS. 7 tests in `tests/test_project_model.py`. D027 closed. 592 total tests passing.
 
 ---
 
@@ -235,7 +237,7 @@ P1 PASSED when: `markery-langgraph` repo initialised; `config.py`, `state.py`, `
 
 P2 PASSED when: LangGraph graph integration test passes with mocked tools; routing logic verified; `README.md` documents setup and usage. — PASSED
 
-P3 PASSED when: `markery project onboard` exits 0 on a correctly configured project and exits 1 with actionable errors on a misconfigured one; D027 closed.
+P3 PASSED when: `markery project onboard` exits 0 on a correctly configured project and exits 1 with actionable errors on a misconfigured one; D027 closed. — PASSED
 
 P4 PASSED when: `markery match --serials` generates candidates only for the listed serials; test passes; D042 fully closed.
 
