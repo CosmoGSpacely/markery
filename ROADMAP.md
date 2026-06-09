@@ -262,17 +262,71 @@ Phase PASSED when P1–P5 all pass. — PASSED
 
 ### P1 — Publisher quality pass
 
-Four targeted improvements to the publisher, in priority order:
+A full quality pass on the publisher, addressing bugs, rendering gaps, and visual improvements found in a Phase 22 pre-flight audit. Goal: radio-pioneers becomes a publication-ready reference site that sets the quality bar for all future projects.
 
-1. **Patent figure embedding.** When a patent's figure PNG is in `patent_figures`, render it as an inline `<img>` in the match essay HTML, below the "The Invention" section heading. The `publisher/queries.py` already loads figure BLOBs; add the HTML rendering step to the match-essay template.
+**Group 1 — Critical bug fixes**
 
-2. **Entity cross-links.** Add bidirectional cross-links between match essay pages and entity summary pages. Each match essay should link to `entity-<entity-slug>.html`; each entity summary page should list and link to all confirmed pairs for that entity. The data is already in `confirmed.jsonl`; this is a rendering change only.
+1a. **Frontmatter stripping in match essays.** `render_match_essay()` in `render.py` does not call `_strip_frontmatter()` before passing essay Markdown to `_render_markdown()`. YAML blocks are currently rendered as prose text. Fix: call `_strip_frontmatter()` on essay content before rendering. Verify in radio-pioneers match essay output.
 
-3. **Landing page confirmed-pair listing.** Below the stat cards on the landing page, add a compact linked list of confirmed pairs: trademark name, entity name, date gap, and a link to the essay. Replaces the bare confirmed-pair count with navigable content.
+1b. **Frontmatter in search excerpts.** `_text_excerpt()` in `queries.py` extracts excerpt text from raw Markdown; YAML frontmatter bleeds into `search.json` entries. Fix: strip frontmatter before excerpt extraction.
 
-4. **Research question block styling.** Wrap the `research-question.md` block (introduced in Phase 17 P1) in a visually distinct HTML element (bordered card or highlighted block via inline style or a dedicated CSS class) so it reads as a project framing section rather than plain body text.
+**Group 2 — Markdown parser improvements**
 
-5. Run `markery site build` for all existing projects (information-systems, radio-pioneers, animal-marks-1930). All must exit 0. Any regression from the new rendering is a blocker.
+`_render_markdown()` currently handles headers, bold, inline code, fenced code blocks, and `[[cross-links]]`. Essays and narratives require richer markup:
+
+2a. **Unordered lists.** Lines beginning with `- ` or `* ` rendered as grouped `<ul><li>` blocks. Consecutive list lines form a single `<ul>`; a blank line closes the list.
+
+2b. **Ordered lists.** Lines beginning with a digit and `.` (e.g., `1. `) rendered as grouped `<ol><li>` blocks with the same grouping logic.
+
+2c. **Blockquotes.** Lines beginning with `> ` rendered as `<blockquote>`. Consecutive `>` lines form a single block.
+
+2d. **External links.** `[text](url)` syntax rendered as `<a href="url" target="_blank" rel="noopener">text</a>`. Only `http://` and `https://` URLs are accepted; all other schemes are dropped to prevent injection.
+
+**Group 3 — Patent figure embedding**
+
+3a. **Verify existing syntax.** Confirm `[[figure:patent_no]]` in `_render_markdown()` resolves correctly to the relative image path via `figure_index` for all three radio-pioneers pairs (minalite, sterilamp, victor). Fix any broken path resolution.
+
+3b. **Auto-embed fallback.** In `render_match_essay()`, if the essay Markdown does not contain a `[[figure:patent_no]]` tag but a figure is available for this patent (i.e., the patent_no key exists in `figure_index`), append the figure as a `<figure><img><figcaption>` block below the rendered essay content. This ensures figures always appear without requiring manual essay edits.
+
+3c. **Figure CSS.** Add CSS for `<figure>` element: centered, `max-width: 600px`, light border (`1px solid #d4c9b0`), `border-radius: 4px`, `padding: 8px`, caption in small italic serif below the image.
+
+**Group 4 — Entity cross-links (bidirectional)**
+
+4a. **Match essay → entity page.** In `render_match_essay()`, add a "Filed by: [Entity Name]" link in the page header stat chips row, pointing to `../entities/<entity-slug>.html`. The entity_id, entity name, and entity slug are already in the confirmed-match record passed to the renderer.
+
+4b. **Entity page → confirmed pairs (enriched).** Audit `render_entity_page()`. The confirmed-pairs list exists but shows bare slugs. Enrich each entry to show: trademark name, patent number, year gap (trademark filing year vs. patent grant year expressed as "N years"), and the essay title as the link text. All data is available from the confirmed-match records.
+
+4c. **No-pairs messaging.** When an entity has no confirmed pairs, show an explicit "No confirmed pairs yet." line rather than a blank section.
+
+**Group 5 — Landing page and research question**
+
+5a. **Date gap stat chip on confirmed-pair cards.** The existing match cards on the landing page show thumbnail, title, entity, and dates. Add a highlighted stat chip showing the date gap (e.g., "12 yr gap") between trademark filing and patent grant. This makes the research premise immediately tangible on arrival.
+
+5b. **Research question block.** The block already uses a light-background bordered box. Sharpen the visual treatment: left border ≥ 3px in warm accent color (`#8b5e3c`), `padding: 16px 20px`, and a small-caps label "Research Question" above the text in a muted accent. When `research-question.md` is absent, suppress the section entirely — do not render a placeholder.
+
+5c. **Suppress all narrative placeholders.** Any section whose content comes from a missing `.md` file currently renders italic placeholder text ("not yet written" or similar). Change all such cases to suppress the section entirely. Placeholder text in a published site is unprofessional.
+
+**Group 6 — Gallery improvements**
+
+6a. **Lazy loading.** Add `loading="lazy"` to all `<img>` tags in card components (trademark cards, patent cards, match cards). One attribute addition per image tag; no logic change required.
+
+6b. **Dynamic timeline date range.** The filing/grant timeline SVGs in gallery pages and `render_timeline_page()` use hardcoded range 1900–1939. Replace with a range calculated from `min(year)` and `max(year)` of the actual dataset for each project, padded by ±2 years.
+
+**Group 7 — Navigation and accessibility**
+
+7a. **Breadcrumb trail.** Add a one-line breadcrumb (`Home › Entities › Radio Corporation of America` or `Home › Matches › VICTOR`) below the site header bar and above the page header block on entity and match essay pages. Use `<nav aria-label="Breadcrumb"><ol>` for semantic accessibility. CSS: small font, muted color, separator via CSS `content`.
+
+7b. **Responsive navigation.** The site header entity nav links overflow on narrow screens. Wrap entity nav links in a horizontally scrollable container (`overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch`) so they remain accessible on mobile without wrapping.
+
+**Group 8 — Metadata**
+
+8a. **Page title pattern.** Each page's `<title>` tag should follow `[Page Title] — [Project Display Name] — Markery`. Audit all page renderers and fix any that deviate.
+
+8b. **OG description.** Ensure all pages carry a meaningful `og:description` meta tag (≤160 chars). For match essays: use the first sentence of the research note from confirmed.jsonl. For entity pages: use the entity industry/type. For the landing page: use the research question (if available), otherwise the project subtitle.
+
+**Group 9 — Site builds**
+
+Run `markery site build` for all three existing projects in sequence: radio-pioneers, information-systems, animal-marks-1930. All must exit 0. Any regression introduced by Groups 1–8 is a blocker; fix before marking P1 PASSED.
 
 ---
 
@@ -315,7 +369,7 @@ Target: ≥3 confirmed pairs, validated essays, site build exit 0, Wikipedia dra
 
 ### Phase Gate
 
-P1 PASSED when: patent figures render inline in match essays; entity cross-links present; landing page lists confirmed pairs; research-question block styled distinctly; all three existing site builds exit 0 without regressions.
+P1 PASSED when: frontmatter stripping bug fixed in essays and search excerpts; Markdown parser supports unordered lists, ordered lists, blockquotes, and external links; patent figures auto-embed when figure data is available and `[[figure:]]` tag is absent from essay; match essays link to entity pages; entity pages show enriched confirmed-pair cards (name, patent no, year gap, essay link); date gap stat chip on landing page confirmed-pair cards; research question section suppressed when file absent; all narrative placeholder text suppressed site-wide; `loading="lazy"` on all gallery images; timeline date range is dynamic; breadcrumb nav on entity and match essay pages; entity nav links scrollable on mobile; page titles follow `[Title] — [Project] — Markery` pattern; OG descriptions populated for all page types; all three existing site builds exit 0 with no regressions.
 
 P2 PASSED when: `photographic-equipment` has ≥3 confirmed pairs (G03B patents only), all essays validate 8/8, site build exits 0, Wikipedia draft written to `projects/photographic-equipment/wikipedia/`.
 
