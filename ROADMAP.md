@@ -358,7 +358,29 @@ Target: ≥3 confirmed pairs, validated essays, site build exit 0, Wikipedia dra
 
 ---
 
-### P4 — Wikipedia submissions for new domains
+### P4 — Mack Trucks bulldog: live markery-langgraph run on animal-marks-1930
+
+**Starting mark:** Mack Trucks bulldog, USPTO serial 71247861. Filed 1927-04-22. Purely figurative registration — null text, no word element, design code 030108 (bulldog, specific breed). Goods: motor trucks. Registrant: MACK TRUCKS, INC. (reg. 231645).
+
+The bulldog became Mack's enduring symbol of toughness and pulling power precisely because drivers and rival manufacturers used the word informally to describe Mack's vehicles during World War I. The 1927 filing formalized that folk identity. Matching a purely figurative mark against truck-technology patents is a genuine hard case for the pipeline: the goods-title signal is absent, and all scoring weight falls on temporal proximity and CPC class alignment. This makes it ideal for the markery-langgraph `human_gate` — the graph will surface borderline candidates that require human judgment, not mechanical thresholding.
+
+Mack Trucks is already entity_id 13 in the project with variants `MACK TRUCKS, INC.`, `INTERNATIONAL MOTOR COMPANY`, and `MACK MANUFACTURING CORPORATION`. No patent candidates exist yet because no Mack-aligned CPC class has been fetched. This phase builds that data from scratch.
+
+1. **Verify project state.** Run `markery project onboard animal-marks-1930`. Confirm entity 13 (Mack Trucks) passes variant validation and coverage checks. Note any coverage gaps in the project's `RESEARCH.md`.
+
+2. **Build Mack Trucks patents.** Run `markery patent build` for CPC class B62D (motor vehicles, trailer, cycle engineering) over 1905–1932 via EPO OPS. B62D is the primary CPC class for truck frames, load bodies, steering gear, and transmission patents. Mack Trucks' core technical advances — the chain-drive transmission, the underslung worm-drive rear axle — fall here. Target: ≥10 patent records assigned to Mack Trucks assignee variants in the DB.
+
+3. **Generate candidates for the bulldog mark.** Run `markery match animal-marks-1930 --serials 71247861` to generate candidates specific to the bulldog serial. The `--serials` flag (Phase 21 P4) restricts matching to this single trademark, isolating the figurative mark's candidate queue from the rest of the project. Run `markery patent signals animal-marks-1930` immediately after to populate signal columns.
+
+4. **Run markery-langgraph against the Mack candidate queue.** Set `MARKERY_ROOT` and run the Phase 21 P2 graph against the animal-marks-1930 project, restricted to the bulldog mark's candidates. Because the mark has no text component, scores will cluster in borderline territory (0.35–0.60); the `human_gate` should interrupt on most candidates. For each interrupted candidate: review the patent title, grant date, assignee, and temporal gap; confirm or reject. Target: ≥1 confirmed pair. Record the session in a brief note in `RESEARCH.md`.
+
+5. **Validate confirmed pairs.** For each confirmed Mack pair, run `markery historian draft` then `markery historian validate`. The essay for a figurative mark must explain the animal imagery choice, the wartime origin of the "bulldog Mack" epithet, and the temporal relationship between the specific technology patent and the brand registration. All drafts must pass 8/8.
+
+6. **Rebuild the site.** Run `markery site build animal-marks-1930`. Exit 0 required. The Mack Trucks entity page must list the confirmed pair(s) with the enriched card layout from P1. The match essay must render the bulldog mark image (has `img: True` in the DB, reg. 231645) inline.
+
+---
+
+### P5 — Wikipedia submissions for new domains
 
 1. For photographic equipment: review the draft from P2 step 9. Submit via `markery wikipedia replace --yes` after diff review. Use summary: "Add primary source citation from USPTO filing record."
 2. For precision tools: identify and draft a citation addition for the strongest underserved Wikipedia article in the domain. Submit via `markery wikipedia replace --yes` after diff review.
@@ -375,6 +397,8 @@ P2 PASSED when: `photographic-equipment` has ≥3 confirmed pairs (G03B patents 
 
 P3 PASSED when: `precision-tools` has ≥3 confirmed pairs (G01B patents only), all essays validate 8/8, site build exits 0, Wikipedia draft written to `projects/precision-tools/wikipedia/`.
 
-P4 PASSED when: at least one Wikipedia edit submitted per domain; revision IDs recorded in STATUS.md files; D051 and D052 DEFERRED entries filed.
+P4 PASSED when: ≥10 Mack B62D patents in DB; ≥1 confirmed pair for bulldog mark (serial 71247861); essay validates 8/8; `markery site build animal-marks-1930` exits 0 with Mack bulldog essay and mark image rendered; markery-langgraph `human_gate` exercised on ≥1 candidate.
 
-Phase PASSED when P1–P4 all pass. `DEFERRED.md` updated with all new bypasses discovered during the two new projects.
+P5 PASSED when: at least one Wikipedia edit submitted per domain; revision IDs recorded in STATUS.md files; D051 and D052 DEFERRED entries filed.
+
+Phase PASSED when P1–P5 all pass. `DEFERRED.md` updated with all new bypasses discovered during the two new projects.
