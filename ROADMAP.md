@@ -279,11 +279,11 @@ Four targeted improvements to the publisher, in priority order:
 ### P2 — D025: Photographic equipment project
 
 **Target entities:** Eastman Kodak Company, Ansco (Ansco Company / General Aniline & Film), Graflex Inc., Blair Camera Company.
-**CPC classes:** `G03B` (photographic apparatus), `G03C` (photosensitive materials), `G03D` (photographic processing).
+**CPC class (this phase): `G03B` only** (photographic apparatus). G03C and G03D deferred.
 
 1. Run `markery project onboard photographic-equipment` (Phase 21 P3). Confirm PASSED before proceeding.
 2. Run trademark sweeps for each entity's variants. Target: ≥8 trademark records across all four entities.
-3. Run `markery patent build` for CPC classes G03B, G03C, G03D over 1890–1940 via EPO OPS.
+3. Run `markery patent build` for CPC class G03B over 1890–1940 via EPO OPS.
 4. Run `markery match photographic-equipment`. Run `markery patent signals photographic-equipment` immediately after.
 5. Use the LangGraph graph (Phase 21 P2) for the initial review cycle: run the graph against the candidate queue. Confirm that `human_gate` interrupts work correctly for borderline cases. Target: ≥3 confirmed pairs.
 6. Run `markery historian draft` for each confirmed pair; run `markery historian validate` on each draft. All must pass 8/8.
@@ -296,7 +296,7 @@ Four targeted improvements to the publisher, in priority order:
 ### P3 — D026: Precision tools project
 
 **Target entities:** Snap-on Tools Company, L.S. Starrett Company, Brown & Sharpe Manufacturing, Illinois Tool Works.
-**CPC classes:** `B25B` (tools for tightening/loosening), `B23B` (turning and boring), `G01B` (measuring instruments).
+**CPC class (this phase): `G01B` only** (measuring instruments). B25B and B23B deferred.
 
 Same workflow as P2. Secondary literature is thinner for precision tools — use `markery librarian discover --wikipedia` on company article pages to surface available IA sources. Acquire what is available; note any dry-run gaps in `RESEARCH-AGENDA.md`.
 
@@ -317,9 +317,9 @@ Target: ≥3 confirmed pairs, validated essays, site build exit 0, Wikipedia dra
 
 P1 PASSED when: patent figures render inline in match essays; entity cross-links present; landing page lists confirmed pairs; research-question block styled distinctly; all three existing site builds exit 0 without regressions.
 
-P2 PASSED when: `photographic-equipment` has ≥3 confirmed pairs, all essays validate 8/8, site build exits 0, Wikipedia draft written to `projects/photographic-equipment/wikipedia/`.
+P2 PASSED when: `photographic-equipment` has ≥3 confirmed pairs (G03B patents only), all essays validate 8/8, site build exits 0, Wikipedia draft written to `projects/photographic-equipment/wikipedia/`.
 
-P3 PASSED when: `precision-tools` has ≥3 confirmed pairs, all essays validate 8/8, site build exits 0, Wikipedia draft written to `projects/precision-tools/wikipedia/`.
+P3 PASSED when: `precision-tools` has ≥3 confirmed pairs (G01B patents only), all essays validate 8/8, site build exits 0, Wikipedia draft written to `projects/precision-tools/wikipedia/`.
 
 P4 PASSED when: at least one Wikipedia edit submitted per domain; revision IDs recorded in STATUS.md files; D051 and D052 DEFERRED entries filed.
 
