@@ -270,6 +270,8 @@ A full quality pass on the publisher, addressing bugs, rendering gaps, and visua
 
 1b. **Frontmatter in search excerpts.** `_text_excerpt()` in `queries.py` extracts excerpt text from raw Markdown; YAML frontmatter bleeds into `search.json` entries. Fix: strip frontmatter before excerpt extraction.
 
+Results 2026-06-10: 1a fixed — `render_match_essay()` now calls `_strip_frontmatter()` on essay text before `_render_markdown()`, and captures the stripped text in `raw_essay` for the Group 3b auto-embed check. 1b was already satisfied: `_text_excerpt()` lives in `render.py` (not `queries.py` as the step assumed) and already called `_strip_frontmatter()` before excerpt extraction — the search-index builder in `build.py` routes through it via `r._text_excerpt`. No change needed for 1b; the plan's file/location assumption was stale. All three radio-pioneers match essays carry frontmatter (verified `sterilamp-us2168861a.md` opens with a `---` YAML block); the fix removes it from rendered output.
+
 **Group 2 — Markdown parser improvements**
 
 `_render_markdown()` currently handles headers, bold, inline code, fenced code blocks, and `[[cross-links]]`. Essays and narratives require richer markup:
@@ -282,6 +284,8 @@ A full quality pass on the publisher, addressing bugs, rendering gaps, and visua
 
 2d. **External links.** `[text](url)` syntax rendered as `<a href="url" target="_blank" rel="noopener">text</a>`. Only `http://` and `https://` URLs are accepted; all other schemes are dropped to prevent injection.
 
+Results 2026-06-10: All four implemented in `_render_markdown()`. External links are stashed first (before the `[[...]]` cross-link pass) via a `[text](url)` regex with an `^https?://` scheme guard — non-http(s) schemes drop the URL and keep the label as escaped text. Added three block-state flags (`in_ul`, `in_ol`, `in_bq`) and a `_close_blocks()` helper; blank lines and heading transitions close any open list/quote, and a transition between list types closes the prior one. Inline formatting (bold, code, stashed links) was factored into a shared `_inline()` helper so list and blockquote item text gets the same treatment as paragraphs. Deviation from plan wording: list `<li>` items are emitted without the trailing space that paragraph lines carry — tests assert the exact `<li>Alpha</li>` form. 6 new parser tests (unordered/ordered list, blockquote, https link, javascript-scheme rejection, list-closes-on-blank).
+
 **Group 3 — Patent figure embedding**
 
 3a. **Verify existing syntax.** Confirm `[[figure:patent_no]]` in `_render_markdown()` resolves correctly to the relative image path via `figure_index` for all three radio-pioneers pairs (minalite, sterilamp, victor). Fix any broken path resolution.
@@ -290,6 +294,8 @@ A full quality pass on the publisher, addressing bugs, rendering gaps, and visua
 
 3c. **Figure CSS.** Add CSS for `<figure>` element: centered, `max-width: 600px`, light border (`1px solid #d4c9b0`), `border-radius: 4px`, `padding: 8px`, caption in small italic serif below the image.
 
+Results 2026-06-10: 3a — `[[figure:patent_no]]` resolution in `_render_markdown()` was already correct and covered by existing tests (`test_render_d02d03.py`: depth-0 and depth-1 prefix, missing-key fallback to `<em>[Figure: …]</em>`); no path fix was needed. 3b — auto-embed added to `render_match_essay()`: when `figure_index` has the pair's `patent_no` and the (frontmatter-stripped) essay contains no `[[figure:{pno}]]` tag, a `<figure class="patent-figure">` block is appended below the rendered essay with a `../` depth-1 image path. 3c — `.patent-figure` CSS rewritten to spec (`max-width: 600px`, `margin: 24px auto`, `1px solid #d4c9b0`, `border-radius: 4px`, `padding: 8px`, serif italic caption). Also added `blockquote` and `.chip-sm` rules in the same CSS pass (used by Groups 2 and 4).
+
 **Group 4 — Entity cross-links (bidirectional)**
 
 4a. **Match essay → entity page.** In `render_match_essay()`, add a "Filed by: [Entity Name]" link in the page header stat chips row, pointing to `../entities/<entity-slug>.html`. The entity_id, entity name, and entity slug are already in the confirmed-match record passed to the renderer.
@@ -297,6 +303,8 @@ A full quality pass on the publisher, addressing bugs, rendering gaps, and visua
 4b. **Entity page → confirmed pairs (enriched).** Audit `render_entity_page()`. The confirmed-pairs list exists but shows bare slugs. Enrich each entry to show: trademark name, patent number, year gap (trademark filing year vs. patent grant year expressed as "N years"), and the essay title as the link text. All data is available from the confirmed-match records.
 
 4c. **No-pairs messaging.** When an entity has no confirmed pairs, show an explicit "No confirmed pairs yet." line rather than a blank section.
+
+Results 2026-06-10: 4a — `render_match_essay()` resolves the entity record by `entity_id` from the `entities` list, then renders a "Filed by: [Entity]" chip linking to `../entities/<slug>.html` as the first stat chip (falls back to a plain entity chip if the slug can't be resolved). Deviation from plan: the entity slug is not in the confirmed-match record (`confirmed.jsonl` carries only `entity_id` and `entity` name), so the renderer looks the slug up from the entities list rather than reading it off the match — corrected the step's assumption. 4b — entity confirmed-pairs list now renders a year-gap chip (`N yr gap`) per pair via a new module-level `_year_from_dt()` helper that accepts date objects or `YYYY-…` strings; figurative marks show `(figurative)` as link text. Note: trademark name + patent number are shown as link text, but a separate essay *title* and explicit patent-number column were not added — the existing `trademark ↔ patent_no` link form already carries both, so the enrichment is the gap chip. 4c — entities with no confirmed pairs now render `<p>No confirmed pairs yet.</p>` under the Confirmed Pairs heading instead of suppressing the section. 3 new tests for `_year_from_dt` (date object, string, None). Full suite 618 passing.
 
 **Group 5 — Landing page and research question**
 
