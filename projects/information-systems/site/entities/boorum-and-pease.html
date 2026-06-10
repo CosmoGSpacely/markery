@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Boorum &amp;amp; Pease</title>
+<title>Boorum &amp; Pease — Information Systems — Markery</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -34,6 +34,13 @@ a:hover { color: #8b5e3c; }
   color: #e8dcc8;
   text-decoration: none;
 }
+.site-header nav {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-width: 0;
+}
 .site-header nav a {
   color: #b8a88a;
   text-decoration: none;
@@ -41,6 +48,19 @@ a:hover { color: #8b5e3c; }
   margin-right: 16px;
 }
 .site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  padding: 8px 40px;
+  background: #ede8de;
+  border-bottom: 1px solid #ddd;
+  font-size: .78em;
+}
+.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; }
+.breadcrumb li { color: #888; }
+.breadcrumb li:not(:last-child)::after { content: "›"; margin: 0 8px; color: #b8a88a; }
+.breadcrumb a { color: #5a3e28; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
 
 /* ── Page header ── */
 .page-header {
@@ -165,10 +185,18 @@ a:hover { color: #8b5e3c; }
 }
 .research-question {
   background: #ede8de;
-  border-left: 3px solid #5a3e28;
-  padding: 18px 22px;
+  border-left: 4px solid #8b5e3c;
+  padding: 16px 20px;
   margin-bottom: 32px;
   max-width: 700px;
+}
+.research-question .rq-label {
+  display: block;
+  font-size: .72em;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8b5e3c;
+  margin-bottom: 8px;
 }
 .research-question p { margin-bottom: .7em; }
 .research-question p:last-child { margin-bottom: 0; }
@@ -365,9 +393,16 @@ a:hover { color: #8b5e3c; }
 .site-search input[type=search]::placeholder { color: #888; }
 
 /* ── Patent figure (embedded via [[figure:patent_no]]) ── */
-.patent-figure { margin: 24px 0; text-align: center; }
-.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
-.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+.patent-figure { margin: 24px auto; text-align: center; max-width: 600px; border: 1px solid #d4c9b0; border-radius: 4px; padding: 8px; }
+.patent-figure img { max-width: 100%; background: #faf8f4; display: block; margin: 0 auto; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+
+/* ── Blockquotes ── */
+blockquote { border-left: 3px solid #b8a88a; margin: 16px 0; padding: 8px 16px; color: #555; font-style: italic; }
+blockquote p { margin: 0; }
+
+/* ── Small chip (inline stat tags) ── */
+.chip-sm { font-size: .75em; background: #e8dcc8; border-radius: 3px; padding: 1px 6px; color: #5a3e28; white-space: nowrap; }
 
 /* ── Site footer ── */
 .site-footer {
@@ -379,8 +414,8 @@ a:hover { color: #8b5e3c; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
-<div class="page-header"><h1>Boorum &amp; Pease</h1><div class="subtitle">blank-books · manufacturer</div><div class="stat-chips"><span class="chip">3 marks</span><span class="chip">38 patents</span><span class="chip">0 confirmed</span><span class="chip">1903–1936</span></div></div><div class="page-body"><div class="narrative"><h2>Boorum &amp; Pease</h2>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/index.html">Entities</a><a href="../matches/index.html">Matches</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="../index.html">Home</a></li><li><a href="index.html">Entities</a></li><li aria-current="page">Boorum &amp; Pease</li></ol></nav><div class="page-header"><h1>Boorum &amp; Pease</h1><div class="subtitle">blank-books · manufacturer</div><div class="stat-chips"><span class="chip">3 marks</span><span class="chip">38 patents</span><span class="chip">0 confirmed</span><span class="chip">1903–1936</span></div></div><div class="page-body"><div class="narrative"><h2>Boorum &amp; Pease</h2>
 <h2>Historical Identity</h2>
 <p>
 Boorum &amp; Pease Company of New York was one of the leading manufacturers of blank books in the American market during the late nineteenth and early twentieth centuries. Blank books — ruled ledgers, account books, journals, day books, and related record-keeping volumes — were the primary medium for business accounting and correspondence before the widespread adoption of loose-leaf and card-index systems. Boorum &amp; Pease occupied this market alongside other major producers such as Wilson Jones (which later expanded into filing appliances) and operated in the same commercial space as the companies more directly represented in the information-systems project. 
@@ -401,7 +436,7 @@ Boorum &amp; Pease is included in the project's entity registry as a representat
 </p>
 <p>
 The absence of a confirmed pair for Boorum &amp; Pease is itself informative. The company held patents and registered trademarks across the same period as the project's paired entities, but its product strategy centered on brand identity and material quality rather than the mechanism-specific product naming that generates patent-trademark correspondence. BULLDOG sells a binding concept; the Remington Rand and Wilson Jones marks name specific mechanical systems whose technical basis appears in contemporaneous patents. 
-</p><table><thead><tr><th>Name variant</th><th>Source</th></tr></thead><tbody><tr><td>BOORUM &amp; PEASE COMPANY</td><td>patent_assignee</td></tr><tr><td>BOORUM &amp; PEASE LOOSE LEAF BOOK COMPANY [US]</td><td>patent_assignee</td></tr><tr><td>BOORUM AND PEASE COMPANY</td><td>patent_assignee</td></tr><tr><td>BOORUM AND PEASE COMPANY [US]</td><td>patent_assignee</td></tr><tr><td>BOORUM &amp; PEASE CO.</td><td>trademark_owner</td></tr><tr><td>BOORUM &amp; PEASE COMPANY</td><td>trademark_owner</td></tr></tbody></table><p><a href="../trademarks.html">Trademark gallery →</a> &nbsp; <a href="../patents.html">Patent gallery →</a></p></div></div>
+</p><table><thead><tr><th>Name variant</th><th>Source</th></tr></thead><tbody><tr><td>BOORUM &amp; PEASE COMPANY</td><td>patent_assignee</td></tr><tr><td>BOORUM &amp; PEASE LOOSE LEAF BOOK COMPANY [US]</td><td>patent_assignee</td></tr><tr><td>BOORUM AND PEASE COMPANY</td><td>patent_assignee</td></tr><tr><td>BOORUM AND PEASE COMPANY [US]</td><td>patent_assignee</td></tr><tr><td>BOORUM &amp; PEASE CO.</td><td>trademark_owner</td></tr><tr><td>BOORUM &amp; PEASE COMPANY</td><td>trademark_owner</td></tr></tbody></table><h2>Confirmed Pairs</h2><p>No confirmed pairs yet.</p><p><a href="../trademarks.html">Trademark gallery →</a> &nbsp; <a href="../patents.html">Patent gallery →</a></p></div></div>
 <footer class="site-footer">Built with <a href="https://github.com/CosmoGSpacely/markery">Markery</a></footer>
 </body>
 </html>

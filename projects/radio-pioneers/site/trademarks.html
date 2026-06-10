@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Trademark Gallery</title>
+<title>Trademark Gallery — Radio Pioneers — Markery</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -34,6 +34,13 @@ a:hover { color: #8b5e3c; }
   color: #e8dcc8;
   text-decoration: none;
 }
+.site-header nav {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-width: 0;
+}
 .site-header nav a {
   color: #b8a88a;
   text-decoration: none;
@@ -41,6 +48,19 @@ a:hover { color: #8b5e3c; }
   margin-right: 16px;
 }
 .site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  padding: 8px 40px;
+  background: #ede8de;
+  border-bottom: 1px solid #ddd;
+  font-size: .78em;
+}
+.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; }
+.breadcrumb li { color: #888; }
+.breadcrumb li:not(:last-child)::after { content: "›"; margin: 0 8px; color: #b8a88a; }
+.breadcrumb a { color: #5a3e28; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
 
 /* ── Page header ── */
 .page-header {
@@ -165,10 +185,18 @@ a:hover { color: #8b5e3c; }
 }
 .research-question {
   background: #ede8de;
-  border-left: 3px solid #5a3e28;
-  padding: 18px 22px;
+  border-left: 4px solid #8b5e3c;
+  padding: 16px 20px;
   margin-bottom: 32px;
   max-width: 700px;
+}
+.research-question .rq-label {
+  display: block;
+  font-size: .72em;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8b5e3c;
+  margin-bottom: 8px;
 }
 .research-question p { margin-bottom: .7em; }
 .research-question p:last-child { margin-bottom: 0; }
@@ -365,9 +393,16 @@ a:hover { color: #8b5e3c; }
 .site-search input[type=search]::placeholder { color: #888; }
 
 /* ── Patent figure (embedded via [[figure:patent_no]]) ── */
-.patent-figure { margin: 24px 0; text-align: center; }
-.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
-.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+.patent-figure { margin: 24px auto; text-align: center; max-width: 600px; border: 1px solid #d4c9b0; border-radius: 4px; padding: 8px; }
+.patent-figure img { max-width: 100%; background: #faf8f4; display: block; margin: 0 auto; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+
+/* ── Blockquotes ── */
+blockquote { border-left: 3px solid #b8a88a; margin: 16px 0; padding: 8px 16px; color: #555; font-style: italic; }
+blockquote p { margin: 0; }
+
+/* ── Small chip (inline stat tags) ── */
+.chip-sm { font-size: .75em; background: #e8dcc8; border-radius: 3px; padding: 1px 6px; color: #5a3e28; white-space: nowrap; }
 
 /* ── Site footer ── */
 .site-footer {
@@ -379,52 +414,50 @@ a:hover { color: #8b5e3c; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="index.html">Markery Research</a><nav><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a><a href="entities/radio-corporation-of-america.html">Radio Corporation of America</a><a href="entities/westinghouse-electric-and-manufacturing-company.html">Westinghouse Electric and Manufacturing Company</a><a href="entities/atwater-kent-manufacturing-company.html">Atwater Kent Manufacturing Company</a><a href="entities/zenith-radio-corporation.html">Zenith Radio Corporation</a><a href="entities/de-forest-radio-company.html">De Forest Radio Company</a><a href="search.html">Search</a></nav><form class="site-search" action="search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
-<div class="page-header"><h1>Trademark Gallery</h1><div class="subtitle">Radio Pioneers</div><div class="stat-chips"><span class="chip">25 marks</span><span class="chip">0 with images</span><span class="chip">3 confirmed pairs</span></div></div><div class="page-body"><div class="narrative"><p style="color:#999;font-style:italic">Narrative not yet written. See <code>trademarks-narrative.md</code> for the content schema.</p></div><div class="timeline-section"><p class="section-title">Filing Timeline</p><svg viewBox="0 0 880 90" class="timeline-svg">
+<header class="site-header"><a class="site-title" href="index.html">Markery Research</a><nav><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a><a href="entities/index.html">Entities</a><a href="matches/index.html">Matches</a><a href="search.html">Search</a></nav><form class="site-search" action="search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<div class="page-header"><h1>Trademark Gallery</h1><div class="subtitle">Radio Pioneers</div><div class="stat-chips"><span class="chip">25 marks</span><span class="chip">0 with images</span><span class="chip">3 confirmed pairs</span></div></div><div class="page-body"><div class="timeline-section"><p class="section-title">Filing Timeline</p><svg viewBox="0 0 880 90" class="timeline-svg">
 <line x1="40" y1="56" x2="860" y2="56" stroke="#bbb" stroke-width="1"/>
-<line x1="40.0" y1="56" x2="40.0" y2="61" stroke="#bbb" stroke-width="1"/>
-<text x="40.0" y="72" text-anchor="middle" font-size="9" fill="#888">1900</text>
-<line x1="142.5" y1="56" x2="142.5" y2="61" stroke="#bbb" stroke-width="1"/>
-<text x="142.5" y="72" text-anchor="middle" font-size="9" fill="#888">1905</text>
-<line x1="245.0" y1="56" x2="245.0" y2="61" stroke="#bbb" stroke-width="1"/>
-<text x="245.0" y="72" text-anchor="middle" font-size="9" fill="#888">1910</text>
-<line x1="347.5" y1="56" x2="347.5" y2="61" stroke="#bbb" stroke-width="1"/>
-<text x="347.5" y="72" text-anchor="middle" font-size="9" fill="#888">1915</text>
-<line x1="450.0" y1="56" x2="450.0" y2="61" stroke="#bbb" stroke-width="1"/>
-<text x="450.0" y="72" text-anchor="middle" font-size="9" fill="#888">1920</text>
-<line x1="552.5" y1="56" x2="552.5" y2="61" stroke="#bbb" stroke-width="1"/>
-<text x="552.5" y="72" text-anchor="middle" font-size="9" fill="#888">1925</text>
-<line x1="655.0" y1="56" x2="655.0" y2="61" stroke="#bbb" stroke-width="1"/>
-<text x="655.0" y="72" text-anchor="middle" font-size="9" fill="#888">1930</text>
-<line x1="757.5" y1="56" x2="757.5" y2="61" stroke="#bbb" stroke-width="1"/>
-<text x="757.5" y="72" text-anchor="middle" font-size="9" fill="#888">1935</text>
-<line x1="860.0" y1="56" x2="860.0" y2="61" stroke="#bbb" stroke-width="1"/>
-<text x="860.0" y="72" text-anchor="middle" font-size="9" fill="#888">1940</text>
-<circle cx="149.3" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>BRYANT (1905-04-07)</title></circle>
-<circle cx="163.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>VICTROLA (1905-12-01)</title></circle>
-<circle cx="306.5" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>MICARTA (1912-12-28)</title></circle>
-<circle cx="497.8" cy="48" r="4" fill="#7a3e5a" opacity="0.75"><title>ZENITH (1922-04-24)</title></circle>
-<circle cx="504.7" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>WEMCO (1922-08-08)</title></circle>
-<circle cx="538.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>VICTOR (1924-04-08)</title></circle>
-<circle cx="538.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>HIS MASTER'S VOICE (1924-04-08)</title></circle>
-<circle cx="579.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>VICTOR (1926-04-13)</title></circle>
-<circle cx="655.0" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>&quot;DE-ION&quot; (1929-12-20)</title></circle>
-<circle cx="677.2" cy="48" r="4" fill="#7a3e5a" opacity="0.75"><title>ZENITH (1931-01-21)</title></circle>
-<circle cx="694.3" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>MINALITE (1931-11-11)</title></circle>
-<circle cx="704.5" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>WESTINGHOUSE (1932-05-18)</title></circle>
-<circle cx="706.2" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>MICARTA (1932-06-30)</title></circle>
-<circle cx="778.0" cy="48" r="4" fill="#7a3e5a" opacity="0.75"><title>HOME POWER (1935-12-23)</title></circle>
-<circle cx="781.4" cy="48" r="4" fill="#7a3e5a" opacity="0.75"><title>ZENITH (1936-02-17)</title></circle>
-<circle cx="788.2" cy="48" r="4" fill="#7a3e5a" opacity="0.75"><title>TARGET TUNING (1936-06-18)</title></circle>
-<circle cx="790.0" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>PHOS-COPPER (1936-07-08)</title></circle>
-<circle cx="798.5" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>WESTINGHOUSE (1936-12-17)</title></circle>
-<circle cx="807.0" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>WESTINGHOUSE (1937-05-22)</title></circle>
-<circle cx="839.5" cy="48" r="4" fill="#7a3e5a" opacity="0.75"><title>WAVEMAGNET (1938-12-03)</title></circle>
-<circle cx="839.5" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>MICARTA (1938-12-07)</title></circle>
-<circle cx="839.5" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>MICARTA (1938-12-07)</title></circle>
-<circle cx="851.5" cy="48" r="4" fill="#7a3e5a" opacity="0.75"><title>ZENITH (1939-07-31)</title></circle>
-<circle cx="853.2" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>STERILAMP (1939-08-25)</title></circle>
-<circle cx="854.9" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>VISICODE (1939-09-15)</title></circle>
+<line x1="83.2" y1="56" x2="83.2" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="83.2" y="72" text-anchor="middle" font-size="9" fill="#888">1905</text>
+<line x1="191.1" y1="56" x2="191.1" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="191.1" y="72" text-anchor="middle" font-size="9" fill="#888">1910</text>
+<line x1="298.9" y1="56" x2="298.9" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="298.9" y="72" text-anchor="middle" font-size="9" fill="#888">1915</text>
+<line x1="406.8" y1="56" x2="406.8" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="406.8" y="72" text-anchor="middle" font-size="9" fill="#888">1920</text>
+<line x1="514.7" y1="56" x2="514.7" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="514.7" y="72" text-anchor="middle" font-size="9" fill="#888">1925</text>
+<line x1="622.6" y1="56" x2="622.6" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="622.6" y="72" text-anchor="middle" font-size="9" fill="#888">1930</text>
+<line x1="730.5" y1="56" x2="730.5" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="730.5" y="72" text-anchor="middle" font-size="9" fill="#888">1935</text>
+<line x1="838.4" y1="56" x2="838.4" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="838.4" y="72" text-anchor="middle" font-size="9" fill="#888">1940</text>
+<circle cx="90.4" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>BRYANT (1905-04-07)</title></circle>
+<circle cx="104.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>VICTROLA (1905-12-01)</title></circle>
+<circle cx="255.8" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>MICARTA (1912-12-28)</title></circle>
+<circle cx="457.2" cy="48" r="4" fill="#7a3e5a" opacity="0.75"><title>ZENITH (1922-04-24)</title></circle>
+<circle cx="464.4" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>WEMCO (1922-08-08)</title></circle>
+<circle cx="500.4" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>VICTOR (1924-04-08)</title></circle>
+<circle cx="500.4" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>HIS MASTER'S VOICE (1924-04-08)</title></circle>
+<circle cx="543.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>VICTOR (1926-04-13)</title></circle>
+<circle cx="622.6" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>&quot;DE-ION&quot; (1929-12-20)</title></circle>
+<circle cx="646.0" cy="48" r="4" fill="#7a3e5a" opacity="0.75"><title>ZENITH (1931-01-21)</title></circle>
+<circle cx="664.0" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>MINALITE (1931-11-11)</title></circle>
+<circle cx="674.8" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>WESTINGHOUSE (1932-05-18)</title></circle>
+<circle cx="676.6" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>MICARTA (1932-06-30)</title></circle>
+<circle cx="752.1" cy="48" r="4" fill="#7a3e5a" opacity="0.75"><title>HOME POWER (1935-12-23)</title></circle>
+<circle cx="755.7" cy="48" r="4" fill="#7a3e5a" opacity="0.75"><title>ZENITH (1936-02-17)</title></circle>
+<circle cx="762.9" cy="48" r="4" fill="#7a3e5a" opacity="0.75"><title>TARGET TUNING (1936-06-18)</title></circle>
+<circle cx="764.7" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>PHOS-COPPER (1936-07-08)</title></circle>
+<circle cx="773.7" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>WESTINGHOUSE (1936-12-17)</title></circle>
+<circle cx="782.7" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>WESTINGHOUSE (1937-05-22)</title></circle>
+<circle cx="816.8" cy="48" r="4" fill="#7a3e5a" opacity="0.75"><title>WAVEMAGNET (1938-12-03)</title></circle>
+<circle cx="816.8" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>MICARTA (1938-12-07)</title></circle>
+<circle cx="816.8" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>MICARTA (1938-12-07)</title></circle>
+<circle cx="829.4" cy="48" r="4" fill="#7a3e5a" opacity="0.75"><title>ZENITH (1939-07-31)</title></circle>
+<circle cx="831.2" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>STERILAMP (1939-08-25)</title></circle>
+<circle cx="833.0" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>VISICODE (1939-09-15)</title></circle>
 </svg></div><p class="section-title">All Marks</p><div class="card-grid"><div class="card" id="sn-71000714"><div class="card-image-placeholder">71000714</div><div class="card-body"><div class="card-name">BRYANT</div><div class="card-meta">Filed April 07, 1905 · Registered</div><span class="entity-badge">Westinghouse Electric and Manufacturing Company</span><div class="card-goods">SOCKETS AND RECEPTACLES FOR ELECTRIC LAMPS AND PLUGS, ELECTRIC PLUGS THEREFOR, ROSETTES FOR ELECTRIC WIRING, AND CUT-OUT…</div><div class="card-footer">71000714 · Draw 1000</div></div></div><div class="card" id="sn-71015106"><div class="card-image-placeholder">71015106</div><div class="card-body"><div class="card-name">VICTROLA</div><div class="card-meta">Filed December 01, 1905 · Abandoned</div><span class="entity-badge">Radio Corporation of America</span><div class="card-goods">RECORDS FOR TALKING-MACHINES</div><div class="card-footer">71015106 · Draw 5W23</div></div></div><div class="card" id="sn-71067610"><div class="card-image-placeholder">71067610</div><div class="card-body"><div class="card-name">MICARTA</div><div class="card-meta">Filed December 28, 1912 · Registered</div><span class="entity-badge">Westinghouse Electric and Manufacturing Company</span><div class="card-goods">ELECTRICAL INSULATING SHEETS AND TUBES</div><div class="card-footer">71067610 · Draw 5U06</div></div></div><div class="card" id="sn-71162805"><div class="card-image-placeholder">71162805</div><div class="card-body"><div class="card-name">ZENITH</div><div class="card-meta">Filed April 24, 1922 · Registered</div><span class="entity-badge">Zenith Radio Corporation</span><div class="card-goods">Radio Apparatus-Namely, Receivers, Amplifiers, Loud Speakers, Tuning Devices, Antenna Wire, Head Phones, Batteries, Loop…</div><div class="card-footer">71162805 · Draw 5W23</div></div></div><div class="card" id="sn-71167963"><div class="card-image-placeholder">71167963</div><div class="card-body"><div class="card-name">WEMCO</div><div class="card-meta">Filed August 08, 1922 · Abandoned</div><span class="entity-badge">Westinghouse Electric and Manufacturing Company</span><div class="card-goods">Mineral Oil for Insulating and Cooling Purposes</div><div class="card-footer">71167963 · Draw 1000</div></div></div><div class="card" id="sn-71195203"><div class="card-image-placeholder">71195203</div><div class="card-body"><div class="card-name">VICTOR</div><div class="card-meta">Filed April 08, 1924 · Expired</div><span class="entity-badge">Radio Corporation of America</span><div class="card-goods">RADIO APPARATUS, PARTS, AND APPURTENANCES-NAMELY, RADIO RECEIVING SETS, SOUND-AMPLIFYING HORNS HAYING TELEPHONE RECEIVER…</div><a class="match-link" href="matches/victor-us1486221a.html">Confirmed pair →</a><div class="card-footer">71195203 · Draw 5000</div></div></div><div class="card" id="sn-71195205"><div class="card-image-placeholder">71195205</div><div class="card-body"><div class="card-name">HIS MASTER'S VOICE</div><div class="card-meta">Filed April 08, 1924 · Registered</div><span class="entity-badge">Radio Corporation of America</span><div class="card-goods">RADIO APPARATUS, PARTS, AND APPURTENANCES--NAMELY, RADIO RECEIVING SETS, [SOUND AMPLIFYING HORNS HAVING TELEPHONE RECEIV…</div><div class="card-footer">71195205 · Draw 3T13</div></div></div><div class="card" id="sn-71230068"><div class="card-image-placeholder">71230068</div><div class="card-body"><div class="card-name">VICTOR</div><div class="card-meta">Filed April 13, 1926 · Registered</div><span class="entity-badge">Radio Corporation of America</span><div class="card-goods">[ TALKING MACHINES AND PARTS THEREOF AND FOR ] TALKING MACHINE RECORDS</div><div class="card-footer">71230068 · Draw 5T09</div></div></div><div class="card" id="sn-71293946"><div class="card-image-placeholder">71293946</div><div class="card-body"><div class="card-name">&quot;DE-ION&quot;</div><div class="card-meta">Filed December 20, 1929 · Expired</div><span class="entity-badge">Westinghouse Electric and Manufacturing Company</span><div class="card-goods">ELECTRIC-CIRCUIT BREAKERS</div><div class="card-footer">71293946 · Draw 3T07</div></div></div><div class="card" id="sn-71310232"><div class="card-image-placeholder">71310232</div><div class="card-body"><div class="card-name">ZENITH</div><div class="card-meta">Filed January 21, 1931 · Expired</div><span class="entity-badge">Zenith Radio Corporation</span><div class="card-goods">RADIO ELECTRON TUBES</div><div class="card-footer">71310232 · Draw 3S07</div></div></div><div class="card" id="sn-71321058"><div class="card-image-placeholder">71321058</div><div class="card-body"><div class="card-name">MINALITE</div><div class="card-meta">Filed November 11, 1931 · Expired</div><span class="entity-badge">Westinghouse Electric and Manufacturing Company</span><div class="card-goods">INCANDESCENT ELECTRIC LAMPS</div><a class="match-link" href="matches/minalite-us1829460a.html">Confirmed pair →</a><div class="card-footer">71321058 · Draw 1000</div></div></div><div class="card" id="sn-71327236"><div class="card-image-placeholder">71327236</div><div class="card-body"><div class="card-name">WESTINGHOUSE</div><div class="card-meta">Filed May 18, 1932 · Registered</div><span class="entity-badge">Westinghouse Electric and Manufacturing Company</span><div class="card-goods">[ ELECTRIC ARC AND INCANDESCENT LAMPS, ELECTRIC CONTROLLERS, ] ELECTRIC FUSES AND FUSE HOLDERS, ELECTRIC GENERATORS AND …</div><div class="card-footer">71327236 · Draw 5U06</div></div></div><div class="card" id="sn-71328464"><div class="card-image-placeholder">71328464</div><div class="card-body"><div class="card-name">MICARTA</div><div class="card-meta">Filed June 30, 1932 · Registered</div><span class="entity-badge">Westinghouse Electric and Manufacturing Company</span><div class="card-goods">GEARS, GEAR BLANKS, SPINNING BUCKETS, CELLOPHANE ROLLS, AND PULLEYS CONSTRUCTED OF MOLDED FIBROUS MATERIAL WITH A HEAT H…</div><div class="card-footer">71328464 · Draw 5U06</div></div></div><div class="card" id="sn-71373009"><div class="card-image-placeholder">71373009</div><div class="card-body"><div class="card-name">HOME POWER</div><div class="card-meta">Filed December 23, 1935 · Registered</div><span class="entity-badge">Zenith Radio Corporation</span><div class="card-goods">PRIME-MOVER-DRIVEN ELECTRIC GENERATOR COMBINATIONS, INCLUDING WIND-DRIVEN AND ENGINE-DRIVEN ELECTRIC GENERATOR COMBINATI…</div><div class="card-footer">71373009 · Draw 1000</div></div></div><div class="card" id="sn-71374953"><div class="card-image-placeholder">71374953</div><div class="card-body"><div class="card-name">ZENITH</div><div class="card-meta">Filed February 17, 1936 · Registered</div><span class="entity-badge">Zenith Radio Corporation</span><div class="card-goods">TELEVISION RECEIVING APPARATUS AND PARTS THEREOF</div><div class="card-footer">71374953 · Draw 3000</div></div></div><div class="card" id="sn-71379918"><div class="card-image-placeholder">71379918</div><div class="card-body"><div class="card-name">TARGET TUNING</div><div class="card-meta">Filed June 18, 1936 · Expired</div><span class="entity-badge">Zenith Radio Corporation</span><div class="card-goods">RADIO RECEIVING AND PARTS THEREOF</div><div class="card-footer">71379918 · Draw 1000</div></div></div><div class="card" id="sn-71380814"><div class="card-image-placeholder">71380814</div><div class="card-body"><div class="card-name">PHOS-COPPER</div><div class="card-meta">Filed July 08, 1936 · Expired</div><span class="entity-badge">Westinghouse Electric and Manufacturing Company</span><div class="card-goods">WELDING ALLOYS</div><div class="card-footer">71380814 · Draw 5W23</div></div></div><div class="card" id="sn-71386834"><div class="card-image-placeholder">71386834</div><div class="card-body"><div class="card-name">WESTINGHOUSE</div><div class="card-meta">Filed December 17, 1936 · Expired</div><span class="entity-badge">Westinghouse Electric and Manufacturing Company</span><div class="card-goods">STEAM TURBINES AND MARINE REDUCTION GEARING, AND CENTRIFUGAL PUMPS AND PROPELLER PUMPS</div><div class="card-footer">71386834 · Draw 5000</div></div></div><div class="card" id="sn-71393155"><div class="card-image-placeholder">71393155</div><div class="card-body"><div class="card-name">WESTINGHOUSE</div><div class="card-meta">Filed May 22, 1937 · Expired</div><span class="entity-badge">Westinghouse Electric and Manufacturing Company</span><div class="card-goods">STOKERS AND STOKER PARTS, STEAM CONDENSERS, PROPELLER BLOWERS, COUNTERFLOW AND CROSSFLOW HEAT EXCHANGERS AND AIR CONDITI…</div><div class="card-footer">71393155 · Draw 5000</div></div></div><div class="card" id="sn-71413463"><div class="card-image-placeholder">71413463</div><div class="card-body"><div class="card-name">WAVEMAGNET</div><div class="card-meta">Filed December 03, 1938 · Abandoned</div><span class="entity-badge">Zenith Radio Corporation</span><div class="card-goods">ANTENNAS FOR RADIO AND TELEVISION RECEIVING SETS AND PARTS THEREOF</div><div class="card-footer">71413463 · Draw 3000</div></div></div><div class="card" id="sn-71413574"><div class="card-image-placeholder">71413574</div><div class="card-body"><div class="card-name">MICARTA</div><div class="card-meta">Filed December 07, 1938 · Expired</div><span class="entity-badge">Westinghouse Electric and Manufacturing Company</span><div class="card-goods">JOURNAL BEARINGS</div><div class="card-footer">71413574 · Draw 1000</div></div></div><div class="card" id="sn-71413575"><div class="card-image-placeholder">71413575</div><div class="card-body"><div class="card-name">MICARTA</div><div class="card-meta">Filed December 07, 1938 · Expired</div><span class="entity-badge">Westinghouse Electric and Manufacturing Company</span><div class="card-goods">SUCTION BOX COVERS FOR USE IN PAPER MAKING MACHINES</div><div class="card-footer">71413575 · Draw 5000</div></div></div><div class="card" id="sn-71422164"><div class="card-image-placeholder">71422164</div><div class="card-body"><div class="card-name">ZENITH</div><div class="card-meta">Filed July 31, 1939 · Registered</div><span class="entity-badge">Zenith Radio Corporation</span><div class="card-goods">ELECTRIC LAMPS</div><div class="card-footer">71422164 · Draw 5W23</div></div></div><div class="card" id="sn-71423019"><div class="card-image-placeholder">71423019</div><div class="card-body"><div class="card-name">STERILAMP</div><div class="card-meta">Filed August 25, 1939 · Registered</div><span class="entity-badge">Westinghouse Electric and Manufacturing Company</span><div class="card-goods">VACUUM OR GAS-FILLED TUBES EMPLOYED FOR THE GENERATION OF RADIATIONS FOR HASTENING THE TENDERIZATION OF MEAT, IN SHOWCAS…</div><a class="match-link" href="matches/sterilamp-us2168861a.html">Confirmed pair →</a><div class="card-footer">71423019 · Draw 1000</div></div></div><div class="card" id="sn-71423642"><div class="card-image-placeholder">71423642</div><div class="card-body"><div class="card-name">VISICODE</div><div class="card-meta">Filed September 15, 1939 · Abandoned</div><span class="entity-badge">Westinghouse Electric and Manufacturing Company</span><div class="card-goods">SUPERVISORY CONTROL SYSTEM APPARATUS AND SWITCHBOARDS FOR ELECTRICAL APPARATUS</div><div class="card-footer">71423642 · Draw 1000</div></div></div></div></div>
 <footer class="site-footer">Built with <a href="https://github.com/CosmoGSpacely/markery">Markery</a></footer>
 </body>

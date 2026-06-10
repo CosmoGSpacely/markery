@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KARDEX ↔ US2178457A</title>
+<title>Confirmed Pairs — Radio Pioneers — Markery</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -34,6 +34,13 @@ a:hover { color: #8b5e3c; }
   color: #e8dcc8;
   text-decoration: none;
 }
+.site-header nav {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-width: 0;
+}
 .site-header nav a {
   color: #b8a88a;
   text-decoration: none;
@@ -41,6 +48,19 @@ a:hover { color: #8b5e3c; }
   margin-right: 16px;
 }
 .site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  padding: 8px 40px;
+  background: #ede8de;
+  border-bottom: 1px solid #ddd;
+  font-size: .78em;
+}
+.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; }
+.breadcrumb li { color: #888; }
+.breadcrumb li:not(:last-child)::after { content: "›"; margin: 0 8px; color: #b8a88a; }
+.breadcrumb a { color: #5a3e28; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
 
 /* ── Page header ── */
 .page-header {
@@ -149,6 +169,37 @@ a:hover { color: #8b5e3c; }
   flex-direction: column;
   overflow: hidden;
 }
+.card--focus {
+  border: 2px solid #5a3e28;
+  box-shadow: 0 2px 8px rgba(90,62,40,.18);
+}
+.focus-badge {
+  display: inline-block;
+  background: #5a3e28;
+  color: #f5f0e8;
+  font-size: .65em;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-top: 2px;
+  font-family: monospace;
+}
+.research-question {
+  background: #ede8de;
+  border-left: 4px solid #8b5e3c;
+  padding: 16px 20px;
+  margin-bottom: 32px;
+  max-width: 700px;
+}
+.research-question .rq-label {
+  display: block;
+  font-size: .72em;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8b5e3c;
+  margin-bottom: 8px;
+}
+.research-question p { margin-bottom: .7em; }
+.research-question p:last-child { margin-bottom: 0; }
 .card-image {
   width: 100%;
   height: 140px;
@@ -342,9 +393,16 @@ a:hover { color: #8b5e3c; }
 .site-search input[type=search]::placeholder { color: #888; }
 
 /* ── Patent figure (embedded via [[figure:patent_no]]) ── */
-.patent-figure { margin: 24px 0; text-align: center; }
-.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
-.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+.patent-figure { margin: 24px auto; text-align: center; max-width: 600px; border: 1px solid #d4c9b0; border-radius: 4px; padding: 8px; }
+.patent-figure img { max-width: 100%; background: #faf8f4; display: block; margin: 0 auto; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+
+/* ── Blockquotes ── */
+blockquote { border-left: 3px solid #b8a88a; margin: 16px 0; padding: 8px 16px; color: #555; font-style: italic; }
+blockquote p { margin: 0; }
+
+/* ── Small chip (inline stat tags) ── */
+.chip-sm { font-size: .75em; background: #e8dcc8; border-radius: 3px; padding: 1px 6px; color: #5a3e28; white-space: nowrap; }
 
 /* ── Site footer ── */
 .site-footer {
@@ -356,108 +414,8 @@ a:hover { color: #8b5e3c; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
-<div class="page-header"><h1>KARDEX ↔ US2178457A</h1><div class="subtitle">Confirmed patent-trademark pair · Information Systems</div><div class="stat-chips"><span class="chip">Remington Rand</span><span class="chip">Patent 1939-10-31</span><span class="chip">Mark filed 1939-12-14</span></div></div><div class="page-body"><div class="essay"><h2>KARDEX: The Visible Index and the Filing System Empire</h2>
-<p>
-The KARDEX trademark (serial 71426576, filed December 14, 1939) is the registered name of a visible card-index system whose core mechanism was patented by Remington Rand Inc. in US2178457A, &quot;Visible Index,&quot; granted October 31, 1939. The patent describes the overlapping-tray arrangement that allowed an operator to scan hundreds of cards at a glance; the trademark registers the product-line name under which that arrangement had been sold commercially for more than a decade before Remington Rand formalized it as intellectual property. 
-</p>
-<p>
---- 
-</p>
-<h2>The Mark</h2>
-<p>
-Remington Rand filed the KARDEX trademark on <strong>December 14, 1939</strong>, registration number <strong>0377986</strong>, covering *&quot;card index filing cabinets and trays, index cards, guides, and supplies therefor.&quot;* The applicant was Remington Rand Inc. of New York, NY. 
-</p>
-<p>
-The filing came late in the company's 1930s filing burst. Between 1929 and 1939, Remington Rand registered REMRANDCO, LINEDEX, SCOTTIE, ARISTOCRAT, VARIADEX, RAND, and two REMINGTON marks before arriving at KARDEX. That the company waited until 1939 to register the name most closely associated with its visible-filing product line suggests KARDEX had long functioned as a trade name — recognized in the market without formal trademark protection — and that the 1939 filing was a consolidation of brand assets rather than the introduction of a new product. 
-</p>
-<p>
---- 
-</p>
-<h2>What Kardex Was</h2>
-<p>
-The Kardex system was a <strong>visible record filing system</strong>: index cards arranged in overlapping trays so that the bottom edge of each card remained exposed, allowing an operator to scan a large index at a glance without removing any card. The trays were mounted in cabinets — desktop units, floor-standing towers, or rotary carousels — that could hold hundreds or thousands of cards. 
-</p>
-<p>
-The visible record concept had several commercial applications. In its simplest form it was a name-and-address index. More elaborately, each card represented an inventory item, an account, a personnel file, or a production order; the visible edge carried summary data (stock level, balance due, status code) while the full card held the detail. A colored signal tab could be clipped to the card edge to flag exceptions — past-due accounts, low stock, deferred items — making the tray itself a dashboard for the state of a business operation. 
-</p>
-<p>
-This was, in the vocabulary of the period, not just a filing system but an <strong>information system</strong> — a designed arrangement for storing, retrieving, and acting on operational data at the speed of a clerk scanning a tray rather than pulling a drawer. 
-</p>
-<p>
---- 
-</p>
-<h2>The Patent Record: 171 Patents, 1917–1939</h2>
-<p>
-The combined patent record for Remington Typewriter Company and Remington Rand Inc. contains <strong>171 patents</strong> in filing-system and blank-book classes (CPC B42F and B42D) between 1917 and 1939. The density of filing tells the corporate history as clearly as any narrative: 
-</p>
-<p>
-| Period | Assignee | Patents | Character | 
-|---|---|---|---| 
-| 1917–1926 | Remington Typewriter Company | ~10 | Foundational: accounting sheets, billing forms, index trays | 
-| 1927–1934 | Remington Rand Inc. | ~90 | Burst: card index trays, filing cabinets, visible index mechanisms | 
-| 1935–1939 | Remington Rand Inc. | ~70 | Refinement: prong binders, followers, signal tabs, protective strips | 
-</p>
-<p>
-The 1927 inflection is the merger. After Remington Typewriter joined with Rand Kardex to form Remington Rand, patent output in filing-system classes roughly tripled. The merged company was not just larger — it was filing systems as its core business, and it was patenting aggressively. 
-</p>
-<p>
-Selected patents from the cluster most directly corresponding to the KARDEX mark and visible-index product line: 
-</p>
-<p>
-| Patent | Title | Granted | 
-|---|---|---| 
-| US1640397A | Card-Index Tray | 1927-08-30 | 
-| US1647655A | Ledger Tray | 1927-10-18 | 
-| US1801804A | Visible Index | 1931-04-21 | 
-| US1802348A | Visible Index | 1931-04-28 | 
-| US1811633A | Visible File Case | 1931-06-23 | 
-| US1813257A | Credit System | 1931-07-07 | 
-| US1834204A | Overlapping Visible Index | 1931-12-01 | 
-| US1925343A | Index Card And Method Of Preparing Same | 1933-09-05 | 
-| US1963806A | Visible Index File Panel | 1934-06-19 | 
-| US2015460A | Index Device | 1935-09-24 | 
-| US2015480A | Card Index System For Keeping Records In A Visible Or Horizontal Way | 1935-09-24 | 
-| US2043675A | Record Member For Card Index Systems | 1936-06-09 | 
-| US2081841A | Visible Card File | 1937-05-25 | 
-| US2086047A | Card Index File | 1937-07-06 | 
-| US2178457A | Visible Index | 1939-10-31 | 
-</p>
-<p>
-The KARDEX trademark was filed two months after the last visible-index patent in the dataset (US2178457A, granted October 31, 1939; trademark filed December 14, 1939). The sequence — a decade of patents followed by a trademark consolidation — is characteristic of a mature product line rather than a launch. 
-</p>
-<p>
---- 
-</p>
-<h2>LINEDEX and VARIADEX: The Product Family</h2>
-<p>
-The KARDEX mark did not stand alone. The cross-reference of Remington Rand's trademark registrations against the patent record reveals a product family with distinct lines: 
-</p>
-<p>
-<strong>LINEDEX</strong> (Reg. 0289923, filed 1931) — registered by the subsidiary Remington Rand Business Service, Inc. The &quot;line&quot; in LINEDEX likely refers to the horizontal line of visible card edges in a Kardex-style tray: the product was a line-visible index rather than a tab-visible system. 
-</p>
-<p>
-<strong>VARIADEX</strong> (Reg. 0371824, filed April 7, 1939) — filed just weeks before the year's most active Remington Rand patent cluster. &quot;Varia&quot; suggests a variable or rotary index. US1849049A (&quot;Rotary Index,&quot; 1932) and US2026503A (&quot;Card Index Device,&quot; 1935) are candidate patents; the closest date correspondence is US2152606A (&quot;Card Index,&quot; granted March 28, 1939; VARIADEX filed April 7, 1939 — ten days later). 
-</p>
-<p>
-<strong>SCOTTIE</strong> (Reg. 0323202, filed October 8, 1934) — the only Remington Rand trademark from this period without an obvious product category from the name alone. US1973497A (&quot;Loose Leaf Binder,&quot; granted September 11, 1934; SCOTTIE filed October 8, 1934 — 27 days later) is the strongest patent correspondence. The product was likely a branded binder model. 
-</p>
-<p>
---- 
-</p>
-<h2>The Confirmed Pair</h2>
-<p>
-The confirmed correspondence is between US2178457A (&quot;Visible Index,&quot; granted October 31, 1939) and the KARDEX trademark (serial 71426576, filed December 14, 1939): 
-</p>
-<p>
-| Record | Identifier | Date | 
-|---|---|---| 
-| Patent | US2178457A — Visible Index | Granted October 31, 1939 | 
-| Trademark | Serial 71426576 — KARDEX | Filed December 14, 1939 | 
-</p>
-<p>
-The 44-day gap between grant and filing is consistent with a deliberate sequence: patent the mechanism, then register the product name. That Remington Rand had operated commercially under the KARDEX name for years before filing the trademark suggests the 1939 registration was not a product launch but an asset consolidation — securing the name at the same moment the core patents were finalized. This is a different patent-trademark dynamic than the SOUNDEX or VARIADEX pairs, where the trademark closely followed a specific new invention. The KARDEX pair documents what happens at the end of a product's technical development: the company closes out its patent activity and formally registers the commercial identity it had been using all along. 
-</p><div class="sources"><h2>Primary Sources</h2><dl><dt>Trademark</dt><dd>Serial No. 71426576 · KARDEX · Filed 1939-12-14</dd><dt>Patent</dt><dd>US2178457A · Visible Index · Granted 1939-10-31</dd></dl></div></div></div>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/index.html">Entities</a><a href="../matches/index.html">Matches</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="../index.html">Home</a></li><li aria-current="page">Matches</li></ol></nav><div class="page-header"><h1>Confirmed Pairs</h1><div class="subtitle">Radio Pioneers · 3 pairs</div></div><div class="page-body"><div class="match-cards"><div class="match-card"><div class="match-card-thumb-placeholder">STE</div><div class="match-card-body"><div class="match-card-title"><a href="sterilamp-us2168861a.html">STERILAMP ↔ US2168861A</a></div><div class="match-card-meta">Westinghouse Electric and Manufacturing Company <span class="chip-sm">0 yr gap</span></div><div class="match-card-note">STERILAMP trademark ('vacuum or gas-filled tubes employed for the generation of radiations') directly covers the technology in this stroboscopic lamp patent (H01J vacuum tube class); granted 1939-08-08, trademark filed 1939-08-25 — 17-day gap. Represents Westinghouse's UV/germicidal lamp product line commercialized under the STERILAMP brand.</div></div></div><div class="match-card"><div class="match-card-thumb-placeholder">MIN</div><div class="match-card-body"><div class="match-card-title"><a href="minalite-us1829460a.html">MINALITE ↔ US1829460A</a></div><div class="match-card-meta">Westinghouse Electric and Manufacturing Company <span class="chip-sm">0 yr gap</span></div><div class="match-card-note">MINALITE trademark ('incandescent electric lamps') corresponds to this hot cathode electron discharge tube patent (H01J vacuum tube class); granted 1931-10-27, trademark filed 1931-11-11 — 15-day gap. Represents Westinghouse's miniature lamp product line marketed under the MINALITE brand.</div></div></div><div class="match-card"><div class="match-card-thumb-placeholder">VIC</div><div class="match-card-body"><div class="match-card-title"><a href="victor-us1486221a.html">VICTOR ↔ US1486221A</a></div><div class="match-card-meta">Radio Corporation of America <span class="chip-sm">0 yr gap</span></div><div class="match-card-note">VICTOR trademark filed by RCA for 'radio apparatus, parts, and appurtenances—radio receiving sets, loudspeakers' just 28 days after this vacuum tube control patent was granted (H01J). Vacuum tubes were the core component of RCA's VICTOR-branded radio receivers; the 1924 filing date places this at the peak of early commercial radio, when RCA held a near-monopoly on radio set manufacture under its patent pool arrangement with GE and Westinghouse.</div></div></div></div></div>
 <footer class="site-footer">Built with <a href="https://github.com/CosmoGSpacely/markery">Markery</a></footer>
 </body>
 </html>

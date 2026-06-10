@@ -6,6 +6,12 @@
     "excerpt": ""
   },
   {
+    "title": "Entities",
+    "type": "entities_index",
+    "url": "entities/index.html",
+    "excerpt": ""
+  },
+  {
     "title": "Radio Corporation of America",
     "type": "entity",
     "url": "entities/radio-corporation-of-america.html",
@@ -33,6 +39,12 @@
     "title": "De Forest Radio Company",
     "type": "entity",
     "url": "entities/de-forest-radio-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Confirmed Pairs",
+    "type": "matches_index",
+    "url": "matches/index.html",
     "excerpt": ""
   },
   {

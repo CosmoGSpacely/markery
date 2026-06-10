@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SOUNDEX ↔ US1261167A</title>
+<title>Entities — Information Systems — Markery</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -34,6 +34,13 @@ a:hover { color: #8b5e3c; }
   color: #e8dcc8;
   text-decoration: none;
 }
+.site-header nav {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-width: 0;
+}
 .site-header nav a {
   color: #b8a88a;
   text-decoration: none;
@@ -41,6 +48,19 @@ a:hover { color: #8b5e3c; }
   margin-right: 16px;
 }
 .site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  padding: 8px 40px;
+  background: #ede8de;
+  border-bottom: 1px solid #ddd;
+  font-size: .78em;
+}
+.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; }
+.breadcrumb li { color: #888; }
+.breadcrumb li:not(:last-child)::after { content: "›"; margin: 0 8px; color: #b8a88a; }
+.breadcrumb a { color: #5a3e28; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
 
 /* ── Page header ── */
 .page-header {
@@ -149,6 +169,37 @@ a:hover { color: #8b5e3c; }
   flex-direction: column;
   overflow: hidden;
 }
+.card--focus {
+  border: 2px solid #5a3e28;
+  box-shadow: 0 2px 8px rgba(90,62,40,.18);
+}
+.focus-badge {
+  display: inline-block;
+  background: #5a3e28;
+  color: #f5f0e8;
+  font-size: .65em;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-top: 2px;
+  font-family: monospace;
+}
+.research-question {
+  background: #ede8de;
+  border-left: 4px solid #8b5e3c;
+  padding: 16px 20px;
+  margin-bottom: 32px;
+  max-width: 700px;
+}
+.research-question .rq-label {
+  display: block;
+  font-size: .72em;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8b5e3c;
+  margin-bottom: 8px;
+}
+.research-question p { margin-bottom: .7em; }
+.research-question p:last-child { margin-bottom: 0; }
 .card-image {
   width: 100%;
   height: 140px;
@@ -342,9 +393,16 @@ a:hover { color: #8b5e3c; }
 .site-search input[type=search]::placeholder { color: #888; }
 
 /* ── Patent figure (embedded via [[figure:patent_no]]) ── */
-.patent-figure { margin: 24px 0; text-align: center; }
-.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
-.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+.patent-figure { margin: 24px auto; text-align: center; max-width: 600px; border: 1px solid #d4c9b0; border-radius: 4px; padding: 8px; }
+.patent-figure img { max-width: 100%; background: #faf8f4; display: block; margin: 0 auto; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+
+/* ── Blockquotes ── */
+blockquote { border-left: 3px solid #b8a88a; margin: 16px 0; padding: 8px 16px; color: #555; font-style: italic; }
+blockquote p { margin: 0; }
+
+/* ── Small chip (inline stat tags) ── */
+.chip-sm { font-size: .75em; background: #e8dcc8; border-radius: 3px; padding: 1px 6px; color: #5a3e28; white-space: nowrap; }
 
 /* ── Site footer ── */
 .site-footer {
@@ -356,77 +414,8 @@ a:hover { color: #8b5e3c; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
-<div class="page-header"><h1>SOUNDEX ↔ US1261167A</h1><div class="subtitle">Confirmed patent-trademark pair · Information Systems</div><div class="stat-chips"><span class="chip">Remington Rand</span><span class="chip">Patent 1918-04-02</span><span class="chip">Mark filed 1927-03-31</span></div></div><div class="page-body"><div class="essay"><div class="essay-media"><div><img src="../images/marks/71246709.png" alt="SOUNDEX"><div class="media-label">SOUNDEX · Serial 71246709</div></div></div><h2>The Soundex Marks: Rand Kardex Bureau and the Commercialization of Phonetic Indexing</h2>
-<h2>The Two Marks</h2>
-<p>
-The USPTO trademark record contains two design marks bearing the SOUNDEX name, both filed in 1927 by <strong>Rand Kardex Bureau, Inc.</strong> of Tonawanda, New York. 
-</p>
-<p>
-| Serial | Mark | Filed | First Use | Reg. | File | 
-|---|---|---|---|---|---| 
-| 71246709 | SOUNDEX | March 31, 1927 | August 10, 1926 | 230958 | File Repository (Franconia) | 
-| 71255821 | SOUNDEX QUICK AS A FLASH | October 8, 1927 | May 31, 1927 | 247084 | FILE DESTROYED | 
-</p>
-<p>
-Both covered identical goods: *&quot;blank and partially-printed cards and forms for indexes, indexes consisting of blank or partially-printed forms or cards, index guide cards and separator cards of the type used for phonetic indexes, and frames and holders for index cards.&quot;* 
-</p>
-<p>
-The first-use date for SOUNDEX — August 10, 1926 — establishes that Rand Kardex was selling phonetic index products eight months before filing the trademark. SOUNDEX QUICK AS A FLASH followed seven months after the first filing, its first use dated May 31, 1927, roughly concurrent with the Remington Rand merger described below. 
-</p>
-<p>
---- 
-</p>
-<h2>The Soundex System</h2>
-<p>
-The Soundex phonetic coding algorithm was patented twice, both times assigned to the Remington Typewriter Company: 
-</p>
-<p>
-- <strong>Robert C. Russell</strong>, U.S. Patent 1,261,167 (filed August 1, 1916; granted April 2, 1918) 
-- <strong>Margaret K. Odell</strong>, U.S. Patent 1,435,663 (filed December 19, 1921; granted November 14, 1922) 
-</p>
-<p>
-The system reduced any surname to a one-letter, three-digit code based on consonant sounds, discarding vowels and collapsing phonetically equivalent consonants. *Smith*, *Smyth*, and *Smythe* all encode to <strong>S530</strong>. *Johnson* and *Jonson* both yield <strong>J525</strong>. The result was a filing system where a clerk could locate a record without knowing the exact spelling of a name — only its approximate sound. 
-</p>
-<p>
-The commercial logic was clear: American offices in the 1920s were managing vast quantities of personnel records, customer accounts, and correspondence, much of it indexed by surname. Spelling variation was endemic, particularly in records involving immigrant names transcribed by ear. A phonetic index collapsed that variation into a single lookup. 
-</p>
-<p>
---- 
-</p>
-<h2>Rand Kardex Bureau and the Remington Rand Merger</h2>
-<p>
-Rand Kardex Bureau, Inc. was a subsidiary of the <strong>Rand Corporation</strong> — not the Cold War think tank but the earlier business machine company founded by James Rand Sr. The Kardex line was a visible filing system: cards were arranged in overlapping trays so that a portion of each card remained visible without removal, allowing rapid scanning of large indexes. The Kardex design was itself a major commercial innovation in office organization, and Rand had acquired the rights to it by the mid-1920s. 
-</p>
-<p>
-The timing of these trademark filings is not incidental. In <strong>1927</strong> — the same year both SOUNDEX marks were filed — the Rand Corporation merged with the Remington Typewriter Company to form <strong>Remington Rand, Inc.</strong> The Soundex patents had been Remington's property since 1918 and 1922. The Rand Kardex Bureau filings in early and late 1927 represent the moment when the algorithm's patent-holder and the filing-system manufacturer were consolidating into the same corporate entity. Rand Kardex was, in effect, trademarking a product line built on patents it was about to inherit through merger. 
-</p>
-<p>
-After the merger, the SOUNDEX mark passed to <strong>Kardex Systems, Inc.</strong>, Marietta, Ohio — a successor entity that continued the visible filing and indexing business as Remington Rand reorganized. Kardex Systems held the mark until its expiration. 
-</p>
-<p>
---- 
-</p>
-<h2>The Two Marks as Design Documents</h2>
-<p>
-The design contrast between the two marks is itself informative. 
-</p>
-<p>
-The <strong>SOUNDEX</strong> wordmark (Reg. 230958) is a straightforward italic serif — confident, institutional, consistent with how a business products company would present a technical system to office managers and purchasing agents. It reads as precision equipment, not consumer goods. 
-</p>
-<p>
-The <strong>SOUNDEX QUICK AS A FLASH</strong> mark (Reg. 247084) is something different: a bold script letterform bisected by a large lightning bolt, with smaller bolts below and the tagline *&quot;quick as a Flash&quot;* in cursive. The visual language is speed, electricity, modernity — the same idiom appearing on radio advertisements and automobile promotions of the period. Filing the second mark seven months after the first suggests Rand Kardex tested two positioning strategies simultaneously: one technical, one aspirational. The lightning bolt mark was almost certainly aimed at the purchasing decision-maker who needed to sell the system internally, not just the clerk who would use it. 
-</p>
-<p>
---- 
-</p>
-<h2>The Soundex System After 1927</h2>
-<p>
-The most consequential deployment of the Soundex algorithm came not from Rand Kardex but from the federal government. Beginning in the late 1930s, the <strong>Works Progress Administration (WPA)</strong> employed workers to create Soundex indexes for the <strong>1880, 1900, 1910, and 1920 U.S. Census records</strong>, and later for the 1930 census. These indexes were created to support Social Security Administration lookups — workers needed to prove their age and citizenship to claim benefits, and census records were the primary documentary evidence. 
-</p>
-<p>
-The WPA Soundex index cards — phonetically coded, hand-written, filed in the same style of overlapping-tray systems that Rand Kardex commercialized — became one of the most heavily used genealogical resources in American history. A researcher today looking up a great-grandparent in the 1920 census navigates a system whose commercial form was trademarked by Rand Kardex Bureau on March 31, 1927. 
-</p><div class="sources"><h2>Primary Sources</h2><dl><dt>Trademark</dt><dd>Serial No. 71246709 · SOUNDEX · Filed 1927-03-31</dd><dt>Patent</dt><dd>US1261167A · Index · Granted 1918-04-02</dd></dl></div></div></div>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/index.html">Entities</a><a href="../matches/index.html">Matches</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="../index.html">Home</a></li><li aria-current="page">Entities</li></ol></nav><div class="page-header"><h1>Entities</h1><div class="subtitle">Information Systems · 4 entities</div></div><div class="page-body"><div class="entity-grid"><div class="entity-card"><h3><a href="remington-rand.html">Remington Rand</a></h3><div class="entity-meta">office-systems · manufacturer</div><div class="entity-stats"><span><span class="stat-val">15</span> marks</span><span><span class="stat-val">820</span> patents</span><span><span class="stat-val">5</span> confirmed</span></div></div><div class="entity-card"><h3><a href="wilson-jones.html">Wilson Jones</a></h3><div class="entity-meta">office-systems · manufacturer</div><div class="entity-stats"><span><span class="stat-val">6</span> marks</span><span><span class="stat-val">132</span> patents</span><span><span class="stat-val">2</span> confirmed</span></div></div><div class="entity-card"><h3><a href="yawman-and-erbe.html">Yawman &amp; Erbe</a></h3><div class="entity-meta">office-systems · manufacturer</div><div class="entity-stats"><span><span class="stat-val">3</span> marks</span><span><span class="stat-val">67</span> patents</span><span><span class="stat-val">1</span> confirmed</span></div></div><div class="entity-card"><h3><a href="boorum-and-pease.html">Boorum &amp; Pease</a></h3><div class="entity-meta">blank-books · manufacturer</div><div class="entity-stats"><span><span class="stat-val">3</span> marks</span><span><span class="stat-val">38</span> patents</span><span><span class="stat-val">0</span> confirmed</span></div></div></div></div>
 <footer class="site-footer">Built with <a href="https://github.com/CosmoGSpacely/markery">Markery</a></footer>
 </body>
 </html>

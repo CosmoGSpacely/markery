@@ -34,6 +34,13 @@ a:hover { color: #8b5e3c; }
   color: #e8dcc8;
   text-decoration: none;
 }
+.site-header nav {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-width: 0;
+}
 .site-header nav a {
   color: #b8a88a;
   text-decoration: none;
@@ -41,6 +48,19 @@ a:hover { color: #8b5e3c; }
   margin-right: 16px;
 }
 .site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  padding: 8px 40px;
+  background: #ede8de;
+  border-bottom: 1px solid #ddd;
+  font-size: .78em;
+}
+.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; }
+.breadcrumb li { color: #888; }
+.breadcrumb li:not(:last-child)::after { content: "›"; margin: 0 8px; color: #b8a88a; }
+.breadcrumb a { color: #5a3e28; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
 
 /* ── Page header ── */
 .page-header {
@@ -165,10 +185,18 @@ a:hover { color: #8b5e3c; }
 }
 .research-question {
   background: #ede8de;
-  border-left: 3px solid #5a3e28;
-  padding: 18px 22px;
+  border-left: 4px solid #8b5e3c;
+  padding: 16px 20px;
   margin-bottom: 32px;
   max-width: 700px;
+}
+.research-question .rq-label {
+  display: block;
+  font-size: .72em;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8b5e3c;
+  margin-bottom: 8px;
 }
 .research-question p { margin-bottom: .7em; }
 .research-question p:last-child { margin-bottom: 0; }
@@ -365,9 +393,16 @@ a:hover { color: #8b5e3c; }
 .site-search input[type=search]::placeholder { color: #888; }
 
 /* ── Patent figure (embedded via [[figure:patent_no]]) ── */
-.patent-figure { margin: 24px 0; text-align: center; }
-.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
-.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+.patent-figure { margin: 24px auto; text-align: center; max-width: 600px; border: 1px solid #d4c9b0; border-radius: 4px; padding: 8px; }
+.patent-figure img { max-width: 100%; background: #faf8f4; display: block; margin: 0 auto; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+
+/* ── Blockquotes ── */
+blockquote { border-left: 3px solid #b8a88a; margin: 16px 0; padding: 8px 16px; color: #555; font-style: italic; }
+blockquote p { margin: 0; }
+
+/* ── Small chip (inline stat tags) ── */
+.chip-sm { font-size: .75em; background: #e8dcc8; border-radius: 3px; padding: 1px 6px; color: #5a3e28; white-space: nowrap; }
 
 /* ── Site footer ── */
 .site-footer {
@@ -379,8 +414,8 @@ a:hover { color: #8b5e3c; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="index.html">Markery Research</a><nav><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a><a href="entities/radio-corporation-of-america.html">Radio Corporation of America</a><a href="entities/westinghouse-electric-and-manufacturing-company.html">Westinghouse Electric and Manufacturing Company</a><a href="entities/atwater-kent-manufacturing-company.html">Atwater Kent Manufacturing Company</a><a href="entities/zenith-radio-corporation.html">Zenith Radio Corporation</a><a href="entities/de-forest-radio-company.html">De Forest Radio Company</a><a href="search.html">Search</a></nav><form class="site-search" action="search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
-<div class="page-header"><h1>Radio Pioneers</h1><div class="subtitle">USPTO Patent-Trademark Research Project · 1900–1939</div><div class="stat-chips"><span class="chip">5 entities</span><span class="chip">25 marks</span><span class="chip">1873 patents</span><span class="chip">3 confirmed pairs</span></div></div><div class="page-body"><div class="narrative"><p style="color:#999;font-style:italic">Narrative not yet written. See <code>index-narrative.md</code> for the content schema.</p></div><p class="section-title">Confirmed Pairs</p><div class="match-cards"><div class="match-card"><div class="match-card-thumb-placeholder">STE</div><div class="match-card-body"><div class="match-card-title">STERILAMP ↔ US2168861A</div><div class="match-card-meta">Westinghouse Electric and Manufacturing Company · Patent 1939-08-08 · Mark filed 1939-08-25</div><div class="match-card-note">STERILAMP trademark ('vacuum or gas-filled tubes employed for the generation of radiations') directly covers the technology in this stroboscopic lamp patent (H01J vacuum tube class); granted 1939-08-08, trademark filed 1939-08-25 — 17-day gap. Represents Westinghouse's UV/germicidal lamp product line commercialized under the STERILAMP brand.</div><a href="matches/sterilamp-us2168861a.html">Read essay →</a></div></div><div class="match-card"><div class="match-card-thumb-placeholder">MIN</div><div class="match-card-body"><div class="match-card-title">MINALITE ↔ US1829460A</div><div class="match-card-meta">Westinghouse Electric and Manufacturing Company · Patent 1931-10-27 · Mark filed 1931-11-11</div><div class="match-card-note">MINALITE trademark ('incandescent electric lamps') corresponds to this hot cathode electron discharge tube patent (H01J vacuum tube class); granted 1931-10-27, trademark filed 1931-11-11 — 15-day gap. Represents Westinghouse's miniature lamp product line marketed under the MINALITE brand.</div><a href="matches/minalite-us1829460a.html">Read essay →</a></div></div><div class="match-card"><div class="match-card-thumb-placeholder">VIC</div><div class="match-card-body"><div class="match-card-title">VICTOR ↔ US1486221A</div><div class="match-card-meta">Radio Corporation of America · Patent 1924-03-11 · Mark filed 1924-04-08</div><div class="match-card-note">VICTOR trademark filed by RCA for 'radio apparatus, parts, and appurtenances—radio receiving sets, loudspeakers' just 28 days after this vacuum tube control patent was granted (H01J). Vacuum tubes were the core component of RCA's VICTOR-branded radio receivers; the 1924 filing date places this at the peak of early commercial radio, when RCA held a near-monopoly on radio set manufacture under its patent pool arrangement with GE and Westinghouse.</div><a href="matches/victor-us1486221a.html">Read essay →</a></div></div></div><p class="section-title">Entities</p><div class="entity-grid"><div class="entity-card"><h3><a href="entities/radio-corporation-of-america.html">Radio Corporation of America</a></h3><div class="entity-meta">radio · manufacturer</div><div class="entity-stats"><span><span class="stat-val">4</span> marks</span><span><span class="stat-val">1254</span> patents</span><span><span class="stat-val">1</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div><div class="entity-card"><h3><a href="entities/westinghouse-electric-and-manufacturing-company.html">Westinghouse Electric and Manufacturing Company</a></h3><div class="entity-meta">radio · manufacturer</div><div class="entity-stats"><span><span class="stat-val">14</span> marks</span><span><span class="stat-val">563</span> patents</span><span><span class="stat-val">2</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div><div class="entity-card"><h3><a href="entities/atwater-kent-manufacturing-company.html">Atwater Kent Manufacturing Company</a></h3><div class="entity-meta">radio · manufacturer</div><div class="entity-stats"><span><span class="stat-val">0</span> marks</span><span><span class="stat-val">20</span> patents</span><span><span class="stat-val">0</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div><div class="entity-card"><h3><a href="entities/zenith-radio-corporation.html">Zenith Radio Corporation</a></h3><div class="entity-meta">radio · manufacturer</div><div class="entity-stats"><span><span class="stat-val">7</span> marks</span><span><span class="stat-val">0</span> patents</span><span><span class="stat-val">0</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div><div class="entity-card"><h3><a href="entities/de-forest-radio-company.html">De Forest Radio Company</a></h3><div class="entity-meta">radio · manufacturer</div><div class="entity-stats"><span><span class="stat-val">0</span> marks</span><span><span class="stat-val">36</span> patents</span><span><span class="stat-val">0</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div></div></div>
+<header class="site-header"><a class="site-title" href="index.html">Markery Research</a><nav><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a><a href="entities/index.html">Entities</a><a href="matches/index.html">Matches</a><a href="search.html">Search</a></nav><form class="site-search" action="search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<div class="page-header"><h1>Radio Pioneers</h1><div class="subtitle">USPTO Patent-Trademark Research Project · 1900–1939</div><div class="stat-chips"><span class="chip">5 entities</span><span class="chip">25 marks</span><span class="chip">1873 patents</span><span class="chip">3 confirmed pairs</span></div></div><div class="page-body"><p class="section-title">Confirmed Pairs</p><div class="match-cards"><div class="match-card"><div class="match-card-thumb-placeholder">STE</div><div class="match-card-body"><div class="match-card-title">STERILAMP ↔ US2168861A</div><div class="match-card-meta">Westinghouse Electric and Manufacturing Company · Patent 1939-08-08 · Mark filed 1939-08-25 <span class="chip-sm">0 yr gap</span></div><div class="match-card-note">STERILAMP trademark ('vacuum or gas-filled tubes employed for the generation of radiations') directly covers the technology in this stroboscopic lamp patent (H01J vacuum tube class); granted 1939-08-08, trademark filed 1939-08-25 — 17-day gap. Represents Westinghouse's UV/germicidal lamp product line commercialized under the STERILAMP brand.</div><a href="matches/sterilamp-us2168861a.html">Read essay →</a></div></div><div class="match-card"><div class="match-card-thumb-placeholder">MIN</div><div class="match-card-body"><div class="match-card-title">MINALITE ↔ US1829460A</div><div class="match-card-meta">Westinghouse Electric and Manufacturing Company · Patent 1931-10-27 · Mark filed 1931-11-11 <span class="chip-sm">0 yr gap</span></div><div class="match-card-note">MINALITE trademark ('incandescent electric lamps') corresponds to this hot cathode electron discharge tube patent (H01J vacuum tube class); granted 1931-10-27, trademark filed 1931-11-11 — 15-day gap. Represents Westinghouse's miniature lamp product line marketed under the MINALITE brand.</div><a href="matches/minalite-us1829460a.html">Read essay →</a></div></div><div class="match-card"><div class="match-card-thumb-placeholder">VIC</div><div class="match-card-body"><div class="match-card-title">VICTOR ↔ US1486221A</div><div class="match-card-meta">Radio Corporation of America · Patent 1924-03-11 · Mark filed 1924-04-08 <span class="chip-sm">0 yr gap</span></div><div class="match-card-note">VICTOR trademark filed by RCA for 'radio apparatus, parts, and appurtenances—radio receiving sets, loudspeakers' just 28 days after this vacuum tube control patent was granted (H01J). Vacuum tubes were the core component of RCA's VICTOR-branded radio receivers; the 1924 filing date places this at the peak of early commercial radio, when RCA held a near-monopoly on radio set manufacture under its patent pool arrangement with GE and Westinghouse.</div><a href="matches/victor-us1486221a.html">Read essay →</a></div></div></div><p class="section-title">Entities</p><div class="entity-grid"><div class="entity-card"><h3><a href="entities/radio-corporation-of-america.html">Radio Corporation of America</a></h3><div class="entity-meta">radio · manufacturer</div><div class="entity-stats"><span><span class="stat-val">4</span> marks</span><span><span class="stat-val">1254</span> patents</span><span><span class="stat-val">1</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div><div class="entity-card"><h3><a href="entities/westinghouse-electric-and-manufacturing-company.html">Westinghouse Electric and Manufacturing Company</a></h3><div class="entity-meta">radio · manufacturer</div><div class="entity-stats"><span><span class="stat-val">14</span> marks</span><span><span class="stat-val">563</span> patents</span><span><span class="stat-val">2</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div><div class="entity-card"><h3><a href="entities/atwater-kent-manufacturing-company.html">Atwater Kent Manufacturing Company</a></h3><div class="entity-meta">radio · manufacturer</div><div class="entity-stats"><span><span class="stat-val">0</span> marks</span><span><span class="stat-val">20</span> patents</span><span><span class="stat-val">0</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div><div class="entity-card"><h3><a href="entities/zenith-radio-corporation.html">Zenith Radio Corporation</a></h3><div class="entity-meta">radio · manufacturer</div><div class="entity-stats"><span><span class="stat-val">7</span> marks</span><span><span class="stat-val">0</span> patents</span><span><span class="stat-val">0</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div><div class="entity-card"><h3><a href="entities/de-forest-radio-company.html">De Forest Radio Company</a></h3><div class="entity-meta">radio · manufacturer</div><div class="entity-stats"><span><span class="stat-val">0</span> marks</span><span><span class="stat-val">36</span> patents</span><span><span class="stat-val">0</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div></div></div>
 <footer class="site-footer">Built with <a href="https://github.com/CosmoGSpacely/markery">Markery</a></footer>
 </body>
 </html>

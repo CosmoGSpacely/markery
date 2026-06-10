@@ -6,6 +6,12 @@
     "excerpt": "About This Project The information-systems project cross-references the USPTO patent record with the USPTO trademark filing record for four companies that dominated the American office-filing market b"
   },
   {
+    "title": "Entities",
+    "type": "entities_index",
+    "url": "entities/index.html",
+    "excerpt": ""
+  },
+  {
     "title": "Remington Rand",
     "type": "entity",
     "url": "entities/remington-rand.html",
@@ -28,6 +34,12 @@
     "type": "entity",
     "url": "entities/boorum-and-pease.html",
     "excerpt": "Boorum & Pease Historical Identity Boorum & Pease Company of New York was one of the leading manufacturers of blank books in the American market during the late nineteenth and early twentieth centurie"
+  },
+  {
+    "title": "Confirmed Pairs",
+    "type": "matches_index",
+    "url": "matches/index.html",
+    "excerpt": ""
   },
   {
     "title": "SOUNDEX ↔ US1261167A",

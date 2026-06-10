@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>STERILAMP ↔ US2168861A</title>
+<title>STERILAMP ↔ US2168861A — Radio Pioneers — Markery</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -34,6 +34,13 @@ a:hover { color: #8b5e3c; }
   color: #e8dcc8;
   text-decoration: none;
 }
+.site-header nav {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-width: 0;
+}
 .site-header nav a {
   color: #b8a88a;
   text-decoration: none;
@@ -41,6 +48,19 @@ a:hover { color: #8b5e3c; }
   margin-right: 16px;
 }
 .site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  padding: 8px 40px;
+  background: #ede8de;
+  border-bottom: 1px solid #ddd;
+  font-size: .78em;
+}
+.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; }
+.breadcrumb li { color: #888; }
+.breadcrumb li:not(:last-child)::after { content: "›"; margin: 0 8px; color: #b8a88a; }
+.breadcrumb a { color: #5a3e28; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
 
 /* ── Page header ── */
 .page-header {
@@ -165,10 +185,18 @@ a:hover { color: #8b5e3c; }
 }
 .research-question {
   background: #ede8de;
-  border-left: 3px solid #5a3e28;
-  padding: 18px 22px;
+  border-left: 4px solid #8b5e3c;
+  padding: 16px 20px;
   margin-bottom: 32px;
   max-width: 700px;
+}
+.research-question .rq-label {
+  display: block;
+  font-size: .72em;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8b5e3c;
+  margin-bottom: 8px;
 }
 .research-question p { margin-bottom: .7em; }
 .research-question p:last-child { margin-bottom: 0; }
@@ -365,9 +393,16 @@ a:hover { color: #8b5e3c; }
 .site-search input[type=search]::placeholder { color: #888; }
 
 /* ── Patent figure (embedded via [[figure:patent_no]]) ── */
-.patent-figure { margin: 24px 0; text-align: center; }
-.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
-.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+.patent-figure { margin: 24px auto; text-align: center; max-width: 600px; border: 1px solid #d4c9b0; border-radius: 4px; padding: 8px; }
+.patent-figure img { max-width: 100%; background: #faf8f4; display: block; margin: 0 auto; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+
+/* ── Blockquotes ── */
+blockquote { border-left: 3px solid #b8a88a; margin: 16px 0; padding: 8px 16px; color: #555; font-style: italic; }
+blockquote p { margin: 0; }
+
+/* ── Small chip (inline stat tags) ── */
+.chip-sm { font-size: .75em; background: #e8dcc8; border-radius: 3px; padding: 1px 6px; color: #5a3e28; white-space: nowrap; }
 
 /* ── Site footer ── */
 .site-footer {
@@ -379,28 +414,19 @@ a:hover { color: #8b5e3c; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/radio-corporation-of-america.html">Radio Corporation of America</a><a href="../entities/westinghouse-electric-and-manufacturing-company.html">Westinghouse Electric and Manufacturing Company</a><a href="../entities/atwater-kent-manufacturing-company.html">Atwater Kent Manufacturing Company</a><a href="../entities/zenith-radio-corporation.html">Zenith Radio Corporation</a><a href="../entities/de-forest-radio-company.html">De Forest Radio Company</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
-<div class="page-header"><h1>STERILAMP ↔ US2168861A</h1><div class="subtitle">Confirmed patent-trademark pair · Radio Pioneers</div><div class="stat-chips"><span class="chip">Westinghouse Electric and Manufacturing Company</span><span class="chip">Patent 1939-08-08</span><span class="chip">Mark filed 1939-08-25</span></div></div><div class="page-body"><div class="essay"><p>
---- 
-title: &quot;STERILAMP — US2168861A&quot; 
-trademark_serial: 71423019 
-trademark: &quot;STERILAMP&quot; 
-tm_filing_dt: &quot;1939-08-25&quot; 
-tm_reg_no: &quot;0375857&quot; 
-tm_owner: &quot;WESTINGHOUSE ELECTRIC &amp; MANUFACTURING COMPANY&quot; 
-patent_no: &quot;US2168861A&quot; 
-patent_grant_dt: &quot;1939-08-08&quot; 
-patent_assignee: &quot;WESTINGHOUSE ELECTRIC &amp; MFG CO&quot; 
-entity: &quot;Westinghouse Electric and Manufacturing Company&quot; 
-date_gap: &quot;0.0 years&quot; 
---- 
-</p>
-<h2>Primary Sources</h2>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/index.html">Entities</a><a href="../matches/index.html">Matches</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="../index.html">Home</a></li><li><a href="index.html">Matches</a></li><li aria-current="page">STERILAMP ↔ US2168861A</li></ol></nav><div class="page-header"><h1>STERILAMP ↔ US2168861A</h1><div class="subtitle">Confirmed patent-trademark pair · Radio Pioneers</div><div class="stat-chips"><span class="chip"><a href="../entities/westinghouse-electric-and-manufacturing-company.html">Filed by: Westinghouse Electric and Manufacturing Company</a></span><span class="chip">Patent 1939-08-08</span><span class="chip">Mark filed 1939-08-25</span></div></div><div class="page-body"><div class="essay"><h2>Primary Sources</h2>
+<ul>
+<li>USPTO Trademark Serial No. 71423019 — <a href="https://tsdr.uspto.gov/#caseNumber=71423019&caseType=SERIAL_NO&searchType=statusSearch" target="_blank" rel="noopener">STERILAMP</a></li>
+</ul>
 <p>
-- USPTO Trademark Serial No. 71423019 — [STERILAMP](https://tsdr.uspto.gov/#caseNumber=71423019&amp;caseType=SERIAL_NO&amp;searchType=statusSearch) 
   - Filed: 1939-08-25  ·  Registered: 0375857  ·  Owner: WESTINGHOUSE ELECTRIC &amp; MANUFACTURING COMPANY 
   - Goods and services: VACUUM OR GAS-FILLED TUBES EMPLOYED FOR THE GENERATION OF RADIATIONS FOR HASTENING THE TENDERIZATION OF MEAT, IN SHOWCASES AND DOMESTIC REFRIGERATORS … 
-- US Patent US2168861A — [Stroboscopic Lamp](https://patents.google.com/patent/2168861) 
+</p>
+<ul>
+<li>US Patent US2168861A — <a href="https://patents.google.com/patent/2168861" target="_blank" rel="noopener">Stroboscopic Lamp</a></li>
+</ul>
+<p>
   - Applied: 1934-06-30  ·  Granted: 1939-08-08  ·  Assignee: WESTINGHOUSE ELECTRIC &amp; MFG CO 
 </p>
 <h2>The Invention</h2>

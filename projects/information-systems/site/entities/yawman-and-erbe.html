@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Yawman &amp;amp; Erbe</title>
+<title>Yawman &amp; Erbe — Information Systems — Markery</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -34,6 +34,13 @@ a:hover { color: #8b5e3c; }
   color: #e8dcc8;
   text-decoration: none;
 }
+.site-header nav {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-width: 0;
+}
 .site-header nav a {
   color: #b8a88a;
   text-decoration: none;
@@ -41,6 +48,19 @@ a:hover { color: #8b5e3c; }
   margin-right: 16px;
 }
 .site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  padding: 8px 40px;
+  background: #ede8de;
+  border-bottom: 1px solid #ddd;
+  font-size: .78em;
+}
+.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; }
+.breadcrumb li { color: #888; }
+.breadcrumb li:not(:last-child)::after { content: "›"; margin: 0 8px; color: #b8a88a; }
+.breadcrumb a { color: #5a3e28; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
 
 /* ── Page header ── */
 .page-header {
@@ -165,10 +185,18 @@ a:hover { color: #8b5e3c; }
 }
 .research-question {
   background: #ede8de;
-  border-left: 3px solid #5a3e28;
-  padding: 18px 22px;
+  border-left: 4px solid #8b5e3c;
+  padding: 16px 20px;
   margin-bottom: 32px;
   max-width: 700px;
+}
+.research-question .rq-label {
+  display: block;
+  font-size: .72em;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8b5e3c;
+  margin-bottom: 8px;
 }
 .research-question p { margin-bottom: .7em; }
 .research-question p:last-child { margin-bottom: 0; }
@@ -365,9 +393,16 @@ a:hover { color: #8b5e3c; }
 .site-search input[type=search]::placeholder { color: #888; }
 
 /* ── Patent figure (embedded via [[figure:patent_no]]) ── */
-.patent-figure { margin: 24px 0; text-align: center; }
-.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
-.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+.patent-figure { margin: 24px auto; text-align: center; max-width: 600px; border: 1px solid #d4c9b0; border-radius: 4px; padding: 8px; }
+.patent-figure img { max-width: 100%; background: #faf8f4; display: block; margin: 0 auto; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+
+/* ── Blockquotes ── */
+blockquote { border-left: 3px solid #b8a88a; margin: 16px 0; padding: 8px 16px; color: #555; font-style: italic; }
+blockquote p { margin: 0; }
+
+/* ── Small chip (inline stat tags) ── */
+.chip-sm { font-size: .75em; background: #e8dcc8; border-radius: 3px; padding: 1px 6px; color: #5a3e28; white-space: nowrap; }
 
 /* ── Site footer ── */
 .site-footer {
@@ -379,8 +414,8 @@ a:hover { color: #8b5e3c; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/remington-rand.html">Remington Rand</a><a href="../entities/wilson-jones.html">Wilson Jones</a><a href="../entities/yawman-and-erbe.html">Yawman &amp; Erbe</a><a href="../entities/boorum-and-pease.html">Boorum &amp; Pease</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
-<div class="page-header"><h1>Yawman &amp; Erbe</h1><div class="subtitle">office-systems · manufacturer</div><div class="stat-chips"><span class="chip">3 marks</span><span class="chip">67 patents</span><span class="chip">1 confirmed</span><span class="chip">1902–1939</span></div></div><div class="page-body"><div class="narrative"><h2>Yawman &amp; Erbe</h2>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/index.html">Entities</a><a href="../matches/index.html">Matches</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="../index.html">Home</a></li><li><a href="index.html">Entities</a></li><li aria-current="page">Yawman &amp; Erbe</li></ol></nav><div class="page-header"><h1>Yawman &amp; Erbe</h1><div class="subtitle">office-systems · manufacturer</div><div class="stat-chips"><span class="chip">3 marks</span><span class="chip">67 patents</span><span class="chip">1 confirmed</span><span class="chip">1902–1939</span></div></div><div class="page-body"><div class="narrative"><h2>Yawman &amp; Erbe</h2>
 <h2>Historical Identity</h2>
 <p>
 Yawman &amp; Erbe Mfg. Co. of Rochester, New York was one of the earliest American manufacturers of vertical filing equipment. Founded in the 1890s, the company developed filing cabinets, file guides, and associated equipment in the period when the vertical filing system was displacing older flat-file and pigeon-hole office furniture. By the early twentieth century, Yawman &amp; Erbe was a recognized name in the American office-supply trade, with a patent record extending from 1902 through the research period. 
@@ -407,7 +442,7 @@ Yawman &amp; Erbe is the project's example of a filing-equipment manufacturer wi
 </p>
 <p>
 The January–February 1930 cluster of three trademark filings, combined with the December 1929 patent grant, documents a six-week period of intellectual property activity at Yawman &amp; Erbe: one patent issued, three trademarks filed. This compressed timeline suggests deliberate portfolio management at the turn of the decade, consistent with the behavior seen at Wilson Jones in September 1927 and at Remington Rand in 1939. 
-</p><table><thead><tr><th>Name variant</th><th>Source</th></tr></thead><tbody><tr><td>YAWMAN &amp; ERBE MFG CO</td><td>patent_assignee</td></tr><tr><td>YAWMAN &amp; ERBE MFG CO [US]</td><td>patent_assignee</td></tr><tr><td>YAWMAN AND ERBE MFG COMPANY [US]</td><td>patent_assignee</td></tr><tr><td>YAWMAN AND ERBE MFG. CO.</td><td>trademark_owner</td></tr></tbody></table><p><a href="../trademarks.html">Trademark gallery →</a> &nbsp; <a href="../patents.html">Patent gallery →</a></p></div></div>
+</p><table><thead><tr><th>Name variant</th><th>Source</th></tr></thead><tbody><tr><td>YAWMAN &amp; ERBE MFG CO</td><td>patent_assignee</td></tr><tr><td>YAWMAN &amp; ERBE MFG CO [US]</td><td>patent_assignee</td></tr><tr><td>YAWMAN AND ERBE MFG COMPANY [US]</td><td>patent_assignee</td></tr><tr><td>YAWMAN AND ERBE MFG. CO.</td><td>trademark_owner</td></tr></tbody></table><h2>Confirmed Pairs</h2><p>No confirmed pairs yet.</p><p><a href="../trademarks.html">Trademark gallery →</a> &nbsp; <a href="../patents.html">Patent gallery →</a></p></div></div>
 <footer class="site-footer">Built with <a href="https://github.com/CosmoGSpacely/markery">Markery</a></footer>
 </body>
 </html>

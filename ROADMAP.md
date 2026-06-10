@@ -344,6 +344,19 @@ Results 2026-06-10: 8a — added `_page_title(page, project)` → `"[Page] — [
 
 Run `markery site build` for all three existing projects in sequence: radio-pioneers, information-systems, animal-marks-1930. All must exit 0. Any regression introduced by Groups 1–8 is a blocker; fix before marking P1 PASSED.
 
+Results 2026-06-10: All three built via `markery site build <project>` (CLI, no bypass for the build itself), all exit 0 — radio-pioneers 14 pages, information-systems 18, animal-marks-1930 27, each now including the new `entities/index.html` and `matches/index.html` section pages. Run under `MARKERY_MODEL=claude-haiku-4-5-20251001` with `MARKERY_TOKEN_LOG` set.
+
+**Token usage / cost (Haiku):** 0 tokens, **$0.00**. The token log was empty after all three builds. Finding: the publisher/site path is fully deterministic — it renders HTML from the DuckDB databases and makes no `messages.create` calls, so the model selection had no effect. Tokens are only consumed by the historian (`card --infer`, `draft`) and librarian (`extract`) LLM steps, none of which Group 9 invokes. A per-build cost baseline for site generation is therefore $0 by construction.
+
+**Link integrity (the review concern "you render links to assets you haven't built"):** clean. An audit script resolved every internal `href`/`img src` across all three sites — 803 internal links, **0 broken** (3 apparent hits were the search-page JavaScript template literal `' + p.url + '`, not real links).
+
+**CLI gaps and bypasses found (the report you asked for):**
+- *Bypass — link audit (D063 filed).* No `markery site check`/`verify` command exists, so the link/asset audit was an ad-hoc Python script reading the built HTML directly. Reading generated site output is not a project-state CLI-first violation (the rule governs DB/CSV/JSONL project state, not build artifacts), but the absence of a validator command is the gap. Proposed: `markery site check <project>` that resolves links, reports orphans, and exits non-zero on breakage.
+- *Bypass — token inspection (D059, already filed).* No `markery tokens report`; confirmed the log empty with a raw `cat`/`wc`. (Moot here since usage was 0, but it is the command that would have surfaced that automatically.)
+- *Build gap — stale output not pruned (D064 filed).* `markery site build` never cleans `site/` before writing, so the match-slug change (`<trademark>` → `<trademark>-<patent_no>`) left 10 orphaned dead pages on disk (radio-pioneers 3, information-systems 7; animal-marks-1930 clean). They were unlinked (audit passed) but committed. Removed by hand this phase; systemic fix deferred to D064.
+
+P1 is complete: Groups 1–9 done, plus the mid-phase restructure (render.py decomposed into a `render/` package; real Entities/Matches index pages built so breadcrumbs and nav point at pages the build actually emits). Full suite 633 passing.
+
 ---
 
 ### P2 — Rigor hardening (token-efficiency and model definition)
@@ -424,7 +437,7 @@ Mack Trucks is already entity_id 13 in the project with variants `MACK TRUCKS, I
 
 ### Phase Gate
 
-P1 PASSED when: frontmatter stripping bug fixed in essays and search excerpts; Markdown parser supports unordered lists, ordered lists, blockquotes, and external links; patent figures auto-embed when figure data is available and `[[figure:]]` tag is absent from essay; match essays link to entity pages; entity pages show enriched confirmed-pair cards (name, patent no, year gap, essay link); date gap stat chip on landing page confirmed-pair cards; research question section suppressed when file absent; all narrative placeholder text suppressed site-wide; `loading="lazy"` on all gallery images; timeline date range is dynamic; breadcrumb nav on entity and match essay pages; entity nav links scrollable on mobile; page titles follow `[Title] — [Project] — Markery` pattern; OG descriptions populated for all page types; all three existing site builds exit 0 with no regressions.
+P1 PASSED when: frontmatter stripping bug fixed in essays and search excerpts; Markdown parser supports unordered lists, ordered lists, blockquotes, and external links; patent figures auto-embed when figure data is available and `[[figure:]]` tag is absent from essay; match essays link to entity pages; entity pages show enriched confirmed-pair cards (name, patent no, year gap, essay link); date gap stat chip on landing page confirmed-pair cards; research question section suppressed when file absent; all narrative placeholder text suppressed site-wide; `loading="lazy"` on all gallery images; timeline date range is dynamic; breadcrumb nav on entity and match essay pages; entity nav links scrollable on mobile; page titles follow `[Title] — [Project] — Markery` pattern; OG descriptions populated for all page types; all three existing site builds exit 0 with no regressions. — PASSED 2026-06-10. Delivered in Groups 1–9 plus a mid-phase restructure prompted by review: render.py decomposed into a `render/` package, and real Entities/Matches section index pages built so breadcrumbs/nav point at emitted pages (the breadcrumb requirement was met by building the IA, not layering nav on a missing one). All three sites build exit 0 with 0 broken internal links (803 audited). New CLI gaps filed: D063 (site link checker), D064 (build prune stale output). Full suite 633 passing.
 
 P2 PASSED when: the three cache-minimum docstrings (`llm.py`, `historian/cli.py`, `librarian/extract.py`) corrected; a cache-verification warning fires when `cache_read_input_tokens` is 0 across a shared-prefix run; `DEFAULT_MODEL` defined once and imported in all three call sites; `markery tokens report` aggregates a token log into a cost summary; D059 closed.
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>JOHN DEERE MOLINE, ILL. ↔ US979019A</title>
+<title>JOHN DEERE MOLINE, ILL. ↔ US979019A — Animal Marks 1930 — Markery</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -34,6 +34,13 @@ a:hover { color: #8b5e3c; }
   color: #e8dcc8;
   text-decoration: none;
 }
+.site-header nav {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-width: 0;
+}
 .site-header nav a {
   color: #b8a88a;
   text-decoration: none;
@@ -41,6 +48,19 @@ a:hover { color: #8b5e3c; }
   margin-right: 16px;
 }
 .site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  padding: 8px 40px;
+  background: #ede8de;
+  border-bottom: 1px solid #ddd;
+  font-size: .78em;
+}
+.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; }
+.breadcrumb li { color: #888; }
+.breadcrumb li:not(:last-child)::after { content: "›"; margin: 0 8px; color: #b8a88a; }
+.breadcrumb a { color: #5a3e28; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
 
 /* ── Page header ── */
 .page-header {
@@ -165,10 +185,18 @@ a:hover { color: #8b5e3c; }
 }
 .research-question {
   background: #ede8de;
-  border-left: 3px solid #5a3e28;
-  padding: 18px 22px;
+  border-left: 4px solid #8b5e3c;
+  padding: 16px 20px;
   margin-bottom: 32px;
   max-width: 700px;
+}
+.research-question .rq-label {
+  display: block;
+  font-size: .72em;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8b5e3c;
+  margin-bottom: 8px;
 }
 .research-question p { margin-bottom: .7em; }
 .research-question p:last-child { margin-bottom: 0; }
@@ -365,9 +393,16 @@ a:hover { color: #8b5e3c; }
 .site-search input[type=search]::placeholder { color: #888; }
 
 /* ── Patent figure (embedded via [[figure:patent_no]]) ── */
-.patent-figure { margin: 24px 0; text-align: center; }
-.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
-.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+.patent-figure { margin: 24px auto; text-align: center; max-width: 600px; border: 1px solid #d4c9b0; border-radius: 4px; padding: 8px; }
+.patent-figure img { max-width: 100%; background: #faf8f4; display: block; margin: 0 auto; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+
+/* ── Blockquotes ── */
+blockquote { border-left: 3px solid #b8a88a; margin: 16px 0; padding: 8px 16px; color: #555; font-style: italic; }
+blockquote p { margin: 0; }
+
+/* ── Small chip (inline stat tags) ── */
+.chip-sm { font-size: .75em; background: #e8dcc8; border-radius: 3px; padding: 1px 6px; color: #5a3e28; white-space: nowrap; }
 
 /* ── Site footer ── */
 .site-footer {
@@ -379,28 +414,19 @@ a:hover { color: #8b5e3c; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/mack-trucks.html">Mack Trucks</a><a href="../entities/pratt-and-whitney-aircraft.html">Pratt and Whitney Aircraft</a><a href="../entities/eagle-electric-manufacturing.html">Eagle Electric Manufacturing</a><a href="../entities/pathe-cinema.html">Pathe Cinema</a><a href="../entities/albert-setzer.html">Albert Setzer</a><a href="../entities/shell-oil-company.html">Shell Oil Company</a><a href="../entities/deere-and-company.html">Deere and Company</a><a href="../entities/alfa-romeo.html">Alfa Romeo</a><a href="../entities/worthington-pump-and-machinery.html">Worthington Pump and Machinery</a><a href="../entities/raleigh-cycle-company.html">Raleigh Cycle Company</a><a href="../entities/goodyear-tire-and-rubber.html">Goodyear Tire and Rubber</a><a href="../entities/colts-patent-fire-arms-manufacturing.html">Colts Patent Fire Arms Manufacturing</a><a href="../entities/ji-case-company.html">JI Case Company</a><a href="../entities/general-motors-corporation.html">General Motors Corporation</a><a href="../entities/james-walker-and-company.html">James Walker and Company</a><a href="../entities/gillette-tire-company.html">Gillette Tire Company</a><a href="../entities/american-brass-company.html">American Brass Company</a><a href="../entities/standard-johnson-company.html">Standard Johnson Company</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
-<div class="page-header"><h1>JOHN DEERE MOLINE, ILL. ↔ US979019A</h1><div class="subtitle">Confirmed patent-trademark pair · Animal Marks 1930</div><div class="stat-chips"><span class="chip">Deere and Company</span><span class="chip">Patent 1910-12-20</span><span class="chip">Mark filed 1911-04-08</span></div></div><div class="page-body"><div class="essay"><div class="essay-media"><div><img src="../images/marks/71055630.png" alt="JOHN DEERE MOLINE, ILL."><div class="media-label">JOHN DEERE MOLINE, ILL. · Serial 71055630</div></div></div><p>
---- 
-title: &quot;JOHN DEERE MOLINE, ILL. — US979019A&quot; 
-trademark_serial: 71055630 
-trademark: &quot;JOHN DEERE MOLINE, ILL.&quot; 
-tm_filing_dt: &quot;1911-04-08&quot; 
-tm_reg_no: &quot;0088248&quot; 
-tm_owner: &quot;DEERE &amp; COMPANY&quot; 
-patent_no: &quot;US979019A&quot; 
-patent_grant_dt: &quot;1910-12-20&quot; 
-patent_assignee: &quot;DEERE &amp; CO [US]&quot; 
-entity: &quot;Deere and Company&quot; 
-date_gap: &quot;0.3 years&quot; 
---- 
-</p>
-<h2>Primary Sources</h2>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/index.html">Entities</a><a href="../matches/index.html">Matches</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="../index.html">Home</a></li><li><a href="index.html">Matches</a></li><li aria-current="page">JOHN DEERE MOLINE, ILL. ↔ US979019A</li></ol></nav><div class="page-header"><h1>JOHN DEERE MOLINE, ILL. ↔ US979019A</h1><div class="subtitle">Confirmed patent-trademark pair · Animal Marks 1930</div><div class="stat-chips"><span class="chip"><a href="../entities/deere-and-company.html">Filed by: Deere and Company</a></span><span class="chip">Patent 1910-12-20</span><span class="chip">Mark filed 1911-04-08</span></div></div><div class="page-body"><div class="essay"><div class="essay-media"><div><img src="../images/marks/71055630.png" alt="JOHN DEERE MOLINE, ILL."><div class="media-label">JOHN DEERE MOLINE, ILL. · Serial 71055630</div></div></div><h2>Primary Sources</h2>
+<ul>
+<li>USPTO Trademark Serial No. 71055630 — <a href="https://tsdr.uspto.gov/#caseNumber=71055630&caseType=SERIAL_NO&searchType=statusSearch" target="_blank" rel="noopener">JOHN DEERE MOLINE, ILL.</a></li>
+</ul>
 <p>
-- USPTO Trademark Serial No. 71055630 — [JOHN DEERE MOLINE, ILL.](https://tsdr.uspto.gov/#caseNumber=71055630&amp;caseType=SERIAL_NO&amp;searchType=statusSearch) 
   - Filed: 1911-04-08  ·  Registered: 0088248  ·  Owner: DEERE &amp; COMPANY 
   - Goods and services: PLOWS, CULTIVATORS, HARROWS, MOWERS, REAPERS, GRAIN HARVESTERS [ AND BINDERS, ] HAY-RAKES, HAY-PRESSES, HAY-TEDDERS, HAY-LOADERS, HAY-STACKERS, HAY-UN… 
-- US Patent US979019A — [Reversible-Disk Plow.](https://patents.google.com/patent/979019) 
+</p>
+<ul>
+<li>US Patent US979019A — <a href="https://patents.google.com/patent/979019" target="_blank" rel="noopener">Reversible-Disk Plow.</a></li>
+</ul>
+<p>
   - Applied: 1909-06-07  ·  Granted: 1910-12-20  ·  Assignee: DEERE &amp; CO [US] 
 </p>
 <h2>The Invention</h2>

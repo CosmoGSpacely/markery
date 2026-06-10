@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>De Forest Radio Company</title>
+<title>De Forest Radio Company — Radio Pioneers — Markery</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -34,6 +34,13 @@ a:hover { color: #8b5e3c; }
   color: #e8dcc8;
   text-decoration: none;
 }
+.site-header nav {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-width: 0;
+}
 .site-header nav a {
   color: #b8a88a;
   text-decoration: none;
@@ -41,6 +48,19 @@ a:hover { color: #8b5e3c; }
   margin-right: 16px;
 }
 .site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  padding: 8px 40px;
+  background: #ede8de;
+  border-bottom: 1px solid #ddd;
+  font-size: .78em;
+}
+.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; }
+.breadcrumb li { color: #888; }
+.breadcrumb li:not(:last-child)::after { content: "›"; margin: 0 8px; color: #b8a88a; }
+.breadcrumb a { color: #5a3e28; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
 
 /* ── Page header ── */
 .page-header {
@@ -165,10 +185,18 @@ a:hover { color: #8b5e3c; }
 }
 .research-question {
   background: #ede8de;
-  border-left: 3px solid #5a3e28;
-  padding: 18px 22px;
+  border-left: 4px solid #8b5e3c;
+  padding: 16px 20px;
   margin-bottom: 32px;
   max-width: 700px;
+}
+.research-question .rq-label {
+  display: block;
+  font-size: .72em;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8b5e3c;
+  margin-bottom: 8px;
 }
 .research-question p { margin-bottom: .7em; }
 .research-question p:last-child { margin-bottom: 0; }
@@ -365,9 +393,16 @@ a:hover { color: #8b5e3c; }
 .site-search input[type=search]::placeholder { color: #888; }
 
 /* ── Patent figure (embedded via [[figure:patent_no]]) ── */
-.patent-figure { margin: 24px 0; text-align: center; }
-.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
-.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+.patent-figure { margin: 24px auto; text-align: center; max-width: 600px; border: 1px solid #d4c9b0; border-radius: 4px; padding: 8px; }
+.patent-figure img { max-width: 100%; background: #faf8f4; display: block; margin: 0 auto; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+
+/* ── Blockquotes ── */
+blockquote { border-left: 3px solid #b8a88a; margin: 16px 0; padding: 8px 16px; color: #555; font-style: italic; }
+blockquote p { margin: 0; }
+
+/* ── Small chip (inline stat tags) ── */
+.chip-sm { font-size: .75em; background: #e8dcc8; border-radius: 3px; padding: 1px 6px; color: #5a3e28; white-space: nowrap; }
 
 /* ── Site footer ── */
 .site-footer {
@@ -379,8 +414,8 @@ a:hover { color: #8b5e3c; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/radio-corporation-of-america.html">Radio Corporation of America</a><a href="../entities/westinghouse-electric-and-manufacturing-company.html">Westinghouse Electric and Manufacturing Company</a><a href="../entities/atwater-kent-manufacturing-company.html">Atwater Kent Manufacturing Company</a><a href="../entities/zenith-radio-corporation.html">Zenith Radio Corporation</a><a href="../entities/de-forest-radio-company.html">De Forest Radio Company</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
-<div class="page-header"><h1>De Forest Radio Company</h1><div class="subtitle">radio · manufacturer</div><div class="stat-chips"><span class="chip">0 marks</span><span class="chip">36 patents</span><span class="chip">0 confirmed</span><span class="chip">1920–1934</span></div></div><div class="page-body"><div class="narrative"><p style="color:#999;font-style:italic">Narrative not yet written. See <code>entity-de-forest-radio-company.md</code> for the content schema.</p><table><thead><tr><th>Name variant</th><th>Source</th></tr></thead><tbody><tr><td>DEFOREST RADIO COMPANY</td><td>patent_assignee</td></tr><tr><td>FOREST RADIO COMPANY DE</td><td>patent_assignee</td></tr><tr><td>FOREST RADIO TELEPHONE &amp; TELEG</td><td>patent_assignee</td></tr><tr><td>FOREST RADIO TELEPHONE AND TEL</td><td>patent_assignee</td></tr><tr><td>AUDION</td><td>trademark_search</td></tr><tr><td>DE FOREST</td><td>trademark_search</td></tr><tr><td>OSCILLION</td><td>trademark_search</td></tr></tbody></table><p><a href="../trademarks.html">Trademark gallery →</a> &nbsp; <a href="../patents.html">Patent gallery →</a></p></div></div>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/index.html">Entities</a><a href="../matches/index.html">Matches</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="../index.html">Home</a></li><li><a href="index.html">Entities</a></li><li aria-current="page">De Forest Radio Company</li></ol></nav><div class="page-header"><h1>De Forest Radio Company</h1><div class="subtitle">radio · manufacturer</div><div class="stat-chips"><span class="chip">0 marks</span><span class="chip">36 patents</span><span class="chip">0 confirmed</span><span class="chip">1920–1934</span></div></div><div class="page-body"><div class="narrative"><table><thead><tr><th>Name variant</th><th>Source</th></tr></thead><tbody><tr><td>DEFOREST RADIO COMPANY</td><td>patent_assignee</td></tr><tr><td>FOREST RADIO COMPANY DE</td><td>patent_assignee</td></tr><tr><td>FOREST RADIO TELEPHONE &amp; TELEG</td><td>patent_assignee</td></tr><tr><td>FOREST RADIO TELEPHONE AND TEL</td><td>patent_assignee</td></tr><tr><td>AUDION</td><td>trademark_search</td></tr><tr><td>DE FOREST</td><td>trademark_search</td></tr><tr><td>OSCILLION</td><td>trademark_search</td></tr></tbody></table><h2>Confirmed Pairs</h2><p>No confirmed pairs yet.</p><p><a href="../trademarks.html">Trademark gallery →</a> &nbsp; <a href="../patents.html">Patent gallery →</a></p></div></div>
 <footer class="site-footer">Built with <a href="https://github.com/CosmoGSpacely/markery">Markery</a></footer>
 </body>
 </html>

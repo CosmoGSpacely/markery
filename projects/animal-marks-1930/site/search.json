@@ -6,6 +6,12 @@
     "excerpt": ""
   },
   {
+    "title": "Entities",
+    "type": "entities_index",
+    "url": "entities/index.html",
+    "excerpt": ""
+  },
+  {
     "title": "Mack Trucks",
     "type": "entity",
     "url": "entities/mack-trucks.html",
@@ -111,6 +117,12 @@
     "title": "Standard Johnson Company",
     "type": "entity",
     "url": "entities/standard-johnson-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Confirmed Pairs",
+    "type": "matches_index",
+    "url": "matches/index.html",
     "excerpt": ""
   },
   {
