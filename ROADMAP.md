@@ -251,12 +251,12 @@ Phase PASSED when P1–P5 all pass. — PASSED
 
 ---
 
-## Phase 22 — New Projects and Publisher Quality Pass
+## Phase 22 — Harden, Prove, Present
 
-**Trigger:** Phase 21 complete.
-**Scope:** Two new research projects — D025 (photographic equipment) and D026 (precision tools) — run end-to-end through the full pipeline including LangGraph-assisted review. Alongside the projects, a publisher quality pass delivers specific site rendering improvements identified across Phases 16–21.
+**Trigger:** Phase 21 complete; MARKERY_REVIEW (2026-06-09) reframed priorities from breadth to depth.
+**Scope:** Make the three existing research sites publication-grade, close the token-efficiency and rigor gaps found in the review, prove the model-agnosticism thesis with a cross-model benchmark, and give the repository a visitor-facing front door. New research domains (D025 photographic-equipment, D026 precision-tools) are deferred — breadth is already demonstrated three times over; the leverage now is depth, proof, and legibility.
 
-**Goal state:** `photographic-equipment` and `precision-tools` both have ≥3 confirmed pairs, validated essays, and clean site builds; publisher renders patent figures inline, provides entity cross-links, and lists confirmed pairs on the landing page; LangGraph handles the initial review cycle for both projects; Wikipedia contributions submitted for both domains; all five project site builds meet a consistent quality standard.
+**Goal state:** the three existing sites render at publication quality; prompt caching is verified live rather than silently dead; a single `DEFAULT_MODEL` definition; `markery tokens report` aggregates cost; a cross-model MVO benchmark shows Haiku 4.5 and Sonnet 4.6 both passing the same validators with a recorded cost/quality table; the repo has a README front door, CI, and a provenance statement.
 
 ---
 
@@ -330,35 +330,51 @@ Run `markery site build` for all three existing projects in sequence: radio-pion
 
 ---
 
-### P2 — D025: Photographic equipment project
+### P2 — Rigor hardening (token-efficiency and model definition)
 
-**Target entities:** Eastman Kodak Company, Ansco (Ansco Company / General Aniline & Film), Graflex Inc., Blair Camera Company.
-**CPC class (this phase): `G03B` only** (photographic apparatus). G03C and G03D deferred.
+Close the credibility gaps found in MARKERY_REVIEW (2026-06-09) §A1, §B1, and §A4. Small, high-confidence changes.
 
-1. Run `markery project onboard photographic-equipment` (Phase 21 P3). Confirm PASSED before proceeding.
-2. Run trademark sweeps for each entity's variants. Target: ≥8 trademark records across all four entities.
-3. Run `markery patent build` for CPC class G03B over 1890–1940 via EPO OPS.
-4. Run `markery match photographic-equipment`. Run `markery patent signals photographic-equipment` immediately after.
-5. Use the LangGraph graph (Phase 21 P2) for the initial review cycle: run the graph against the candidate queue. Confirm that `human_gate` interrupts work correctly for borderline cases. Target: ≥3 confirmed pairs.
-6. Run `markery historian draft` for each confirmed pair; run `markery historian validate` on each draft. All must pass 8/8.
-7. Acquire Reese Jenkins, *Images and Enterprise: Technology and the American Photographic Industry, 1839–1925* (1975) from IA (`markery librarian acquire`). Run `markery librarian extract` with topics `"Kodak" "trademark" "patent" "camera"`.
-8. Run `markery site build photographic-equipment`. Exit 0 required.
-9. Identify the strongest Wikipedia contribution target: an article with a genuine citation gap that a USPTO primary source (from confirmed pairs) would fill. Write a draft to `projects/photographic-equipment/wikipedia/`.
+1. **Fix the prompt-cache minimum (A1).** The cache-enabling docstrings in `common/llm.py`, `historian/cli.py`, and `librarian/extract.py` claim a 1024-token minimum. Haiku 4.5 — the default model — requires 4096. The ~2K-token system prompts therefore never cache: `cache_read_input_tokens` is 0 on every call. Correct the three docstrings to state the real, model-dependent minimum.
+
+2. **Add a cache-verification warning (A1).** In the token instrumentation, after any run that shares a system prefix across calls, warn when `cache_read_input_tokens` is 0 across the run. Converts "we think caching works" into a checked invariant.
+
+3. **Consolidate the default model (B1).** `claude-haiku-4-5-20251001` is hardcoded in `common/tokens.py`, `librarian/extract.py`, and `historian/cli.py`. Define `DEFAULT_MODEL` once in `common/config.py` and import it in all three. Keep the pinned dated ID for reproducibility — just in one place.
+
+4. **Build `markery tokens report` (D059).** Aggregate the `MARKERY_TOKEN_LOG` JSONL into a cost summary: sum prompt/completion/cache_read tokens, compute cache-hit rate, estimate USD at current Haiku/Sonnet/Opus pricing, group by specialist or command. This is the measurement half of token-efficiency and the prerequisite for D060/D061. Close D059 when done.
 
 ---
 
-### P3 — D026: Precision tools project
+### P3 — Prove model-agnosticism (cross-model MVO benchmark)
 
-**Target entities:** Snap-on Tools Company, L.S. Starrett Company, Brown & Sharpe Manufacturing, Illinois Tool Works.
-**CPC class (this phase): `G01B` only** (measuring instruments). B25B and B23B deferred.
+The model-agnosticism claim in DESIGN.md §Model-Agnosticism is the project's intellectual centerpiece and is currently asserted, not demonstrated (MARKERY_REVIEW §B2, D061). Build the benchmark that proves it.
 
-Same workflow as P2. Secondary literature is thinner for precision tools — use `markery librarian discover --wikipedia` on company article pages to surface available IA sources. Acquire what is available; note any dry-run gaps in `RESEARCH-AGENDA.md`.
+1. Assemble a fixed fixture set: a handful of confirmed pairs from the three existing projects, each with a known-good scaffold.
+2. Run the model-agnostic-tier tasks — `markery historian card --infer` and `markery historian draft` — under at least two models (Haiku 4.5 and Sonnet 4.6) over the fixtures, with `MARKERY_TOKEN_LOG` set.
+3. Assert each output passes its MVO validator: `markery historian validate` 8/8 for drafts; the structured RECOMMENDATION/SCORE/REASONING format for infer. The pass/fail gate is the proof — any model whose output passes the validator is producing correct factual content.
+4. Emit a per-model cost/quality table (model, validator pass rate, prompt/completion/cache-read tokens, USD estimate via `tokens report`). Write it to `tests/benchmarks/` and surface a copy in DESIGN.md.
+5. Wire the benchmark as a repeatable command or test so the claim becomes a regression-tested property, not a one-off.
 
-Target: ≥3 confirmed pairs, validated essays, site build exit 0, Wikipedia draft written.
+Close D061 when the table exists and the model-agnostic-tier tasks pass under ≥2 models.
 
 ---
 
-### P4 — Mack Trucks bulldog: live markery-langgraph run on animal-marks-1930
+### P4 — Front door (README, CI, provenance)
+
+Make the repository legible to an outside reviewer (MARKERY_REVIEW §Portfolio #1, #4). Build this last — after P1–P3 give it something to show.
+
+1. **Visitor-facing README.** One-sentence pitch; an annotated screenshot of a generated essay page (from the P1 publication-grade sites); direct links to the live Wikipedia contributions with revision IDs (from D050); a 30-second "run it, or view the output without running." The inward-facing docs (ROADMAP, DEFERRED, CLAUDE.md) stay; the README is the new front door above them.
+
+2. **Surface quality signals.** Add CI that runs the test suite on push; add a coverage number/badge; make the `historian validate` 8/8 gate visible as evidence the research claims are checked. A reviewer should see green without cloning.
+
+3. **Provenance statement.** One README paragraph naming the human-judgment layer explicitly: the three-tier architecture, the MVO / model-agnosticism framework, the CLI-as-test-harness thesis, and the human-gate altitude. Own the AI-orchestrated framing as a strength.
+
+4. **Name the process discipline.** Call out the phase-gated ROADMAP, the contract-versioned subprocess interface, and the reopen-triggered DEFERRED register as deliberate engineering choices, not buried internal docs.
+
+---
+
+### P5 — Optional showcase: Mack Trucks bulldog live run on animal-marks-1930
+
+Optional — not a gate on the phase. Do this only if P1–P4 are complete and a concrete agentic artifact adds value to the writeup. One live markery-langgraph run that exercises the `human_gate` end-to-end, plus the `--json` contract hardening (D062) at the end.
 
 **Starting mark:** Mack Trucks bulldog, USPTO serial 71247861. Filed 1927-04-22. Purely figurative registration — null text, no word element, design code 030108 (bulldog, specific breed). Goods: motor trucks. Registrant: MACK TRUCKS, INC. (reg. 231645).
 
@@ -386,14 +402,7 @@ Mack Trucks is already entity_id 13 in the project with variants `MACK TRUCKS, I
 
 8. **Review token log.** Read `projects/animal-marks-1930/mack-run-tokens.jsonl`. Sum prompt_tokens, completion_tokens, and cache_read_tokens across all records. Record the totals in `RESEARCH.md` under a "Build cost" heading. This establishes a per-project cost baseline for Haiku-driven runs.
 
----
-
-### P5 — Wikipedia submissions for new domains
-
-1. For photographic equipment: review the draft from P2 step 9. Submit via `markery wikipedia replace --yes` after diff review. Use summary: "Add primary source citation from USPTO filing record."
-2. For precision tools: identify and draft a citation addition for the strongest underserved Wikipedia article in the domain. Submit via `markery wikipedia replace --yes` after diff review.
-3. Monitor both new edits for 48 hours. Record revision IDs in each project's `STATUS.md`.
-4. Add DEFERRED entries (D051, D052) for both new edits following the D050 pattern — one monitoring entry per article edit.
+**Contract hardening (D062).** Before or during the run, add `--json` to `markery historian card --infer` and `digest --infer` emitting `{recommendation, score, reasoning, card_text}`, and update `markery-langgraph/src/langgraph_markery/tools.py` to parse JSON instead of scraping the `[infer]` block with regex. Close D062 when the graph runs on JSON output.
 
 ---
 
@@ -401,12 +410,12 @@ Mack Trucks is already entity_id 13 in the project with variants `MACK TRUCKS, I
 
 P1 PASSED when: frontmatter stripping bug fixed in essays and search excerpts; Markdown parser supports unordered lists, ordered lists, blockquotes, and external links; patent figures auto-embed when figure data is available and `[[figure:]]` tag is absent from essay; match essays link to entity pages; entity pages show enriched confirmed-pair cards (name, patent no, year gap, essay link); date gap stat chip on landing page confirmed-pair cards; research question section suppressed when file absent; all narrative placeholder text suppressed site-wide; `loading="lazy"` on all gallery images; timeline date range is dynamic; breadcrumb nav on entity and match essay pages; entity nav links scrollable on mobile; page titles follow `[Title] — [Project] — Markery` pattern; OG descriptions populated for all page types; all three existing site builds exit 0 with no regressions.
 
-P2 PASSED when: `photographic-equipment` has ≥3 confirmed pairs (G03B patents only), all essays validate 8/8, site build exits 0, Wikipedia draft written to `projects/photographic-equipment/wikipedia/`.
+P2 PASSED when: the three cache-minimum docstrings (`llm.py`, `historian/cli.py`, `librarian/extract.py`) corrected; a cache-verification warning fires when `cache_read_input_tokens` is 0 across a shared-prefix run; `DEFAULT_MODEL` defined once and imported in all three call sites; `markery tokens report` aggregates a token log into a cost summary; D059 closed.
 
-P3 PASSED when: `precision-tools` has ≥3 confirmed pairs (G01B patents only), all essays validate 8/8, site build exits 0, Wikipedia draft written to `projects/precision-tools/wikipedia/`.
+P3 PASSED when: a cross-model benchmark runs `historian card --infer` and `historian draft` under ≥2 models over a fixed fixture set; every output passes its MVO validator; a per-model cost/quality table is written to `tests/benchmarks/` and surfaced in DESIGN.md; D061 closed.
 
-P4 PASSED when: B62D added to `class_hints` and Mack patent_assignee variant added to `variants.csv`; `markery project onboard animal-marks-1930` shows Mack in Step 5 (not skipped); ≥10 Mack B62D patents in DB; ≥1 confirmed pair for bulldog mark (serial 71247861) confirmed via markery-langgraph `human_gate`; essay validates 8/8 with model=claude-haiku-4-5-20251001; `markery site build animal-marks-1930` exits 0 with Mack bulldog essay and mark image rendered; token log reviewed and build cost totals recorded in `RESEARCH.md`.
+P4 PASSED when: a visitor-facing README exists with pitch, an essay screenshot, live Wikipedia revision links, and run/view instructions; CI runs the test suite on push with a visible status; a provenance statement names the human-judgment layer; the process-discipline artifacts are called out.
 
-P5 PASSED when: at least one Wikipedia edit submitted per domain; revision IDs recorded in STATUS.md files; D051 and D052 DEFERRED entries filed.
+P5 (optional) — not required for the phase. When attempted, PASSED when: ≥1 bulldog confirmed pair via the live graph `human_gate`; essay validates 8/8; `markery site build animal-marks-1930` exits 0 with the bulldog essay and mark image rendered; `--json` added to the infer commands and the langgraph graph parses it; D062 closed.
 
-Phase PASSED when P1–P5 all pass. `DEFERRED.md` updated with all new bypasses discovered during the two new projects.
+Phase PASSED when P1–P4 pass (P5 is optional). `DEFERRED.md` updated with any new bypasses discovered. D025 (photographic-equipment) and D026 (precision-tools) remain deferred — breadth is not the goal of this phase.
