@@ -375,9 +375,16 @@ a:hover { color: #8b5e3c; }
 .site-search input[type=search]::placeholder { color: #888; }
 
 /* ── Patent figure (embedded via [[figure:patent_no]]) ── */
-.patent-figure { margin: 24px 0; text-align: center; }
-.patent-figure img { max-width: 100%; border: 1px solid #ddd; background: #faf8f4; }
-.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+.patent-figure { margin: 24px auto; text-align: center; max-width: 600px; border: 1px solid #d4c9b0; border-radius: 4px; padding: 8px; }
+.patent-figure img { max-width: 100%; background: #faf8f4; display: block; margin: 0 auto; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+
+/* ── Blockquotes ── */
+blockquote { border-left: 3px solid #b8a88a; margin: 16px 0; padding: 8px 16px; color: #555; font-style: italic; }
+blockquote p { margin: 0; }
+
+/* ── Small chip (inline stat tags) ── */
+.chip-sm { font-size: .75em; background: #e8dcc8; border-radius: 3px; padding: 1px 6px; color: #5a3e28; white-space: nowrap; }
 
 /* ── Site footer ── */
 .site-footer {
@@ -503,7 +510,8 @@ def _render_markdown(
     depth: int = 0,
     figure_index: dict[str, str] | None = None,
 ) -> str:
-    """Minimal Markdown → HTML: headings, paragraphs, bold, inline code, fenced blocks.
+    """Minimal Markdown → HTML: headings, paragraphs, bold, inline code, fenced blocks,
+    unordered/ordered lists, blockquotes, and external links.
 
     link_index maps slug → root-relative URL; [[Slug]] resolves to <a>.
     figure_index maps patent_no → root-relative image path; [[figure:patent_no]] renders <figure>.
@@ -517,6 +525,18 @@ def _render_markdown(
         return key
 
     text = re.sub(r'```[^\n]*\n(.*?)```', _stash_block, text, flags=re.DOTALL)
+
+    # Stash external links [text](url) — only http/https schemes accepted.
+    def _stash_ext_link(m: re.Match) -> str:
+        label, url = m.group(1), m.group(2)
+        key = f"\x00LINK{len(stash)}\x00"
+        if re.match(r'^https?://', url):
+            stash[key] = f'<a href="{url}" target="_blank" rel="noopener">{_esc(label)}</a>'
+        else:
+            stash[key] = _esc(label)
+        return key
+
+    text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', _stash_ext_link, text)
 
     if link_index or figure_index:
         prefix = "../" * depth
@@ -547,49 +567,75 @@ def _render_markdown(
 
         text = re.sub(r'\[\[([^\]]+)\]\]', _stash_link, text)
 
+    def _inline(s: str) -> str:
+        out = _esc(s)
+        out = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', out)
+        out = re.sub(r'`(.+?)`', r'<code>\1</code>', out)
+        for k, v in stash.items():
+            if k in out:
+                out = out.replace(k, v)
+        return out
+
     lines = text.split("\n")
     html_parts: list[str] = []
     in_para = False
+    in_ul   = False
+    in_ol   = False
+    in_bq   = False
+
+    def _close_blocks() -> None:
+        nonlocal in_para, in_ul, in_ol, in_bq
+        if in_para: html_parts.append("</p>"); in_para = False
+        if in_ul:   html_parts.append("</ul>");  in_ul   = False
+        if in_ol:   html_parts.append("</ol>");  in_ol   = False
+        if in_bq:   html_parts.append("</blockquote>"); in_bq = False
 
     for line in lines:
         if line.startswith("## "):
-            if in_para:
-                html_parts.append("</p>")
-                in_para = False
+            _close_blocks()
             html_parts.append(f'<h2>{_esc(line[3:])}</h2>')
         elif line.startswith("### "):
-            if in_para:
-                html_parts.append("</p>")
-                in_para = False
+            _close_blocks()
             html_parts.append(f'<h3>{_esc(line[4:])}</h3>')
         elif line.startswith("# "):
-            if in_para:
-                html_parts.append("</p>")
-                in_para = False
+            _close_blocks()
             html_parts.append(f'<h2>{_esc(line[2:])}</h2>')
         elif line.strip() == "":
-            if in_para:
-                html_parts.append("</p>")
-                in_para = False
+            _close_blocks()
         elif line.startswith("\x00BLOCK") and line.rstrip() in stash:
-            if in_para:
-                html_parts.append("</p>")
-                in_para = False
+            _close_blocks()
             html_parts.append(stash[line.rstrip()])
+        elif line.startswith("- ") or line.startswith("* "):
+            if in_para: html_parts.append("</p>"); in_para = False
+            if in_bq:   html_parts.append("</blockquote>"); in_bq = False
+            if in_ol:   html_parts.append("</ol>"); in_ol = False
+            if not in_ul: html_parts.append("<ul>"); in_ul = True
+            html_parts.append(f'<li>{_inline(line[2:])}</li>')
+        elif re.match(r'^\d+\.\s', line):
+            if in_para: html_parts.append("</p>"); in_para = False
+            if in_bq:   html_parts.append("</blockquote>"); in_bq = False
+            if in_ul:   html_parts.append("</ul>"); in_ul = False
+            if not in_ol: html_parts.append("<ol>"); in_ol = True
+            html_parts.append(f'<li>{_inline(re.sub(r"^\d+\.\s+", "", line))}</li>')
+        elif line.startswith("> "):
+            if in_para: html_parts.append("</p>"); in_para = False
+            if in_ul:   html_parts.append("</ul>"); in_ul = False
+            if in_ol:   html_parts.append("</ol>"); in_ol = False
+            if not in_bq: html_parts.append("<blockquote>"); in_bq = True
+            html_parts.append(f'<p>{_inline(line[2:])}</p>')
         else:
-            processed = _esc(line)
-            processed = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', processed)
-            processed = re.sub(r'`(.+?)`', r'<code>\1</code>', processed)
-            for k, v in stash.items():
-                if k in processed:
-                    processed = processed.replace(k, v)
+            if in_ul: html_parts.append("</ul>"); in_ul = False
+            if in_ol: html_parts.append("</ol>"); in_ol = False
+            if in_bq: html_parts.append("</blockquote>"); in_bq = False
             if not in_para:
                 html_parts.append("<p>")
                 in_para = True
-            html_parts.append(processed + " ")
+            html_parts.append(_inline(line) + " ")
 
-    if in_para:
-        html_parts.append("</p>")
+    if in_para: html_parts.append("</p>")
+    if in_ul:   html_parts.append("</ul>")
+    if in_ol:   html_parts.append("</ol>")
+    if in_bq:   html_parts.append("</blockquote>")
 
     return "\n".join(html_parts)
 
@@ -639,6 +685,18 @@ def _text_excerpt(path: Path, max_chars: int = 200) -> str:
     text = re.sub(r'\[\[(.+?)\]\]', r'\1', text)
     text = re.sub(r'\s+', ' ', text).strip()
     return text[:max_chars]
+
+
+def _year_from_dt(dt: object) -> int | None:
+    """Extract a year integer from a date object, datetime, or YYYY-... string."""
+    if dt is None:
+        return None
+    if hasattr(dt, "year"):
+        return int(dt.year)
+    try:
+        return int(str(dt)[:4])
+    except (ValueError, TypeError):
+        return None
 
 
 def build_link_index(
@@ -1020,14 +1078,26 @@ def render_entity_page(
         f'<tbody>{variants_rows}</tbody></table>'
     ) if variants_rows else ""
 
+    def _gap_chip(m: dict) -> str:
+        fy = _year_from_dt(m.get("filing_dt"))
+        gy = _year_from_dt(m.get("grant_dt"))
+        if fy and gy:
+            return f' <span class="chip-sm">{abs(gy - fy)} yr gap</span>'
+        return ""
+
     match_links = "".join(
-        f'<li><a href="../matches/{m["slug"]}.html">'
-        f'{_esc(m["trademark"])} ↔ {_esc(m["patent_no"])}</a></li>'
+        f'<li>'
+        f'<a href="../matches/{m["slug"]}.html">'
+        f'{_esc(m.get("trademark") or "(figurative)")} ↔ {_esc(m["patent_no"])}</a>'
+        f'{_gap_chip(m)}'
+        f'</li>'
         for m in matches if m.get("essay_path")
     )
     match_section = (
         f'<h2>Confirmed Pairs</h2><ul>{match_links}</ul>'
-    ) if match_links else ""
+        if match_links else
+        f'<h2>Confirmed Pairs</h2><p>No confirmed pairs yet.</p>'
+    )
 
     stat_chips = (
         f'<span class="chip">{stats.get("trademark_count", 0)} marks</span>'
@@ -1081,10 +1151,21 @@ def render_match_essay(
     slug = match["slug"]
     nav = _nav_links(project, entities, extra_nav)
 
+    raw_essay: str | None = None
     if match.get("essay_path") and Path(match["essay_path"]).exists():
-        essay_md = _render_markdown(Path(match["essay_path"]).read_text(),
-                                    link_index=link_index, depth=1,
+        raw_essay = _strip_frontmatter(Path(match["essay_path"]).read_text())
+        essay_md = _render_markdown(raw_essay, link_index=link_index, depth=1,
                                     figure_index=figure_index)
+        # Auto-embed: append figure below essay when no [[figure:]] tag but figure exists.
+        pno = match.get("patent_no", "")
+        if figure_index and pno and pno in figure_index and f"[[figure:{pno}]]" not in raw_essay:
+            img_path = figure_index[pno]
+            essay_md += (
+                f'\n<figure class="patent-figure">'
+                f'<img src="../{img_path}" alt="Patent drawing: {_esc(pno)}">'
+                f'<figcaption>Patent drawing: {_esc(pno)}</figcaption>'
+                f'</figure>'
+            )
     else:
         essay_md = (
             f'<p style="color:#999;font-style:italic">'
@@ -1122,10 +1203,18 @@ def render_match_essay(
         f'</dl></div>'
     )
 
-    stat_chips = (
+    entity_rec  = next((e for e in entities if e.get("entity_id") == match.get("entity_id")), None)
+    entity_slug = entity_rec["slug"] if entity_rec else None
+    filed_by = (
+        f'<span class="chip"><a href="../entities/{_esc(entity_slug)}.html">'
+        f'Filed by: {_esc(match.get("entity", ""))}</a></span>'
+        if entity_slug and match.get("entity") else
         f'<span class="chip">{_esc(match.get("entity", ""))}</span>'
-        f'<span class="chip">Patent {match.get("grant_dt", "")}</span>'
-        f'<span class="chip">Mark filed {match.get("filing_dt", "")}</span>'
+    )
+    stat_chips = (
+        filed_by
+        + f'<span class="chip">Patent {match.get("grant_dt", "")}</span>'
+        + f'<span class="chip">Mark filed {match.get("filing_dt", "")}</span>'
     )
 
     body = (

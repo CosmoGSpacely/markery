@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from markery.specialist.publisher.render import _esc, _page, _render_markdown
+from markery.specialist.publisher.render import _esc, _page, _render_markdown, _year_from_dt
 
 
 def test_esc_empty_string():
@@ -74,3 +74,62 @@ def test_page_with_og_tags():
     assert 'content="https://example.com/page.html"' in result
     assert 'property="og:type"' in result
     assert 'content="article"' in result
+
+
+# Group 2: list, blockquote, external link rendering
+
+def test_render_markdown_unordered_list():
+    result = _render_markdown("- Alpha\n- Beta\n- Gamma")
+    assert "<ul>" in result
+    assert "<li>Alpha</li>" in result
+    assert "<li>Beta</li>" in result
+    assert "</ul>" in result
+
+
+def test_render_markdown_ordered_list():
+    result = _render_markdown("1. First\n2. Second")
+    assert "<ol>" in result
+    assert "<li>First</li>" in result
+    assert "</ol>" in result
+
+
+def test_render_markdown_blockquote():
+    result = _render_markdown("> Quoted text here.")
+    assert "<blockquote>" in result
+    assert "Quoted text here." in result
+    assert "</blockquote>" in result
+
+
+def test_render_markdown_external_link_https():
+    result = _render_markdown("[USPTO](https://www.uspto.gov)")
+    assert 'href="https://www.uspto.gov"' in result
+    assert 'target="_blank"' in result
+    assert 'rel="noopener"' in result
+    assert ">USPTO<" in result
+
+
+def test_render_markdown_external_link_rejects_javascript():
+    result = _render_markdown("[Bad](javascript:alert(1))")
+    assert "javascript:" not in result
+    assert "Bad" in result
+
+
+def test_render_markdown_list_closes_on_blank():
+    result = _render_markdown("- Item\n\nParagraph after.")
+    assert "</ul>" in result
+    assert "<p>" in result
+
+
+# Group 4: _year_from_dt helper
+
+def test_year_from_dt_date_object():
+    import datetime
+    assert _year_from_dt(datetime.date(1930, 5, 1)) == 1930
+
+
+def test_year_from_dt_string():
+    assert _year_from_dt("1927-04-22") == 1927
+
+
+def test_year_from_dt_none():
+    assert _year_from_dt(None) is None
