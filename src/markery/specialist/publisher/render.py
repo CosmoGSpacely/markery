@@ -44,6 +44,13 @@ a:hover { color: #8b5e3c; }
   color: #e8dcc8;
   text-decoration: none;
 }
+.site-header nav {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-width: 0;
+}
 .site-header nav a {
   color: #b8a88a;
   text-decoration: none;
@@ -51,6 +58,19 @@ a:hover { color: #8b5e3c; }
   margin-right: 16px;
 }
 .site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  padding: 8px 40px;
+  background: #ede8de;
+  border-bottom: 1px solid #ddd;
+  font-size: .78em;
+}
+.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; }
+.breadcrumb li { color: #888; }
+.breadcrumb li:not(:last-child)::after { content: "›"; margin: 0 8px; color: #b8a88a; }
+.breadcrumb a { color: #5a3e28; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
 
 /* ── Page header ── */
 .page-header {
@@ -175,10 +195,18 @@ a:hover { color: #8b5e3c; }
 }
 .research-question {
   background: #ede8de;
-  border-left: 3px solid #5a3e28;
-  padding: 18px 22px;
+  border-left: 4px solid #8b5e3c;
+  padding: 16px 20px;
   margin-bottom: 32px;
   max-width: 700px;
+}
+.research-question .rq-label {
+  display: block;
+  font-size: .72em;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8b5e3c;
+  margin-bottom: 8px;
 }
 .research-question p { margin-bottom: .7em; }
 .research-question p:last-child { margin-bottom: 0; }
@@ -649,9 +677,32 @@ def _read_narrative(
     if path.exists():
         return _render_markdown(path.read_text(), link_index=link_index,
                                 depth=depth, figure_index=figure_index)
+    # Missing narrative source: suppress the section entirely (no placeholder prose).
+    return ""
+
+
+def _narrative_block(narrative: str) -> str:
+    """Wrap narrative HTML in its section div, or return '' to suppress the section."""
+    return f'<div class="narrative">{narrative}</div>' if narrative else ''
+
+
+def _page_title(page: str, project: str) -> str:
+    """Format a page <title> as '[Page] — [Project Display] — Markery'."""
+    return f"{page} — {project.replace('-', ' ').title()} — Markery"
+
+
+def _breadcrumb(trail: list[tuple[str, str | None]]) -> str:
+    """Render an accessible breadcrumb. Each item is (label, href|None);
+    href=None renders the current (final) page as plain text."""
+    items = []
+    for label, href in trail:
+        if href:
+            items.append(f'<li><a href="{href}">{_esc(label)}</a></li>')
+        else:
+            items.append(f'<li aria-current="page">{_esc(label)}</li>')
     return (
-        f'<p style="color:#999;font-style:italic">'
-        f'Narrative not yet written. See <code>{path.name}</code> for the content schema.</p>'
+        f'<nav class="breadcrumb" aria-label="Breadcrumb">'
+        f'<ol>{"".join(items)}</ol></nav>'
     )
 
 
@@ -716,12 +767,26 @@ def build_link_index(
     return index
 
 
+def _timeline_range(records: list[dict], date_field: str,
+                    pad: int = 2) -> tuple[int, int]:
+    """Derive a [start, end] year range from the records' dates, padded by ±pad.
+
+    Falls back to 1900–1940 when no dated records are present.
+    """
+    years = [y for y in (_year_from_dt(r.get(date_field)) for r in records) if y]
+    if not years:
+        return 1900, 1940
+    return min(years) - pad, max(years) + pad
+
+
 def _timeline_svg(records: list[dict], date_field: str, label_field: str,
                   entity_field: str, entity_colors: dict[int, str],
-                  year_start: int = 1900, year_end: int = 1940) -> str:
+                  year_start: int | None = None, year_end: int | None = None) -> str:
+    if year_start is None or year_end is None:
+        year_start, year_end = _timeline_range(records, date_field)
     width, height = 880, 90
     pad_l, pad_r, pad_t, pad_b = 40, 20, 20, 30
-    span = year_end - year_start
+    span = year_end - year_start or 1
 
     def x(dt: date | None) -> float:
         if not dt:
@@ -733,7 +798,8 @@ def _timeline_svg(records: list[dict], date_field: str, label_field: str,
     svg.append(f'<line x1="{pad_l}" y1="{axis_y}" x2="{width - pad_r}" y2="{axis_y}" '
                f'stroke="#bbb" stroke-width="1"/>')
 
-    for y in range(year_start, year_end + 1, 5):
+    first_tick = year_start + (-year_start % 5)  # first multiple of 5 within range
+    for y in range(first_tick, year_end + 1, 5):
         tx = pad_l + (y - year_start) / span * (width - pad_l - pad_r)
         svg.append(f'<line x1="{tx:.1f}" y1="{axis_y}" x2="{tx:.1f}" y2="{axis_y + 5}" '
                    f'stroke="#bbb" stroke-width="1"/>')
@@ -787,7 +853,7 @@ def render_landing(
     for m in matches:
         src = _img_src("mark", str(m["trademark_serial"]), 0, images_dir) if m.get("has_image") else None
         if src:
-            thumb = f'<img class="match-card-thumb" src="{src}" alt="{_esc(m["trademark"])}">'
+            thumb = f'<img class="match-card-thumb" loading="lazy" src="{src}" alt="{_esc(m["trademark"])}">'
         else:
             thumb = f'<div class="match-card-thumb-placeholder">{_esc(m["trademark"][:3])}</div>'
 
@@ -797,13 +863,15 @@ def render_landing(
 
         grant = m.get("grant_dt", "")
         filed = m.get("filing_dt", "")
+        gy, fy = _year_from_dt(grant), _year_from_dt(filed)
+        gap_chip = f'<span class="chip-sm">{abs(gy - fy)} yr gap</span>' if gy and fy else ""
         match_cards.append(
             f'<div class="match-card">'
             f'{thumb}'
             f'<div class="match-card-body">'
             f'<div class="match-card-title">{_esc(m["trademark"])} ↔ {_esc(m["patent_no"])}</div>'
             f'<div class="match-card-meta">{_esc(m.get("entity", ""))} · '
-            f'Patent {grant} · Mark filed {filed}</div>'
+            f'Patent {grant} · Mark filed {filed} {gap_chip}</div>'
             f'<div class="match-card-note">{_esc(m.get("note", ""))}</div>'
             f'{essay_link}'
             f'</div></div>'
@@ -842,7 +910,10 @@ def render_landing(
             f'<p>{_esc(p.strip())}</p>'
             for p in research_question.split("\n\n") if p.strip()
         )
-        rq_html = f'<div class="research-question">{paras}</div>'
+        rq_html = (
+            f'<div class="research-question">'
+            f'<span class="rq-label">Research Question</span>{paras}</div>'
+        )
 
     body = (
         f'<div class="page-header">'
@@ -852,7 +923,7 @@ def render_landing(
         f'</div>'
         f'<div class="page-body">'
         f'{rq_html}'
-        f'<div class="narrative">{narrative}</div>'
+        f'{_narrative_block(narrative)}'
         + (f'<p class="section-title">Confirmed Pairs</p>'
            f'<div class="match-cards">{"".join(match_cards)}</div>' if match_cards else '')
         + f'<p class="section-title">Entities</p>'
@@ -861,9 +932,13 @@ def render_landing(
     )
 
     title = f"{project.replace('-', ' ').title()} — Markery"
+    if research_question:
+        landing_desc = re.split(r'(?<=[.!?])\s', research_question.strip())[0][:160]
+    else:
+        landing_desc = "USPTO Patent-Trademark Research Project · 1900–1939"
     og = {
         "title": title,
-        "description": f"{len(matches)} confirmed pairs across {len(entities)} entities",
+        "description": landing_desc,
         "url": f"{base_url}/{project}/index.html",
     } if base_url else None
     out_path = out_dir / "index.html"
@@ -896,7 +971,7 @@ def render_trademark_gallery(
         sn  = tm["serial_no"]
         src = _img_src("mark", sn, 0, images_dir) if tm.get("image_available") else None
         if src:
-            img_html = f'<img class="card-image" src="{src}" alt="{_esc(tm["mark_name"])}">'
+            img_html = f'<img class="card-image" loading="lazy" src="{src}" alt="{_esc(tm["mark_name"])}">'
         else:
             img_html = f'<div class="card-image-placeholder">{_esc(sn)}</div>'
 
@@ -955,7 +1030,7 @@ def render_trademark_gallery(
         f'<div class="stat-chips">{stat_chips}</div>'
         f'</div>'
         f'<div class="page-body">'
-        f'<div class="narrative">{narrative}</div>'
+        f'{_narrative_block(narrative)}'
         f'<div class="timeline-section"><p class="section-title">Filing Timeline</p>{timeline}</div>'
         f'{gallery_html}'
         f'</div>'
@@ -967,7 +1042,7 @@ def render_trademark_gallery(
         "url": f"{base_url}/{project}/trademarks.html",
     } if base_url else None
     out_path = out_dir / "trademarks.html"
-    out_path.write_text(_page("Trademark Gallery", body, nav, og=og), encoding="utf-8")
+    out_path.write_text(_page(_page_title("Trademark Gallery", project), body, nav, og=og), encoding="utf-8")
     return out_path
 
 
@@ -995,7 +1070,7 @@ def render_patent_gallery(
         pn  = pat["patent_no"]
         src = _img_src("patent", pn, 0, images_dir) if pat.get("figure_available") else None
         if src:
-            img_html = f'<img class="card-image" src="{src}" alt="{_esc(pn)}">'
+            img_html = f'<img class="card-image" loading="lazy" src="{src}" alt="{_esc(pn)}">'
         else:
             img_html = f'<div class="card-image-placeholder">{_esc(pn)}</div>'
 
@@ -1034,7 +1109,7 @@ def render_patent_gallery(
         f'<div class="stat-chips">{stat_chips}</div>'
         f'</div>'
         f'<div class="page-body">'
-        f'<div class="narrative">{narrative}</div>'
+        f'{_narrative_block(narrative)}'
         f'<div class="timeline-section"><p class="section-title">Grant Timeline</p>{timeline}</div>'
         f'<p class="section-title">All Patents</p>'
         f'<div class="card-grid">{"".join(cards)}</div>'
@@ -1047,7 +1122,7 @@ def render_patent_gallery(
         "url": f"{base_url}/{project}/patents.html",
     } if base_url else None
     out_path = out_dir / "patents.html"
-    out_path.write_text(_page("Patent Gallery", body, nav, og=og), encoding="utf-8")
+    out_path.write_text(_page(_page_title("Patent Gallery", project), body, nav, og=og), encoding="utf-8")
     return out_path
 
 
@@ -1107,7 +1182,13 @@ def render_entity_page(
            if stats.get("active_from") else '')
     )
 
+    breadcrumb = _breadcrumb([
+        ("Home", "../index.html"),
+        (entity["canonical_name"], None),
+    ])
+
     body = (
+        f'{breadcrumb}'
         f'<div class="page-header">'
         f'<h1>{_esc(entity["canonical_name"])}</h1>'
         f'<div class="subtitle">{_esc(entity.get("industry", ""))} · {_esc(entity.get("entity_type", ""))}</div>'
@@ -1126,14 +1207,17 @@ def render_entity_page(
 
     tm_count  = stats.get("trademark_count", 0)
     pat_count = stats.get("patent_count", 0)
+    ent_desc = " · ".join(
+        p for p in (entity.get("industry", ""), entity.get("entity_type", "")) if p
+    ) or f"{tm_count} trademarks · {pat_count} patents"
     og = {
         "title": entity["canonical_name"],
-        "description": f"{tm_count} trademarks · {pat_count} patents",
+        "description": ent_desc[:160],
         "url": f"{base_url}/{project}/entities/{slug}.html",
     } if base_url else None
     (out_dir / "entities").mkdir(exist_ok=True)
     out_path = out_dir / "entities" / f"{slug}.html"
-    out_path.write_text(_page(_esc(entity["canonical_name"]), body, nav, depth=1, og=og), encoding="utf-8")
+    out_path.write_text(_page(_page_title(entity["canonical_name"], project), body, nav, depth=1, og=og), encoding="utf-8")
     return out_path
 
 
@@ -1217,7 +1301,15 @@ def render_match_essay(
         + f'<span class="chip">Mark filed {match.get("filing_dt", "")}</span>'
     )
 
+    crumb_title = f"{match['trademark'] or '(figurative)'} ↔ {match['patent_no']}"
+    trail: list[tuple[str, str | None]] = [("Home", "../index.html")]
+    if entity_slug and match.get("entity"):
+        trail.append((match["entity"], f'../entities/{entity_slug}.html'))
+    trail.append((crumb_title, None))
+    breadcrumb = _breadcrumb(trail)
+
     body = (
+        f'{breadcrumb}'
         f'<div class="page-header">'
         f'<h1>{_esc(match["trademark"])} ↔ {_esc(match["patent_no"])}</h1>'
         f'<div class="subtitle">Confirmed patent-trademark pair · {_esc(project.replace("-", " ").title())}</div>'
@@ -1233,14 +1325,17 @@ def render_match_essay(
     )
 
     essay_title = f"{match['trademark']} ↔ {match['patent_no']}"
+    note = (match.get("note") or "").strip()
+    note_sentence = re.split(r'(?<=[.!?])\s', note)[0][:160] if note else \
+        f"Confirmed patent-trademark pair: {match['trademark']} and {match['patent_no']}"
     og = {
         "title": essay_title,
-        "description": f"Match essay for {match['trademark']} and {match['patent_no']}",
+        "description": note_sentence,
         "url": f"{base_url}/{project}/matches/{slug}.html",
     } if base_url else None
     (out_dir / "matches").mkdir(exist_ok=True)
     out_path = out_dir / "matches" / f"{slug}.html"
-    out_path.write_text(_page(essay_title, body, nav, depth=1, og=og), encoding="utf-8")
+    out_path.write_text(_page(_page_title(essay_title, project), body, nav, depth=1, og=og), encoding="utf-8")
     return out_path
 
 
@@ -1283,7 +1378,7 @@ def render_thematic_essay(
     } if base_url else None
     (out_dir / "themes").mkdir(exist_ok=True)
     out_path = out_dir / "themes" / f"{slug}.html"
-    out_path.write_text(_page(essay_title, body, nav, depth=1, og=og), encoding="utf-8")
+    out_path.write_text(_page(_page_title(essay_title, project), body, nav, depth=1, og=og), encoding="utf-8")
     return out_path
 
 
@@ -1321,7 +1416,7 @@ def render_sources_page(
         "url": f"{base_url}/{project}/sources.html",
     } if base_url else None
     out_path = out_dir / "sources.html"
-    out_path.write_text(_page("Sources", body, nav, og=og), encoding="utf-8")
+    out_path.write_text(_page(_page_title("Sources", project), body, nav, og=og), encoding="utf-8")
     return out_path
 
 
@@ -1387,7 +1482,7 @@ def render_timeline_page(
         "url": f"{base_url}/{project}/timeline.html",
     } if base_url else None
     out_path = out_dir / "timeline.html"
-    out_path.write_text(_page("Timeline", body, nav, og=og), encoding="utf-8")
+    out_path.write_text(_page(_page_title("Timeline", project), body, nav, og=og), encoding="utf-8")
     return out_path
 
 
@@ -1461,5 +1556,5 @@ def render_search_page(
     )
 
     out_path = out_dir / "search.html"
-    out_path.write_text(_page("Search", body, nav), encoding="utf-8")
+    out_path.write_text(_page(_page_title("Search", project), body, nav), encoding="utf-8")
     return out_path

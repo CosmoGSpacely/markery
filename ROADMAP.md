@@ -314,11 +314,15 @@ Results 2026-06-10: 4a — `render_match_essay()` resolves the entity record by 
 
 5c. **Suppress all narrative placeholders.** Any section whose content comes from a missing `.md` file currently renders italic placeholder text ("not yet written" or similar). Change all such cases to suppress the section entirely. Placeholder text in a published site is unprofessional.
 
+Results 2026-06-10: 5a — landing match cards now append a `chip-sm` gap chip (`N yr gap`) to the meta line, computed via `_year_from_dt` over filing/grant dates. 5b — the research-question box CSS was sharpened to spec (4px `#8b5e3c` left border, `16px 20px` padding) and now carries an uppercase `Research Question` label (`.rq-label`); the block was already suppressed when `research-question.md` is absent (the `if research_question:` guard predates this phase), so no new suppression logic was needed there. 5c — `_read_narrative()` now returns `""` instead of the "Narrative not yet written…" placeholder when the source `.md` is missing; to avoid emitting an empty 40px-margin `.narrative` div, added a `_narrative_block()` helper that returns `''` for empty content, and routed the landing, trademark-gallery, and patent-gallery bodies through it. The entity-page narrative div stays (it also wraps the variants table and confirmed-pairs section, which always render). The match-essay "Essay not yet written" placeholder was left intact: confirmed pairs always have an essay, so that branch is unreachable in practice — left as a defensive fallback rather than suppressed.
+
 **Group 6 — Gallery improvements**
 
 6a. **Lazy loading.** Add `loading="lazy"` to all `<img>` tags in card components (trademark cards, patent cards, match cards). One attribute addition per image tag; no logic change required.
 
 6b. **Dynamic timeline date range.** The filing/grant timeline SVGs in gallery pages and `render_timeline_page()` use hardcoded range 1900–1939. Replace with a range calculated from `min(year)` and `max(year)` of the actual dataset for each project, padded by ±2 years.
+
+Results 2026-06-10: 6a — `loading="lazy"` added to the three card image tags (match-card thumb, trademark card-image, patent card-image). 6b — added `_timeline_range(records, date_field, pad=2)` which derives `(min−2, max+2)` from the records' dates (falls back to 1900–1940 when no dated records exist). `_timeline_svg()` now takes `year_start`/`year_end` as `None`-defaulted optionals and auto-derives the range when not supplied, so all four call sites (both galleries, both timeline-page SVGs) get per-project ranges without passing arguments. Also aligned the axis tick loop to start at the first multiple of 5 within the range (`first_tick`) so labels land on round years rather than the padded boundary, and guarded `span` against a zero divisor for single-year datasets. 3 new tests for `_timeline_range`.
 
 **Group 7 — Navigation and accessibility**
 
@@ -326,11 +330,15 @@ Results 2026-06-10: 4a — `render_match_essay()` resolves the entity record by 
 
 7b. **Responsive navigation.** The site header entity nav links overflow on narrow screens. Wrap entity nav links in a horizontally scrollable container (`overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch`) so they remain accessible on mobile without wrapping.
 
+Results 2026-06-10: 7a — added a `_breadcrumb(trail)` helper rendering `<nav class="breadcrumb" aria-label="Breadcrumb"><ol>` with `aria-current="page"` on the final crumb and `›` separators via CSS `::after content`. Wired into the entity page (`Home › Entity`) and the match-essay page. Deviation from plan: the plan's match-essay example was `Home › Matches › VICTOR`, but there is no Matches index page to link, so the match-essay trail routes through the filing entity instead (`Home › <Entity> › <Mark ↔ Patent>`) — a navigable path rather than a dead link, and it reinforces the Group 4 entity cross-linking. 7b — the existing `.site-header nav` rule gained `overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch` plus `flex: 1; min-width: 0` so the link row scrolls horizontally on narrow screens instead of wrapping. 2 new breadcrumb tests.
+
 **Group 8 — Metadata**
 
 8a. **Page title pattern.** Each page's `<title>` tag should follow `[Page Title] — [Project Display Name] — Markery`. Audit all page renderers and fix any that deviate.
 
 8b. **OG description.** Ensure all pages carry a meaningful `og:description` meta tag (≤160 chars). For match essays: use the first sentence of the research note from confirmed.jsonl. For entity pages: use the entity industry/type. For the landing page: use the research question (if available), otherwise the project subtitle.
+
+Results 2026-06-10: 8a — added `_page_title(page, project)` → `"[Page] — [Project Display] — Markery"` and applied it to all seven sub-page renderers (trademark gallery, patent gallery, entity, match essay, thematic essay, sources, timeline, search). The landing page keeps the 2-part root form `"[Project] — Markery"` intentionally — its page title equals the project name, so the 3-part pattern would read "Radio Pioneers — Radio Pioneers — Markery". Incidental fix: the entity page previously passed `_esc(entity["canonical_name"])` into `_page`, which itself `_esc`'s the title — a latent double-escape; `_page_title` passes the raw name so it is now escaped once. 8b — og descriptions: match essays use the first sentence of the `note` field (regex split on sentence-final punctuation, capped 160 chars, with a generated fallback when the note is empty); entity pages use `industry · entity_type`; the landing page uses the first sentence of the research question when present, else the project subtitle string. og tags only emit when `base_url` is set (build default is `None`), so these affect deployed builds. All four groups (5–8): full suite 626 passing (8 new render-helper tests). Group 9 (site builds for all three projects) intentionally not run — instructed to stop at end of Group 8.
 
 **Group 9 — Site builds**
 

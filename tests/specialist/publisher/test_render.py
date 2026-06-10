@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from markery.specialist.publisher.render import _esc, _page, _render_markdown, _year_from_dt
+from markery.specialist.publisher.render import (
+    _esc, _page, _render_markdown, _year_from_dt,
+    _timeline_range, _breadcrumb, _page_title, _narrative_block,
+)
 
 
 def test_esc_empty_string():
@@ -133,3 +136,47 @@ def test_year_from_dt_string():
 
 def test_year_from_dt_none():
     assert _year_from_dt(None) is None
+
+
+# Group 6: dynamic timeline range
+
+def test_timeline_range_from_records():
+    records = [{"d": "1925-01-01"}, {"d": "1930-06-01"}, {"d": "1928-03-01"}]
+    assert _timeline_range(records, "d") == (1923, 1932)
+
+
+def test_timeline_range_empty_falls_back():
+    assert _timeline_range([], "d") == (1900, 1940)
+
+
+def test_timeline_range_custom_pad():
+    assert _timeline_range([{"d": "1910-01-01"}], "d", pad=5) == (1905, 1915)
+
+
+# Group 7: breadcrumb
+
+def test_breadcrumb_renders_nav_with_aria():
+    html = _breadcrumb([("Home", "../index.html"), ("RCA", None)])
+    assert 'aria-label="Breadcrumb"' in html
+    assert '<a href="../index.html">Home</a>' in html
+    assert 'aria-current="page"' in html
+    assert "RCA" in html
+
+
+def test_breadcrumb_escapes_labels():
+    html = _breadcrumb([("A & B", None)])
+    assert "A &amp; B" in html
+
+
+# Group 8: page title pattern + narrative suppression
+
+def test_page_title_pattern():
+    assert _page_title("Timeline", "radio-pioneers") == "Timeline — Radio Pioneers — Markery"
+
+
+def test_narrative_block_suppressed_when_empty():
+    assert _narrative_block("") == ""
+
+
+def test_narrative_block_wraps_content():
+    assert _narrative_block("<p>hi</p>") == '<div class="narrative"><p>hi</p></div>'
