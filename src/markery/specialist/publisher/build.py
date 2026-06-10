@@ -140,6 +140,15 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
     ))
     print(f"  patent gallery   → {pages[-1].name}")
 
+    pages.append(r.render_entities_index(
+        project, entities, stats, out,
+        base_url=base_url, link_index=link_index, extra_nav=extra_nav,
+    ))
+    print(f"  entities index   → entities/{pages[-1].name}")
+    search_records.append(_build_search_record(
+        "Entities", "entities_index", "entities/index.html", None,
+    ))
+
     for entity in entities:
         ent_tms   = [t for t in trademarks if t["entity_id"] == entity["entity_id"]]
         ent_pats  = [p for p in patents    if p["entity_id"] == entity["entity_id"]]
@@ -156,6 +165,16 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
             f"entities/{entity['slug']}.html",
             proj.content / f"entity-{entity['slug']}.md",
         ))
+
+    pages.append(r.render_matches_index(
+        project, matches, entities, out,
+        base_url=base_url, link_index=link_index, extra_nav=extra_nav,
+        images_dir=images_dir,
+    ))
+    print(f"  matches index    → matches/{pages[-1].name}")
+    search_records.append(_build_search_record(
+        "Confirmed Pairs", "matches_index", "matches/index.html", None,
+    ))
 
     seen: set[str] = set()
     for match in matches:
