@@ -1,4 +1,4 @@
-## CARD: john-deere-moline-ill-us979019a  [candidate  0.4925  gap=0.3y]
+## CARD: john-deere-moline-ill-us979019a  [confirmed  0.7925  gap=0.3y]
 mark:      JOHN DEERE MOLINE, ILL. (serial 71055630)
 filed:     1911-04-08
 owner:     DEERE & COMPANY
@@ -11,4 +11,4 @@ assignee:  DEERE & CO [US]
 cpc:       A01B
 abstract:  
 signals:     gt=0.0  ga=0.0
-essay:     absent
+essay:     present

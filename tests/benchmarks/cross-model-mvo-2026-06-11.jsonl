@@ -1,0 +1,13 @@
+{"benchmark": "cross-model-mvo", "date": "2026-06-11", "fixtures": ["information-systems/soundex-us1261167a", "radio-pioneers/sterilamp-us2168861a", "animal-marks-1930/john-deere-moline-ill-us979019a"], "summary": {"claude-haiku-4-5-20251001": {"validator_pass": 6, "validator_total": 6, "prompt_tokens": 16721, "completion_tokens": 3861, "cache_read_tokens": 0, "usd": 0.036026}, "claude-sonnet-4-6": {"validator_pass": 6, "validator_total": 6, "prompt_tokens": 3324, "completion_tokens": 4474, "cache_read_tokens": 8082, "usd": 0.09466035}}}
+{"model": "claude-haiku-4-5-20251001", "project": "information-systems", "slug": "soundex-us1261167a", "task": "card.infer", "passed": true, "recommendation": "confirm", "score": 5}
+{"model": "claude-haiku-4-5-20251001", "project": "information-systems", "slug": "soundex-us1261167a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "claude-haiku-4-5-20251001", "project": "radio-pioneers", "slug": "sterilamp-us2168861a", "task": "card.infer", "passed": true, "recommendation": "confirm", "score": 5}
+{"model": "claude-haiku-4-5-20251001", "project": "radio-pioneers", "slug": "sterilamp-us2168861a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "claude-haiku-4-5-20251001", "project": "animal-marks-1930", "slug": "john-deere-moline-ill-us979019a", "task": "card.infer", "passed": true, "recommendation": "confirm", "score": 5}
+{"model": "claude-haiku-4-5-20251001", "project": "animal-marks-1930", "slug": "john-deere-moline-ill-us979019a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "claude-sonnet-4-6", "project": "information-systems", "slug": "soundex-us1261167a", "task": "card.infer", "passed": true, "recommendation": "reject", "score": 2}
+{"model": "claude-sonnet-4-6", "project": "information-systems", "slug": "soundex-us1261167a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "claude-sonnet-4-6", "project": "radio-pioneers", "slug": "sterilamp-us2168861a", "task": "card.infer", "passed": true, "recommendation": "defer", "score": 3}
+{"model": "claude-sonnet-4-6", "project": "radio-pioneers", "slug": "sterilamp-us2168861a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "claude-sonnet-4-6", "project": "animal-marks-1930", "slug": "john-deere-moline-ill-us979019a", "task": "card.infer", "passed": true, "recommendation": "confirm", "score": 5}
+{"model": "claude-sonnet-4-6", "project": "animal-marks-1930", "slug": "john-deere-moline-ill-us979019a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}

@@ -1,4 +1,4 @@
-## CARD: sterilamp-us2168861a  [candidate  0.4988  gap=0.0y]
+## CARD: sterilamp-us2168861a  [confirmed  0.4988  gap=0.0y]
 mark:      STERILAMP (serial 71423019)
 filed:     1939-08-25
 owner:     WESTINGHOUSE ELECTRIC CORPORATION
@@ -11,4 +11,4 @@ assignee:  WESTINGHOUSE ELECTRIC & MFG CO
 cpc:       H01J
 abstract:  
 signals:     gt=0.0  ga=0.0
-essay:     absent
+essay:     present

@@ -1,10 +1,6 @@
-## CARD: soundex-us1261167a
-status:    confirmed
-score:     0.5752
-date_gap:  9.0y
+## CARD: soundex-us1261167a  [confirmed  0.5752  gap=9.0y]
 mark:      SOUNDEX (serial 71246709)
 filed:     1927-03-31
-reg_no:    0230958
 owner:     RAND KARDEX BUREAU, INC.
 goods:     BLANK AND PARTIALLY-PRINTED CARDS AND FORMS FOR INDEXES, INDEXES CONSISTING OF B…  [1 class(es)]
 entity:    Remington Rand (id 1)
