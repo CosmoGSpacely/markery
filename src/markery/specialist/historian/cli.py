@@ -10,17 +10,17 @@ import sys
 import time
 from pathlib import Path
 
-from markery.common.config import DB
+from markery.common.config import DB, DEFAULT_MODEL as _DEFAULT_MODEL
 from markery.common.project import Project, require_project
 from markery.common.tokens import TokenRecord, count_output_tokens, emit as emit_tokens
 
-
-_DEFAULT_MODEL = "claude-haiku-4-5-20251001"
-
 # ---------------------------------------------------------------------------
 # Inference system prompts
-# Identity loaded at module init; task suffixes appended to push above the
-# 1024-token minimum required for Anthropic prompt caching.
+# Identity loaded at module init; task suffixes appended to grow the prefix.
+# NOTE: the cacheable-prefix minimum is model-dependent — Haiku 4.5 (the
+# default) requires 4096 tokens, not 1024. These ~2K-token prompts are below
+# that threshold, so prompt caching does NOT activate on the default model.
+# See common/llm.py for the per-model table.
 # ---------------------------------------------------------------------------
 
 _PERSONA_DIR = Path(__file__).parent / "persona"

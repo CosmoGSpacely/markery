@@ -19,6 +19,11 @@ def _find_root() -> Path:
 
 ROOT = _find_root()
 
+# Single definition site for the default LLM model. The dated ID is pinned for
+# reproducibility. Override per-call with --model or the MARKERY_MODEL env var.
+# Note: Haiku 4.5's cacheable-prefix minimum is 4096 tokens (see common/llm.py).
+DEFAULT_MODEL = "claude-haiku-4-5-20251001"
+
 DB = {
     "patents":    ROOT / "data" / "patents.duckdb",
     "trademarks": ROOT / "data" / "trademarks.duckdb",

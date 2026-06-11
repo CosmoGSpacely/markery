@@ -62,6 +62,7 @@ _SUBCOMMANDS = {
     "publisher":   "Publisher specialist  (build <project>)",
     "wikipedia":   "Wikipedia tooling  (draft|submit <project> <slug>)",
     "project":     "Project management  (init|adopt)",
+    "tokens":      "Token-cost reporting  (report [--by specialist|command|model])",
 }
 
 
@@ -146,6 +147,23 @@ def cmd_project(rest: list[str]) -> None:
     project_main()
 
 
+def cmd_tokens(rest: list[str]) -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(prog="markery tokens")
+    sub = parser.add_subparsers(dest="action", required=True)
+    rep = sub.add_parser("report", help="Aggregate a token log into a cost summary")
+    rep.add_argument("--log", metavar="PATH", default=None,
+                     help="Token log path (default: $MARKERY_TOKEN_LOG)")
+    rep.add_argument("--by", metavar="FIELD", default=None,
+                     choices=["specialist", "command", "model"],
+                     help="Group the breakdown by specialist, command, or model")
+    args, _ = parser.parse_known_args(rest)
+    if args.action == "report":
+        from markery.common.tokens_report import report_main
+        report_main(rest[1:])  # drop the "report" token
+
+
 def cmd_site(rest: list[str]) -> None:
     import argparse
     from pathlib import Path
@@ -201,6 +219,7 @@ def main() -> None:
         "publisher":  lambda: cmd_publisher(rest),
         "wikipedia":  lambda: cmd_wikipedia(rest),
         "project":    lambda: cmd_project(rest),
+        "tokens":     lambda: cmd_tokens(rest),
     }[cmd]()
 
 

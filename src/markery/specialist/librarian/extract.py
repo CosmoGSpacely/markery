@@ -14,11 +14,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from markery.common.config import ROOT
+from markery.common.config import ROOT, DEFAULT_MODEL as _DEFAULT_MODEL
 from markery.common.tokens import TokenRecord, emit as emit_tokens
 
 _LIBRARY = ROOT / "library"
-_DEFAULT_MODEL = "claude-haiku-4-5-20251001"
 
 # ~8 000 chars ≈ 2 000 tokens; 800-char overlap ≈ 200 tokens
 _CHUNK_CHARS = 8_000
@@ -170,7 +169,10 @@ def _call_claude(chunk: str, topics: list[str], client, model: str) -> tuple[lis
 
     Returns (candidates, prompt_tokens, completion_tokens, cache_read, cache_creation).
     The system prompt is sent as an ephemeral cache block; on the second+ chunk in a
-    session the cache_read value will be > 0 if the prompt meets the 1024-token minimum.
+    session cache_read is > 0 only if the prefix meets the model-dependent minimum.
+    That minimum is 4096 tokens on Haiku 4.5 (the default model), 2048 on Sonnet 4.6,
+    1024 on older Sonnet — see common/llm.py. If the system prompt is below the
+    active model's threshold, caching silently does not activate (cache_read = 0).
     """
     user_msg = _USER_TMPL.format(
         topics=", ".join(f'"{t}"' for t in topics),
@@ -413,7 +415,7 @@ def extract(
             wall_ms=wall_ms,
         )
         emit_tokens(record, specialist="librarian", command="extract",
-                    tokens_flag=tokens_flag)
+                    tokens_flag=tokens_flag, n_calls=total_chunks - errors)
 
     if not deduped:
         print("No relevant passages found.", file=sys.stderr)

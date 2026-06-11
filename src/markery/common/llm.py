@@ -9,9 +9,17 @@ call Claude go through here so provider changes require editing one file.
     text, ptok, ctok, cr, cc = call(model, system, user, max_tokens)
 
 cache_system=True (default) wraps the system prompt in a cache_control block.
-The block must be ≥1024 tokens for the cache to activate; shorter prompts are
-accepted but silently not cached. cache_read and cache_creation are 0 when
-the API does not support or honour caching for a given call.
+The cacheable-prefix minimum is **model-dependent** — a marker on a shorter
+prefix is silently ignored (no error, just cache_creation/cache_read = 0):
+
+    Haiku 4.5, Opus 4.5–4.8   4096 tokens
+    Sonnet 4.6, Haiku 3/3.5   2048 tokens
+    Sonnet 3.7–4.5            1024 tokens
+
+Markery's default model is Haiku 4.5 (4096-token minimum); the specialist
+system prompts are ~2K tokens, so caching does NOT currently activate on the
+default model — cache_read is 0 on every call. See `markery tokens report`
+(D059) and the cache-verification warning in common/tokens.py.
 """
 
 from __future__ import annotations
