@@ -49,3 +49,8 @@ library/works/*/candidates.md
 library/index.duckdb
 # Context cards — regenerable via markery librarian card <query>
 library/cards/
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
