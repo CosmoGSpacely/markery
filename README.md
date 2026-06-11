@@ -6,6 +6,21 @@ Markery is a command-line research tool for historical patent and trademark scho
 
 Active research projects include the pre-computer information systems industry (filing appliances, card-index equipment, tabulating machines), early American radio manufacturers (1920–1940), and animal imagery in technology company trademarks (pre-1931).
 
+[![CI](https://github.com/CosmoGSpacely/markery/actions/workflows/ci.yml/badge.svg)](https://github.com/CosmoGSpacely/markery/actions/workflows/ci.yml) · 647 tests · `historian validate` 8/8 on every essay · cross-model MVO benchmark 6/6 ([Haiku & Sonnet](DESIGN.md#empirical-verification-phase-22-p3))
+
+---
+
+## See the output — without running anything
+
+A generated essay page (`markery site build` → static HTML, no JavaScript framework):
+
+![A generated patent–trademark essay page](docs/img/essay-sterilamp.png)
+
+*Every page carries breadcrumb navigation, a Primary Sources block linking the USPTO serial and patent numbers, and a sourced essay scaffolded from DB records and human-finalized. The factual frontmatter on each essay is checked against the live databases by `markery historian validate` (8/8) before it publishes.*
+
+- **Browse the live site** (published from this repo via GitHub Pages): <https://cosmogspacely.github.io/markery/>
+- **Or open it locally** without a build: [`projects/information-systems/site/index.html`](projects/information-systems/site/index.html) — the committed static site for the information-systems project.
+
 ---
 
 ## Quickstart
@@ -120,6 +135,45 @@ markery <subcommand> --help
 | `patents.duckdb` | ~40,000+ US patents across B42F, B42D, B41J, B41L, G06C, G06K, G09F, H04B, H01J, H03F, B60C, A01B, F02B and others |
 | `entities.duckdb` | 30 entities across three projects (information-systems, radio-pioneers, animal-marks-1930) |
 | `library/` | Shared secondary literature corpus (Internet Archive / Gutenberg) — full text, indexed passages, embedding index |
+
+---
+
+## Published contributions
+
+The research output is not only a static site — confirmed pairs have been used to add primary-source citations to live Wikipedia articles. Each edit is a real, reverted-checked revision:
+
+| Article | Contribution | Revision |
+|---|---|---|
+| [Soundex](https://en.wikipedia.org/wiki/Soundex) | SOUNDEX trademark citation (USPTO Serial 71246709, Rand Kardex, 1927) | [1358151441](https://en.wikipedia.org/w/index.php?diff=1358151441) |
+| [Rolodex](https://en.wikipedia.org/wiki/Rolodex) | Wheeldex trademark citation (USPTO Serial 71321669) | [1357918452](https://en.wikipedia.org/w/index.php?diff=1357918452) |
+| [Remington Rand](https://en.wikipedia.org/wiki/Remington_Rand) | Filing-systems section from primary sources | [1358111560](https://en.wikipedia.org/w/index.php?diff=1358111560) |
+| [Library Bureau](https://en.wikipedia.org/wiki/Library_Bureau) | Resolved `{{Citation needed}}` (1921 catalog) | [1357391696](https://en.wikipedia.org/w/index.php?diff=1357391696) |
+| [Library Bureau](https://en.wikipedia.org/wiki/Library_Bureau) | Absorption citation (LA Times, 1927) | [1357570204](https://en.wikipedia.org/w/index.php?diff=1357570204) |
+| [Chicago Pneumatic](https://en.wikipedia.org/wiki/Chicago_Pneumatic) | CP monogram trademark citation (USPTO Serial 71299042, 1930) | [1358151236](https://en.wikipedia.org/w/index.php?diff=1358151236) |
+
+---
+
+## How this was built
+
+Markery is an AI-orchestrated research tool, and that is a design stance, not a disclaimer. The architecture is built to put a stronger model (or a human) only where judgment is irreducible, and to make everything else checkable by code:
+
+- **Three-tier work classification.** Every change belongs to exactly one of *Markery* (shared infrastructure), *Specialist* (one agent's domain), or *Project* (one research project's artifacts). The boundaries are enforced per session by `CLAUDE.md` and each specialist's `identity.md` scope — so an agent cannot write outside its lane without halting.
+- **Human judgment at the right altitude.** Automated scoring caps at 0.80 by design: a high score identifies a pair *worth examining*, never a confirmed correspondence. Confirmation is a human act recorded in `confirmed.jsonl`; `candidates.jsonl` is machine-generated and never hand-edited. The model drafts prose from a scholar persona; a human finalizes it.
+- **Checkable outputs (MVO).** Each command defines a *minimum viable output* that code can validate — `historian validate` checks an essay's facts against the live databases (serial resolves, patent resolves, grant date matches, no cross-pair contamination). This converts "is this essay accurate?" from a model-sensitive judgment into a deterministic check.
+- **Model-agnosticism, measured.** Because the model-agnostic tier is defined by checkable outputs, model choice there is a *cost* decision, not a *correctness* one — and this is proven, not asserted: the [cross-model MVO benchmark](DESIGN.md#empirical-verification-phase-22-p3) runs the inference tasks under Haiku 4.5 and Sonnet 4.6 and both pass every validator (6/6).
+- **CLI as the test harness.** The CLI is the product under test: every read and write goes through it, so exercising a command validates the same path a user hits. There is no privileged back door for the tool's own scripts.
+
+See [DESIGN.md](DESIGN.md) for the full rationale and [CONTEXT.md](CONTEXT.md) for the specialist/project model.
+
+---
+
+## Engineering discipline
+
+The internal process is deliberate and visible, not buried:
+
+- **Phase-gated roadmap.** [ROADMAP.md](ROADMAP.md) carries explicit, checkable phase gates (`PASSED when: …`) and dated results paragraphs — work is not "done" until its gate criteria are met and recorded.
+- **Contract-versioned subprocess interface.** The `markery-langgraph` orchestration repo calls Markery through a versioned contract declared in [`MANIFEST.json`](MANIFEST.json) (`contract_version`); a signature or output-format change bumps the version and a `check_contract()` assertion catches drift.
+- **Reopen-triggered deferral register.** [DEFERRED.md](DEFERRED.md) records known-but-not-now work, and every entry carries an explicit *reopen trigger* — no item is deferred without the condition that should bring it back.
 
 ---
 
