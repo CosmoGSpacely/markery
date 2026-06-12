@@ -443,6 +443,42 @@ Results 2026-06-11 (run under `claude-haiku-4-5-20251001`, all via the CLI): Ste
 
 ---
 
+### P6 — Close the register (MARKERY_REVIEW open items + Phase 22 gaps)
+
+P1–P5 closed the headline MARKERY_REVIEW findings (A1, A4/D059, B1, B2/D061, C1/D062) and 5 of 6 portfolio flags. P6 closes the remaining open items the review flagged — including the loose end the review expected P1 to handle (D054) and the two findings whose reopen triggers have since fired (D058, D060) — plus the CLI/build/agentic gaps Phase 22 itself surfaced (D063–D066), and archives the review file per the CLAUDE.md REVIEW convention.
+
+**Explicitly out of scope — these remain deferred with rationale:** D025 / D026 (new research domains — breadth deferred until a new project opportunity, per the operator's decision); D028 / D007 (TSDR mark-text search, PatentsView bulk import — alternative acquisition paths the review judged not goal-aligned); D057 (isolated langgraph venv — blocked on `python3.12-venv`, an external dependency).
+
+**Group A — Review's open findings**
+
+A1. **D054 — migrate 5 legacy information-systems essays.** Create canonically-named, YAML-frontmatter essay files for the confirmed pairs `soundex-us1435663a`, `soundex-quick-as-a-flash-us1435663a`, `vi-dex-us1527374a`, `rediref-us1614080a`, `shannon-us1738120a`; split the multi-serial `soundex.md` into two single-pair essays (resolving its `no_cross_contamination` failure). Each new essay must pass `markery historian validate` 8/8. Rebuild the information-systems site (exit 0). Close D054.
+
+A2. **D058 — `markery trademark inspect <serial>`.** New read command: mark text (or `(figurative)` when null), filing date, goods, owner, registration number, mark-image availability, and all design search codes with human-readable descriptions — the gap that forced a raw DuckDB query in P5. Add an MVO contract in `tests/benchmarks/mvo.md` and a test. Close D058.
+
+A3. **D060 — Batch API path (the unrealized 50%-cost lever).** Add a `--batch` path to `librarian extract` (route chunk calls through `client.messages.batches`) and a `markery historian infer-queue <project>` that batches `card --infer` across all unreviewed candidates. Keep the live path as the default for single-item interactive use. Quantify the saving with `markery tokens report` against a live-path baseline. Close D060.
+
+**Group B — CLI / build / inspection gaps from Phase 22**
+
+B1. **D063 — `markery site check <project>`.** Walk every built page; resolve each internal `href`/`img src` against files on disk; report broken links and orphaned (unlinked) files; exit non-zero on any breakage so it can gate a build. Replaces the ad-hoc audit script written in P1 Group 9. Close D063.
+
+B2. **D064 — prune stale site output.** `markery site build` tracks the set of files it writes and removes `site/` files not written this run (or gate behind `--clean`). Removes the manual orphan cleanup done in P1 Group 9. Close D064.
+
+B3. **D066 + D053 — dedupe and inspection.** Dedupe candidates on `(trademark_serial, patent_no)` in `match` (the bulldog produced duplicate rows); add `markery patent search --assignee <substr>` (the local-DB assignee read missing in P5); add `markery match inspect <project> [--entity N]` for per-entity candidate scores (D053); add an un-reject / confirm-overrides-reject path to `matchmaker confirm`. Close D066 and D053.
+
+**Group C — Agentic robustness**
+
+C1. **D065 — human-gate on rejects.** Route a model `reject` (and optionally `defer`) through the langgraph `human_gate` so a human can overturn it, instead of auto-writing `rejected.jsonl` — the limitation the P5 bulldog exposed. Keep auto-reject only below a score floor, or add `--review-all`. Update `_route_infer`, the gate routing, and `tests/test_graph.py`. Close D065.
+
+**Group D — Setup & housekeeping**
+
+D1. **D056 — `MARKERY_ROOT` persistence.** Let langgraph resolve the Markery repo without a manual export (e.g. a `.markery-root` pointer file, or default to a sibling `markery/` directory), documented in the langgraph README. Close D056.
+
+D2. **D055 — resolve the `projects/*/site/` tracking decision.** Decide and document: keep `site/` tracked, because P4's "view the output without running" links committed HTML and GitHub Pages builds from the repo. Close D055 as decided (keep tracked).
+
+D3. **Archive the review file.** Copy `MARKERY_REVIEW.md` → `archive/MARKERY_REVIEW-2026-06-09.md` and `git rm` it from root, per the REVIEW-file convention (its own line 8).
+
+---
+
 ### Phase Gate
 
 P1 PASSED when: frontmatter stripping bug fixed in essays and search excerpts; Markdown parser supports unordered lists, ordered lists, blockquotes, and external links; patent figures auto-embed when figure data is available and `[[figure:]]` tag is absent from essay; match essays link to entity pages; entity pages show enriched confirmed-pair cards (name, patent no, year gap, essay link); date gap stat chip on landing page confirmed-pair cards; research question section suppressed when file absent; all narrative placeholder text suppressed site-wide; `loading="lazy"` on all gallery images; timeline date range is dynamic; breadcrumb nav on entity and match essay pages; entity nav links scrollable on mobile; page titles follow `[Title] — [Project] — Markery` pattern; OG descriptions populated for all page types; all three existing site builds exit 0 with no regressions. — PASSED 2026-06-10. Delivered in Groups 1–9 plus a mid-phase restructure prompted by review: render.py decomposed into a `render/` package, and real Entities/Matches section index pages built so breadcrumbs/nav point at emitted pages (the breadcrumb requirement was met by building the IA, not layering nav on a missing one). All three sites build exit 0 with 0 broken internal links (803 audited). New CLI gaps filed: D063 (site link checker), D064 (build prune stale output). Full suite 633 passing.
@@ -455,4 +491,6 @@ P4 PASSED when: a visitor-facing README exists with pitch, an essay screenshot, 
 
 P5 (optional) — not required for the phase. When attempted, PASSED when: ≥1 bulldog confirmed pair via the live graph `human_gate`; essay validates 8/8; `markery site build animal-marks-1930` exits 0 with the bulldog essay and mark image rendered; `--json` added to the infer commands and the langgraph graph parses it; D062 closed.
 
-Phase PASSED when P1–P4 pass (P5 is optional). `DEFERRED.md` updated with any new bypasses discovered. D025 (photographic-equipment) and D026 (precision-tools) remain deferred — breadth is not the goal of this phase. — PASSED 2026-06-11. P1–P4 all PASSED; optional P5 also completed (Mack bulldog confirmed via transparent human curation over a Haiku reject; D062 closed; D065/D066 filed). New deferrals this phase: D063, D064, D065, D066. Closed: D059, D061, D062.
+P6 PASSED when: D054, D058, D060, D063, D064, D065, D066, D053, D056, and D055 are all closed in `DEFERRED.md`; the new commands (`trademark inspect`, `site check`, `patent search --assignee`, `match inspect`, `historian infer-queue`) carry MVO contracts and tests; `MARKERY_REVIEW.md` is archived to `archive/` and removed from root; the full suite is green. D025, D026, D028, D007, and D057 remain deferred with documented rationale.
+
+Phase PASSED when P1–P4 pass (P5 is optional). `DEFERRED.md` updated with any new bypasses discovered. D025 (photographic-equipment) and D026 (precision-tools) remain deferred — breadth is not the goal of this phase. — PASSED 2026-06-11. P1–P4 all PASSED; optional P5 also completed (Mack bulldog confirmed via transparent human curation over a Haiku reject; D062 closed; D065/D066 filed). New deferrals this phase: D063, D064, D065, D066. Closed: D059, D061, D062. **P6 added 2026-06-12 as the deferred-debt closeout** — the P1–P4 phase pass stands; the register is fully cleared when P6 passes.
