@@ -381,3 +381,66 @@ class TestLibrarian:
         assert rc == 0
         # Each passage line contains a quoted excerpt
         assert '"' in out, "card output contains no quoted passage lines"
+
+
+# ---------------------------------------------------------------------------
+# trademark inspect (D058)
+# ---------------------------------------------------------------------------
+
+@requires_dbs
+class TestTrademarkInspect:
+    """MVO contract for `markery trademark inspect <serial>`.
+
+    Fixture: the Mack bulldog, serial 71247861 — a purely figurative mark with
+    design search code 030108, mark image present, owner MACK TRUCKS, INC.
+    """
+    BULLDOG = "71247861"
+
+    def _inspect(self, serial: str) -> tuple[str, int]:
+        return _run("markery", "trademark", "inspect", serial)
+
+    def test_exit_zero(self):
+        _out, rc = self._inspect(self.BULLDOG)
+        assert rc == 0
+
+    def test_header_and_core_fields(self):
+        out, _ = self._inspect(self.BULLDOG)
+        assert out.startswith(f"## TRADEMARK {self.BULLDOG}")
+        for field in ("mark:", "filed:", "registration:", "owner:", "goods:", "image:"):
+            assert field in out, f"missing field line: {field}"
+
+    def test_figurative_marked(self):
+        out, _ = self._inspect(self.BULLDOG)
+        assert "(figurative" in out  # null mark text → figurative label
+
+    def test_image_available(self):
+        out, _ = self._inspect(self.BULLDOG)
+        assert "image:         available" in out
+
+    def test_design_code_described(self):
+        out, _ = self._inspect(self.BULLDOG)
+        assert "030108" in out
+        assert "bulldog" in out.lower()  # human-readable gloss, not just the code
+
+    def test_missing_serial_exits_nonzero(self):
+        _out, rc = self._inspect("99999999")
+        assert rc != 0
+
+
+class TestDesignCodeDescribe:
+    """design_codes.describe() — no DB required."""
+
+    def test_known_section(self):
+        from markery.specialist.trademark.design_codes import describe
+        d = describe("030108")
+        assert "Animals" in d and "bulldog" in d.lower()
+
+    def test_category_decomposition(self):
+        from markery.specialist.trademark.design_codes import describe
+        d = describe("260103")  # geometric figures, unknown section
+        assert "Geometric" in d
+        assert "division 01" in d and "section 03" in d
+
+    def test_bad_format(self):
+        from markery.specialist.trademark.design_codes import describe
+        assert "unrecognised" in describe("03A1")

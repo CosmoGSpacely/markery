@@ -91,6 +91,22 @@ and deterministic — no LLM inference is required.
 
 ---
 
+## trademark inspect
+
+**Command:** `markery trademark inspect <serial>`
+**Fixture serial:** `71247861` (Mack bulldog — figurative, design code 030108, image present)
+
+| Field | Validation rule |
+|---|---|
+| Exit code | 0 for an existing serial; non-zero for an unknown serial |
+| Header line | First line matches `^## TRADEMARK <serial>` |
+| Core fields | All present: `mark:`, `draw code:`, `filed:`, `registration:`, `status:`, `owner:`, `goods:`, `image:` |
+| Figurative marks | When `mark_id_char` is null/blank, the `mark:` line reads `(figurative …)` |
+| Image line | `image:` reads `available (…)` when a `mark_images` row exists, else `not available` |
+| Design codes | Each six-digit code is printed with a human-readable description (authoritative category + section gloss or structural decomposition); `none` when the mark has no codes |
+
+---
+
 ---
 
 ## librarian index

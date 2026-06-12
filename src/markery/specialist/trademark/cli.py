@@ -257,6 +257,65 @@ def cmd_design_search(args: argparse.Namespace) -> None:
     print(f"\n{len(rows)} row(s).")
 
 
+def cmd_inspect(args: argparse.Namespace) -> None:
+    """Inspect one trademark: text/figurative, dates, owner, goods, image, design codes."""
+    import duckdb
+    from markery.common.config import DB
+    from markery.specialist.trademark.design_codes import describe as describe_code
+
+    serial = int(args.serial)
+    conn = duckdb.connect(str(DB["trademarks"]), read_only=True)
+
+    cf = conn.execute(
+        "SELECT mark_id_char, mark_draw_cd, filing_dt, registration_no, "
+        "       registration_dt, cfh_status_cd "
+        "FROM case_file WHERE serial_no = ?", [serial]
+    ).fetchone()
+    if cf is None:
+        print(f"No trademark found for serial {serial}.", file=sys.stderr)
+        conn.close()
+        sys.exit(1)
+
+    owner = conn.execute(
+        "SELECT own_name FROM owner WHERE serial_no = ? ORDER BY own_seq LIMIT 1", [serial]
+    ).fetchone()
+    goods = conn.execute(
+        "SELECT statement_text FROM statement WHERE serial_no = ? "
+        "AND statement_type_cd LIKE 'GS%' LIMIT 1", [serial]
+    ).fetchone()
+    img = conn.execute(
+        "SELECT image_format, image_size FROM mark_images WHERE serial_no = ?", [serial]
+    ).fetchone()
+    codes = [r[0] for r in conn.execute(
+        "SELECT design_search_cd FROM design_search WHERE serial_no = ? "
+        "ORDER BY design_search_cd", [serial]
+    ).fetchall()]
+    conn.close()
+
+    mark_text = cf[0].strip() if cf[0] and cf[0].strip() else None
+
+    print(f"## TRADEMARK {serial}")
+    print(f"mark:          {mark_text if mark_text else '(figurative — no word element)'}")
+    print(f"draw code:     {cf[1] or '—'}")
+    print(f"filed:         {cf[2] or '—'}")
+    reg = cf[3] or "—"
+    reg_dt = f"  ({cf[4]})" if cf[4] else ""
+    print(f"registration:  {reg}{reg_dt}")
+    print(f"status:        {cf[5] or '—'}")
+    print(f"owner:         {owner[0] if owner else '—'}")
+    print(f"goods:         {(goods[0] if goods else '') or '—'}")
+    if img:
+        print(f"image:         available ({img[0] or '?'}, {img[1] or '?'} bytes)")
+    else:
+        print(f"image:         not available")
+    if codes:
+        print("design codes:")
+        for c in codes:
+            print(f"  {c}   {describe_code(c)}")
+    else:
+        print("design codes:  none")
+
+
 def cmd_reparse(args: argparse.Namespace) -> None:
     from markery.specialist.trademark.build import open_db
     from markery.specialist.trademark.enrich import backfill_structured_fields
@@ -362,6 +421,11 @@ def main() -> None:
     p_ds.add_argument("--limit", type=int, default=200, metavar="N",
                       help="Maximum rows returned (default: 200)")
 
+    # inspect
+    p_insp = sub.add_parser("inspect",
+                            help="Inspect one mark: text/figurative, dates, owner, goods, image, design codes")
+    p_insp.add_argument("serial", metavar="SERIAL", help="Trademark serial number")
+
     # reparse
     sub.add_parser("reparse",
                    help="Re-parse stored raw_json to fill NULL structured fields (no API calls)")
@@ -385,6 +449,7 @@ def main() -> None:
         "mark-status":         cmd_mark_status,
         "load-assignment":     cmd_load_assignment,
         "design-search":       cmd_design_search,
+        "inspect":             cmd_inspect,
         "reparse":             cmd_reparse,
         "verify-credentials":  cmd_verify_credentials,
         "status":              cmd_status,
