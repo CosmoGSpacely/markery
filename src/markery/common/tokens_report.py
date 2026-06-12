@@ -44,8 +44,11 @@ def _rate(model: str) -> tuple[float, float] | None:
     return best
 
 
+_BATCH_MULT = 0.50  # Batch API bills all token usage at 50% of standard price.
+
+
 def record_cost(rec: dict) -> tuple[float, bool]:
-    """Return (usd, unknown_pricing) for one record."""
+    """Return (usd, unknown_pricing) for one record. Batch records bill at 50%."""
     rate = _rate(rec.get("model", ""))
     if rate is None:
         return 0.0, True
@@ -56,6 +59,8 @@ def record_cost(rec: dict) -> tuple[float, bool]:
         + rec.get("cache_read_tokens", 0) * inp * _CACHE_READ_MULT
         + rec.get("completion_tokens", 0) * out
     ) / 1_000_000
+    if rec.get("batch"):
+        usd *= _BATCH_MULT
     return usd, False
 
 

@@ -457,6 +457,16 @@ A2. **D058 — `markery trademark inspect <serial>`.** New read command: mark te
 
 A3. **D060 — Batch API path (the unrealized 50%-cost lever).** Add a `--batch` path to `librarian extract` (route chunk calls through `client.messages.batches`) and a `markery historian infer-queue <project>` that batches `card --infer` across all unreviewed candidates. Keep the live path as the default for single-item interactive use. Quantify the saving with `markery tokens report` against a live-path baseline. Close D060.
 
+Results 2026-06-12 (Group A — D054, D058, D060 all closed):
+
+- **D054** — Scaffolded the five canonical slugs via `markery historian scaffold` (DB-sourced frontmatter), then migrated the historically-accurate legacy prose into each, scoped to a single pair. Split the multi-serial `soundex.md` (71246709 + 71255821) into two contamination-free essays; `rediref` drops the co-mingled HANDIREF serial; `soundex-quick-as-a-flash` (destroyed case file) takes its filing date/reg/owner from the TSDR status record, noted in-essay. All five validate **8/8**; seven superseded legacy non-slug files removed; `markery site build information-systems` exits 0 with no placeholders.
+
+- **D058** — `markery trademark inspect <serial>` added (mark text or `(figurative)`, draw code, dates, registration, status, owner, goods, image availability, and every design code with a human-readable gloss via a new `design_codes.describe()` — 29 authoritative USPTO categories + curated section glosses such as `030108` → "Dogs of the bulldog / mastiff type", with structural decomposition for the rest). Closes the read that forced a raw DuckDB query in P5. MVO contract in `mvo.md`; 9 tests.
+
+- **D060** — Centralized `call_batch()` in `common/llm.py` (submit/poll/collect via `client.messages.batches`). Wired `librarian extract --batch` (whole text as one job) and a new `historian infer-queue <project> [--min-score S]` (deterministic card generation, then one batched `--infer`). `TokenRecord.batch` + `tokens_report` bill batch records at 50%, so the saving shows in `markery tokens report`. **Verified live:** `infer-queue` ran 8 inferences as one batch in ~93s under Haiku; measured saving on the captured P5 infer workload is exactly 50% ($0.0091 → $0.0046). Tests: `tests/test_llm_batch.py` (mocked) + a batch-cost test.
+
+Full suite **660 passing**. Groups B–D remain (not started — Group A was the scoped request).
+
 **Group B — CLI / build / inspection gaps from Phase 22**
 
 B1. **D063 — `markery site check <project>`.** Walk every built page; resolve each internal `href`/`img src` against files on disk; report broken links and orphaned (unlinked) files; exit non-zero on any breakage so it can gate a build. Replaces the ad-hoc audit script written in P1 Group 9. Close D063.

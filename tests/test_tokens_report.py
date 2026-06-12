@@ -41,6 +41,16 @@ def test_record_cost_unknown_model_flags():
     assert unknown and usd == 0.0
 
 
+def test_batch_record_costs_half():
+    """Batch API bills at 50% — a batch record must cost exactly half the live one."""
+    base = {"model": "claude-haiku-4-5", "prompt_tokens": 1_000_000,
+            "completion_tokens": 1_000_000, "cache_read_tokens": 0,
+            "cache_creation_tokens": 0}
+    live, _ = record_cost(base)
+    batch, _ = record_cost({**base, "batch": True})
+    assert batch == pytest.approx(live * 0.5)
+
+
 # ── aggregation ───────────────────────────────────────────────────────────
 
 def test_load_records_missing_file(tmp_path):

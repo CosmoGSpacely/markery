@@ -31,6 +31,7 @@ class TokenRecord:
     cache_read_tokens: int
     cache_creation_tokens: int
     wall_ms: int
+    batch: bool = False  # True when served via the Batch API (billed at 50%)
 
 
 # Model-dependent minimum cacheable-prefix size (tokens). A cache_control

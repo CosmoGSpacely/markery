@@ -414,6 +414,7 @@ def cmd_extract(args: argparse.Namespace) -> None:
         max_passages=args.max_passages,
         auto_accept=args.auto_accept,
         tokens_flag=args.tokens,
+        batch=getattr(args, "batch", False),
     )
 
 
@@ -680,6 +681,9 @@ def librarian_main() -> None:
                        help="Skip review; append directly to excerpts.md")
     p_ext.add_argument("--tokens", action="store_true",
                        help="Print token usage to stderr after extraction")
+    p_ext.add_argument("--batch", action="store_true",
+                       help="Submit all chunks as one Batch API job (50%% price; "
+                            "no early-stop, processes the whole text)")
 
     # review
     p_rev = sub.add_parser(

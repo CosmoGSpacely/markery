@@ -332,6 +332,7 @@ def extract(
     max_passages: int = 10,
     auto_accept: bool = False,
     tokens_flag: bool = False,
+    batch: bool = False,
 ) -> Path:
     """Extract passages from raw_text.txt and write candidates.md (or excerpts.md
     if --auto-accept). Returns path to the written file."""
@@ -381,22 +382,44 @@ def extract(
     total_cache_create = 0
     errors = 0
 
-    for i, chunk in enumerate(chunks, 1):
-        print(f"  chunk {i}/{total_chunks}…", end="\r", flush=True)
-        try:
-            cands, ptok, ctok, cread, ccreate = _call_claude(chunk, topics, client, model)
-            all_candidates.extend(cands)
-            total_prompt += ptok
-            total_completion += ctok
-            total_cache_read += cread
-            total_cache_create += ccreate
-            # Stop early if we already have plenty of candidates
-            if len(all_candidates) >= max_passages * 3:
-                print(f"\n  stopping early ({len(all_candidates)} candidates found)")
-                break
-        except Exception as exc:
-            errors += 1
-            print(f"\n  chunk {i} error: {exc}", file=sys.stderr)
+    if batch:
+        # All chunks are independent and not latency-sensitive — submit as one
+        # Batch API job (50% price). No early-stop; the whole book is processed.
+        from markery.common.llm import call_batch
+        items = [
+            (f"chunk-{i}", _USER_TMPL.format(
+                topics=", ".join(f'"{t}"' for t in topics), chunk=chunk))
+            for i, chunk in enumerate(chunks, 1)
+        ]
+        print(f"  submitting {len(items)} chunks as one batch (50% price)…", flush=True)
+        results = call_batch(model, _SYSTEM, items, max_tokens=1024)
+        for cid, r in results.items():
+            if "error" in r:
+                errors += 1
+                print(f"\n  {cid} error: {r['error']}", file=sys.stderr)
+                continue
+            all_candidates.extend(_parse_response(r["text"]))
+            total_prompt += r["prompt_tokens"]
+            total_completion += r["completion_tokens"]
+            total_cache_read += r["cache_read_tokens"]
+            total_cache_create += r["cache_creation_tokens"]
+    else:
+        for i, chunk in enumerate(chunks, 1):
+            print(f"  chunk {i}/{total_chunks}…", end="\r", flush=True)
+            try:
+                cands, ptok, ctok, cread, ccreate = _call_claude(chunk, topics, client, model)
+                all_candidates.extend(cands)
+                total_prompt += ptok
+                total_completion += ctok
+                total_cache_read += cread
+                total_cache_create += ccreate
+                # Stop early if we already have plenty of candidates
+                if len(all_candidates) >= max_passages * 3:
+                    print(f"\n  stopping early ({len(all_candidates)} candidates found)")
+                    break
+            except Exception as exc:
+                errors += 1
+                print(f"\n  chunk {i} error: {exc}", file=sys.stderr)
 
     print(f"  {len(all_candidates)} raw candidates from {total_chunks - errors} chunks")
 
@@ -413,6 +436,7 @@ def extract(
             cache_read_tokens=total_cache_read,
             cache_creation_tokens=total_cache_create,
             wall_ms=wall_ms,
+            batch=batch,
         )
         emit_tokens(record, specialist="librarian", command="extract",
                     tokens_flag=tokens_flag, n_calls=total_chunks - errors)

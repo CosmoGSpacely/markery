@@ -723,6 +723,105 @@ def cmd_draft(args: argparse.Namespace) -> None:
             sys.exit(exc.code)
 
 
+def _candidate_slug(c: dict) -> str:
+    """Derive the canonical slug for a candidate record."""
+    tm = (c.get("trademark") or "figurative")
+    tm_slug = re.sub(r"[^a-z0-9]+", "-", tm.lower()).strip("-")
+    return f"{tm_slug}-{c['patent_no'].lower()}"
+
+
+def cmd_infer_queue(args: argparse.Namespace) -> None:
+    """Batch `card --infer` across all unreviewed candidates via the Batch API (50%).
+
+    Generates each card deterministically through `markery historian card` (no API),
+    then submits all inference requests as one batch. Prints a recommendation table
+    and logs aggregated token usage (flagged batch=True so `tokens report` halves it).
+    """
+    import json as _json
+    import subprocess
+
+    proj = require_project(args.project)
+    if not proj.candidates.exists():
+        print(f"No candidates.jsonl for {args.project}.", file=sys.stderr)
+        sys.exit(1)
+
+    candidates = [_json.loads(l) for l in proj.candidates.read_text().splitlines() if l.strip()]
+    confirmed = set()
+    if proj.confirmed.exists():
+        for l in proj.confirmed.read_text().splitlines():
+            if l.strip():
+                c = _json.loads(l)
+                confirmed.add((c["patent_no"], str(c["trademark_serial"])))
+    rejected = set()
+    if proj.rejected.exists():
+        for l in proj.rejected.read_text().splitlines():
+            if l.strip():
+                c = _json.loads(l)
+                rejected.add((c.get("patent_no"), str(c.get("trademark_serial"))))
+
+    # Unreviewed, de-duplicated by slug, optionally score-filtered.
+    seen: set[str] = set()
+    queue: list[tuple[str, dict]] = []
+    for c in candidates:
+        key = (c["patent_no"], str(c["trademark_serial"]))
+        if key in confirmed or key in rejected:
+            continue
+        if c.get("score", 0) < args.min_score:
+            continue
+        slug = _candidate_slug(c)
+        if slug in seen:
+            continue
+        seen.add(slug)
+        queue.append((slug, c))
+
+    if not queue:
+        print("No unreviewed candidates above the score threshold.")
+        return
+
+    print(f"Generating {len(queue)} cards…", flush=True)
+    items: list[tuple[str, str]] = []
+    for slug, _c in queue:
+        cp = subprocess.run(
+            ["markery", "historian", "card", args.project, slug, "--out", "-"],
+            capture_output=True, text=True,
+        )
+        if cp.returncode != 0:
+            print(f"  card failed for {slug}: {cp.stderr[:120]}", file=sys.stderr)
+            continue
+        items.append((slug, cp.stdout.strip() + "\n\nAssess this candidate pair."))
+
+    model = getattr(args, "model", None) or os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
+    from markery.common.llm import call_batch
+    print(f"Submitting {len(items)} inferences as one batch ({model}, 50% price)…", flush=True)
+    t0 = time.monotonic()
+    results = call_batch(model, _CARD_INFER_SYSTEM, items, max_tokens=256)
+
+    tp = tc = tcr = tcc = 0
+    rows: list[tuple[str, str, int]] = []
+    for slug, _c in queue:
+        r = results.get(slug)
+        if not r or "error" in r:
+            rows.append((slug, "error", 0))
+            continue
+        parsed = _parse_infer_result(r["text"])
+        rows.append((slug, parsed["recommendation"], parsed["score"]))
+        tp += r["prompt_tokens"]; tc += r["completion_tokens"]
+        tcr += r["cache_read_tokens"]; tcc += r["cache_creation_tokens"]
+
+    print(f"\n{'slug':<42}{'recommendation':<14}score")
+    for slug, rec, score in rows:
+        print(f"{slug:<42}{rec:<14}{score}")
+
+    if tp or os.environ.get("MARKERY_TOKEN_LOG"):
+        rec = TokenRecord(
+            model=model, prompt_tokens=tp, completion_tokens=tc,
+            cache_read_tokens=tcr, cache_creation_tokens=tcc,
+            wall_ms=int((time.monotonic() - t0) * 1000), batch=True,
+        )
+        emit_tokens(rec, specialist="historian", command="infer-queue",
+                    tokens_flag=True, n_calls=len(items))
+
+
 def cmd_validate(args: argparse.Namespace) -> None:
     import duckdb
     import re as _re
@@ -897,6 +996,14 @@ def historian_main() -> None:
     validate_p.add_argument("--essay", metavar="PATH", default=None,
                             help="Explicit path to essay file")
 
+    iq_p = sub.add_parser("infer-queue",
+                          help="Batch card --infer over all unreviewed candidates (Batch API, 50%)")
+    iq_p.add_argument("project", help="Project name")
+    iq_p.add_argument("--min-score", type=float, default=0.0, dest="min_score", metavar="S",
+                      help="Only infer candidates with score ≥ S (default: 0.0)")
+    iq_p.add_argument("--model", default=None, metavar="MODEL",
+                      help="Override MARKERY_MODEL for this batch")
+
     args = parser.parse_args()
 
     if args.action == "prepare":
@@ -912,3 +1019,5 @@ def historian_main() -> None:
         cmd_scaffold(args)
     elif args.action == "validate":
         cmd_validate(args)
+    elif args.action == "infer-queue":
+        cmd_infer_queue(args)
