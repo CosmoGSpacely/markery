@@ -317,13 +317,18 @@ def cmd_card(args: argparse.Namespace) -> None:
                     break
         card_text = "\n".join(lines)
 
-    if args.out == "-":
-        print(card_text)
-    else:
-        out_path = Path(args.out) if args.out else cards_dir / f"{args.slug}.md"
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(card_text + "\n", encoding="utf-8")
-        print(f"Card written → {out_path}")
+    json_mode = getattr(args, "json", False)
+
+    # In --json mode stdout must be a single machine-parseable object, so the
+    # human-readable card print/write is suppressed (card_text rides in the JSON).
+    if not json_mode:
+        if args.out == "-":
+            print(card_text)
+        else:
+            out_path = Path(args.out) if args.out else cards_dir / f"{args.slug}.md"
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(card_text + "\n", encoding="utf-8")
+            print(f"Card written → {out_path}")
 
     tokens_flag = getattr(args, "tokens", False)
     if tokens_flag or os.environ.get("MARKERY_TOKEN_LOG"):
@@ -331,7 +336,8 @@ def cmd_card(args: argparse.Namespace) -> None:
         rec.wall_ms = int((time.monotonic() - t0) * 1000)
         emit_tokens(rec, specialist="historian", command="card", tokens_flag=tokens_flag)
 
-    if getattr(args, "infer", False):
+    if getattr(args, "infer", False) or json_mode:
+        import json as _json
         from markery.common.llm import call as llm_call
         model = getattr(args, "model", None) or os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
         user_msg = card_text + "\n\nAssess this candidate pair."
@@ -339,8 +345,17 @@ def cmd_card(args: argparse.Namespace) -> None:
             resp_text, ptok, ctok, cache_read, cache_create = llm_call(
                 model, _CARD_INFER_SYSTEM, user_msg, 256)
             result = _parse_infer_result(resp_text)
-            print(f"\n[infer]  recommendation={result['recommendation']}  score={result['score']}")
-            print(f"         {result['reasoning']}")
+            if json_mode:
+                # Stable subprocess contract (D062): {recommendation, score, reasoning, card_text}.
+                print(_json.dumps({
+                    "recommendation": result["recommendation"],
+                    "score":          result["score"],
+                    "reasoning":      result["reasoning"],
+                    "card_text":      card_text,
+                }))
+            else:
+                print(f"\n[infer]  recommendation={result['recommendation']}  score={result['score']}")
+                print(f"         {result['reasoning']}")
             infer_rec = TokenRecord(
                 model=model,
                 prompt_tokens=ptok,
@@ -349,9 +364,16 @@ def cmd_card(args: argparse.Namespace) -> None:
                 cache_creation_tokens=cache_create,
                 wall_ms=int((time.monotonic() - t0) * 1000),
             )
-            emit_tokens(infer_rec, specialist="historian", command="card.infer", tokens_flag=True)
+            emit_tokens(infer_rec, specialist="historian", command="card.infer",
+                        tokens_flag=not json_mode)
         except Exception as exc:
-            print(f"\n[infer]  error: {exc}", file=sys.stderr)
+            if json_mode:
+                print(_json.dumps({
+                    "recommendation": "defer", "score": 3,
+                    "reasoning": f"inference error: {exc}", "card_text": card_text,
+                }))
+            else:
+                print(f"\n[infer]  error: {exc}", file=sys.stderr)
 
 
 def cmd_digest(args: argparse.Namespace) -> None:
@@ -457,7 +479,9 @@ def cmd_digest(args: argparse.Namespace) -> None:
         lines.append("preflight:   never run")
 
     digest_text = "\n".join(lines)
-    print(digest_text)
+    json_mode = getattr(args, "json", False)
+    if not json_mode:
+        print(digest_text)
 
     tokens_flag = getattr(args, "tokens", False)
     if tokens_flag or os.environ.get("MARKERY_TOKEN_LOG"):
@@ -465,7 +489,8 @@ def cmd_digest(args: argparse.Namespace) -> None:
         rec.wall_ms = int((time.monotonic() - t0) * 1000)
         emit_tokens(rec, specialist="historian", command="digest", tokens_flag=tokens_flag)
 
-    if getattr(args, "infer", False):
+    if getattr(args, "infer", False) or json_mode:
+        import json as _json
         from markery.common.llm import call as llm_call
         model = getattr(args, "model", None) or os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
         user_msg = (
@@ -476,7 +501,10 @@ def cmd_digest(args: argparse.Namespace) -> None:
         try:
             ranked_text, ptok, ctok, cache_read, cache_create = llm_call(
                 model, _DIGEST_INFER_SYSTEM, user_msg, 512)
-            print("\n" + ranked_text)
+            if json_mode:
+                print(_json.dumps({"ranking": ranked_text.strip(), "digest": digest_text}))
+            else:
+                print("\n" + ranked_text)
             infer_rec = TokenRecord(
                 model=model,
                 prompt_tokens=ptok,
@@ -485,9 +513,14 @@ def cmd_digest(args: argparse.Namespace) -> None:
                 cache_creation_tokens=cache_create,
                 wall_ms=int((time.monotonic() - t0) * 1000),
             )
-            emit_tokens(infer_rec, specialist="historian", command="digest.infer", tokens_flag=True)
+            emit_tokens(infer_rec, specialist="historian", command="digest.infer",
+                        tokens_flag=not json_mode)
         except Exception as exc:
-            print(f"\n[infer]  error: {exc}", file=sys.stderr)
+            if json_mode:
+                print(_json.dumps({"ranking": "", "digest": digest_text,
+                                   "error": str(exc)}))
+            else:
+                print(f"\n[infer]  error: {exc}", file=sys.stderr)
 
 
 def cmd_scaffold(args: argparse.Namespace) -> None:
@@ -822,6 +855,9 @@ def historian_main() -> None:
                         help="Print token count of card output to stderr")
     card_p.add_argument("--infer", action="store_true",
                         help="Call the API for a confirm/reject/defer recommendation")
+    card_p.add_argument("--json", action="store_true",
+                        help="Emit a single JSON object {recommendation, score, reasoning, card_text} "
+                             "(implies --infer; for the langgraph subprocess contract)")
     card_p.add_argument("--model", default=None, metavar="MODEL",
                         help="Override MARKERY_MODEL for this --infer call")
 
@@ -835,6 +871,8 @@ def historian_main() -> None:
                           help="Print token count of digest output to stderr")
     digest_p.add_argument("--infer", action="store_true",
                           help="Call the API for ranked candidate prioritization")
+    digest_p.add_argument("--json", action="store_true",
+                          help="Emit the ranked prioritization as JSON {ranking} (implies --infer)")
     digest_p.add_argument("--model", default=None, metavar="MODEL",
                           help="Override MARKERY_MODEL for this --infer call")
 

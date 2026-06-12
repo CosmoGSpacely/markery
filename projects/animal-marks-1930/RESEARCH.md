@@ -45,3 +45,31 @@ None of these five entities has patent records in `patents.duckdb` at project se
 ## Operational model
 
 **`MARKERY_MODEL=claude-haiku-4-5-20251001` is the committed operational model for this project.** All historian, librarian extract, and any inference operations use Haiku. This is not a test — it is the primary model. If a step cannot be completed on Haiku, the failure mode and minimum required model tier are documented in RESEARCH-AGENDA.md.
+
+---
+
+## P5 — Mack Trucks bulldog live run (2026-06-11)
+
+The Mack bulldog mark (USPTO serial 71247861; purely figurative, design search code 030108; filed 1927-04-22; goods: motor trucks) was run end-to-end through the Haiku-driven pipeline and the markery-langgraph human-in-the-loop graph.
+
+**Patent acquisition.** Added `B62D` to `class_hints` and fetched B62D (1905–1932) via EPO OPS — **8,983 patents added**. Added a `patent_assignee` variant for Mack and re-ran `markery project onboard` (PASSED).
+
+**Key finding — no corporate Mack patent exists in the corpus.** Searching the patent DB for `MACK TRUCKS`, `INTERNATIONAL MOTOR`, and `MACK MANUFACTURING` returned **zero** assignees in any CPC class. EPO OPS's pre-1976 US assignee coverage does not surface Mack Trucks, Inc. as a corporate patentee for this period. The only defensible Mack-related patent in the corpus is **US904137A, "Steering Mechanism For Automobiles," granted 1908-11-17 to John M. Mack** — a company co-founder, filing as an individual.
+
+**Human override of a model rejection.** The langgraph graph ran live under Haiku via the v1.1 `--json` contract. Haiku's inference **recommended REJECT (score 1)**, correctly identifying that the assignee is an individual (not the corporation), with no documented succession and an 18.4-year gap. The graph auto-routed the reject to `rejected.jsonl` without surfacing it for human review (see DEFERRED D065). Executing the documented curation decision, the human reviewer overrode the rejection and confirmed the pair via `markery matchmaker confirm` with a transparent caveat note. The published essay (`content/figurative-us904137a.md`) leads with an **Editorial Note** stating plainly that the pairing is a curated interpretive bridge — the founder's foundational automotive invention as antecedent to the company's later brand identity — and **not** a documented corporate assignment chain. The essay validates 8/8.
+
+This is the project's clearest demonstration of the model-agnosticism boundary: Haiku's draft passed the deterministic validator (8/8 — every fact resolves against the DBs) yet, read critically, **overstated** the connection ("directly underwrites") and omitted the founder caveat and the bulldog/wartime context entirely (the card could not surface the design code — see D058). The validator certifies factual correctness; interpretive honesty required human finalization.
+
+## Build cost (Haiku)
+
+Per `markery tokens report` over `mack-run-tokens.jsonl` (9 LLM calls):
+
+| Command | Prompt | Completion | Cache read | Cost |
+|---|---|---|---|---|
+| card.infer | 6,804 | 462 | 0 | $0.0091 |
+| draft | 2,403 | 822 | 0 | $0.0065 |
+| card | 704 | 0 | 0 | $0.0007 |
+| scaffold | 451 | 0 | 0 | $0.0005 |
+| **Total** | **10,362** | **1,284** | **0** | **$0.0168** |
+
+**Cost baseline: ~$0.017 to build one confirmed pair with a validated essay on Haiku.** Cache hit rate was **0%** — confirming the Phase 22 P2 finding in production: the ~2K-token system prefixes sit below Haiku 4.5's 4096-token cacheable minimum, so prompt caching never activates on the default model.

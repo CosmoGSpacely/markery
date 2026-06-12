@@ -740,5 +740,47 @@
     "year_end": 1915,
     "fetch_dt": "2026-06-04T08:58:17.600688",
     "patents_added": 1
+  },
+  {
+    "cpc_class": "B62D",
+    "year_start": 1905,
+    "year_end": 1909,
+    "fetch_dt": "2026-06-11T16:03:14.826632",
+    "patents_added": 1010
+  },
+  {
+    "cpc_class": "B62D",
+    "year_start": 1910,
+    "year_end": 1914,
+    "fetch_dt": "2026-06-11T16:03:54.827414",
+    "patents_added": 905
+  },
+  {
+    "cpc_class": "B62D",
+    "year_start": 1915,
+    "year_end": 1919,
+    "fetch_dt": "2026-06-11T16:05:12.698722",
+    "patents_added": 1879
+  },
+  {
+    "cpc_class": "B62D",
+    "year_start": 1920,
+    "year_end": 1924,
+    "fetch_dt": "2026-06-11T16:07:21.543227",
+    "patents_added": 2243
+  },
+  {
+    "cpc_class": "B62D",
+    "year_start": 1925,
+    "year_end": 1929,
+    "fetch_dt": "2026-06-11T16:08:44.171492",
+    "patents_added": 1858
+  },
+  {
+    "cpc_class": "B62D",
+    "year_start": 1930,
+    "year_end": 1932,
+    "fetch_dt": "2026-06-11T16:09:34.366021",
+    "patents_added": 1088
   }
 ]
