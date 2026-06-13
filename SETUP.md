@@ -121,9 +121,33 @@ markery model test --model meta-llama/llama-3.3-70b-instruct:free
 ```
 
 If you already hold a plain inference key (`sk-or-v1-…`), set `OPENROUTER_API_KEY`
-instead and skip minting. Free models are rate-limited upstream; `chat()` retries
+instead and skip minting. Free models are rate-limited upstream; the client retries
 429/5xx with backoff, and a busy model returns a clear 429 — retry shortly or try
 another free slug (`markery model test` lists the default).
+
+### OpenAI and xAI (optional — direct providers)
+
+OpenAI and xAI use the same OpenAI-compatible protocol. They take a plain key
+from `.env` (no minting):
+
+```
+OPENAI_API_KEY=sk-...
+XAI_API_KEY=xai-...
+```
+
+Model ids route by name (see `common/providers.py`): `gpt-*` / `openai:<model>`
+→ OpenAI; `grok-*` / `xai:<model>` → xAI; `claude-*` → Anthropic; any
+`vendor/model[:tag]` slug → OpenRouter. Use the explicit `openai:` / `xai:`
+prefix to force the direct provider when a bare name is ambiguous.
+
+```bash
+markery model status                       # shows OpenRouter + OPENAI/XAI key state
+markery model test --model gpt-4o-mini     # OpenAI direct
+markery model test --model xai:grok-3      # xAI direct
+```
+
+A project selects its model with `"model": "<id>"` in `project.json`; every
+specialist call then routes to that provider.
 
 ---
 

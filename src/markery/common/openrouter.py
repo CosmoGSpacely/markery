@@ -138,9 +138,7 @@ def chat(
     frequently rate-limited upstream, so a single 429 should not abort a run.
     Raises RuntimeError if no runtime key can be resolved or all attempts fail.
     """
-    import time
-
-    import requests
+    from markery.common.providers import openai_compatible_chat
 
     key = runtime_key()
     if not key:
@@ -148,38 +146,7 @@ def chat(
             "No OpenRouter runtime key. Set OPENROUTER_API_KEY, or set "
             "OPENROUTER_PROVISIONING_KEY in .env and run 'markery model mint'."
         )
-    payload = {
-        "model": model,
-        "max_tokens": max_tokens,
-        "temperature": temperature,
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-    }
-    resp = None
-    for attempt in range(max_retries + 1):
-        resp = requests.post(
-            f"{API_BASE}/chat/completions",
-            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-            json=payload,
-            timeout=120,
-        )
-        if resp.status_code == 200:
-            break
-        if resp.status_code in (429, 500, 502, 503) and attempt < max_retries:
-            time.sleep(2 ** attempt)
-            continue
-        raise RuntimeError(
-            f"OpenRouter chat failed ({resp.status_code}): {resp.text[:300]}"
-        )
-    data = resp.json()
-    if "choices" not in data or not data["choices"]:
-        raise RuntimeError(f"OpenRouter response has no choices: {data!r}")
-    text = (data["choices"][0]["message"]["content"] or "").strip()
-    usage = data.get("usage", {}) or {}
-    return (
-        text,
-        int(usage.get("prompt_tokens", 0) or 0),
-        int(usage.get("completion_tokens", 0) or 0),
+    return openai_compatible_chat(
+        "OpenRouter", API_BASE, key, model, system, user, max_tokens,
+        temperature=temperature, max_retries=max_retries,
     )

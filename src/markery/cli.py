@@ -217,9 +217,11 @@ def cmd_model(rest: list[str]) -> None:
     p_mint.add_argument("--limit", type=float, default=None, metavar="USD",
                         help="Optional spend cap in USD (omit for free models)")
 
-    p_test = sub.add_parser("test", help="Make one live OpenRouter call to verify wiring")
+    p_test = sub.add_parser("test", help="Make one live call to verify provider wiring")
     p_test.add_argument("--model", default=orr.DEFAULT_TEST_MODEL,
-                        help=f"OpenRouter model slug (default: {orr.DEFAULT_TEST_MODEL})")
+                        help=f"Model id for any provider — OpenRouter slug, gpt-*, "
+                             f"openai:<model>, grok-*, xai:<model>, or claude-* "
+                             f"(default: {orr.DEFAULT_TEST_MODEL})")
 
     args = parser.parse_args(rest)
 
@@ -227,6 +229,7 @@ def cmd_model(rest: list[str]) -> None:
         return f"{secret[:12]}…{secret[-4:]}" if len(secret) > 20 else "set"
 
     if args.action == "status":
+        from markery.common import providers as prv
         prov = bool(orr._provisioning_key())
         explicit = bool(os.environ.get("OPENROUTER_API_KEY", "").strip())
         cache = orr._cache_path()
@@ -237,6 +240,10 @@ def cmd_model(rest: list[str]) -> None:
         rk = orr.runtime_key(allow_mint=False)
         print(f"  resolved runtime   : {'yes' if rk else 'no — run: markery model mint'}")
         print(f"  default test model : {orr.DEFAULT_TEST_MODEL}")
+        keys = prv.key_status()
+        print("\nDirect providers:")
+        print(f"  OPENAI_API_KEY     : {'set' if keys['openai'] else 'not set'}  (models: gpt-*, openai:<model>)")
+        print(f"  XAI_API_KEY        : {'set' if keys['xai'] else 'not set'}  (models: grok-*, xai:<model>)")
         return
 
     if args.action == "mint":

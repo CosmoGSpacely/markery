@@ -66,10 +66,18 @@ def call(
     Returns (text, prompt_tokens, completion_tokens, cache_read_tokens, cache_creation_tokens).
     cache_read and cache_creation are 0 when caching is disabled or the prompt is too short.
     """
-    from markery.common.openrouter import is_openrouter_model
-    if is_openrouter_model(model):
-        from markery.common.openrouter import chat
-        text, ptok, ctok = chat(model, system, user, max_tokens)
+    from markery.common.providers import route
+    provider = route(model)
+    if provider != "anthropic":
+        if provider == "openrouter":
+            from markery.common.openrouter import chat
+            text, ptok, ctok = chat(model, system, user, max_tokens)
+        elif provider == "openai":
+            from markery.common.providers import openai_chat
+            text, ptok, ctok = openai_chat(model, system, user, max_tokens)
+        else:  # xai
+            from markery.common.providers import xai_chat
+            text, ptok, ctok = xai_chat(model, system, user, max_tokens)
         return text, ptok, ctok, 0, 0
 
     client = get_client()
@@ -121,12 +129,12 @@ def call_batch(
     Blocks until the batch ends (most finish within minutes; max 24h). Raises
     RuntimeError on missing client or if the batch does not end within `timeout`.
 
-    OpenRouter models have no Batch API; for them this falls back to sequential
-    `call()` per item (no 50% discount — free models already cost $0), returning
-    the same dict shape so callers are provider-agnostic.
+    Only Anthropic has a Batch API; for OpenRouter/OpenAI/xAI models this falls
+    back to sequential `call()` per item (no 50% discount), returning the same
+    dict shape so callers are provider-agnostic.
     """
-    from markery.common.openrouter import is_openrouter_model
-    if is_openrouter_model(model):
+    from markery.common.providers import route
+    if route(model) != "anthropic":
         out: dict[str, dict] = {}
         for cid, text in items:
             try:

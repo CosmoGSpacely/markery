@@ -69,11 +69,11 @@ def cache_health_warning(
     the 2nd+ call. If cache_read is 0 across the whole run, the prefix is almost
     certainly below the model's cacheable minimum, so caching is silently disabled.
 
-    Non-Anthropic models (OpenRouter slugs, ``provider/model``) do not support
+    Non-Anthropic models (OpenRouter slugs, direct OpenAI/xAI) do not support
     Anthropic prompt caching at all, so a 0 cache_read is expected, not a defect —
     no warning is emitted for them.
     """
-    if "/" in model.split("~")[0]:
+    if not model.split("~")[0].startswith("claude"):
         return None
     if n_calls >= 2 and cache_read_tokens == 0:
         return (
