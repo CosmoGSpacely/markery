@@ -107,6 +107,49 @@ and deterministic — no LLM inference is required.
 
 ---
 
+## site check
+
+**Command:** `markery site check <project> [--strict]`
+**Test file:** `tests/specialist/publisher/test_site_check.py` (synthetic site dirs, no DB)
+
+| Field | Validation rule |
+|---|---|
+| Exit code | 0 when all internal links resolve; 1 on any broken link |
+| Internal-link classification | Relative paths and `page.html#frag` are internal; `http(s)://`, `mailto:`, `data:`, and pure `#anchor` are not |
+| Broken detection | A relative `href`/`src` whose target is absent on disk is reported as broken |
+| Orphan detection | An emitted file no page links to (excluding `index.html`, `search.json`, `pagefind/`) is reported as an orphan |
+| Strict mode | `--strict` raises exit code to 1 when orphans exist; default leaves orphans non-fatal |
+| Missing build | Exit code 1 with a "run build first" message when the site directory is absent |
+
+---
+
+## patent search --assignee
+
+**Command:** `markery patent search --assignee <substr> [--examples N]`
+**Test file:** `tests/specialist/patent/test_search.py` (in-memory patents.duckdb)
+
+| Field | Validation rule |
+|---|---|
+| Match set | Lists every distinct `assignee_name` matching the substring (case-insensitive), with hit counts, descending |
+| Non-match exclusion | Assignees not matching the substring do not appear |
+| Examples | With `--examples N`, prints up to N `patent_no  title (year)` rows per assignee |
+| No-match case | Prints `No assignees matching '<substr>'` |
+
+---
+
+## match inspect
+
+**Command:** `markery match inspect <project> [--entity ID] [--min-score F]`
+**Test file:** `tests/specialist/matchmaker/test_groupb.py` (synthetic candidates.jsonl)
+
+| Field | Validation rule |
+|---|---|
+| Grouping | Candidates grouped under `Entity <id>: <name>` headers, sorted by descending score within each group |
+| Disposition | Each row marked `confirmed`, `rejected`, or `unreviewed` by cross-referencing confirmed/rejected.jsonl |
+| Entity filter | `--entity ID` restricts output to that entity only |
+| Figurative marks | A null trademark renders as `(figurative)` |
+| Empty case | Prints a "no candidates" message when the filtered set is empty |
+
 ---
 
 ## librarian index

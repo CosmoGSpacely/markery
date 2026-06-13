@@ -170,6 +170,17 @@ def generate_candidates(
                 })
 
     conn.close()
+
+    # Deduplicate on (entity_id, patent_no, trademark_serial): a trademark that
+    # matches an entity via more than one name variant can yield identical pairs
+    # (the bulldog case in Phase 22 P5). Keep the highest-scoring instance.
+    deduped: dict[tuple, dict] = {}
+    for c in candidates:
+        key = (c["entity_id"], c["patent_no"], str(c["trademark_serial"]))
+        if key not in deduped or c["score"] > deduped[key]["score"]:
+            deduped[key] = c
+    candidates = list(deduped.values())
+
     candidates.sort(key=lambda c: (c["entity_id"], -c["score"]))
     return candidates
 

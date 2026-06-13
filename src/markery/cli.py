@@ -177,12 +177,26 @@ def cmd_site(rest: list[str]) -> None:
                        help="Output directory (default: projects/<project>/site)")
     build.add_argument("--base-url", metavar="URL", default=None,
                        help="Absolute base URL for Open Graph og:url tags")
+    build.add_argument("--no-prune", action="store_true",
+                       help="Keep stale files from previous builds (default: prune)")
+
+    check = sub.add_parser("check", help="Validate built site links; exit non-zero on breakage")
+    check.add_argument("project", help="Project name (directory under projects/)")
+    check.add_argument("--out", metavar="DIR",
+                       help="Site directory to check (default: projects/<project>/site)")
+    check.add_argument("--strict", action="store_true",
+                       help="Also fail on orphaned (unlinked) files")
 
     args = parser.parse_args(rest)
 
     if args.action == "build":
         from markery.specialist.publisher.build import build_site
-        build_site(args.project, Path(args.out) if args.out else None, base_url=args.base_url)
+        build_site(args.project, Path(args.out) if args.out else None,
+                   base_url=args.base_url, prune=not args.no_prune)
+    elif args.action == "check":
+        from markery.specialist.publisher.check import run_check
+        sys.exit(run_check(args.project, Path(args.out) if args.out else None,
+                           strict=args.strict))
 
 
 def main() -> None:

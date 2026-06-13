@@ -165,6 +165,46 @@ def cmd_citations(args: argparse.Namespace) -> None:
     print(f"{n} new patent(s) added.")
 
 
+def cmd_search(args: argparse.Namespace) -> None:
+    """Search the local patents.duckdb by assignee substring (case-insensitive).
+
+    Closes the P5 gap where checking 'is there a Mack assignee in the corpus?'
+    required a raw DuckDB query — this surfaces local-DB assignee reads via the CLI.
+    """
+    import duckdb
+
+    conn = duckdb.connect(str(DB["patents"]), read_only=True)
+    pattern = f"%{args.assignee}%"
+    rows = conn.execute(
+        "SELECT assignee_name, COUNT(*) AS n "
+        "FROM patents "
+        "WHERE assignee_name IS NOT NULL AND assignee_name != '' "
+        "  AND assignee_name ILIKE ? "
+        "GROUP BY assignee_name ORDER BY n DESC, assignee_name",
+        [pattern],
+    ).fetchall()
+
+    if not rows:
+        print(f"No assignees matching '{args.assignee}' in patents.duckdb.")
+        conn.close()
+        return
+
+    print(f"Assignees matching '{args.assignee}' ({len(rows)} distinct):\n")
+    for name, n in rows:
+        print(f"  {n:>5}×  {name}")
+        if args.examples:
+            examples = conn.execute(
+                "SELECT patent_no, title, YEAR(grant_dt) FROM patents "
+                "WHERE assignee_name = ? AND title IS NOT NULL "
+                "ORDER BY grant_dt LIMIT ?",
+                [name, args.examples],
+            ).fetchall()
+            for pno, title, year in examples:
+                yr = f" ({year})" if year else ""
+                print(f"          {pno}  {title}{yr}")
+    conn.close()
+
+
 def cmd_coverage_check(args: argparse.Namespace) -> None:
     """Query EPO OPS for expected record counts before committing to a full sweep."""
     from markery.specialist.patent.build import _cql
@@ -260,6 +300,14 @@ def main() -> None:
                             help="Fetch backward citations for a patent; pull any new ones")
     p_cit.add_argument("patent_no", metavar="PATENT_NO")
 
+    # search
+    p_search = sub.add_parser("search",
+                              help="Search local patents.duckdb (e.g. by assignee substring)")
+    p_search.add_argument("--assignee", required=True, metavar="SUBSTR",
+                          help="Case-insensitive substring to match against assignee_name")
+    p_search.add_argument("--examples", type=int, default=0, metavar="N",
+                          help="Show up to N example patents per assignee (default: 0)")
+
     # coverage-check
     p_cov = sub.add_parser(
         "coverage-check",
@@ -279,5 +327,6 @@ def main() -> None:
         "citations":           cmd_citations,
         "verify-credentials":  cmd_verify_credentials,
         "signals":             cmd_signals,
+        "search":              cmd_search,
         "coverage-check":      cmd_coverage_check,
     }[args.cmd](args)

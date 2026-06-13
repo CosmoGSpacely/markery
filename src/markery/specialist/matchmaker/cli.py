@@ -293,6 +293,81 @@ def _run_entity(name: str, min_score: float) -> None:
     write_candidates(candidates, out)
 
 
+def _run_inspect(rest: list[str]) -> None:
+    """Entry point for `markery match inspect <project> [--entity N]`.
+
+    Surface per-entity candidate scores and disposition (confirmed / rejected /
+    unreviewed) from candidates.jsonl — the read that previously required parsing
+    candidates.jsonl by hand (D053).
+    """
+    import json
+
+    parser = argparse.ArgumentParser(
+        prog="markery match inspect",
+        description="Show per-entity candidate pairs, scores, and disposition",
+    )
+    parser.add_argument("project", help="Project name under projects/")
+    parser.add_argument("--entity", type=int, default=None, metavar="ID",
+                        help="Restrict to a single entity_id")
+    parser.add_argument("--min-score", type=float, default=0.0,
+                        help="Only show candidates at or above this score")
+    args = parser.parse_args(rest)
+
+    proj = require_project(args.project)
+    if not proj.candidates.exists():
+        print(f"No candidates.jsonl. Run 'markery match {args.project}' first.", file=sys.stderr)
+        sys.exit(1)
+
+    from markery.specialist.matchmaker.queries import read_confirmed, read_rejected
+
+    confirmed_keys = {
+        (c["patent_no"], str(c["trademark_serial"]))
+        for c in read_confirmed(proj.confirmed)
+    }
+    rejected_keys = read_rejected(proj.rejected)
+
+    candidates = [
+        json.loads(l) for l in proj.candidates.read_text().splitlines() if l.strip()
+    ]
+    if args.entity is not None:
+        candidates = [c for c in candidates if c["entity_id"] == args.entity]
+    candidates = [c for c in candidates if c.get("score", 0) >= args.min_score]
+
+    if not candidates:
+        print(f"No candidates for '{args.project}'"
+              + (f" entity {args.entity}" if args.entity is not None else "")
+              + (f" at score ≥ {args.min_score}" if args.min_score else "") + ".")
+        return
+
+    # Group by entity_id, sort each group by descending score.
+    by_entity: dict[int, list[dict]] = {}
+    for c in candidates:
+        by_entity.setdefault(c["entity_id"], []).append(c)
+
+    def _disp(c: dict) -> str:
+        key = (c["patent_no"], str(c["trademark_serial"]))
+        if key in confirmed_keys:
+            return "confirmed "
+        if key in rejected_keys:
+            return "rejected  "
+        return "unreviewed"
+
+    total = 0
+    for eid in sorted(by_entity):
+        rows = sorted(by_entity[eid], key=lambda c: -c.get("score", 0))
+        ename = rows[0].get("entity", "")
+        print(f"\nEntity {eid}: {ename}  ({len(rows)} candidate(s))")
+        print(f"  {'Score':>6}  {'Disp':<10}  {'Patent':<12}  Mark")
+        print("  " + "-" * 70)
+        for c in rows:
+            mark = c.get("trademark") or "(figurative)"
+            print(f"  {c.get('score', 0):>6.3f}  {_disp(c):<10}  "
+                  f"{c['patent_no']:<12}  {mark}")
+            total += 1
+
+    print(f"\n{total} candidate(s) shown across {len(by_entity)} entity/entities.")
+
+
 def _run_auto_disposition(rest: list[str]) -> None:
     """Entry point for `markery match auto-disposition <project>`."""
     import json
@@ -547,6 +622,9 @@ def match_main() -> None:
     if rest and rest[0] == "preflight":
         _run_preflight(rest[1:])
         return
+    if rest and rest[0] == "inspect":
+        _run_inspect(rest[1:])
+        return
 
     parser = argparse.ArgumentParser(
         prog="markery match",
@@ -556,7 +634,8 @@ def match_main() -> None:
             "  status <project>            Show pipeline enrichment state\n"
             "  rescore <project>           Re-score candidates with current weights\n"
             "  auto-disposition <project>  Auto-reject low-scoring candidates\n"
-            "  preflight <project>         Run enrichment preflight checks"
+            "  preflight <project>         Run enrichment preflight checks\n"
+            "  inspect <project>           Show per-entity candidate scores/disposition"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -610,6 +689,74 @@ def match_main() -> None:
 # ---------------------------------------------------------------------------
 # markery matchmaker
 # ---------------------------------------------------------------------------
+
+def _remove_rejection(rejected_path: Path, patent_no: str, trademark_serial) -> int:
+    """Drop any rejected.jsonl rows matching (patent_no, trademark_serial).
+
+    Rewrites the file without the matching rows. Returns the number removed.
+    """
+    import json as _json
+    if not rejected_path.exists():
+        return 0
+    kept: list[str] = []
+    removed = 0
+    for line in rejected_path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        row = _json.loads(line)
+        if (row["patent_no"] == patent_no
+                and str(row["trademark_serial"]) == str(trademark_serial)):
+            removed += 1
+            continue
+        kept.append(line)
+    if removed:
+        rejected_path.write_text(
+            "".join(l + "\n" for l in kept), encoding="utf-8")
+    return removed
+
+
+def cmd_unreject(args: argparse.Namespace) -> None:
+    """Remove a pair from rejected.jsonl, returning it to the unreviewed queue."""
+    import re
+    import json as _json
+
+    proj = require_project(args.project)
+    if not proj.rejected.exists():
+        print(f"No rejected.jsonl for '{args.project}'. Nothing to un-reject.")
+        return
+
+    slug = args.slug.lower()
+    m = re.match(r'^(.+)-(us\d+[a-z]+)$', slug)
+    if not m:
+        print(f"Cannot parse slug '{args.slug}'. Expected <trademark>-<patent_no>.",
+              file=sys.stderr)
+        sys.exit(1)
+    tm_slug, pat_no = m.group(1), m.group(2).upper()
+
+    def _slug_matches(slug_part: str, trademark: str | None) -> bool:
+        if trademark is None:
+            return slug_part == "figurative"
+        normalised = re.sub(r'[^a-z0-9]+', '-', trademark.lower()).strip('-')
+        return slug_part == normalised or slug_part in normalised
+
+    # Find the rejected row to learn its trademark_serial.
+    target = None
+    for line in proj.rejected.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        row = _json.loads(line)
+        if row["patent_no"].upper() == pat_no and _slug_matches(tm_slug, row.get("trademark")):
+            target = row
+            break
+
+    if target is None:
+        print(f"No rejected pair matching '{args.slug}' in {proj.rejected}.", file=sys.stderr)
+        sys.exit(1)
+
+    n = _remove_rejection(proj.rejected, target["patent_no"], target["trademark_serial"])
+    print(f"Un-rejected {args.slug} ({n} row(s) removed). "
+          f"It will reappear as a candidate on the next 'markery match {args.project}'.")
+
 
 def cmd_confirm(args: argparse.Namespace) -> None:
     """Non-interactive pair confirmation: look up slug in candidates.jsonl and append to confirmed.jsonl."""
@@ -679,6 +826,15 @@ def cmd_confirm(args: argparse.Namespace) -> None:
     write_confirmed(proj.confirmed, entry)
     print(f"Confirmed: {args.slug}")
     print(f"  Written to {proj.confirmed.relative_to(proj.root.parent.parent)}")
+
+    # A confirm overrides any prior rejection of the same pair (the P5 bulldog
+    # case: a human overturns a model reject). Drop it from rejected.jsonl so the
+    # two dispositions cannot disagree.
+    rejected_path = getattr(proj, "rejected", None)
+    if rejected_path is not None:
+        removed = _remove_rejection(rejected_path, cand["patent_no"], cand["trademark_serial"])
+        if removed:
+            print(f"  Overrode prior rejection ({removed} row removed from rejected.jsonl)")
 
 
 def _get_example_titles(
@@ -943,6 +1099,11 @@ def matchmaker_main() -> None:
     p_cf.add_argument("--note",  default="", metavar="TEXT",
                       help="Optional curation note appended to the confirmed record")
 
+    p_ur = sub.add_parser("unreject",
+                          help="Remove a pair from rejected.jsonl (return it to the queue)")
+    p_ur.add_argument("project", help="Project name under projects/")
+    p_ur.add_argument("slug",    help="Rejected pair slug, e.g. figurative-us904137a")
+
     p_sv = sub.add_parser("suggest-variants",
                           help="Rank patent assignee and trademark owner strings matching a canonical name")
     p_sv.add_argument("name", help="Canonical entity name to match against")
@@ -959,6 +1120,7 @@ def matchmaker_main() -> None:
         "build":              cmd_build,
         "clear":              cmd_clear,
         "confirm":            cmd_confirm,
+        "unreject":           cmd_unreject,
         "list":               cmd_list,
         "status":             cmd_status,
         "suggest-variants":   cmd_suggest_variants,

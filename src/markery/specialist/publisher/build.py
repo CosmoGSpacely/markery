@@ -61,8 +61,34 @@ def _run_pagefind(out_dir: Path) -> None:
         print(f"  pagefind failed: {exc.stderr.decode()[:200]}")
 
 
-def build_site(project: str, out_dir: Path | None = None, base_url: str | None = None) -> list[Path]:
-    """Render all pages for a project; return list of written paths."""
+def _prune_stale(out: Path, written: set[Path]) -> list[Path]:
+    """Remove HTML and image files under `out` not written this run.
+
+    Only `.html` pages and files under `images/` are pruned — these are the
+    outputs whose names track project state (match slugs, mark serials) and so
+    go stale when that state changes. The pagefind index and `search.json` are
+    rewritten every build and left alone.
+    """
+    removed: list[Path] = []
+    candidates = list(out.rglob("*.html"))
+    images_dir = out / "images"
+    if images_dir.exists():
+        candidates += [p for p in images_dir.rglob("*") if p.is_file()]
+    for f in candidates:
+        if f.resolve() not in written:
+            f.unlink()
+            removed.append(f)
+    return removed
+
+
+def build_site(project: str, out_dir: Path | None = None, base_url: str | None = None,
+               prune: bool = True) -> list[Path]:
+    """Render all pages for a project; return list of written paths.
+
+    When ``prune`` is true (the default), stale `.html` and `images/` files from
+    a previous build that are not re-written this run are removed, so renamed or
+    deleted pages do not linger as orphans on disk.
+    """
     proj = load_project(Project(project).root)
     out  = out_dir if out_dir is not None else proj.site
     out.mkdir(parents=True, exist_ok=True)
@@ -97,11 +123,14 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
     (images_dir / "marks").mkdir(parents=True, exist_ok=True)
     (images_dir / "patents").mkdir(parents=True, exist_ok=True)
 
+    written_images: set[Path] = set()
     for tm in trademarks:
         if tm.get("image_available"):
             data = q.get_mark_image_bytes(tm["serial_no"])
             if data:
-                (images_dir / "marks" / f"{tm['serial_no']}.png").write_bytes(data)
+                dest = images_dir / "marks" / f"{tm['serial_no']}.png"
+                dest.write_bytes(data)
+                written_images.add(dest.resolve())
 
     figure_index: dict[str, str] = {}
     for pat in patents:
@@ -111,6 +140,7 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
                 dest = images_dir / "patents" / f"{pat['patent_no']}.png"
                 dest.write_bytes(data)
                 figure_index[pat["patent_no"]] = f"images/patents/{pat['patent_no']}.png"
+                written_images.add(dest.resolve())
 
     pages: list[Path] = []
     search_records: list[dict] = []
@@ -241,6 +271,12 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
         encoding="utf-8",
     )
     print(f"  search.json      → {len(search_records)} records")
+
+    if prune:
+        written = {p.resolve() for p in pages} | written_images
+        removed = _prune_stale(out, written)
+        if removed:
+            print(f"  pruned           → {len(removed)} stale file(s)")
 
     _run_pagefind(out)
 
