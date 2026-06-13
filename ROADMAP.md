@@ -443,7 +443,7 @@ Results 2026-06-11 (run under `claude-haiku-4-5-20251001`, all via the CLI): Ste
 
 ---
 
-### P6 — Close the register (MARKERY_REVIEW open items + Phase 22 gaps)
+### P6 — Close the register (MARKERY_REVIEW open items + Phase 22 gaps) — CLOSED
 
 P1–P5 closed the headline MARKERY_REVIEW findings (A1, A4/D059, B1, B2/D061, C1/D062) and 5 of 6 portfolio flags. P6 closes the remaining open items the review flagged — including the loose end the review expected P1 to handle (D054) and the two findings whose reopen triggers have since fired (D058, D060) — plus the CLI/build/agentic gaps Phase 22 itself surfaced (D063–D066), and archives the review file per the CLAUDE.md REVIEW convention.
 
@@ -481,6 +481,8 @@ Results 2026-06-13 (Group B — D063, D064, D066, D053 all closed): **B1/D063** 
 
 C1. **D065 — human-gate on rejects.** Route a model `reject` (and optionally `defer`) through the langgraph `human_gate` so a human can overturn it, instead of auto-writing `rejected.jsonl` — the limitation the P5 bulldog exposed. Keep auto-reject only below a score floor, or add `--review-all`. Update `_route_infer`, the gate routing, and `tests/test_graph.py`. Close D065.
 
+Results 2026-06-13 (Group C — D065 closed; markery-langgraph commit cd6bf05): `_route_infer` now surfaces a model `reject` at `human_gate` when `--review-all` is set **or** the reject score (1–5) is ≥ `reject_review_floor` (default `config.REJECT_REVIEW_FLOOR = 3`); rejects below the floor auto-write to `rejected.jsonl` as before, so the existing low-score reject path (MINALITE, score 2) is unchanged. New `ResearchState` keys `review_all`/`reject_review_floor`; `main()` gained `--review-all` and `--reject-floor N`. `defer` is also surfaced under `--review-all`. A human can overturn a surfaced reject to confirm (verified end-to-end in a test: the score-1 bulldog reject, surfaced via `--review-all`, overturned to confirm → `run_confirm` called). The default floor means a *confident* reject (low score) still auto-rejects quietly; `--review-all` is the explicit "show me everything" mode that would have caught the P5 bulldog. 15 new langgraph tests (`test_reject_review.py` 10, `test_config_root.py` 5); langgraph suite **30 passing**.
+
 **Group D — Setup & housekeeping**
 
 D1. **D056 — `MARKERY_ROOT` persistence.** Let langgraph resolve the Markery repo without a manual export (e.g. a `.markery-root` pointer file, or default to a sibling `markery/` directory), documented in the langgraph README. Close D056.
@@ -488,6 +490,8 @@ D1. **D056 — `MARKERY_ROOT` persistence.** Let langgraph resolve the Markery r
 D2. **D055 — resolve the `projects/*/site/` tracking decision.** Decide and document: keep `site/` tracked, because P4's "view the output without running" links committed HTML and GitHub Pages builds from the repo. Close D055 as decided (keep tracked).
 
 D3. **Archive the review file.** Copy `MARKERY_REVIEW.md` → `archive/MARKERY_REVIEW-2026-06-09.md` and `git rm` it from root, per the REVIEW-file convention (its own line 8).
+
+Results 2026-06-13 (Group D — D056, D055 closed; review archived): **D1/D056** — `config.resolve_markery_root()` (markery-langgraph cd6bf05) resolves the Markery repo without a manual export: `MARKERY_ROOT` env var → `.markery-root` pointer file in the repo root → sibling `markery/` directory, each accepted only if `MANIFEST.json` is present. `main()` calls it and prints actionable guidance if nothing resolves. Documented in the langgraph `CLAUDE.md`; 5 tests (`test_config_root.py`). **D2/D055** — decided: **keep `projects/*/site/` tracked.** The built HTML is the published deliverable (P4 links to committed HTML; GitHub Pages serves from the repo), and `markery site build` is now deterministic and prunes stale output (D064), so rebuild diffs are bounded — no `.gitignore` entry added; rationale recorded in DEFERRED.md. **D3** — `MARKERY_REVIEW.md` copied to `archive/MARKERY_REVIEW-2026-06-09.md` and `git rm`'d from root per the REVIEW-file convention.
 
 ---
 
@@ -503,6 +507,6 @@ P4 PASSED when: a visitor-facing README exists with pitch, an essay screenshot, 
 
 P5 (optional) — not required for the phase. When attempted, PASSED when: ≥1 bulldog confirmed pair via the live graph `human_gate`; essay validates 8/8; `markery site build animal-marks-1930` exits 0 with the bulldog essay and mark image rendered; `--json` added to the infer commands and the langgraph graph parses it; D062 closed.
 
-P6 PASSED when: D054, D058, D060, D063, D064, D065, D066, D053, D056, and D055 are all closed in `DEFERRED.md`; the new commands (`trademark inspect`, `site check`, `patent search --assignee`, `match inspect`, `historian infer-queue`) carry MVO contracts and tests; `MARKERY_REVIEW.md` is archived to `archive/` and removed from root; the full suite is green. D025, D026, D028, D007, and D057 remain deferred with documented rationale.
+P6 PASSED when: D054, D058, D060, D063, D064, D065, D066, D053, D056, and D055 are all closed in `DEFERRED.md`; the new commands (`trademark inspect`, `site check`, `patent search --assignee`, `match inspect`, `historian infer-queue`) carry MVO contracts and tests; `MARKERY_REVIEW.md` is archived to `archive/` and removed from root; the full suite is green. D025, D026, D028, D007, and D057 remain deferred with documented rationale. — PASSED 2026-06-13. All ten D-items closed across Groups A–D (A: D054/D058/D060; B: D063/D064/D066/D053; C: D065; D: D056/D055). The five new commands carry MVO contracts in `tests/benchmarks/mvo.md` and tests. `MARKERY_REVIEW.md` archived to `archive/MARKERY_REVIEW-2026-06-09.md` and removed from root. Markery suite **688 passing**; markery-langgraph suite **30 passing**. D025, D026, D028, D007, D057 remain deferred with documented rationale.
 
-Phase PASSED when P1–P4 pass (P5 is optional). `DEFERRED.md` updated with any new bypasses discovered. D025 (photographic-equipment) and D026 (precision-tools) remain deferred — breadth is not the goal of this phase. — PASSED 2026-06-11. P1–P4 all PASSED; optional P5 also completed (Mack bulldog confirmed via transparent human curation over a Haiku reject; D062 closed; D065/D066 filed). New deferrals this phase: D063, D064, D065, D066. Closed: D059, D061, D062. **P6 added 2026-06-12 as the deferred-debt closeout** — the P1–P4 phase pass stands; the register is fully cleared when P6 passes.
+Phase PASSED when P1–P4 pass (P5 is optional). `DEFERRED.md` updated with any new bypasses discovered. D025 (photographic-equipment) and D026 (precision-tools) remain deferred — breadth is not the goal of this phase. — PASSED 2026-06-11. P1–P4 all PASSED; optional P5 also completed (Mack bulldog confirmed via transparent human curation over a Haiku reject; D062 closed; D065/D066 filed). New deferrals this phase: D063, D064, D065, D066. Closed: D059, D061, D062. **P6 added 2026-06-12 as the deferred-debt closeout** — the P1–P4 phase pass stands; the register is fully cleared when P6 passes. **P6 PASSED 2026-06-13** — all ten Phase-22 D-items (D053/D054/D056/D058/D060/D063/D064/D065/D066, and the D055 tracking decision) are closed; the register is cleared. Phase 22 complete.
