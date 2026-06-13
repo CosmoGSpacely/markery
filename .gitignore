@@ -1,4 +1,6 @@
 .env
+# OpenRouter minted runtime inference key — gitignored secret, regenerable via 'markery model mint'
+.openrouter-key
 __pycache__/
 *.py[cod]
 *$py.class

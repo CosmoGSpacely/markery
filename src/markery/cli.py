@@ -63,6 +63,7 @@ _SUBCOMMANDS = {
     "wikipedia":   "Wikipedia tooling  (draft|submit <project> <slug>)",
     "project":     "Project management  (init|adopt)",
     "tokens":      "Token-cost reporting  (report [--by specialist|command|model])",
+    "model":       "Provider/model setup  (status|mint|test — OpenRouter)",
 }
 
 
@@ -199,6 +200,73 @@ def cmd_site(rest: list[str]) -> None:
                            strict=args.strict))
 
 
+def cmd_model(rest: list[str]) -> None:
+    """Provider/model setup — currently the OpenRouter runtime-key lifecycle."""
+    import argparse
+    import os
+
+    from markery.common import openrouter as orr
+
+    parser = argparse.ArgumentParser(prog="markery model")
+    sub = parser.add_subparsers(dest="action", required=True)
+
+    sub.add_parser("status", help="Show provider key state and default test model")
+
+    p_mint = sub.add_parser("mint", help="Mint an OpenRouter runtime key from the provisioning key")
+    p_mint.add_argument("--name", default="markery-runtime", help="Key label (default: markery-runtime)")
+    p_mint.add_argument("--limit", type=float, default=None, metavar="USD",
+                        help="Optional spend cap in USD (omit for free models)")
+
+    p_test = sub.add_parser("test", help="Make one live OpenRouter call to verify wiring")
+    p_test.add_argument("--model", default=orr.DEFAULT_TEST_MODEL,
+                        help=f"OpenRouter model slug (default: {orr.DEFAULT_TEST_MODEL})")
+
+    args = parser.parse_args(rest)
+
+    def _mask(secret: str) -> str:
+        return f"{secret[:12]}…{secret[-4:]}" if len(secret) > 20 else "set"
+
+    if args.action == "status":
+        prov = bool(orr._provisioning_key())
+        explicit = bool(os.environ.get("OPENROUTER_API_KEY", "").strip())
+        cache = orr._cache_path()
+        print("OpenRouter:")
+        print(f"  provisioning key   : {'present' if prov else 'MISSING (set OPENROUTER_PROVISIONING_KEY in .env)'}")
+        print(f"  OPENROUTER_API_KEY : {'set' if explicit else 'not set'}")
+        print(f"  cached runtime key : {'present (' + str(cache) + ')' if cache.exists() else 'none'}")
+        rk = orr.runtime_key(allow_mint=False)
+        print(f"  resolved runtime   : {'yes' if rk else 'no — run: markery model mint'}")
+        print(f"  default test model : {orr.DEFAULT_TEST_MODEL}")
+        return
+
+    if args.action == "mint":
+        secret = orr.mint_runtime_key(name=args.name, limit=args.limit)
+        cache = orr._cache_path()
+        try:
+            cache.write_text(secret + "\n", encoding="utf-8")
+            cache.chmod(0o600)
+        except OSError as exc:
+            print(f"Minted key but could not cache it: {exc}", file=sys.stderr)
+        print(f"Minted runtime key {_mask(secret)} → cached at {cache}")
+        print("It is gitignored. OpenRouter calls will now use it automatically.")
+        return
+
+    if args.action == "test":
+        from markery.common.llm import call
+        import time as _time
+        t0 = _time.monotonic()
+        text, ptok, ctok, _, _ = call(
+            args.model,
+            system="You are a terse assistant. Answer in one short sentence.",
+            user="In one sentence, what is a trademark?",
+            max_tokens=128,
+        )
+        ms = int((_time.monotonic() - t0) * 1000)
+        print(f"Model: {args.model}  ({ms}ms, prompt={ptok}, completion={ctok})")
+        print(f"Response: {text}")
+        return
+
+
 def main() -> None:
     if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
         _print_help()
@@ -234,6 +302,7 @@ def main() -> None:
         "wikipedia":  lambda: cmd_wikipedia(rest),
         "project":    lambda: cmd_project(rest),
         "tokens":     lambda: cmd_tokens(rest),
+        "model":      lambda: cmd_model(rest),
     }[cmd]()
 
 

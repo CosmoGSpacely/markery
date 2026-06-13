@@ -36,6 +36,8 @@ _FIELDS = ("prompt_tokens", "completion_tokens",
 
 def _rate(model: str) -> tuple[float, float] | None:
     base = model.split("~")[0]  # strip the ~estimate suffix
+    if base.endswith(":free"):
+        return (0.0, 0.0)        # OpenRouter free models cost nothing
     best: tuple[float, float] | None = None
     best_len = -1
     for prefix, rate in _PRICING:

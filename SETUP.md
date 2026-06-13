@@ -93,6 +93,38 @@ Verify:
 markery wikipedia verify-credentials
 ```
 
+### OpenRouter (optional — model-agnosticism testing)
+
+Markery is provider-agnostic: a model id containing `/` (e.g.
+`meta-llama/llama-3.3-70b-instruct:free`) routes to OpenRouter instead of
+Anthropic, letting you run specialists on a free or non-Anthropic model. Set a
+project's model with `"model": "<slug>"` in its `project.json`, or pass a slug to
+`markery model test`.
+
+Key handling uses a **provisioning (management) key** to mint a runtime inference
+key automatically:
+
+1. Get a provisioning key at **https://openrouter.ai/settings/provisioning-keys**
+2. Add to `.env`:
+
+```
+OPENROUTER_PROVISIONING_KEY=sk-or-v1-...
+```
+
+3. Mint a runtime key (cached to the gitignored `.openrouter-key`) and verify:
+
+```bash
+markery model status        # show key state and the default test model
+markery model mint          # mint + cache a runtime key from the provisioning key
+markery model test          # one live call (default: openai/gpt-oss-120b:free)
+markery model test --model meta-llama/llama-3.3-70b-instruct:free
+```
+
+If you already hold a plain inference key (`sk-or-v1-…`), set `OPENROUTER_API_KEY`
+instead and skip minting. Free models are rate-limited upstream; `chat()` retries
+429/5xx with backoff, and a busy model returns a clear 429 — retry shortly or try
+another free slug (`markery model test` lists the default).
+
 ---
 
 ## 3. Verify the committed databases

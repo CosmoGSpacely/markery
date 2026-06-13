@@ -20,6 +20,13 @@ Markery's default model is Haiku 4.5 (4096-token minimum); the specialist
 system prompts are ~2K tokens, so caching does NOT currently activate on the
 default model — cache_read is 0 on every call. See `markery tokens report`
 (D059) and the cache-verification warning in common/tokens.py.
+
+Provider routing
+----------------
+A model id containing "/" (e.g. ``meta-llama/llama-3.3-70b-instruct:free``) is an
+OpenRouter slug and is routed through ``common/openrouter.py`` (OpenAI-compatible
+chat completions); a ``claude-*`` id goes to Anthropic. OpenRouter free models do
+not support prompt caching, so cache_read/cache_creation are always 0 for them.
 """
 
 from __future__ import annotations
@@ -59,6 +66,12 @@ def call(
     Returns (text, prompt_tokens, completion_tokens, cache_read_tokens, cache_creation_tokens).
     cache_read and cache_creation are 0 when caching is disabled or the prompt is too short.
     """
+    from markery.common.openrouter import is_openrouter_model
+    if is_openrouter_model(model):
+        from markery.common.openrouter import chat
+        text, ptok, ctok = chat(model, system, user, max_tokens)
+        return text, ptok, ctok, 0, 0
+
     client = get_client()
     if client is None:
         raise RuntimeError(
@@ -107,7 +120,26 @@ def call_batch(
 
     Blocks until the batch ends (most finish within minutes; max 24h). Raises
     RuntimeError on missing client or if the batch does not end within `timeout`.
+
+    OpenRouter models have no Batch API; for them this falls back to sequential
+    `call()` per item (no 50% discount — free models already cost $0), returning
+    the same dict shape so callers are provider-agnostic.
     """
+    from markery.common.openrouter import is_openrouter_model
+    if is_openrouter_model(model):
+        out: dict[str, dict] = {}
+        for cid, text in items:
+            try:
+                t, ptok, ctok, _, _ = call(model, system, text, max_tokens,
+                                           cache_system=cache_system)
+                out[cid] = {
+                    "text": t, "prompt_tokens": ptok, "completion_tokens": ctok,
+                    "cache_read_tokens": 0, "cache_creation_tokens": 0,
+                }
+            except Exception as exc:  # noqa: BLE001 — record per-item failure
+                out[cid] = {"error": str(type(exc).__name__)}
+        return out
+
     client = get_client()
     if client is None:
         raise RuntimeError(
