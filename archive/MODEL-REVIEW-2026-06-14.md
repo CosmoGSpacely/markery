@@ -1,6 +1,6 @@
 # Model Cost and Provider Review
 
-**Status:** Comparison complete (2026-06-14) — see Parts 5–6; ready to archive pending the optional cache/tier follow-up  
+**Status:** Closed 2026-06-14 — comparison complete (Parts 5–6); archived per the REVIEW-file convention. Optional depth follow-up tracked as DEFERRED **D067**.  
 **Scope:** Cost comparison across inference providers for Markery's three inference workloads: `historian card --infer`, `historian draft`, and `librarian extract`. Covers what is known (Anthropic), what is needed (OpenAI, xAI), and the code changes required to enable multi-provider comparison.
 
 ---
@@ -349,5 +349,5 @@ buys judgment quality, not factual correctness — and judgment is human-gated a
 - [x] Run card session with each model; record token counts — Part 6
 - [x] Run `historian draft` with each model; record validate pass/fail — all 8/8
 - [x] Cost comparison table populated — Part 6 (results JSONL committed under tests/benchmarks/)
-- [ ] Archive this file to `archive/MODEL-REVIEW-2026-06-14.md` when closed
-- [ ] (Optional follow-up) Measure per-provider cache behaviour; add `gpt-4o`/`sonnet`-tier and a larger fixture set
+- [x] Archive this file to `archive/MODEL-REVIEW-2026-06-14.md` when closed
+- [x] ~~(Optional follow-up) Measure per-provider cache behaviour; add `gpt-4o`/`sonnet`-tier and a larger fixture set~~ → deferred as **D067**
