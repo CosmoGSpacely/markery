@@ -41,11 +41,21 @@ TODAY = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 RESULTS_PATH = BENCH_DIR / f"cross-model-mvo-{TODAY}.jsonl"
 
 # Two models spanning the price/capability range. Haiku is the default; Sonnet
-# is the natural "second house model" the agnosticism claim must survive.
+# is the natural "second house model" the agnosticism claim must survive. Pass
+# --models to override (e.g. a cross-provider OpenRouter/OpenAI/xAI comparison).
 MODELS = [
     "claude-haiku-4-5-20251001",
     "claude-sonnet-4-6",
 ]
+
+
+def _short_name(model: str) -> str:
+    """Filesystem-safe short tag for a model id (for draft provenance files)."""
+    if "haiku" in model:
+        return "haiku"
+    if "sonnet" in model:
+        return "sonnet"
+    return re.sub(r"[^a-z0-9.]+", "-", model.lower()).strip("-")
 
 # One confirmed pair from each of the three existing projects. Each has a
 # committed scaffold/essay at content/<slug>.md and a resolvable candidate card.
@@ -92,7 +102,7 @@ def _draft_and_validate(project: str, slug: str, model: str, env: dict) -> dict:
     # Preserve this model's draft for provenance before the next model overwrites it.
     prov_dir = BENCH_DIR / "drafts" / TODAY
     prov_dir.mkdir(parents=True, exist_ok=True)
-    short = "haiku" if "haiku" in model else "sonnet" if "sonnet" in model else model
+    short = _short_name(model)
     (prov_dir / f"{slug}.{short}.md").write_text(
         draft_abs.read_text(encoding="utf-8"), encoding="utf-8")
 
@@ -112,26 +122,68 @@ def _draft_and_validate(project: str, slug: str, model: str, env: dict) -> dict:
     }
 
 
-def main() -> int:
+def _provider_ready(model: str) -> tuple[bool, str]:
+    """Return (ready, reason) — whether the provider key for `model` is present."""
+    from markery.common.providers import route, _env_key
     from markery.common.llm import get_client
-    if get_client() is None:
-        print("ANTHROPIC_API_KEY absent — cannot run the live cross-model benchmark.",
-              file=sys.stderr)
+    provider = route(model)
+    if provider == "anthropic":
+        return (get_client() is not None, "ANTHROPIC_API_KEY / anthropic SDK")
+    if provider == "openrouter":
+        from markery.common.openrouter import runtime_key
+        return (runtime_key(allow_mint=False) is not None, "OpenRouter runtime key")
+    if provider == "openai":
+        return (bool(_env_key("OPENAI_API_KEY")), "OPENAI_API_KEY")
+    if provider == "xai":
+        return (bool(_env_key("XAI_API_KEY")), "XAI_API_KEY")
+    return (True, "")
+
+
+def main() -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Cross-model MVO benchmark")
+    parser.add_argument("--models", nargs="+", default=MODELS,
+                        help="Model ids to compare (any provider). Default: the P3 two-model set.")
+    parser.add_argument("--infer-only", action="store_true",
+                        help="Run only card --infer (skip the draft+validate step)")
+    parser.add_argument("--label", default="cross-model-mvo",
+                        help="Output filename stem. Use a distinct label (e.g. "
+                             "'cross-provider') for runs where partial validator "
+                             "failure is expected, to keep the P3 regression guard "
+                             "(which globs cross-model-mvo-*.jsonl) separate.")
+    args = parser.parse_args()
+    results_path = BENCH_DIR / f"{args.label}-{TODAY}.jsonl"
+
+    models: list[str] = []
+    for m in args.models:
+        ready, reason = _provider_ready(m)
+        if ready:
+            models.append(m)
+        else:
+            print(f"  skipping {m}: provider not ready ({reason})", file=sys.stderr)
+    if not models:
+        print("No runnable models — check provider keys.", file=sys.stderr)
         return 1
 
     token_log = Path(tempfile.mkstemp(suffix=".jsonl", prefix="xmvo-")[1])
     base_env = {**os.environ, "MARKERY_TOKEN_LOG": str(token_log)}
 
     records: list[dict] = []
-    for model in MODELS:
+    for model in models:
         for project, slug in FIXTURES:
             print(f"  {model:<32} {project}/{slug}")
             infer = _infer(project, slug, model, base_env)
-            dv = _draft_and_validate(project, slug, model, base_env)
-            for r in (infer, dv):
+            results = [infer]
+            if not args.infer_only:
+                results.append(_draft_and_validate(project, slug, model, base_env))
+            for r in results:
                 records.append({"model": model, "project": project, "slug": slug, **r})
                 flag = "ok " if r["passed"] else "FAIL"
-                print(f"      [{flag}] {r['task']}")
+                print(f"      [{flag}] {r['task']}"
+                      + (f"  ({r.get('recommendation')}/{r.get('score')})"
+                         if r["task"] == "card.infer" else
+                         f"  ({r.get('checks_passed')}/{r.get('checks_total')})"))
 
     # Aggregate token cost per model from the live token log.
     from markery.common.tokens_report import load_records, _sum_fields, record_cost
@@ -139,7 +191,7 @@ def main() -> int:
     token_log.unlink(missing_ok=True)
 
     by_model: dict[str, dict] = {}
-    for model in MODELS:
+    for model in models:
         runs = [r for r in records if r["model"] == model]
         passed = sum(1 for r in runs if r["passed"])
         tr = [t for t in token_records if t.get("model", "").startswith(model.split("~")[0])]
@@ -155,14 +207,14 @@ def main() -> int:
         }
 
     # Write per-run results JSONL.
-    with open(RESULTS_PATH, "w", encoding="utf-8") as fh:
+    with open(results_path, "w", encoding="utf-8") as fh:
         fh.write(json.dumps({"benchmark": "cross-model-mvo", "date": TODAY,
                              "fixtures": [f"{p}/{s}" for p, s in FIXTURES],
                              "summary": by_model}) + "\n")
         for r in records:
             fh.write(json.dumps(r) + "\n")
 
-    print(f"\nResults → {RESULTS_PATH}\n")
+    print(f"\nResults → {results_path}\n")
     print(render_table(by_model))
     return 0
 

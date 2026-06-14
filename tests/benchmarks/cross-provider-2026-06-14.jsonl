@@ -1,0 +1,25 @@
+{"benchmark": "cross-model-mvo", "date": "2026-06-14", "fixtures": ["information-systems/soundex-us1261167a", "radio-pioneers/sterilamp-us2168861a", "animal-marks-1930/john-deere-moline-ill-us979019a"], "summary": {"claude-haiku-4-5-20251001": {"validator_pass": 6, "validator_total": 6, "prompt_tokens": 18001, "completion_tokens": 3680, "cache_read_tokens": 0, "usd": 0.036401}, "gpt-4o-mini": {"validator_pass": 6, "validator_total": 6, "prompt_tokens": 14323, "completion_tokens": 3023, "cache_read_tokens": 0, "usd": 0.00396225}, "grok-3": {"validator_pass": 6, "validator_total": 6, "prompt_tokens": 14660, "completion_tokens": 2929, "cache_read_tokens": 0, "usd": 0.087915}, "openai/gpt-oss-120b:free": {"validator_pass": 6, "validator_total": 6, "prompt_tokens": 14683, "completion_tokens": 4038, "cache_read_tokens": 0, "usd": 0.0}}}
+{"model": "claude-haiku-4-5-20251001", "project": "information-systems", "slug": "soundex-us1261167a", "task": "card.infer", "passed": true, "recommendation": "confirm", "score": 5}
+{"model": "claude-haiku-4-5-20251001", "project": "information-systems", "slug": "soundex-us1261167a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "claude-haiku-4-5-20251001", "project": "radio-pioneers", "slug": "sterilamp-us2168861a", "task": "card.infer", "passed": true, "recommendation": "confirm", "score": 5}
+{"model": "claude-haiku-4-5-20251001", "project": "radio-pioneers", "slug": "sterilamp-us2168861a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "claude-haiku-4-5-20251001", "project": "animal-marks-1930", "slug": "john-deere-moline-ill-us979019a", "task": "card.infer", "passed": true, "recommendation": "confirm", "score": 5}
+{"model": "claude-haiku-4-5-20251001", "project": "animal-marks-1930", "slug": "john-deere-moline-ill-us979019a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "gpt-4o-mini", "project": "information-systems", "slug": "soundex-us1261167a", "task": "card.infer", "passed": true, "recommendation": "reject", "score": 2}
+{"model": "gpt-4o-mini", "project": "information-systems", "slug": "soundex-us1261167a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "gpt-4o-mini", "project": "radio-pioneers", "slug": "sterilamp-us2168861a", "task": "card.infer", "passed": true, "recommendation": "confirm", "score": 5}
+{"model": "gpt-4o-mini", "project": "radio-pioneers", "slug": "sterilamp-us2168861a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "gpt-4o-mini", "project": "animal-marks-1930", "slug": "john-deere-moline-ill-us979019a", "task": "card.infer", "passed": true, "recommendation": "confirm", "score": 5}
+{"model": "gpt-4o-mini", "project": "animal-marks-1930", "slug": "john-deere-moline-ill-us979019a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "grok-3", "project": "information-systems", "slug": "soundex-us1261167a", "task": "card.infer", "passed": true, "recommendation": "defer", "score": 3}
+{"model": "grok-3", "project": "information-systems", "slug": "soundex-us1261167a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "grok-3", "project": "radio-pioneers", "slug": "sterilamp-us2168861a", "task": "card.infer", "passed": true, "recommendation": "reject", "score": 2}
+{"model": "grok-3", "project": "radio-pioneers", "slug": "sterilamp-us2168861a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "grok-3", "project": "animal-marks-1930", "slug": "john-deere-moline-ill-us979019a", "task": "card.infer", "passed": true, "recommendation": "confirm", "score": 5}
+{"model": "grok-3", "project": "animal-marks-1930", "slug": "john-deere-moline-ill-us979019a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "openai/gpt-oss-120b:free", "project": "information-systems", "slug": "soundex-us1261167a", "task": "card.infer", "passed": true, "recommendation": "confirm", "score": 4}
+{"model": "openai/gpt-oss-120b:free", "project": "information-systems", "slug": "soundex-us1261167a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "openai/gpt-oss-120b:free", "project": "radio-pioneers", "slug": "sterilamp-us2168861a", "task": "card.infer", "passed": true, "recommendation": "confirm", "score": 5}
+{"model": "openai/gpt-oss-120b:free", "project": "radio-pioneers", "slug": "sterilamp-us2168861a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}
+{"model": "openai/gpt-oss-120b:free", "project": "animal-marks-1930", "slug": "john-deere-moline-ill-us979019a", "task": "card.infer", "passed": true, "recommendation": "confirm", "score": 5}
+{"model": "openai/gpt-oss-120b:free", "project": "animal-marks-1930", "slug": "john-deere-moline-ill-us979019a", "task": "draft.validate", "passed": true, "checks_passed": 8, "checks_total": 8}

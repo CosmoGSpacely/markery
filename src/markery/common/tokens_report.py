@@ -25,6 +25,11 @@ _PRICING: list[tuple[str, tuple[float, float]]] = [
     ("claude-haiku-4-5",  (1.0,  5.0)),
     ("claude-haiku-3-5",  (0.80, 4.0)),
     ("claude-haiku-3",    (0.25, 1.25)),
+    # OpenAI / xAI direct (point-in-time list prices, 2026-06; may drift).
+    ("gpt-4o-mini",       (0.15, 0.60)),
+    ("gpt-4o",            (2.50, 10.0)),
+    ("grok-3-mini",       (0.25, 0.50)),
+    ("grok-3",            (3.0,  15.0)),
 ]
 
 _CACHE_WRITE_MULT = 1.25
