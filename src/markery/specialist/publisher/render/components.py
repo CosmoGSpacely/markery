@@ -234,7 +234,8 @@ def _render_markdown(
             if in_bq:   html_parts.append("</blockquote>"); in_bq = False
             if in_ul:   html_parts.append("</ul>"); in_ul = False
             if not in_ol: html_parts.append("<ol>"); in_ol = True
-            html_parts.append(f'<li>{_inline(re.sub(r"^\d+\.\s+", "", line))}</li>')
+            item = re.sub(r"^\d+\.\s+", "", line)  # backslash regex kept out of the f-string (3.11 compat)
+            html_parts.append(f'<li>{_inline(item)}</li>')
         elif line.startswith("> "):
             if in_para: html_parts.append("</p>"); in_para = False
             if in_ul:   html_parts.append("</ul>"); in_ul = False
