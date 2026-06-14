@@ -289,7 +289,8 @@ single run mix providers:
   Anthropic has a Batch API; others loop sequentially.
 - `common/tokens.py` — cache-health warning suppressed for non-Anthropic models.
 - `common/tokens_report.py` — pricing added: `gpt-4o-mini` $0.15/$0.60, `gpt-4o`
-  $2.50/$10, `grok-3` $3/$15, `grok-3-mini` $0.25/$0.50; `…:free` priced at $0.
+  $2.50/$10, `grok-4.3` $1.25/$2.50, `grok-3` $3/$15, `grok-3-mini` $0.25/$0.50;
+  `…:free` priced at $0.
   (NB: Haiku 4.5 is priced at the current $1.00/$5.00 list rate here, not the older
   $0.80/$4.00 figure in Part 1.)
 - `markery model status | mint | test` — provider-key lifecycle and a one-shot live check.
@@ -305,19 +306,21 @@ Run via the parameterized P3 harness:
 
 ```bash
 python tests/benchmarks/cross_model_mvo.py --label cross-provider \
-  --models claude-haiku-4-5-20251001 gpt-4o-mini grok-3 openai/gpt-oss-120b:free
+  --models claude-haiku-4-5-20251001 gpt-4o-mini grok-4.3 openai/gpt-oss-120b:free
 ```
 
 3 fixtures (one confirmed pair per project) × {`card --infer`, `historian draft`
 → `validate`}. Results in `tests/benchmarks/cross-provider-2026-06-14.jsonl`;
-drafts under `tests/benchmarks/drafts/2026-06-14/`.
+drafts under `tests/benchmarks/drafts/2026-06-14/`. (xAI model: `grok-4.3`, the
+current flagship at $1.25/$2.50 — chosen over the older `grok-3` at $3/$15, which
+made identical judgments here at ~3.5× the cost.)
 
 | Model | Provider | Validator pass | Prompt tok | Completion tok | Est. cost |
 |---|---|---|---|---|---|
-| `claude-haiku-4-5-20251001` | Anthropic | **6/6** | 18,001 | 3,680 | $0.0364 |
-| `gpt-4o-mini` | OpenAI | **6/6** | 14,323 | 3,023 | $0.0040 |
-| `grok-3` | xAI | **6/6** | 14,660 | 2,929 | $0.0879 |
-| `openai/gpt-oss-120b:free` | OpenRouter (free) | **6/6** | 14,683 | 4,038 | **$0.0000** |
+| `claude-haiku-4-5-20251001` | Anthropic | **6/6** | 18,001 | 3,964 | $0.0378 |
+| `gpt-4o-mini` | OpenAI | **6/6** | 14,323 | 2,985 | $0.0039 |
+| `grok-4.3` | xAI | **6/6** | 14,660 | 2,811 | $0.0254 |
+| `openai/gpt-oss-120b:free` | OpenRouter (free) | **6/6** | 14,683 | 3,988 | **$0.0000** |
 
 **Finding — two layers behave differently:**
 
@@ -327,11 +330,11 @@ drafts under `tests/benchmarks/drafts/2026-06-14/`.
    cross-contamination). The model-agnosticism claim holds across four vendors.
 2. **Judgment (confirm/reject/defer) is provider-dependent.** On the human-confirmed
    SOUNDEX and STERILAMP pairs the models disagreed with ground truth — `gpt-4o-mini`
-   rejected SOUNDEX (score 2), `grok-3` deferred SOUNDEX (3) and rejected STERILAMP
+   rejected SOUNDEX (score 2), `grok-4.3` deferred SOUNDEX (3) and rejected STERILAMP
    (2), while Haiku and gpt-oss matched the human. This is exactly why Markery gates
    the disposition through a human (D065) and lets the validator gate only facts.
 
-**Cost:** for identical validator outcomes, `grok-3` is ~22× `gpt-4o-mini` and the
+**Cost:** for identical validator outcomes, `grok-4.3` is ~6.5× `gpt-4o-mini` and the
 free `gpt-oss-120b` is $0. A free model clears Markery's factual bar; the spend
 buys judgment quality, not factual correctness — and judgment is human-gated anyway.
 
@@ -340,9 +343,9 @@ buys judgment quality, not factual correctness — and judgment is human-gated a
 ## Open items before this review can be closed
 
 - [x] Verify current OpenAI pricing — `gpt-4o-mini` $0.15/$0.60, `gpt-4o` $2.50/$10
-- [x] Verify current xAI pricing — `grok-3` $3/$15, `grok-3-mini` $0.25/$0.50
+- [x] Verify current xAI pricing — `grok-4.3` $1.25/$2.50 (current flagship), `grok-3` $3/$15, `grok-3-mini` $0.25/$0.50
 - [x] ~~Implement `MARKERY_PROVIDER` dispatch~~ → implemented as model-id routing (Part 5)
-- [x] Run MVO pass with `gpt-4o-mini` and `grok-3` — both 6/6
+- [x] Run MVO pass with `gpt-4o-mini` and `grok-4.3` — both 6/6
 - [x] Run card session with each model; record token counts — Part 6
 - [x] Run `historian draft` with each model; record validate pass/fail — all 8/8
 - [x] Cost comparison table populated — Part 6 (results JSONL committed under tests/benchmarks/)

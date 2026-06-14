@@ -30,6 +30,7 @@ _PRICING: list[tuple[str, tuple[float, float]]] = [
     ("gpt-4o",            (2.50, 10.0)),
     ("grok-3-mini",       (0.25, 0.50)),
     ("grok-3",            (3.0,  15.0)),
+    ("grok-4.3",          (1.25, 2.50)),
 ]
 
 _CACHE_WRITE_MULT = 1.25
