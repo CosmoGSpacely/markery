@@ -1,13 +1,11 @@
 entity_id,variant_name,source
 31,EASTMAN KODAK COMPANY,trademark_owner
+31,"EASTMAN KODAK COMPANY, THE",trademark_owner
+31,EASTMAN KODAK CO.,trademark_owner
 31,EASTMAN KODAK CO,patent_assignee
 31,EASTMAN KODAK CO [US],patent_assignee
-32,ANSCO,trademark_owner
-32,GENERAL ANILINE & FILM CORPORATION,trademark_owner
-32,AGFA ANSCO CORP [US],patent_assignee
+32,ANSCO COMPANY,trademark_owner
+32,AGFA ANSCO CORPORATION,trademark_owner
+32,"ANSCO PHOTOPRODUCTS, INC.",trademark_owner
 32,ANSCO PHOTOPRODUCTS INC,patent_assignee
-33,GRAFLEX INC,trademark_owner
-33,FOLMER GRAFLEX CORP [US],patent_assignee
-33,GRAFLEX INC [US],patent_assignee
-34,BLAIR CAMERA COMPANY,trademark_owner
-34,BLAIR CAMERA CO [US],patent_assignee
+33,FOLMER GRAFLEX CORPORATION,trademark_owner
