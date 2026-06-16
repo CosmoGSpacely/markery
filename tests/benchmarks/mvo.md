@@ -107,6 +107,22 @@ and deterministic — no LLM inference is required.
 
 ---
 
+## trademark search-tsdr
+
+**Command:** `markery trademark search-tsdr <mark-text> [--active-only] [--limit N]`
+**Test file:** `tests/specialist/trademark/test_odp_search.py` (mocked ODP responses)
+
+| Field | Validation rule |
+|---|---|
+| Exit code | 0 on a reachable search (incl. zero results); 1 when the ODP key is absent or the search API is unavailable |
+| Unavailable message | On exit 1, stderr names the cause and the manual fallback (`tmsearch.uspto.gov` + `markery trademark fetch <serial>`) |
+| Header line | On success, first line matches `^## TSDR SEARCH: ` with a `[N result(s)]` count |
+| Result columns | Each row carries serial, filed date, registration, owner, and mark text |
+| Result filtering | Records without a serial number are dropped; output is capped at `--limit` |
+| Field tolerance | Parsing accepts snake_case and camelCase ODP field names and OpenSearch `_source` wrapping |
+
+---
+
 ## site check
 
 **Command:** `markery site check <project> [--strict]`

@@ -74,6 +74,23 @@ Verify:
 markery trademark verify-credentials
 ```
 
+### USPTO Open Data Portal API (optional — trademark text search)
+
+Required only for `markery trademark search-tsdr <mark-text>`, which resolves a
+brand name to serial numbers. The TSDR key above is serial-keyed and cannot do
+text search; the ODP search API needs a **separate ID.me-linked key**.
+
+1. Create a **USPTO.gov account** and complete **ID.me** verification
+2. Request an API key at **https://data.uspto.gov**
+3. Add to `.env`:
+
+```
+USPTO_ODP_API_KEY=your_odp_key_here
+```
+
+Without this key, `search-tsdr` exits non-zero with a manual fallback: search the
+mark at https://tmsearch.uspto.gov, then `markery trademark fetch <serial>`.
+
 ### Wikipedia API (optional)
 
 Required only if you plan to submit Wikipedia drafts or external links. This is an optional workflow; skip this section if you are only using Markery for local research.

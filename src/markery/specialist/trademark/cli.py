@@ -329,6 +329,48 @@ def cmd_reparse(args: argparse.Namespace) -> None:
 # Argument parser
 # ---------------------------------------------------------------------------
 
+def cmd_search_tsdr(args: argparse.Namespace) -> None:
+    """Resolve a mark name to serial numbers via the USPTO ODP text search (D028).
+
+    Falls back to a clear manual path and exits non-zero when the ODP key is
+    absent or the search API is unavailable.
+    """
+    from markery.specialist.trademark.odp_search import search_marks, ODPSearchUnavailable
+    from markery.common.auth import load_odp_key
+
+    def _fallback(reason: str) -> None:
+        print(f"search-tsdr unavailable: {reason}", file=sys.stderr)
+        print(
+            "  Manual fallback: search the mark at https://tmsearch.uspto.gov, then\n"
+            f"  fetch the serial directly:  markery trademark fetch <serial>",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    try:
+        key = load_odp_key()
+    except EnvironmentError as exc:
+        _fallback(str(exc))
+
+    try:
+        results = search_marks(args.mark_text, key,
+                               active_only=args.active_only, limit=args.limit)
+    except ODPSearchUnavailable as exc:
+        _fallback(str(exc))
+
+    if not results:
+        print(f"No marks matching '{args.mark_text}'.")
+        return
+
+    print(f"## TSDR SEARCH: {args.mark_text}  [{len(results)} result(s)]")
+    print(f"  {'Serial':<10}  {'Filed':<10}  {'Reg':<10}  {'Owner':<28}  Mark")
+    print("  " + "-" * 78)
+    for r in results:
+        print(f"  {(r['serial_no'] or ''):<10}  {(r['filing_dt'] or '—'):<10}  "
+              f"{(r['registration_no'] or '—'):<10}  {((r['owner_name'] or '—')[:28]):<28}  "
+              f"{r['mark_text'] or '—'}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(
         prog="markery trademark",
@@ -421,6 +463,15 @@ def main() -> None:
     p_ds.add_argument("--limit", type=int, default=200, metavar="N",
                       help="Maximum rows returned (default: 200)")
 
+    # search-tsdr
+    p_st = sub.add_parser("search-tsdr",
+                          help="Resolve a mark name to serial numbers via the USPTO ODP text search")
+    p_st.add_argument("mark_text", metavar="MARK_TEXT", help="Mark name to search, e.g. KODACHROME")
+    p_st.add_argument("--active-only", action="store_true",
+                      help="Restrict to active (live) marks")
+    p_st.add_argument("--limit", type=int, default=20, metavar="N",
+                      help="Maximum results (default: 20)")
+
     # inspect
     p_insp = sub.add_parser("inspect",
                             help="Inspect one mark: text/figurative, dates, owner, goods, image, design codes")
@@ -449,6 +500,7 @@ def main() -> None:
         "mark-status":         cmd_mark_status,
         "load-assignment":     cmd_load_assignment,
         "design-search":       cmd_design_search,
+        "search-tsdr":         cmd_search_tsdr,
         "inspect":             cmd_inspect,
         "reparse":             cmd_reparse,
         "verify-credentials":  cmd_verify_credentials,
