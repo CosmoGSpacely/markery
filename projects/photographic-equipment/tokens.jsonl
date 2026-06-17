@@ -1,0 +1,2 @@
+{"timestamp": "2026-06-17T12:16:10.193145+00:00", "specialist": "historian", "command": "card", "model": "openai/gpt-oss-120b:free~estimate", "prompt_tokens": 34, "completion_tokens": 0, "cache_read_tokens": 0, "cache_creation_tokens": 0, "wall_ms": 983, "batch": false}
+{"timestamp": "2026-06-17T12:16:20.475081+00:00", "specialist": "historian", "command": "card.infer", "model": "openai/gpt-oss-120b:free", "prompt_tokens": 2186, "completion_tokens": 227, "cache_read_tokens": 0, "cache_creation_tokens": 0, "wall_ms": 11265, "batch": false}

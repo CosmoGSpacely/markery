@@ -810,5 +810,12 @@
     "year_end": 1909,
     "fetch_dt": "2026-06-16T07:05:37.032248",
     "patents_added": 583
+  },
+  {
+    "cpc_class": "G03B",
+    "year_start": 1910,
+    "year_end": 1914,
+    "fetch_dt": "2026-06-17T06:41:12.544512",
+    "patents_added": 568
   }
 ]

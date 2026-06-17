@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Patent Gallery — Photographic Equipment — Markery</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: #f5f0e8;
+  color: #1a1a1a;
+  line-height: 1.65;
+  font-size: 16px;
+}
+
+a { color: #5a3e28; text-decoration: underline; }
+a:hover { color: #8b5e3c; }
+
+/* ── Site header ── */
+.site-header {
+  background: #2a1f14;
+  color: #f5f0e8;
+  padding: 18px 40px;
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+.site-header .site-title {
+  font-size: 1.1em;
+  font-weight: normal;
+  letter-spacing: .04em;
+  color: #e8dcc8;
+  text-decoration: none;
+}
+.site-header nav {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-width: 0;
+}
+.site-header nav a {
+  color: #b8a88a;
+  text-decoration: none;
+  font-size: .85em;
+  margin-right: 16px;
+}
+.site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  padding: 8px 40px;
+  background: #ede8de;
+  border-bottom: 1px solid #ddd;
+  font-size: .78em;
+}
+.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; }
+.breadcrumb li { color: #888; }
+.breadcrumb li:not(:last-child)::after { content: "›"; margin: 0 8px; color: #b8a88a; }
+.breadcrumb a { color: #5a3e28; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+
+/* ── Page header ── */
+.page-header {
+  background: #3d2b1a;
+  color: #f5f0e8;
+  padding: 40px;
+}
+.page-header h1 {
+  font-size: 2em;
+  font-weight: normal;
+  margin-bottom: 6px;
+}
+.page-header .subtitle {
+  color: #b8a88a;
+  font-size: .95em;
+}
+.page-header .stat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.chip {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  color: #e8dcc8;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: .8em;
+  font-family: monospace;
+}
+
+/* ── Page body ── */
+.page-body { max-width: 960px; margin: 0 auto; padding: 48px 40px; }
+
+.narrative {
+  max-width: 700px;
+  margin-bottom: 40px;
+}
+.narrative h2 {
+  font-size: 1.2em;
+  font-weight: normal;
+  margin: 32px 0 10px;
+  color: #3d2b1a;
+}
+.narrative p { margin-bottom: 1em; }
+.narrative table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .88em;
+  margin: 16px 0;
+}
+.narrative th, .narrative td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid #ddd;
+}
+.narrative th { background: #ede8de; font-weight: normal; color: #555; }
+.narrative code {
+  font-family: monospace;
+  font-size: .88em;
+  background: #ede8de;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.narrative pre {
+  background: #ede8de;
+  padding: 14px;
+  overflow-x: auto;
+  margin: 12px 0;
+  font-size: .83em;
+}
+
+/* ── Timeline ── */
+.timeline-section { margin-bottom: 40px; }
+.timeline-section h2 {
+  font-size: 1em;
+  font-weight: normal;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+.timeline-svg { width: 100%; overflow: visible; }
+
+/* ── Card grid ── */
+.section-title {
+  font-size: 1em;
+  font-weight: normal;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 16px;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.card--focus {
+  border: 2px solid #5a3e28;
+  box-shadow: 0 2px 8px rgba(90,62,40,.18);
+}
+.focus-badge {
+  display: inline-block;
+  background: #5a3e28;
+  color: #f5f0e8;
+  font-size: .65em;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-top: 2px;
+  font-family: monospace;
+}
+.research-question {
+  background: #ede8de;
+  border-left: 4px solid #8b5e3c;
+  padding: 16px 20px;
+  margin-bottom: 32px;
+  max-width: 700px;
+}
+.research-question .rq-label {
+  display: block;
+  font-size: .72em;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8b5e3c;
+  margin-bottom: 8px;
+}
+.research-question p { margin-bottom: .7em; }
+.research-question p:last-child { margin-bottom: 0; }
+.card-image {
+  width: 100%;
+  height: 140px;
+  object-fit: contain;
+  background: #faf8f4;
+  border-bottom: 1px solid #eee;
+  display: block;
+}
+.card-image-placeholder {
+  width: 100%;
+  height: 140px;
+  background: #ede8de;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: .75em;
+  font-family: monospace;
+  border-bottom: 1px solid #eee;
+}
+.card-body { padding: 10px 12px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.card-name { font-weight: bold; font-size: .88em; line-height: 1.3; }
+.card-meta { font-size: .75em; color: #666; }
+.card-goods { font-size: .73em; color: #444; margin-top: 4px; line-height: 1.4;
+  border-top: 1px solid #eee; padding-top: 4px; }
+.card-footer { font-size: .7em; color: #999; font-family: monospace; margin-top: auto; padding-top: 4px; }
+.entity-badge {
+  display: inline-block;
+  background: #e8dcc8;
+  color: #5a3e28;
+  font-size: .68em;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-top: 2px;
+  font-family: monospace;
+}
+.match-link {
+  display: inline-block;
+  background: #5a3e28;
+  color: #f5f0e8;
+  font-size: .68em;
+  padding: 2px 8px;
+  border-radius: 3px;
+  text-decoration: none;
+  margin-top: 4px;
+}
+.match-link:hover { background: #8b5e3c; color: #f5f0e8; }
+
+/* ── Entity grid ── */
+.entity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.entity-card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  padding: 20px;
+}
+.entity-card h3 { font-size: 1.1em; font-weight: normal; margin-bottom: 8px; }
+.entity-card .entity-meta { font-size: .8em; color: #666; margin-bottom: 12px; }
+.entity-card .entity-stats {
+  display: flex;
+  gap: 16px;
+  font-size: .78em;
+  color: #444;
+  margin-bottom: 12px;
+}
+.entity-card .stat-val { font-weight: bold; color: #2a1f14; }
+.entity-card .links a { font-size: .82em; margin-right: 12px; }
+
+/* ── Match cards (landing page) ── */
+.match-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.match-card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+}
+.match-card-thumb {
+  width: 80px;
+  min-width: 80px;
+  height: 80px;
+  object-fit: contain;
+  background: #faf8f4;
+  border: 1px solid #eee;
+  border-radius: 3px;
+}
+.match-card-thumb-placeholder {
+  width: 80px;
+  min-width: 80px;
+  height: 80px;
+  background: #ede8de;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #bbb;
+  font-size: .7em;
+}
+.match-card-body { flex: 1; }
+.match-card-title { font-weight: bold; font-size: .95em; margin-bottom: 4px; }
+.match-card-meta { font-size: .78em; color: #666; margin-bottom: 8px; }
+.match-card-note { font-size: .8em; color: #444; line-height: 1.4; margin-bottom: 8px; }
+
+/* ── Essay page ── */
+.essay { max-width: 700px; }
+.essay h2 { font-size: 1.2em; font-weight: normal; margin: 36px 0 10px; color: #3d2b1a; }
+.essay p { margin-bottom: 1em; }
+.essay table { width: 100%; border-collapse: collapse; font-size: .88em; margin: 16px 0; }
+.essay th, .essay td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ddd; }
+.essay th { background: #ede8de; font-weight: normal; color: #555; }
+.essay pre { background: #ede8de; padding: 14px; overflow-x: auto; margin: 12px 0; font-size: .83em; }
+.essay code { font-family: monospace; font-size: .88em; background: #ede8de; padding: 1px 4px; border-radius: 2px; }
+.essay-media {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 24px 0;
+}
+.essay-media img {
+  width: 100%;
+  object-fit: contain;
+  border: 1px solid #ddd;
+  background: #faf8f4;
+}
+.essay-media .media-label { font-size: .75em; color: #888; margin-top: 4px; text-align: center; }
+.sources {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #ddd;
+  font-size: .82em;
+  color: #555;
+}
+.sources h2 { font-size: .95em; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+.sources dt { font-weight: bold; margin-top: 8px; }
+.sources dd { margin-left: 16px; }
+
+/* ── Timeline annotation page ── */
+.timeline-entries { max-width: 700px; margin-top: 40px; }
+.timeline-entries h3 {
+  font-size: 1.05em;
+  font-weight: bold;
+  color: #3d2b1a;
+  margin: 32px 0 6px;
+  border-left: 3px solid #8b5e3c;
+  padding-left: 10px;
+}
+.timeline-entries p { margin-bottom: .8em; }
+
+/* ── Thematic essay ── */
+.theme-essay { max-width: 700px; }
+.theme-essay h2 { font-size: 1.2em; font-weight: normal; margin: 32px 0 10px; color: #3d2b1a; }
+.theme-essay h3 { font-size: 1.05em; font-weight: normal; margin: 24px 0 8px; color: #5a3e28; }
+.theme-essay p { margin-bottom: 1em; }
+.theme-essay table { width: 100%; border-collapse: collapse; font-size: .88em; margin: 16px 0; }
+.theme-essay th, .theme-essay td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ddd; }
+.theme-essay th { background: #ede8de; font-weight: normal; color: #555; }
+
+/* ── Search page ── */
+.search-form { display: flex; gap: 8px; margin-bottom: 32px; }
+.search-form input[type=search] {
+  flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 3px;
+  font-size: 1em; font-family: Georgia, serif; background: #fff;
+}
+.search-form button {
+  padding: 8px 18px; background: #5a3e28; color: #f5f0e8;
+  border: none; border-radius: 3px; cursor: pointer; font-size: .9em;
+}
+.search-results { list-style: none; }
+.search-results li { margin-bottom: 20px; }
+.search-results .result-title { font-size: 1.05em; font-weight: bold; }
+.search-results .result-type { font-size: .75em; color: #888; font-family: monospace; margin-left: 6px; }
+.search-results .result-excerpt { font-size: .88em; color: #444; margin-top: 4px; }
+
+/* ── Search input in header ── */
+.site-search { margin-left: auto; }
+.site-search input[type=search] {
+  padding: 3px 8px; border: 1px solid #555; border-radius: 3px;
+  background: #1a1208; color: #e8dcc8; font-size: .8em; width: 140px;
+}
+.site-search input[type=search]::placeholder { color: #888; }
+
+/* ── Patent figure (embedded via [[figure:patent_no]]) ── */
+.patent-figure { margin: 24px auto; text-align: center; max-width: 600px; border: 1px solid #d4c9b0; border-radius: 4px; padding: 8px; }
+.patent-figure img { max-width: 100%; background: #faf8f4; display: block; margin: 0 auto; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+
+/* ── Blockquotes ── */
+blockquote { border-left: 3px solid #b8a88a; margin: 16px 0; padding: 8px 16px; color: #555; font-style: italic; }
+blockquote p { margin: 0; }
+
+/* ── Small chip (inline stat tags) ── */
+.chip-sm { font-size: .75em; background: #e8dcc8; border-radius: 3px; padding: 1px 6px; color: #5a3e28; white-space: nowrap; }
+
+/* ── Site footer ── */
+.site-footer {
+  margin-top: 48px; padding: 20px 24px; border-top: 1px solid #ddd;
+  font-size: .78em; color: #888; text-align: center;
+}
+.site-footer a { color: #8b5e3c; text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<header class="site-header"><a class="site-title" href="index.html">Markery Research</a><nav><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a><a href="entities/index.html">Entities</a><a href="matches/index.html">Matches</a><a href="search.html">Search</a></nav><form class="site-search" action="search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<div class="page-header"><h1>Patent Gallery</h1><div class="subtitle">Photographic Equipment</div><div class="stat-chips"><span class="chip">159 patents</span><span class="chip">0 with figures</span><span class="chip">2 confirmed pairs</span></div></div><div class="page-body"><div class="timeline-section"><p class="section-title">Grant Timeline</p><svg viewBox="0 0 880 90" class="timeline-svg">
+<line x1="40" y1="56" x2="860" y2="56" stroke="#bbb" stroke-width="1"/>
+<line x1="78.1" y1="56" x2="78.1" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="78.1" y="72" text-anchor="middle" font-size="9" fill="#888">1900</text>
+<line x1="173.5" y1="56" x2="173.5" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="173.5" y="72" text-anchor="middle" font-size="9" fill="#888">1905</text>
+<line x1="268.8" y1="56" x2="268.8" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="268.8" y="72" text-anchor="middle" font-size="9" fill="#888">1910</text>
+<line x1="364.2" y1="56" x2="364.2" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="364.2" y="72" text-anchor="middle" font-size="9" fill="#888">1915</text>
+<line x1="459.5" y1="56" x2="459.5" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="459.5" y="72" text-anchor="middle" font-size="9" fill="#888">1920</text>
+<line x1="554.9" y1="56" x2="554.9" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="554.9" y="72" text-anchor="middle" font-size="9" fill="#888">1925</text>
+<line x1="650.2" y1="56" x2="650.2" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="650.2" y="72" text-anchor="middle" font-size="9" fill="#888">1930</text>
+<line x1="745.6" y1="56" x2="745.6" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="745.6" y="72" text-anchor="middle" font-size="9" fill="#888">1935</text>
+<line x1="840.9" y1="56" x2="840.9" y2="61" stroke="#bbb" stroke-width="1"/>
+<text x="840.9" y="72" text-anchor="middle" font-size="9" fill="#888">1940</text>
+<circle cx="95.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Roll-Holding Camera. (1900-11-06)</title></circle>
+<circle cx="108.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Roll Holder. (1901-07-02)</title></circle>
+<circle cx="113.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Finder For Photographic Cameras. (1901-10-08)</title></circle>
+<circle cx="113.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing Device For Photographic Cameras. (1901-10-08)</title></circle>
+<circle cx="113.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing Device For Cameras. (1901-10-08)</title></circle>
+<circle cx="116.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Panoramic Photographic Camera. (1901-12-17)</title></circle>
+<circle cx="117.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1902-01-21)</title></circle>
+<circle cx="119.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing Device For Photographic Cameras. (1902-02-04)</title></circle>
+<circle cx="119.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Shutter For Photographic Cameras. (1902-02-18)</title></circle>
+<circle cx="122.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1902-04-29)</title></circle>
+<circle cx="124.2" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Panoramic Camera. (1902-05-06)</title></circle>
+<circle cx="133.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1902-11-18)</title></circle>
+<circle cx="133.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing Device For Cameras. (1902-11-18)</title></circle>
+<circle cx="141.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1903-04-14)</title></circle>
+<circle cx="141.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Panoramic Photographic Camera. (1903-04-28)</title></circle>
+<circle cx="141.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera. (1903-04-28)</title></circle>
+<circle cx="164.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Printing Apparatus. (1904-06-14)</title></circle>
+<circle cx="164.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Printing Apparatus. (1904-06-14)</title></circle>
+<circle cx="165.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera. (1904-07-12)</title></circle>
+<circle cx="170.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Roll-Holder Camera. (1904-10-04)</title></circle>
+<circle cx="171.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Stereoscopic Printing Device. (1904-11-22)</title></circle>
+<circle cx="171.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Printing-Frame Support. (1904-11-22)</title></circle>
+<circle cx="171.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Light-Excluding Device For Photographic-Plate Holders. (1904-11-29)</title></circle>
+<circle cx="176.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Film Package For Color Photography. (1905-02-28)</title></circle>
+<circle cx="178.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Plate Holder. (1905-03-28)</title></circle>
+<circle cx="183.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Printing Frame. (1905-06-20)</title></circle>
+<circle cx="206.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Lens-Focusing Mechanism For Cameras. (1906-09-18)</title></circle>
+<circle cx="210.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Lens-Focusing Device. (1906-11-06)</title></circle>
+<circle cx="219.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Clip. (1907-05-07)</title></circle>
+<circle cx="219.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Shutter. (1907-05-07)</title></circle>
+<circle cx="221.2" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing-Screen For Cameras. (1907-06-11)</title></circle>
+<circle cx="233.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>View-Finder. (1908-02-04)</title></circle>
+<circle cx="235.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Enlarging-Camera. (1908-03-17)</title></circle>
+<circle cx="237.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Camera Shutter. (1908-04-21)</title></circle>
+<circle cx="237.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Roller-Blind Shutter. (1908-04-21)</title></circle>
+<circle cx="238.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Folding Photographic Camera. (1908-05-05)</title></circle>
+<circle cx="240.2" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Enlarging-Camera. (1908-06-23)</title></circle>
+<circle cx="246.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Mounting For Photographic Shutters. (1908-10-06)</title></circle>
+<circle cx="248.2" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Folding Photographic Camera. (1908-11-24)</title></circle>
+<circle cx="251.4" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing Attachment For Cameras. (1909-01-26)</title></circle>
+<circle cx="252.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Projection Apparatus. (1909-02-16)</title></circle>
+<circle cx="256.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing Device For Cameras. (1909-04-06)</title></circle>
+<circle cx="256.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera. (1909-04-06)</title></circle>
+<circle cx="256.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Film Pack. (1909-04-06)</title></circle>
+<circle cx="259.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera. (1909-06-08)</title></circle>
+<circle cx="262.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera-Back. (1909-08-03)</title></circle>
+<circle cx="262.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Shutter. (1909-08-24)</title></circle>
+<circle cx="262.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1909-08-24)</title></circle>
+<circle cx="262.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera. (1909-08-31)</title></circle>
+<circle cx="262.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing Device. (1909-08-31)</title></circle>
+<circle cx="262.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Shutter. (1909-08-31)</title></circle>
+<circle cx="264.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera-Back. (1909-09-07)</title></circle>
+<circle cx="264.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing Device. (1909-09-07)</title></circle>
+<circle cx="265.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing Device. (1909-10-19)</title></circle>
+<circle cx="265.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing Device. (1909-10-19)</title></circle>
+<circle cx="265.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Shutter. (1909-10-19)</title></circle>
+<circle cx="265.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera-Finder. (1909-10-19)</title></circle>
+<circle cx="267.2" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Plate-Holder. (1909-11-16)</title></circle>
+<circle cx="270.4" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Shutter. (1910-01-18)</title></circle>
+<circle cx="286.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera. (1910-11-15)</title></circle>
+<circle cx="286.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera-Shutter-Operating Mechanism. (1910-11-15)</title></circle>
+<circle cx="286.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera-Shutter-Operating Mechanism. (1910-11-15)</title></circle>
+<circle cx="286.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Attachment For Operating Camera-Shutters. (1910-11-15)</title></circle>
+<circle cx="292.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Negative. (1911-03-14)</title></circle>
+<circle cx="292.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Bellows-Support For Photographic Apparatus. (1911-03-21)</title></circle>
+<circle cx="292.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1911-03-21)</title></circle>
+<circle cx="294.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>View-Finder. (1911-04-11)</title></circle>
+<circle cx="295.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera. (1911-05-23)</title></circle>
+<circle cx="297.4" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Shutter. (1911-06-13)</title></circle>
+<circle cx="313.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1912-04-23)</title></circle>
+<circle cx="313.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera. (1912-04-23)</title></circle>
+<circle cx="313.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1912-04-23)</title></circle>
+<circle cx="313.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Film-Winding Key For Cameras. (1912-04-23)</title></circle>
+<circle cx="313.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1912-04-23)</title></circle>
+<circle cx="313.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera-Back. (1912-04-30)</title></circle>
+<circle cx="314.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Printing Machine. (1912-05-07)</title></circle>
+<circle cx="314.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Shutter. (1912-05-14)</title></circle>
+<circle cx="316.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Securing Device For Camera-Backs. (1912-06-25)</title></circle>
+<circle cx="324.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Multiplying-Back For Cameras. (1912-11-26)</title></circle>
+<circle cx="327.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Shutter. (1913-01-07)</title></circle>
+<circle cx="332.4" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Shutter. (1913-04-29)</title></circle>
+<circle cx="334.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1913-05-06)</title></circle>
+<circle cx="334.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Printing Mask. (1913-05-06)</title></circle>
+<circle cx="334.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>View-Finder. (1913-05-06)</title></circle>
+<circle cx="334.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>View-Finder. (1913-05-06)</title></circle>
+<circle cx="334.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera-Back. (1913-05-06)</title></circle>
+<circle cx="334.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Printing Device. (1913-05-06)</title></circle>
+<circle cx="334.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing-Hood For Cameras. (1913-05-06)</title></circle>
+<circle cx="334.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Printing Mask. (1913-05-13)</title></circle>
+<circle cx="334.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Multiplying Camera-Back. (1913-05-13)</title></circle>
+<circle cx="335.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Film-Spool Center. (1913-06-24)</title></circle>
+<circle cx="337.2" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>View-Finder. (1913-07-08)</title></circle>
+<circle cx="338.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Panoramic Camera. (1913-08-26)</title></circle>
+<circle cx="349.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing Device. (1914-03-03)</title></circle>
+<circle cx="353.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera-Bed. (1914-05-19)</title></circle>
+<circle cx="354.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Film-Spool Center. (1914-06-16)</title></circle>
+<circle cx="354.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing-Hood. (1914-06-30)</title></circle>
+<circle cx="357.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1914-08-18)</title></circle>
+<circle cx="415.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Shutter. (1917-08-28)</title></circle>
+<circle cx="415.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Method Of And Means For Producing Designations On Photographically-Sensitive Elements. (1917-08-28)</title></circle>
+<circle cx="415.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Method Of And Device For Designating Photographic Exposures. (1917-08-28)</title></circle>
+<circle cx="416.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1917-09-04)</title></circle>
+<circle cx="416.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Shutter. (1917-09-04)</title></circle>
+<circle cx="416.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Controlling Mechanism For Photographic Shutters. (1917-09-11)</title></circle>
+<circle cx="416.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing-Camera. (1917-09-18)</title></circle>
+<circle cx="416.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing-Camera. (1917-09-18)</title></circle>
+<circle cx="418.2" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Shutter. (1917-10-16)</title></circle>
+<circle cx="421.4" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Apparatus. (1917-12-11)</title></circle>
+<circle cx="421.4" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Mount For Photographs. (1917-12-11)</title></circle>
+<circle cx="421.4" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1917-12-25)</title></circle>
+<circle cx="423.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Panoramic Camera. (1918-01-01)</title></circle>
+<circle cx="424.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Magazine-Back For Cameras. (1918-02-12)</title></circle>
+<circle cx="424.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing-Finder For Photographic Cameras. (1918-02-26)</title></circle>
+<circle cx="426.2" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Testing Device. (1918-03-05)</title></circle>
+<circle cx="426.2" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Film-Camera. (1918-03-26)</title></circle>
+<circle cx="426.2" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Film Pack. (1918-03-26)</title></circle>
+<circle cx="427.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Actinometer. (1918-04-09)</title></circle>
+<circle cx="427.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Folding Camera. (1918-04-16)</title></circle>
+<circle cx="427.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera-Carriage. (1918-04-16)</title></circle>
+<circle cx="427.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera-Back. (1918-04-23)</title></circle>
+<circle cx="429.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Winding-Key For Photographic-Film Cameras. (1918-05-14)</title></circle>
+<circle cx="429.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Film-Pack Adapter For Cameras. (1918-05-14)</title></circle>
+<circle cx="429.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Printing Machine. (1918-05-14)</title></circle>
+<circle cx="429.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Shutter Mechanism. (1918-05-14)</title></circle>
+<circle cx="430.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Folding Camera. (1918-06-11)</title></circle>
+<circle cx="430.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Motion-Picture Apparatus. (1918-06-11)</title></circle>
+<circle cx="430.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1918-06-25)</title></circle>
+<circle cx="430.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera-Back. (1918-06-25)</title></circle>
+<circle cx="430.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Shutter. (1918-06-25)</title></circle>
+<circle cx="430.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Cut-Film Holder. (1918-06-25)</title></circle>
+<circle cx="432.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Method Of And Apparatus For Producing Designations Upon Photographic Material. (1918-07-16)</title></circle>
+<circle cx="432.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Detachable Shutter-Releasing Device. (1918-07-23)</title></circle>
+<circle cx="434.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera-Carriage. (1918-08-06)</title></circle>
+<circle cx="434.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Focusing Mechanism For Cameras. (1918-08-13)</title></circle>
+<circle cx="434.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Folding Camera. (1918-08-27)</title></circle>
+<circle cx="435.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1918-09-17)</title></circle>
+<circle cx="435.7" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Folding Camera. (1918-09-24)</title></circle>
+<circle cx="437.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Finder. (1918-10-01)</title></circle>
+<circle cx="437.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Copying And Enlarging Camera. (1918-10-08)</title></circle>
+<circle cx="437.3" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic View-Finder. (1918-10-29)</title></circle>
+<circle cx="438.9" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Finder. (1918-11-05)</title></circle>
+<circle cx="440.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera. (1918-12-03)</title></circle>
+<circle cx="440.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Finder. (1918-12-31)</title></circle>
+<circle cx="442.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic-Camera Back. (1919-01-14)</title></circle>
+<circle cx="442.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photograhic Camera. (1919-01-21)</title></circle>
+<circle cx="443.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Camera-Front. (1919-02-18)</title></circle>
+<circle cx="443.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Lens-Carriage. (1919-02-25)</title></circle>
+<circle cx="445.2" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Finder. (1919-03-04)</title></circle>
+<circle cx="446.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Two-Color-Picture Camera. (1919-04-01)</title></circle>
+<circle cx="446.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Exposure Mechanism. (1919-04-01)</title></circle>
+<circle cx="446.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1919-04-01)</title></circle>
+<circle cx="446.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Photographic Camera. (1919-04-29)</title></circle>
+<circle cx="477.0" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Gun-Camera (1920-11-30)</title></circle>
+<circle cx="543.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Corner Pocket For Mounting Photographs And Process Of Making The Same (1924-05-06)</title></circle>
+<circle cx="569.2" cy="48" r="4" fill="#5a7a3e" opacity="0.75"><title>Display Card (1925-09-15)</title></circle>
+<circle cx="686.8" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Picture Holding Device For Album Leaves (1931-11-17)</title></circle>
+<circle cx="734.5" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Method Of And System For Recording And Reproducing (1934-05-08)</title></circle>
+<circle cx="817.1" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Sound Reproducing Apparatus (1938-09-06)</title></circle>
+<circle cx="826.6" cy="48" r="4" fill="#8b5e3c" opacity="0.75"><title>Combined Letter Sheet And Envelope (1939-03-28)</title></circle>
+</svg></div><p class="section-title">All Patents</p><div class="card-grid"><div class="card" id="pat-US661469A"><div class="card-image-placeholder">US661469A</div><div class="card-body"><div class="card-name">Roll-Holding Camera.</div><div class="card-meta">US661469A · Granted 1900</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">EASTMAN GEORGE [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US677443A"><div class="card-image-placeholder">US677443A</div><div class="card-body"><div class="card-name">Photographic-Roll Holder.</div><div class="card-meta">US677443A · Granted 1901</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">EASTMAN GEORGE [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US684347A"><div class="card-image-placeholder">US684347A</div><div class="card-body"><div class="card-name">Finder For Photographic Cameras.</div><div class="card-meta">US684347A · Granted 1901</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US684348A"><div class="card-image-placeholder">US684348A</div><div class="card-body"><div class="card-name">Focusing Device For Photographic Cameras.</div><div class="card-meta">US684348A · Granted 1901</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US684349A"><div class="card-image-placeholder">US684349A</div><div class="card-body"><div class="card-name">Focusing Device For Cameras.</div><div class="card-meta">US684349A · Granted 1901</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US689159A"><div class="card-image-placeholder">US689159A</div><div class="card-body"><div class="card-name">Panoramic Photographic Camera.</div><div class="card-meta">US689159A · Granted 1901</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US691592A"><div class="card-image-placeholder">US691592A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US691592A · Granted 1902</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US692610A"><div class="card-image-placeholder">US692610A</div><div class="card-body"><div class="card-name">Focusing Device For Photographic Cameras.</div><div class="card-meta">US692610A · Granted 1902</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US693583A"><div class="card-image-placeholder">US693583A</div><div class="card-body"><div class="card-name">Shutter For Photographic Cameras.</div><div class="card-meta">US693583A · Granted 1902</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US698901A"><div class="card-image-placeholder">US698901A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US698901A · Granted 1902</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US699161A"><div class="card-image-placeholder">US699161A</div><div class="card-body"><div class="card-name">Panoramic Camera.</div><div class="card-meta">US699161A · Granted 1902</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FORSHEIM JOSEPH [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US713596A"><div class="card-image-placeholder">US713596A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US713596A · Granted 1902</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US713597A"><div class="card-image-placeholder">US713597A</div><div class="card-body"><div class="card-name">Focusing Device For Cameras.</div><div class="card-meta">US713597A · Granted 1902</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US725034A"><div class="card-image-placeholder">US725034A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US725034A · Granted 1903</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US726313A"><div class="card-image-placeholder">US726313A</div><div class="card-body"><div class="card-name">Panoramic Photographic Camera.</div><div class="card-meta">US726313A · Granted 1903</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">LENAHAN JOHN E [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US726356A"><div class="card-image-placeholder">US726356A</div><div class="card-body"><div class="card-name">Camera.</div><div class="card-meta">US726356A · Granted 1903</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">SCHOBER CHARLES WM [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US762467A"><div class="card-image-placeholder">US762467A</div><div class="card-body"><div class="card-name">Photographic-Printing Apparatus.</div><div class="card-meta">US762467A · Granted 1904</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">CUMMINGS JOHN S [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US762468A"><div class="card-image-placeholder">US762468A</div><div class="card-body"><div class="card-name">Photographic-Printing Apparatus.</div><div class="card-meta">US762468A · Granted 1904</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">CUMMINGS JOHN S [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US764910A"><div class="card-image-placeholder">US764910A</div><div class="card-body"><div class="card-name">Camera.</div><div class="card-meta">US764910A · Granted 1904</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US771416A"><div class="card-image-placeholder">US771416A</div><div class="card-body"><div class="card-name">Photographic Roll-Holder Camera.</div><div class="card-meta">US771416A · Granted 1904</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US775552A"><div class="card-image-placeholder">US775552A</div><div class="card-body"><div class="card-name">Stereoscopic Printing Device.</div><div class="card-meta">US775552A · Granted 1904</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US775555A"><div class="card-image-placeholder">US775555A</div><div class="card-body"><div class="card-name">Photographic-Printing-Frame Support.</div><div class="card-meta">US775555A · Granted 1904</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">CUMMINGS JOHN S [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US776291A"><div class="card-image-placeholder">US776291A</div><div class="card-body"><div class="card-name">Light-Excluding Device For Photographic-Plate Holders.</div><div class="card-meta">US776291A · Granted 1904</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US783613A"><div class="card-image-placeholder">US783613A</div><div class="card-body"><div class="card-name">Photographic-Film Package For Color Photography.</div><div class="card-meta">US783613A · Granted 1905</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">CLARKE JOSEPH THACHER [GB]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US785707A"><div class="card-image-placeholder">US785707A</div><div class="card-body"><div class="card-name">Photographic-Plate Holder.</div><div class="card-meta">US785707A · Granted 1905</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US792645A"><div class="card-image-placeholder">US792645A</div><div class="card-body"><div class="card-name">Photographic-Printing Frame.</div><div class="card-meta">US792645A · Granted 1905</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US831324A"><div class="card-image-placeholder">US831324A</div><div class="card-body"><div class="card-name">Lens-Focusing Mechanism For Cameras.</div><div class="card-meta">US831324A · Granted 1906</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US834884A"><div class="card-image-placeholder">US834884A</div><div class="card-body"><div class="card-name">Lens-Focusing Device.</div><div class="card-meta">US834884A · Granted 1906</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US852923A"><div class="card-image-placeholder">US852923A</div><div class="card-body"><div class="card-name">Clip.</div><div class="card-meta">US852923A · Granted 1907</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">A41F · G09F</div></div></div><div class="card" id="pat-US853000A"><div class="card-image-placeholder">US853000A</div><div class="card-body"><div class="card-name">Photographic Shutter.</div><div class="card-meta">US853000A · Granted 1907</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US856618A"><div class="card-image-placeholder">US856618A</div><div class="card-body"><div class="card-name">Focusing-Screen For Cameras.</div><div class="card-meta">US856618A · Granted 1907</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US878324A"><div class="card-image-placeholder">US878324A</div><div class="card-body"><div class="card-name">View-Finder.</div><div class="card-meta">US878324A · Granted 1908</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">WINTER HENRY J [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US881997A"><div class="card-image-placeholder">US881997A</div><div class="card-body"><div class="card-name">Photographic Enlarging-Camera.</div><div class="card-meta">US881997A · Granted 1908</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US885142A"><div class="card-image-placeholder">US885142A</div><div class="card-body"><div class="card-name">Photographic-Camera Shutter.</div><div class="card-meta">US885142A · Granted 1908</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US885236A"><div class="card-image-placeholder">US885236A</div><div class="card-body"><div class="card-name">Roller-Blind Shutter.</div><div class="card-meta">US885236A · Granted 1908</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US886473A"><div class="card-image-placeholder">US886473A</div><div class="card-body"><div class="card-name">Folding Photographic Camera.</div><div class="card-meta">US886473A · Granted 1908</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US891347A"><div class="card-image-placeholder">US891347A</div><div class="card-body"><div class="card-name">Enlarging-Camera.</div><div class="card-meta">US891347A · Granted 1908</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">KROEDEL ROBERT [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US900081A"><div class="card-image-placeholder">US900081A</div><div class="card-body"><div class="card-name">Mounting For Photographic Shutters.</div><div class="card-meta">US900081A · Granted 1908</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US905122A"><div class="card-image-placeholder">US905122A</div><div class="card-body"><div class="card-name">Folding Photographic Camera.</div><div class="card-meta">US905122A · Granted 1908</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US911001A"><div class="card-image-placeholder">US911001A</div><div class="card-body"><div class="card-name">Focusing Attachment For Cameras.</div><div class="card-meta">US911001A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US912299A"><div class="card-image-placeholder">US912299A</div><div class="card-body"><div class="card-name">Projection Apparatus.</div><div class="card-meta">US912299A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US917079A"><div class="card-image-placeholder">US917079A</div><div class="card-body"><div class="card-name">Focusing Device For Cameras.</div><div class="card-meta">US917079A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">KROEDEL ROBERT [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US917135A"><div class="card-image-placeholder">US917135A</div><div class="card-body"><div class="card-name">Camera.</div><div class="card-meta">US917135A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">ROBERTSON JOHN A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US917136A"><div class="card-image-placeholder">US917136A</div><div class="card-body"><div class="card-name">Photographic-Film Pack.</div><div class="card-meta">US917136A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">ROBERTSON JOHN A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US923827A"><div class="card-image-placeholder">US923827A</div><div class="card-body"><div class="card-name">Camera.</div><div class="card-meta">US923827A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US929671A"><div class="card-image-placeholder">US929671A</div><div class="card-body"><div class="card-name">Camera-Back.</div><div class="card-meta">US929671A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">INGERSOLL TRUMAN W [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US932381A"><div class="card-image-placeholder">US932381A</div><div class="card-body"><div class="card-name">Photographic Shutter.</div><div class="card-meta">US932381A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B · Y10T</div></div></div><div class="card" id="pat-US932392A"><div class="card-image-placeholder">US932392A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US932392A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">HUTCHINGS CHARLES E [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US932457A"><div class="card-image-placeholder">US932457A</div><div class="card-body"><div class="card-name">Camera.</div><div class="card-meta">US932457A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US932458A"><div class="card-image-placeholder">US932458A</div><div class="card-body"><div class="card-name">Focusing Device.</div><div class="card-meta">US932458A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US932485A"><div class="card-image-placeholder">US932485A</div><div class="card-body"><div class="card-name">Photographic Shutter.</div><div class="card-meta">US932485A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">MARKS PAUL J [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US933470A"><div class="card-image-placeholder">US933470A</div><div class="card-body"><div class="card-name">Camera-Back.</div><div class="card-meta">US933470A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">KROEDEL ROBERT [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US933713A"><div class="card-image-placeholder">US933713A</div><div class="card-body"><div class="card-name">Focusing Device.</div><div class="card-meta">US933713A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">KROEDEL ROBERT [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US937077A"><div class="card-image-placeholder">US937077A</div><div class="card-body"><div class="card-name">Focusing Device.</div><div class="card-meta">US937077A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">KROEDEL ROBERT [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US937156A"><div class="card-image-placeholder">US937156A</div><div class="card-body"><div class="card-name">Focusing Device.</div><div class="card-meta">US937156A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">KROEDEL ROBERT [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US937248A"><div class="card-image-placeholder">US937248A</div><div class="card-body"><div class="card-name">Photographic Shutter.</div><div class="card-meta">US937248A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">KROEDEL ROBERT [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US937266A"><div class="card-image-placeholder">US937266A</div><div class="card-body"><div class="card-name">Camera-Finder.</div><div class="card-meta">US937266A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">ROBERTSON JOHN A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US940030A"><div class="card-image-placeholder">US940030A</div><div class="card-body"><div class="card-name">Plate-Holder.</div><div class="card-meta">US940030A · Granted 1909</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">KROEDEL ROBERT [US]</div><a class="match-link" href="matches/wratten-us940030a.html">Confirmed pair →</a><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US946679A"><div class="card-image-placeholder">US946679A</div><div class="card-body"><div class="card-name">Photographic Shutter.</div><div class="card-meta">US946679A · Granted 1910</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">MARKS PAUL J [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US975461A"><div class="card-image-placeholder">US975461A</div><div class="card-body"><div class="card-name">Camera.</div><div class="card-meta">US975461A · Granted 1910</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">ROBERTSON JOHN A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US975497A"><div class="card-image-placeholder">US975497A</div><div class="card-body"><div class="card-name">Camera-Shutter-Operating Mechanism.</div><div class="card-meta">US975497A · Granted 1910</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BECKER JOSEPH [US]</div><div class="card-footer">Y10T · G03B</div></div></div><div class="card" id="pat-US975601A"><div class="card-image-placeholder">US975601A</div><div class="card-body"><div class="card-name">Camera-Shutter-Operating Mechanism.</div><div class="card-meta">US975601A · Granted 1910</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BECKER JOSEPH [US]</div><div class="card-footer">G03B · Y10T</div></div></div><div class="card" id="pat-US975602A"><div class="card-image-placeholder">US975602A</div><div class="card-body"><div class="card-name">Attachment For Operating Camera-Shutters.</div><div class="card-meta">US975602A · Granted 1910</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BECKER JOSEPH [US]</div><div class="card-footer">G03B · Y10T</div></div></div><div class="card" id="pat-US986443A"><div class="card-image-placeholder">US986443A</div><div class="card-body"><div class="card-name">Photographic Negative.</div><div class="card-meta">US986443A · Granted 1911</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">CLARKE JOSEPH THACHER [GB]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US987232A"><div class="card-image-placeholder">US987232A</div><div class="card-body"><div class="card-name">Bellows-Support For Photographic Apparatus.</div><div class="card-meta">US987232A · Granted 1911</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">HUTCHINGS CHARLES E [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US987366A"><div class="card-image-placeholder">US987366A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US987366A · Granted 1911</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">CHARLES E HUTCHINGS [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US989240A"><div class="card-image-placeholder">US989240A</div><div class="card-body"><div class="card-name">View-Finder.</div><div class="card-meta">US989240A · Granted 1911</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US993047A"><div class="card-image-placeholder">US993047A</div><div class="card-body"><div class="card-name">Camera.</div><div class="card-meta">US993047A · Granted 1911</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US994914A"><div class="card-image-placeholder">US994914A</div><div class="card-body"><div class="card-name">Photographic Shutter.</div><div class="card-meta">US994914A · Granted 1911</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1023930A"><div class="card-image-placeholder">US1023930A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US1023930A · Granted 1912</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1023931A"><div class="card-image-placeholder">US1023931A</div><div class="card-body"><div class="card-name">Camera.</div><div class="card-meta">US1023931A · Granted 1912</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1023932A"><div class="card-image-placeholder">US1023932A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US1023932A · Granted 1912</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1023933A"><div class="card-image-placeholder">US1023933A</div><div class="card-body"><div class="card-name">Film-Winding Key For Cameras.</div><div class="card-meta">US1023933A · Granted 1912</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1024200A"><div class="card-image-placeholder">US1024200A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US1024200A · Granted 1912</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">HUTCHINGS CHARLES E [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1024747A"><div class="card-image-placeholder">US1024747A</div><div class="card-body"><div class="card-name">Camera-Back.</div><div class="card-meta">US1024747A · Granted 1912</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">HUTCHINGS CHARLES E [US], RUTTAN ALFRED A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1025249A"><div class="card-image-placeholder">US1025249A</div><div class="card-body"><div class="card-name">Photographic-Printing Machine.</div><div class="card-meta">US1025249A · Granted 1912</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">CUMMINGS JOHN S [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1026043A"><div class="card-image-placeholder">US1026043A</div><div class="card-body"><div class="card-name">Photographic Shutter.</div><div class="card-meta">US1026043A · Granted 1912</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">LINDER JOHN [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1030433A"><div class="card-image-placeholder">US1030433A</div><div class="card-body"><div class="card-name">Securing Device For Camera-Backs.</div><div class="card-meta">US1030433A · Granted 1912</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">RUTTAN ALFRED A [US], HUTCHINGS CHARLES E [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1045539A"><div class="card-image-placeholder">US1045539A</div><div class="card-body"><div class="card-name">Multiplying-Back For Cameras.</div><div class="card-meta">US1045539A · Granted 1912</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1049379A"><div class="card-image-placeholder">US1049379A</div><div class="card-body"><div class="card-name">Photographic Shutter.</div><div class="card-meta">US1049379A · Granted 1913</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">MARKS PAUL J [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1060331A"><div class="card-image-placeholder">US1060331A</div><div class="card-body"><div class="card-name">Photographic Shutter.</div><div class="card-meta">US1060331A · Granted 1913</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1060610A"><div class="card-image-placeholder">US1060610A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US1060610A · Granted 1913</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">LINDER JOHN [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1060618A"><div class="card-image-placeholder">US1060618A</div><div class="card-body"><div class="card-name">Photographic-Printing Mask.</div><div class="card-meta">US1060618A · Granted 1913</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">NILES HENRY E [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1060636A"><div class="card-image-placeholder">US1060636A</div><div class="card-body"><div class="card-name">View-Finder.</div><div class="card-meta">US1060636A · Granted 1913</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">RUTTAN ALFRED A [US], HUTCHINGS CHARLES E [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1060709A"><div class="card-image-placeholder">US1060709A</div><div class="card-body"><div class="card-name">View-Finder.</div><div class="card-meta">US1060709A · Granted 1913</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">ROBERTSON JOHN A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1060748A"><div class="card-image-placeholder">US1060748A</div><div class="card-body"><div class="card-name">Camera-Back.</div><div class="card-meta">US1060748A · Granted 1913</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1060813A"><div class="card-image-placeholder">US1060813A</div><div class="card-body"><div class="card-name">Photographic-Printing Device.</div><div class="card-meta">US1060813A · Granted 1913</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BROWNELL FRANK A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1060834A"><div class="card-image-placeholder">US1060834A</div><div class="card-body"><div class="card-name">Focusing-Hood For Cameras.</div><div class="card-meta">US1060834A · Granted 1913</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1061727A"><div class="card-image-placeholder">US1061727A</div><div class="card-body"><div class="card-name">Photographic-Printing Mask.</div><div class="card-meta">US1061727A · Granted 1913</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">CARKHUFF NORMAN W [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1061736A"><div class="card-image-placeholder">US1061736A</div><div class="card-body"><div class="card-name">Multiplying Camera-Back.</div><div class="card-meta">US1061736A · Granted 1913</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1065601A"><div class="card-image-placeholder">US1065601A</div><div class="card-body"><div class="card-name">Film-Spool Center.</div><div class="card-meta">US1065601A · Granted 1913</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1066848A"><div class="card-image-placeholder">US1066848A</div><div class="card-body"><div class="card-name">View-Finder.</div><div class="card-meta">US1066848A · Granted 1913</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">HUTCHINGS CHARLES E [US], RUTTAN ALFRED A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1071346A"><div class="card-image-placeholder">US1071346A</div><div class="card-body"><div class="card-name">Panoramic Camera.</div><div class="card-meta">US1071346A · Granted 1913</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">REEVES JOHN A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1089111A"><div class="card-image-placeholder">US1089111A</div><div class="card-body"><div class="card-name">Focusing Device.</div><div class="card-meta">US1089111A · Granted 1914</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">CLARKE JOSEPH THACHER [GB]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1096954A"><div class="card-image-placeholder">US1096954A</div><div class="card-body"><div class="card-name">Camera-Bed.</div><div class="card-meta">US1096954A · Granted 1914</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">ROBERTSON JOHN A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1100100A"><div class="card-image-placeholder">US1100100A</div><div class="card-body"><div class="card-name">Film-Spool Center.</div><div class="card-meta">US1100100A · Granted 1914</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">ROBERTSON JOHN A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1101532A"><div class="card-image-placeholder">US1101532A</div><div class="card-body"><div class="card-name">Focusing-Hood.</div><div class="card-meta">US1101532A · Granted 1914</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1107358A"><div class="card-image-placeholder">US1107358A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US1107358A · Granted 1914</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">ROBERTSON JOHN A [US], KROEDEL ROBERT [US]</div><a class="match-link" href="matches/century-us1107358a.html">Confirmed pair →</a><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1238422A"><div class="card-image-placeholder">US1238422A</div><div class="card-body"><div class="card-name">Photographic Shutter.</div><div class="card-meta">US1238422A · Granted 1917</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">MARKS PAUL J [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1238504A"><div class="card-image-placeholder">US1238504A</div><div class="card-body"><div class="card-name">Method Of And Means For Producing Designations On Photographically-Sen…</div><div class="card-meta">US1238504A · Granted 1917</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">GAISMAN HENRY J [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1238506A"><div class="card-image-placeholder">US1238506A</div><div class="card-body"><div class="card-name">Method Of And Device For Designating Photographic Exposures.</div><div class="card-meta">US1238506A · Granted 1917</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">GAISMAN HENRY J [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1239017A"><div class="card-image-placeholder">US1239017A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US1239017A · Granted 1917</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">KROEDEL ROBERT [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1239025A"><div class="card-image-placeholder">US1239025A</div><div class="card-body"><div class="card-name">Photographic Shutter.</div><div class="card-meta">US1239025A · Granted 1917</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">MARKS PAUL J [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1240073A"><div class="card-image-placeholder">US1240073A</div><div class="card-body"><div class="card-name">Controlling Mechanism For Photographic Shutters.</div><div class="card-meta">US1240073A · Granted 1917</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">MARKS PAUL J [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1240651A"><div class="card-image-placeholder">US1240651A</div><div class="card-body"><div class="card-name">Focusing-Camera.</div><div class="card-meta">US1240651A · Granted 1917</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BECKER JOSEPH [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1240788A"><div class="card-image-placeholder">US1240788A</div><div class="card-body"><div class="card-name">Focusing-Camera.</div><div class="card-meta">US1240788A · Granted 1917</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BECKER JOSEPH [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1243086A"><div class="card-image-placeholder">US1243086A</div><div class="card-body"><div class="card-name">Photographic Shutter.</div><div class="card-meta">US1243086A · Granted 1917</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">MARKS PAUL J [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1249612A"><div class="card-image-placeholder">US1249612A</div><div class="card-body"><div class="card-name">Photographic Apparatus.</div><div class="card-meta">US1249612A · Granted 1917</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">GAISMAN HENRY J [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1249713A"><div class="card-image-placeholder">US1249713A</div><div class="card-body"><div class="card-name">Mount For Photographs.</div><div class="card-meta">US1249713A · Granted 1917</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BLYTH JOHN [US]</div><div class="card-footer">B42F</div></div></div><div class="card" id="pat-US1251105A"><div class="card-image-placeholder">US1251105A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US1251105A · Granted 1917</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">RIDDELL WILLIAM A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1251494A"><div class="card-image-placeholder">US1251494A</div><div class="card-body"><div class="card-name">Panoramic Camera.</div><div class="card-meta">US1251494A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1255868A"><div class="card-image-placeholder">US1255868A</div><div class="card-body"><div class="card-name">Magazine-Back For Cameras.</div><div class="card-meta">US1255868A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1257648A"><div class="card-image-placeholder">US1257648A</div><div class="card-body"><div class="card-name">Focusing-Finder For Photographic Cameras.</div><div class="card-meta">US1257648A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">SPEIDEL CHARLES F [US], RIDDELL WILLIAM A [US]…</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1258636A"><div class="card-image-placeholder">US1258636A</div><div class="card-body"><div class="card-name">Testing Device.</div><div class="card-meta">US1258636A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">NEWTON ALFRED J [US], FURNALD STANLEY M [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1260356A"><div class="card-image-placeholder">US1260356A</div><div class="card-body"><div class="card-name">Film-Camera.</div><div class="card-meta">US1260356A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1260458A"><div class="card-image-placeholder">US1260458A</div><div class="card-body"><div class="card-name">Photographic-Film Pack.</div><div class="card-meta">US1260458A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">RUTTAN ALFRED A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1262444A"><div class="card-image-placeholder">US1262444A</div><div class="card-body"><div class="card-name">Actinometer.</div><div class="card-meta">US1262444A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">CAPSTAFF JOHN G [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1262677A"><div class="card-image-placeholder">US1262677A</div><div class="card-body"><div class="card-name">Folding Camera.</div><div class="card-meta">US1262677A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">KROEDEL ROBERT [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1262700A"><div class="card-image-placeholder">US1262700A</div><div class="card-body"><div class="card-name">Camera-Carriage.</div><div class="card-meta">US1262700A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">RIDDELL WILLIAM A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1263904A"><div class="card-image-placeholder">US1263904A</div><div class="card-body"><div class="card-name">Camera-Back.</div><div class="card-meta">US1263904A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">KROEDEL ROBERT [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1266319A"><div class="card-image-placeholder">US1266319A</div><div class="card-body"><div class="card-name">Winding-Key For Photographic-Film Cameras.</div><div class="card-meta">US1266319A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">RIDDELL WILLIAM A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1266323A"><div class="card-image-placeholder">US1266323A</div><div class="card-body"><div class="card-name">Film-Pack Adapter For Cameras.</div><div class="card-meta">US1266323A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">HUTCHINGS CHARLES E [US], RUTTAN ALFRED A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1266385A"><div class="card-image-placeholder">US1266385A</div><div class="card-body"><div class="card-name">Photographic-Printing Machine.</div><div class="card-meta">US1266385A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BARNES FREDERICK W [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1266443A"><div class="card-image-placeholder">US1266443A</div><div class="card-body"><div class="card-name">Photographic-Shutter Mechanism.</div><div class="card-meta">US1266443A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1268950A"><div class="card-image-placeholder">US1268950A</div><div class="card-body"><div class="card-name">Folding Camera.</div><div class="card-meta">US1268950A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FISHER AUSTIN CARL [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1269366A"><div class="card-image-placeholder">US1269366A</div><div class="card-body"><div class="card-name">Motion-Picture Apparatus.</div><div class="card-meta">US1269366A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BARNES FREDERICK W [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1270280A"><div class="card-image-placeholder">US1270280A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US1270280A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1270281A"><div class="card-image-placeholder">US1270281A</div><div class="card-body"><div class="card-name">Camera-Back.</div><div class="card-meta">US1270281A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FOLMER WILLIAM F [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1270311A"><div class="card-image-placeholder">US1270311A</div><div class="card-body"><div class="card-name">Photographic Shutter.</div><div class="card-meta">US1270311A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">MARKS PAUL J [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1270330A"><div class="card-image-placeholder">US1270330A</div><div class="card-body"><div class="card-name">Cut-Film Holder.</div><div class="card-meta">US1270330A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">RUTTAN ALFRED A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1272415A"><div class="card-image-placeholder">US1272415A</div><div class="card-body"><div class="card-name">Method Of And Apparatus For Producing Designations Upon Photographic M…</div><div class="card-meta">US1272415A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">GAISMAN HENRY J [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1273172A"><div class="card-image-placeholder">US1273172A</div><div class="card-body"><div class="card-name">Detachable Shutter-Releasing Device.</div><div class="card-meta">US1273172A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">MARKS PAUL J [US]</div><div class="card-footer">G03B · Y10T</div></div></div><div class="card" id="pat-US1274561A"><div class="card-image-placeholder">US1274561A</div><div class="card-body"><div class="card-name">Camera-Carriage.</div><div class="card-meta">US1274561A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">KROEDEL ROBERT [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1275858A"><div class="card-image-placeholder">US1275858A</div><div class="card-body"><div class="card-name">Focusing Mechanism For Cameras.</div><div class="card-meta">US1275858A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">CROSS FRANCIS JAMES [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1276743A"><div class="card-image-placeholder">US1276743A</div><div class="card-body"><div class="card-name">Folding Camera.</div><div class="card-meta">US1276743A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">FISHER AUSTIN CARL [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1279164A"><div class="card-image-placeholder">US1279164A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US1279164A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">KESTER GEORGE I [US], RUTTAN ALFRED A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1279788A"><div class="card-image-placeholder">US1279788A</div><div class="card-body"><div class="card-name">Folding Camera.</div><div class="card-meta">US1279788A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">TIERNEY PHILIP W [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1280133A"><div class="card-image-placeholder">US1280133A</div><div class="card-body"><div class="card-name">Finder.</div><div class="card-meta">US1280133A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BECKER JOSEPH [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1280638A"><div class="card-image-placeholder">US1280638A</div><div class="card-body"><div class="card-name">Copying And Enlarging Camera.</div><div class="card-meta">US1280638A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BECKER JOSEPH [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1282839A"><div class="card-image-placeholder">US1282839A</div><div class="card-body"><div class="card-name">Photographic View-Finder.</div><div class="card-meta">US1282839A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">HUTCHINGS CHARLES E [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1283633A"><div class="card-image-placeholder">US1283633A</div><div class="card-body"><div class="card-name">Finder.</div><div class="card-meta">US1283633A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BECKER JOSEPH [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1286892A"><div class="card-image-placeholder">US1286892A</div><div class="card-body"><div class="card-name">Camera.</div><div class="card-meta">US1286892A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">STUBER ADOLPH [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1289088A"><div class="card-image-placeholder">US1289088A</div><div class="card-body"><div class="card-name">Finder.</div><div class="card-meta">US1289088A · Granted 1918</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BECKER JOSEPH [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1291004A"><div class="card-image-placeholder">US1291004A</div><div class="card-body"><div class="card-name">Photographic-Camera Back.</div><div class="card-meta">US1291004A · Granted 1919</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">HUTCHINGS CHARLES E [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1291920A"><div class="card-image-placeholder">US1291920A</div><div class="card-body"><div class="card-name">Photograhic Camera.</div><div class="card-meta">US1291920A · Granted 1919</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">KESTER GEORGE I [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1294705A"><div class="card-image-placeholder">US1294705A</div><div class="card-body"><div class="card-name">Camera-Front.</div><div class="card-meta">US1294705A · Granted 1919</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">RIDDELL WILLIAM A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1295373A"><div class="card-image-placeholder">US1295373A</div><div class="card-body"><div class="card-name">Photographic Lens-Carriage.</div><div class="card-meta">US1295373A · Granted 1919</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">RIDDELL WILLIAM A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1296156A"><div class="card-image-placeholder">US1296156A</div><div class="card-body"><div class="card-name">Finder.</div><div class="card-meta">US1296156A · Granted 1919</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BECKER JOSEPH [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1298641A"><div class="card-image-placeholder">US1298641A</div><div class="card-body"><div class="card-name">Two-Color-Picture Camera.</div><div class="card-meta">US1298641A · Granted 1919</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BARNES FREDERICK W [US], ALLEN ERNEST C [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1298723A"><div class="card-image-placeholder">US1298723A</div><div class="card-body"><div class="card-name">Photographic Exposure Mechanism.</div><div class="card-meta">US1298723A · Granted 1919</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">HURLBURT DAVID M [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1298791A"><div class="card-image-placeholder">US1298791A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US1298791A · Granted 1919</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">RIDDELL WILLIAM A [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1301897A"><div class="card-image-placeholder">US1301897A</div><div class="card-body"><div class="card-name">Photographic Camera.</div><div class="card-meta">US1301897A · Granted 1919</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">BECKER JOSEPH [US]</div><div class="card-footer">G03B</div></div></div><div class="card" id="pat-US1360443A"><div class="card-image-placeholder">US1360443A</div><div class="card-body"><div class="card-name">Gun-Camera</div><div class="card-meta">US1360443A · Granted 1920</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">ROBERTSON JOHN A, TIERNEY PHILIP W</div><div class="card-footer">F41A</div></div></div><div class="card" id="pat-US1493159A"><div class="card-image-placeholder">US1493159A</div><div class="card-body"><div class="card-name">Corner Pocket For Mounting Photographs And Process Of Making The Same</div><div class="card-meta">US1493159A · Granted 1924</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">MILMOE MICHAEL J</div><div class="card-footer">B42F</div></div></div><div class="card" id="pat-US1553585A"><div class="card-image-placeholder">US1553585A</div><div class="card-body"><div class="card-name">Display Card</div><div class="card-meta">US1553585A · Granted 1925</div><span class="entity-badge">Ansco</span><div class="card-goods">SNOWDEN BAYARD B, ANTHONY CHARLES H</div><div class="card-footer">G09F</div></div></div><div class="card" id="pat-US1832249A"><div class="card-image-placeholder">US1832249A</div><div class="card-body"><div class="card-name">Picture Holding Device For Album Leaves</div><div class="card-meta">US1832249A · Granted 1931</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">SCHULZ JOHN C</div><div class="card-footer">B42F</div></div></div><div class="card" id="pat-US1957885A"><div class="card-image-placeholder">US1957885A</div><div class="card-body"><div class="card-name">Method Of And System For Recording And Reproducing</div><div class="card-meta">US1957885A · Granted 1934</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">GRIMWOOD WALTER K</div><div class="card-footer">H04B</div></div></div><div class="card" id="pat-US2129227A"><div class="card-image-placeholder">US2129227A</div><div class="card-body"><div class="card-name">Sound Reproducing Apparatus</div><div class="card-meta">US2129227A · Granted 1938</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">MORSE RICHARD S</div><div class="card-footer">H04B</div></div></div><div class="card" id="pat-US2152135A"><div class="card-image-placeholder">US2152135A</div><div class="card-body"><div class="card-name">Combined Letter Sheet And Envelope</div><div class="card-meta">US2152135A · Granted 1939</div><span class="entity-badge">Eastman Kodak Company</span><div class="card-goods">HUGHEY CARTER J, CASE CHARLES Z</div><div class="card-footer">B42D</div></div></div></div></div>
+<footer class="site-footer">Built with <a href="https://github.com/CosmoGSpacely/markery">Markery</a></footer>
+</body>
+</html>

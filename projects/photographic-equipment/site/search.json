@@ -1,0 +1,50 @@
+[
+  {
+    "title": "Photographic Equipment",
+    "type": "landing",
+    "url": "index.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Entities",
+    "type": "entities_index",
+    "url": "entities/index.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Eastman Kodak Company",
+    "type": "entity",
+    "url": "entities/eastman-kodak-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Ansco",
+    "type": "entity",
+    "url": "entities/ansco.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Graflex",
+    "type": "entity",
+    "url": "entities/graflex.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Confirmed Pairs",
+    "type": "matches_index",
+    "url": "matches/index.html",
+    "excerpt": ""
+  },
+  {
+    "title": "WRATTEN ↔ US940030A",
+    "type": "match_essay",
+    "url": "matches/wratten-us940030a.html",
+    "excerpt": "Primary Sources - USPTO Trademark Serial No. 71070177 — [WRATTEN](https://tsdr.uspto.gov/#caseNumber=71070177&caseType=SERIAL_NO&searchType=statusSearch) - Filed: 1913-05-02 · Registered: 0098493 · Ow"
+  },
+  {
+    "title": "CENTURY ↔ US1107358A",
+    "type": "match_essay",
+    "url": "matches/century-us1107358a.html",
+    "excerpt": "Primary Sources - USPTO Trademark Serial No. 71105592 — [CENTURY](https://tsdr.uspto.gov/#caseNumber=71105592&caseType=SERIAL_NO&searchType=statusSearch) - Filed: 1917-08-11 · Registered: 0120963 · Ow"
+  }
+]
