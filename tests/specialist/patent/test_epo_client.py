@@ -183,3 +183,33 @@ def test_token_info_returns_prefix_and_expiry():
     info = client.token_info()
     assert info["token_prefix"].startswith("tok_abc123xy")
     assert info["expires_in_s"] > 0
+
+# ---------------------------------------------------------------------------
+# EPOClient._get — throttle (403) retry  (regression: build crashed on 403)
+# ---------------------------------------------------------------------------
+
+@rsps_lib.activate
+def test_get_retries_throttle_403_then_succeeds(monkeypatch):
+    """A throttle 403 must back off and retry, not raise (EPO uses 403 for throttling)."""
+    monkeypatch.setattr("markery.specialist.patent.epo_client.time.sleep", lambda *a, **k: None)
+    rsps_lib.add(rsps_lib.POST, AUTH_URL, json=TOKEN_RESP)
+    rsps_lib.add(rsps_lib.GET, SEARCH_URL, status=403,
+                 headers={"X-Throttling-Control": "busy (search=red:0)"})
+    rsps_lib.add(rsps_lib.GET, SEARCH_URL, json={"ok": True}, status=200)
+
+    client = EPOClient("key", "secret")
+    r = client._get(SEARCH_URL)
+    assert r.status_code == 200
+
+
+@rsps_lib.activate
+def test_get_persistent_403_surfaces_after_retries(monkeypatch):
+    """A genuine, persistent 403 still surfaces (returned for the caller to raise)."""
+    monkeypatch.setattr("markery.specialist.patent.epo_client.time.sleep", lambda *a, **k: None)
+    rsps_lib.add(rsps_lib.POST, AUTH_URL, json=TOKEN_RESP)
+    for _ in range(4):  # initial attempt + 3 retries (RETRY_DELAYS)
+        rsps_lib.add(rsps_lib.GET, SEARCH_URL, status=403)
+
+    client = EPOClient("key", "secret")
+    r = client._get(SEARCH_URL)
+    assert r.status_code == 403

@@ -4,7 +4,10 @@ Handles OAuth2 client-credentials auth with lazy token refresh, search,
 biblio fetch, and drawing figure download. No DuckDB imports -- all DB
 work lives in build.py and figures.py.
 
-Rate limits: 0.5 s between requests; 503 retries with backoff [5, 15, 30] s.
+Rate limits: EPO's dynamic throttle budgets search at ~30 requests/min (the
+`X-Throttling-Control: ... search=green:30` header). We sleep 2.5 s between
+requests (~24/min) to stay safely under it; exceeding it makes EPO return 403
+(not 503), so 403 is treated as a retryable throttle response, not a hard error.
 EPO OPS docs: https://www.epo.org/searching-for-patents/data/web-services/ops.html
 """
 
@@ -16,8 +19,12 @@ from typing import Any
 
 import requests
 
-RATE_SLEEP    = 0.5
+RATE_SLEEP    = 2.5  # ~24 req/min — under EPO's search=green:30 budget
 RETRY_DELAYS  = [5, 15, 30]
+# Throttle/transient statuses to back off and retry rather than raise. EPO
+# returns 403 when its dynamic per-minute throttle is tripped (verified via the
+# X-Throttling-Control header), so 403 is retryable here, not fatal.
+_RETRYABLE = (403, 429, 503)
 
 
 # ---------------------------------------------------------------------------
@@ -181,7 +188,7 @@ class EPOClient:
         self._session.headers["Authorization"] = f"Bearer {self._token}"
 
     def _get(self, url: str, **kwargs) -> requests.Response:
-        """GET with lazy token refresh, rate limiting, and 503 retry."""
+        """GET with lazy token refresh, rate limiting, and throttle (403/429/503) retry."""
         self._ensure_token()
         for attempt, delay in enumerate([0, *RETRY_DELAYS]):
             if delay:
@@ -191,11 +198,15 @@ class EPOClient:
                 self._expiry = 0  # force re-auth
                 self._ensure_token()
                 continue
-            if r.status_code != 503:
+            if r.status_code not in _RETRYABLE:
                 time.sleep(RATE_SLEEP)
                 return r
             if attempt < len(RETRY_DELAYS):
-                print(f"  EPO throttled, retrying in {RETRY_DELAYS[attempt]}s ...")
+                ctrl = r.headers.get("X-Throttling-Control", "")
+                detail = f" [{ctrl}]" if ctrl else ""
+                print(f"  EPO throttled ({r.status_code}), retrying in {RETRY_DELAYS[attempt]}s ...{detail}")
+        # Retries exhausted — return the last response so the caller's
+        # raise_for_status() surfaces a genuine, persistent error.
         time.sleep(RATE_SLEEP)
         return r
 
