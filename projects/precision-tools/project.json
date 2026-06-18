@@ -1,0 +1,6 @@
+{
+  "type": "match-review-essay",
+  "model": "openai/gpt-oss-120b:free",
+  "class_hints": ["G01B"],
+  "focus_serials": []
+}

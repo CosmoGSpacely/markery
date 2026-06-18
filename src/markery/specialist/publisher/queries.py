@@ -277,7 +277,7 @@ def get_content_gaps(project: str) -> list[dict]:
     # Priority 1 — missing match essays
     seen_slugs: set[str] = set()
     for m in matches:
-        slug = m.get("slug") or m["trademark"].lower().replace(" ", "-")
+        slug = m.get("slug") or (m["trademark"] or "figurative").lower().replace(" ", "-")
         if slug in seen_slugs:
             continue
         seen_slugs.add(slug)

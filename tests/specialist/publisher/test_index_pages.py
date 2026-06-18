@@ -84,3 +84,13 @@ def test_matches_index_skips_unconfirmed(tmp_path: Path):
     candidate = dict(MATCHES[0], essay_path=None, slug="x-y")
     html = render_matches_index("radio-pioneers", [candidate], ENTITIES, tmp_path).read_text()
     assert "No confirmed pairs yet." in html
+
+
+def test_matches_index_handles_figurative_mark(tmp_path: Path):
+    # A figurative mark has no word element: trademark is None. Rendering must not
+    # crash (regression: landing.py used to subscript the null mark text) and must
+    # fall back to a "(figurative)" label. See precision-tools (Phase 23 P2).
+    figurative = dict(MATCHES[0], trademark=None, slug="figurative-us2168861a")
+    html = render_matches_index("radio-pioneers", [figurative], ENTITIES, tmp_path).read_text()
+    assert 'href="figurative-us2168861a.html"' in html
+    assert "(figurative)" in html

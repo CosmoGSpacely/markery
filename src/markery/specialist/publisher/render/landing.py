@@ -31,11 +31,13 @@ def render_landing(
 
     match_cards = []
     for m in matches:
+        tm_label = m["trademark"] or "(figurative)"
+        tm_thumb = (m["trademark"] or "◆")[:3]
         src = _img_src("mark", str(m["trademark_serial"]), 0, images_dir) if m.get("has_image") else None
         if src:
-            thumb = f'<img class="match-card-thumb" loading="lazy" src="{src}" alt="{_esc(m["trademark"])}">'
+            thumb = f'<img class="match-card-thumb" loading="lazy" src="{src}" alt="{_esc(tm_label)}">'
         else:
-            thumb = f'<div class="match-card-thumb-placeholder">{_esc(m["trademark"][:3])}</div>'
+            thumb = f'<div class="match-card-thumb-placeholder">{_esc(tm_thumb)}</div>'
 
         essay_link = ""
         if m.get("essay_path"):
@@ -49,7 +51,7 @@ def render_landing(
             f'<div class="match-card">'
             f'{thumb}'
             f'<div class="match-card-body">'
-            f'<div class="match-card-title">{_esc(m["trademark"])} ↔ {_esc(m["patent_no"])}</div>'
+            f'<div class="match-card-title">{_esc(tm_label)} ↔ {_esc(m["patent_no"])}</div>'
             f'<div class="match-card-meta">{_esc(m.get("entity", ""))} · '
             f'Patent {grant} · Mark filed {filed} {gap_chip}</div>'
             f'<div class="match-card-note">{_esc(m.get("note", ""))}</div>'
@@ -199,7 +201,7 @@ def render_matches_index(
         seen.add(slug)
         src = _img_src("mark", str(m["trademark_serial"]), 1, images_dir) if m.get("has_image") else None
         if src:
-            thumb = f'<img class="match-card-thumb" loading="lazy" src="{src}" alt="{_esc(m["trademark"])}">'
+            thumb = f'<img class="match-card-thumb" loading="lazy" src="{src}" alt="{_esc(m.get("trademark") or "(figurative)")}">'
         else:
             label = (m.get("trademark") or "·")[:3]
             thumb = f'<div class="match-card-thumb-placeholder">{_esc(label)}</div>'

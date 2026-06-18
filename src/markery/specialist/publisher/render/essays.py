@@ -54,8 +54,8 @@ def render_match_essay(
         media_parts = []
         if mark_src:
             media_parts.append(
-                f'<div><img src="{mark_src}" alt="{_esc(match["trademark"])}">'
-                f'<div class="media-label">{_esc(match["trademark"])} · Serial {_esc(str(match["trademark_serial"]))}</div>'
+                f'<div><img src="{mark_src}" alt="{_esc(match["trademark"] or "(figurative)")}">'
+                f'<div class="media-label">{_esc(match["trademark"] or "(figurative)")} · Serial {_esc(str(match["trademark_serial"]))}</div>'
                 f'</div>'
             )
         if fig_src:
@@ -70,7 +70,7 @@ def render_match_essay(
         f'<div class="sources"><h2>Primary Sources</h2><dl>'
         f'<dt>Trademark</dt>'
         f'<dd>Serial No. {_esc(str(match["trademark_serial"]))} · '
-        f'{_esc(match["trademark"])} · Filed {match.get("filing_dt", "")}</dd>'
+        f'{_esc(match["trademark"] or "(figurative)")} · Filed {match.get("filing_dt", "")}</dd>'
         f'<dt>Patent</dt>'
         f'<dd>{_esc(match["patent_no"])} · '
         f'{_esc(match.get("patent_title", ""))} · Granted {match.get("grant_dt", "")}</dd>'
@@ -101,7 +101,7 @@ def render_match_essay(
     body = (
         f'{breadcrumb}'
         f'<div class="page-header">'
-        f'<h1>{_esc(match["trademark"])} ↔ {_esc(match["patent_no"])}</h1>'
+        f'<h1>{_esc(match["trademark"] or "(figurative)")} ↔ {_esc(match["patent_no"])}</h1>'
         f'<div class="subtitle">Confirmed patent-trademark pair · {_esc(project.replace("-", " ").title())}</div>'
         f'<div class="stat-chips">{stat_chips}</div>'
         f'</div>'

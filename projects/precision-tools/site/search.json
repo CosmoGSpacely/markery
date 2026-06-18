@@ -1,0 +1,50 @@
+[
+  {
+    "title": "Precision Tools",
+    "type": "landing",
+    "url": "index.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Entities",
+    "type": "entities_index",
+    "url": "entities/index.html",
+    "excerpt": ""
+  },
+  {
+    "title": "L.S. Starrett Company",
+    "type": "entity",
+    "url": "entities/ls-starrett-company.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Illinois Tool Works",
+    "type": "entity",
+    "url": "entities/illinois-tool-works.html",
+    "excerpt": ""
+  },
+  {
+    "title": "Confirmed Pairs",
+    "type": "matches_index",
+    "url": "matches/index.html",
+    "excerpt": ""
+  },
+  {
+    "title": "(figurative) ↔ US1419306A",
+    "type": "match_essay",
+    "url": "matches/figurative-us1419306a.html",
+    "excerpt": "Primary Sources - USPTO Trademark Serial No. 71185153 — [(figurative)](https://tsdr.uspto.gov/#caseNumber=71185153&caseType=SERIAL_NO&searchType=statusSearch) - Filed: 1923-08-29 · Registered: 0181429"
+  },
+  {
+    "title": "(figurative) ↔ US1438617A",
+    "type": "match_essay",
+    "url": "matches/figurative-us1438617a.html",
+    "excerpt": "Primary Sources - USPTO Trademark Serial No. 71185153 — [(figurative)](https://tsdr.uspto.gov/#caseNumber=71185153&caseType=SERIAL_NO&searchType=statusSearch) - Filed: 1923-08-29 · Registered: 0181429"
+  },
+  {
+    "title": "(figurative) ↔ US1384105A",
+    "type": "match_essay",
+    "url": "matches/figurative-us1384105a.html",
+    "excerpt": "Primary Sources - USPTO Trademark Serial No. 71185153 — [(figurative)](https://tsdr.uspto.gov/#caseNumber=71185153&caseType=SERIAL_NO&searchType=statusSearch) - Filed: 1923-08-29 · Registered: 0181429"
+  }
+]

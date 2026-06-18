@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>None ↔ US1384105A — Precision Tools — Markery</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  background: #f5f0e8;
+  color: #1a1a1a;
+  line-height: 1.65;
+  font-size: 16px;
+}
+
+a { color: #5a3e28; text-decoration: underline; }
+a:hover { color: #8b5e3c; }
+
+/* ── Site header ── */
+.site-header {
+  background: #2a1f14;
+  color: #f5f0e8;
+  padding: 18px 40px;
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+.site-header .site-title {
+  font-size: 1.1em;
+  font-weight: normal;
+  letter-spacing: .04em;
+  color: #e8dcc8;
+  text-decoration: none;
+}
+.site-header nav {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-width: 0;
+}
+.site-header nav a {
+  color: #b8a88a;
+  text-decoration: none;
+  font-size: .85em;
+  margin-right: 16px;
+}
+.site-header nav a:hover { color: #f5f0e8; }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  padding: 8px 40px;
+  background: #ede8de;
+  border-bottom: 1px solid #ddd;
+  font-size: .78em;
+}
+.breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; }
+.breadcrumb li { color: #888; }
+.breadcrumb li:not(:last-child)::after { content: "›"; margin: 0 8px; color: #b8a88a; }
+.breadcrumb a { color: #5a3e28; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+
+/* ── Page header ── */
+.page-header {
+  background: #3d2b1a;
+  color: #f5f0e8;
+  padding: 40px;
+}
+.page-header h1 {
+  font-size: 2em;
+  font-weight: normal;
+  margin-bottom: 6px;
+}
+.page-header .subtitle {
+  color: #b8a88a;
+  font-size: .95em;
+}
+.page-header .stat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.chip {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  color: #e8dcc8;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: .8em;
+  font-family: monospace;
+}
+
+/* ── Page body ── */
+.page-body { max-width: 960px; margin: 0 auto; padding: 48px 40px; }
+
+.narrative {
+  max-width: 700px;
+  margin-bottom: 40px;
+}
+.narrative h2 {
+  font-size: 1.2em;
+  font-weight: normal;
+  margin: 32px 0 10px;
+  color: #3d2b1a;
+}
+.narrative p { margin-bottom: 1em; }
+.narrative table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .88em;
+  margin: 16px 0;
+}
+.narrative th, .narrative td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid #ddd;
+}
+.narrative th { background: #ede8de; font-weight: normal; color: #555; }
+.narrative code {
+  font-family: monospace;
+  font-size: .88em;
+  background: #ede8de;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.narrative pre {
+  background: #ede8de;
+  padding: 14px;
+  overflow-x: auto;
+  margin: 12px 0;
+  font-size: .83em;
+}
+
+/* ── Timeline ── */
+.timeline-section { margin-bottom: 40px; }
+.timeline-section h2 {
+  font-size: 1em;
+  font-weight: normal;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+.timeline-svg { width: 100%; overflow: visible; }
+
+/* ── Card grid ── */
+.section-title {
+  font-size: 1em;
+  font-weight: normal;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 16px;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.card--focus {
+  border: 2px solid #5a3e28;
+  box-shadow: 0 2px 8px rgba(90,62,40,.18);
+}
+.focus-badge {
+  display: inline-block;
+  background: #5a3e28;
+  color: #f5f0e8;
+  font-size: .65em;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-top: 2px;
+  font-family: monospace;
+}
+.research-question {
+  background: #ede8de;
+  border-left: 4px solid #8b5e3c;
+  padding: 16px 20px;
+  margin-bottom: 32px;
+  max-width: 700px;
+}
+.research-question .rq-label {
+  display: block;
+  font-size: .72em;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8b5e3c;
+  margin-bottom: 8px;
+}
+.research-question p { margin-bottom: .7em; }
+.research-question p:last-child { margin-bottom: 0; }
+.card-image {
+  width: 100%;
+  height: 140px;
+  object-fit: contain;
+  background: #faf8f4;
+  border-bottom: 1px solid #eee;
+  display: block;
+}
+.card-image-placeholder {
+  width: 100%;
+  height: 140px;
+  background: #ede8de;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: .75em;
+  font-family: monospace;
+  border-bottom: 1px solid #eee;
+}
+.card-body { padding: 10px 12px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.card-name { font-weight: bold; font-size: .88em; line-height: 1.3; }
+.card-meta { font-size: .75em; color: #666; }
+.card-goods { font-size: .73em; color: #444; margin-top: 4px; line-height: 1.4;
+  border-top: 1px solid #eee; padding-top: 4px; }
+.card-footer { font-size: .7em; color: #999; font-family: monospace; margin-top: auto; padding-top: 4px; }
+.entity-badge {
+  display: inline-block;
+  background: #e8dcc8;
+  color: #5a3e28;
+  font-size: .68em;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-top: 2px;
+  font-family: monospace;
+}
+.match-link {
+  display: inline-block;
+  background: #5a3e28;
+  color: #f5f0e8;
+  font-size: .68em;
+  padding: 2px 8px;
+  border-radius: 3px;
+  text-decoration: none;
+  margin-top: 4px;
+}
+.match-link:hover { background: #8b5e3c; color: #f5f0e8; }
+
+/* ── Entity grid ── */
+.entity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.entity-card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  padding: 20px;
+}
+.entity-card h3 { font-size: 1.1em; font-weight: normal; margin-bottom: 8px; }
+.entity-card .entity-meta { font-size: .8em; color: #666; margin-bottom: 12px; }
+.entity-card .entity-stats {
+  display: flex;
+  gap: 16px;
+  font-size: .78em;
+  color: #444;
+  margin-bottom: 12px;
+}
+.entity-card .stat-val { font-weight: bold; color: #2a1f14; }
+.entity-card .links a { font-size: .82em; margin-right: 12px; }
+
+/* ── Match cards (landing page) ── */
+.match-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.match-card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+}
+.match-card-thumb {
+  width: 80px;
+  min-width: 80px;
+  height: 80px;
+  object-fit: contain;
+  background: #faf8f4;
+  border: 1px solid #eee;
+  border-radius: 3px;
+}
+.match-card-thumb-placeholder {
+  width: 80px;
+  min-width: 80px;
+  height: 80px;
+  background: #ede8de;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #bbb;
+  font-size: .7em;
+}
+.match-card-body { flex: 1; }
+.match-card-title { font-weight: bold; font-size: .95em; margin-bottom: 4px; }
+.match-card-meta { font-size: .78em; color: #666; margin-bottom: 8px; }
+.match-card-note { font-size: .8em; color: #444; line-height: 1.4; margin-bottom: 8px; }
+
+/* ── Essay page ── */
+.essay { max-width: 700px; }
+.essay h2 { font-size: 1.2em; font-weight: normal; margin: 36px 0 10px; color: #3d2b1a; }
+.essay p { margin-bottom: 1em; }
+.essay table { width: 100%; border-collapse: collapse; font-size: .88em; margin: 16px 0; }
+.essay th, .essay td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ddd; }
+.essay th { background: #ede8de; font-weight: normal; color: #555; }
+.essay pre { background: #ede8de; padding: 14px; overflow-x: auto; margin: 12px 0; font-size: .83em; }
+.essay code { font-family: monospace; font-size: .88em; background: #ede8de; padding: 1px 4px; border-radius: 2px; }
+.essay-media {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 24px 0;
+}
+.essay-media img {
+  width: 100%;
+  object-fit: contain;
+  border: 1px solid #ddd;
+  background: #faf8f4;
+}
+.essay-media .media-label { font-size: .75em; color: #888; margin-top: 4px; text-align: center; }
+.sources {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #ddd;
+  font-size: .82em;
+  color: #555;
+}
+.sources h2 { font-size: .95em; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+.sources dt { font-weight: bold; margin-top: 8px; }
+.sources dd { margin-left: 16px; }
+
+/* ── Timeline annotation page ── */
+.timeline-entries { max-width: 700px; margin-top: 40px; }
+.timeline-entries h3 {
+  font-size: 1.05em;
+  font-weight: bold;
+  color: #3d2b1a;
+  margin: 32px 0 6px;
+  border-left: 3px solid #8b5e3c;
+  padding-left: 10px;
+}
+.timeline-entries p { margin-bottom: .8em; }
+
+/* ── Thematic essay ── */
+.theme-essay { max-width: 700px; }
+.theme-essay h2 { font-size: 1.2em; font-weight: normal; margin: 32px 0 10px; color: #3d2b1a; }
+.theme-essay h3 { font-size: 1.05em; font-weight: normal; margin: 24px 0 8px; color: #5a3e28; }
+.theme-essay p { margin-bottom: 1em; }
+.theme-essay table { width: 100%; border-collapse: collapse; font-size: .88em; margin: 16px 0; }
+.theme-essay th, .theme-essay td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #ddd; }
+.theme-essay th { background: #ede8de; font-weight: normal; color: #555; }
+
+/* ── Search page ── */
+.search-form { display: flex; gap: 8px; margin-bottom: 32px; }
+.search-form input[type=search] {
+  flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 3px;
+  font-size: 1em; font-family: Georgia, serif; background: #fff;
+}
+.search-form button {
+  padding: 8px 18px; background: #5a3e28; color: #f5f0e8;
+  border: none; border-radius: 3px; cursor: pointer; font-size: .9em;
+}
+.search-results { list-style: none; }
+.search-results li { margin-bottom: 20px; }
+.search-results .result-title { font-size: 1.05em; font-weight: bold; }
+.search-results .result-type { font-size: .75em; color: #888; font-family: monospace; margin-left: 6px; }
+.search-results .result-excerpt { font-size: .88em; color: #444; margin-top: 4px; }
+
+/* ── Search input in header ── */
+.site-search { margin-left: auto; }
+.site-search input[type=search] {
+  padding: 3px 8px; border: 1px solid #555; border-radius: 3px;
+  background: #1a1208; color: #e8dcc8; font-size: .8em; width: 140px;
+}
+.site-search input[type=search]::placeholder { color: #888; }
+
+/* ── Patent figure (embedded via [[figure:patent_no]]) ── */
+.patent-figure { margin: 24px auto; text-align: center; max-width: 600px; border: 1px solid #d4c9b0; border-radius: 4px; padding: 8px; }
+.patent-figure img { max-width: 100%; background: #faf8f4; display: block; margin: 0 auto; }
+.patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+
+/* ── Blockquotes ── */
+blockquote { border-left: 3px solid #b8a88a; margin: 16px 0; padding: 8px 16px; color: #555; font-style: italic; }
+blockquote p { margin: 0; }
+
+/* ── Small chip (inline stat tags) ── */
+.chip-sm { font-size: .75em; background: #e8dcc8; border-radius: 3px; padding: 1px 6px; color: #5a3e28; white-space: nowrap; }
+
+/* ── Site footer ── */
+.site-footer {
+  margin-top: 48px; padding: 20px 24px; border-top: 1px solid #ddd;
+  font-size: .78em; color: #888; text-align: center;
+}
+.site-footer a { color: #8b5e3c; text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/index.html">Entities</a><a href="../matches/index.html">Matches</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="../index.html">Home</a></li><li><a href="index.html">Matches</a></li><li aria-current="page">(figurative) ↔ US1384105A</li></ol></nav><div class="page-header"><h1>(figurative) ↔ US1384105A</h1><div class="subtitle">Confirmed patent-trademark pair · Precision Tools</div><div class="stat-chips"><span class="chip"><a href="../entities/ls-starrett-company.html">Filed by: L.S. Starrett Company</a></span><span class="chip">Patent 1921-07-12</span><span class="chip">Mark filed 1923-08-29</span></div></div><div class="page-body"><div class="essay"><h2>Primary Sources</h2>
+<ul>
+<li>USPTO Trademark Serial No. 71185153 — <a href="https://tsdr.uspto.gov/#caseNumber=71185153&caseType=SERIAL_NO&searchType=statusSearch" target="_blank" rel="noopener">(figurative)</a></li>
+</ul>
+<p>
+  - Filed: 1923-08-29  ·  Registered: 0181429 (1924-03-18)  ·  Owner: L.S. STARRETT COMPANY, THE 
+  - Goods: BRAD SETS, CENTER PUNCHES, CLAMPS, COUNTERSINKS, CUT NIPPERS, DRILL BLOCKS, HACK SAWS AND FRAMES, NAIL SETS, PIN VISES, ATTACHMENTS FOR WRENCH JAWS, PLIERS, SAWS, SCRAPERS, SCREW DRIVERS, SCRIBERS, TAP WRENCHES, VISES, AND WRENCHES 
+</p>
+<ul>
+<li>US Patent US1384105A — <a href="https://patents.google.com/patent/1384105" target="_blank" rel="noopener">Fine-Adjustment Bevel-Protractor And The Like</a></li>
+</ul>
+<p>
+  - Applied: 1920-03-06  ·  Granted: 1921-07-12  ·  Assignee: STARRETT L S CO 
+</p>
+<h2>The Invention</h2>
+<p>
+US1384105A covers a fine-adjustment bevel-protractor — an angle-measuring and layout instrument with a movable limb that can be set to a precise angle and locked, &quot;and the like&quot; extending the claim to related adjustable protractor forms. As an angular measuring device, it belongs to the precision-instrument family and is classified in CPC G01B (measuring of linear and angular dimensions). Like the surface gauge and steel rule paired with the same mark, it is a measuring instrument rather than one of the cutting or holding hand tools the trademark enumerates. 
+</p>
+<h2>The Mark</h2>
+<p>
+Serial 71185153 is a *figurative* mark — a design device with no word element — registered by The L.S. Starrett Company in 1923 for a broad hand-tool line: brad sets, center punches, clamps, countersinks, cut nippers, drill blocks, hack saws and frames, nail sets, pin vises, pliers, saws, scrapers, screw drivers, scribers, tap wrenches, vises, and wrenches. The registered goods are cutting, holding, and driving tools and do not include protractors or other measuring instruments. The mark's USPTO design codes (170701, 170708) fall in the &quot;measuring and controlling instruments&quot; category, so the device's imagery alludes to measurement while its goods do not. 
+</p>
+<h2>The Connection</h2>
+<p>
+The bevel-protractor patent (granted July 1921) and the figurative mark (filed August 1923) share a single owner, The L.S. Starrett Company, and a common early-1920s window — a gap of about two years, the widest of the three Starrett pairs here. The correspondence is <strong>owner-and-era</strong>, not a documented embodiment: the protractor is a measuring instrument and is *not* among the mark's enumerated hand tools, and nothing in these records ties this patent to this mark commercially. The pair belongs to the same broad story as the others — Starrett patenting precision measuring instruments while protecting its general tool brand in the same period. 
+</p>
+<p>
+<strong>Editorial note.</strong> The free-model draft asserted that the bevel-protractor &quot;provides the fundamental measuring principle that underlies many of the listed tools, particularly those used for layout and positioning such as center punches and drill blocks,&quot; and again invented &quot;Class 6&quot; and &quot;Class 8&quot; attributions absent from the record. Both were removed in human review: the protractor is not among the mark's goods, the listed hand tools do not depend on it, and the class numbers are unsupported. The validator certifies the facts; the interpretive claims required the human gate. 
+</p>
+<h2>Historical Context</h2>
+<p>
+By the early 1920s the L.S. Starrett Company (founded 1880) was an established American precision-instrument maker. The bevel-protractor patent and the catalog-wide trademark both fall in the interwar standardization of machine-shop work, when toolmakers paired patent protection for mechanical refinements with broad trademark registration to defend their product lines. 
+</p>
+<h2>Significance</h2>
+<p>
+With the largest date gap of the three pairs, this case is the clearest reminder that co-ownership plus rough contemporaneity is not the same as a product-patent link. It earns its place in the project as an owner-and-era correspondence within Starrett's precision-tool catalog — and as a demonstration that the honest reading depends on the goods record, not on the suggestive alignment of dates. 
+</p><div class="sources"><h2>Primary Sources</h2><dl><dt>Trademark</dt><dd>Serial No. 71185153 · (figurative) · Filed 1923-08-29</dd><dt>Patent</dt><dd>US1384105A · Fine-Adjustment Bevel-Protractor And The Like · Granted 1921-07-12</dd></dl></div></div></div>
+<footer class="site-footer">Built with <a href="https://github.com/CosmoGSpacely/markery">Markery</a></footer>
+</body>
+</html>

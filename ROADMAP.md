@@ -35,13 +35,15 @@ Both projects are deliberately **tightly subclass-scoped** to keep the EPO paten
 7. `markery site build photographic-equipment`; `markery site check photographic-equipment` exits 0.
 8. `markery tokens report` over the project's token log — confirm $0 for all LLM steps; record token counts and any free-tier rate-limit interruptions in `projects/photographic-equipment/RESEARCH.md`.
 
-### P2 — D026: Precision tools project (Snap-on / Starrett / Brown & Sharpe, G01B, free model)
+### P2 — D026: Precision tools project (Snap-on / Starrett / Brown & Sharpe, G01B, free model) — CLOSED
 
 Same end-to-end sequence as P1, with:
 - Entities: Snap-on Tools Company, L.S. Starrett Company, Brown & Sharpe Manufacturing, Illinois Tool Works.
 - Marks: SNAP-ON, STARRETT, and the others surfaced via `search-tsdr`.
 - **CPC: `G01B` only** (measuring instruments — Starrett/Brown & Sharpe micrometers and gauges), 1910–1940. (B25B / B23B remain a future pass per D026.)
 - Model: `openai/gpt-oss-120b:free` for all LLM steps; site builds clean; `markery tokens report` shows $0.
+
+Results 2026-06-17: Built `precision-tools` end-to-end on `openai/gpt-oss-120b:free` — **3 confirmed pairs (L.S. Starrett), all essays validate 8/8, site clean (11 pages / 106 links / 0 broken), $0.0000** over 20 logged token records. Deviations from the plan: the marks were already in the local `trademarks.duckdb`, so `search-tsdr` (P3) was not needed — `suggest-variants` resolved them (14/14). The G01B 1910–1940 fetch loaded 3,766 patents in one clean pass (the P1 throttle fix held). Of the four entities, only Starrett and ITW had both a mark and a patent locally; Brown & Sharpe had patents but no local mark, Snap-on had marks but no G01B patents. The project anchored on Starrett (never acquired). **Two new findings:** (1) a *period-ownership anachronism* class the validator cannot catch — the free model confirmed MAGNAFLUX/DYKEM/DE VILBISS on ITW patents because the DB owner string reads `ILLINOIS TOOL WORKS INC.` today, but ITW acquired those brands decades later (Magnaflux 1987); rejected by the human gate on period-ownership grounds; (2) the three Starrett pairs are *owner-and-era*, not goods matches — the figurative mark's goods are hand tools, not the measuring instruments the patents cover — and every free-model "Connection" overclaimed an embodiment link, corrected by hand with editorial notes (as in P1). Also fixed a publisher bug this project surfaced: figurative marks (`trademark = NULL`) crashed `site build` in `landing.py`/`essays.py`/`queries.py`; now fall back to "(figurative)". Test count unchanged (publisher suite 145 green). D026 closed.
 
 ### P3 — D028: `markery trademark search-tsdr <mark-text>`
 
@@ -61,7 +63,7 @@ Same end-to-end sequence as P1, with:
 
 P1 PASSED when: `photographic-equipment` has ≥1 confirmed pair whose free-model essay validates 8/8; `markery site build` exits 0 and `markery site check` passes; every LLM step ran on `openai/gpt-oss-120b:free` and `markery tokens report` shows $0 for them; D025 closed.
 
-P2 PASSED when: the same holds for `precision-tools` (CPC G01B); D026 closed.
+P2 PASSED when: the same holds for `precision-tools` (CPC G01B); D026 closed. — PASSED
 
 P3 PASSED when: `markery trademark search-tsdr <mark-text>` returns serial/owner/filing for a known mark and exits non-zero with an actionable message when unavailable; MVO contract + tests present; D028 closed.
 
