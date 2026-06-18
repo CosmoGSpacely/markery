@@ -51,11 +51,13 @@ Results 2026-06-17: Built `precision-tools` end-to-end on `openai/gpt-oss-120b:f
 2. Register under `markery trademark search-tsdr`; MVO contract in `tests/benchmarks/mvo.md`; tests (mocked HTTP, like `tsdr_client`).
 3. This is the enabler for P1/P2 step 4 — it removes the manual external-TSDR-lookup bypass. If it lands after P1/P2 begin, the documented manual workaround (external search + `markery trademark fetch <serial>`) covers the gap.
 
-### P4 — D057: markery-langgraph isolated environment
+### P4 — D057: markery-langgraph isolated environment — CLOSED
 
 1. `python3.12-venv`/`ensurepip` is unavailable and `sudo` was the blocker; establish isolation via a pip-installable manager that bundles its own pip — `virtualenv` (or `uv` if adopted) — creating `markery-langgraph/.venv` independent of the markery venv.
 2. Reinstall `langgraph-markery` (`pip install -e .`) into the isolated env; confirm the langgraph suite (30 tests) passes from it; `config.check_contract` resolves `MARKERY_ROOT` via the D056 resolver.
 3. Update `markery-langgraph/README.md` / `CLAUDE.md` setup to document the isolated-env step. Close D057.
+
+Results 2026-06-18: The pre-existing `markery-langgraph/.venv` was the broken stub from the D057 blocker — `python -m venv` had created it but `ensurepip` failed, so it had a python symlink but **no pip**. Bootstrapped `virtualenv` 21.5.1 (bundles its own pip) into the markery venv, removed the stub, and recreated `.venv` with a working pip 26.1.2. Installed `langgraph-markery` editable with dev extras (`pip install -e '.[dev]'` → langgraph, anthropic 0.109.2, duckdb 1.5.4, pytest 9.1.0). **All 30 tests pass from the isolated env.** Verified true isolation: `import markery` fails from `.venv` (the repo only shells out to the CLI, never imports it), `config.resolve_markery_root()` finds the sibling `/home/wccogswell/markery` via the D056 resolver, and `check_contract` confirms contract 1.1. Updated `markery-langgraph/README.md` and `CLAUDE.md` to document the virtualenv setup and fixed a stale contract-version reference (1.0 → 1.1) in the README. D057 closed.
 
 ---
 
@@ -67,7 +69,7 @@ P2 PASSED when: the same holds for `precision-tools` (CPC G01B); D026 closed. �
 
 P3 PASSED when: `markery trademark search-tsdr <mark-text>` returns serial/owner/filing for a known mark and exits non-zero with an actionable message when unavailable; MVO contract + tests present; D028 closed.
 
-P4 PASSED when: the markery-langgraph suite runs green from an isolated environment; setup docs updated; D057 closed.
+P4 PASSED when: the markery-langgraph suite runs green from an isolated environment; setup docs updated; D057 closed. — PASSED
 
 Phase PASSED when P1–P4 pass and `DEFERRED.md` is updated. After this phase, **D007 (`markery patent bulk-import`, PatentsView) is the only remaining open deferral.**
 
