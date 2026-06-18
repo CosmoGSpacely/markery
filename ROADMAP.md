@@ -9,68 +9,64 @@ Phases 14–15 closed 2026-06-01/2026-05-24. Archived to `archive/ROADMAP-2026-0
 Phases 16–18 closed 2026-06-06. Archived to `archive/ROADMAP-2026-06-06.md`.
 Phase 19 closed 2026-06-07. Archived to `archive/ROADMAP-2026-06-07.md`.
 Phases 20–22 closed 2026-06-14. Archived to `archive/ROADMAP-2026-06-14.md`.
+Phase 23 closed 2026-06-18 (P3/D028 deferred to `DEFERRED.md`). Archived to `archive/ROADMAP-2026-06-18.md`.
 
 ---
 
-## Phase 23 — Free-model live project builds, tooling, and langgraph isolation
+## Phase 24 — Publishing pipeline and content cadence
 
-**Trigger:** Phase 22 complete. The OpenRouter free model `openai/gpt-oss-120b:free` is wired (`common/providers.py` model-id routing) and proven on the four-provider cross-provider benchmark — 6/6 on the deterministic MVO validator, judgments matching ground truth, at $0 (archived `archive/MODEL-REVIEW-2026-06-14.md`).
+**Trigger:** Phase 23 complete (P1/P2/P4 passed; P3/D028 deferred). Two free-model research sites now exist — `photographic-equipment` (13 pages) and `precision-tools` (11 pages) — plus the earlier project sites, but they are built **only locally**: there is no deployment path, the site builder's output has known rough edges, and image enhancement / image review run ad hoc. The tool can build, enhance, and draft Wikipedia articles, but nothing is published or maintained on a cadence.
 
-**Scope:** Take the model-agnosticism result from fixtures to real research. Build **two new research projects end-to-end using the free model alone for every LLM step** (candidate inference, essay drafting), proving the free model carries genuine project work — not just benchmark cards. Add the TSDR text-search tooling both project setups need to resolve marks to serials (D028). Properly isolate the markery-langgraph environment (D057).
+**Scope:** Move Markery from "builds sites locally" to "publishes and maintains them." Five workstreams: improve the site builder's output, stand up real web hosting for the project sites, expand Wikipedia contributions from confirmed pairs, formalize the monthly image-review cadence, and improve image-enhancement quality. Each workstream is independent; sequence within the phase can be reordered as priorities shift.
 
-Both projects are deliberately **tightly subclass-scoped** to keep the EPO patent corpus small and the build tractable: photographic equipment to **G03B**, precision tools to **G01B**. Only LLM steps run on the free model; patent/trademark **data fetch is EPO/USPTO-API-bound regardless of model** and paced by quota. The free model is rate-limited upstream (Venice) — runs retry 429/5xx with backoff; if a model is throttled mid-build, pause and resume rather than switching providers (switching would defeat the "free model alone" test).
-
-**Goal state:** `photographic-equipment` and `precision-tools` each have ≥1 confirmed pair with a free-model essay that validates 8/8, a site that builds clean and passes `markery site check`, and a `markery tokens report` showing $0 for all LLM work; `markery trademark search-tsdr <mark-text>` resolves a mark name to serial/owner/filing without a manual external lookup; markery-langgraph runs its suite from its own isolated environment. After this phase, **D007 is the sole remaining deferred item.**
+**Goal state:** The site builder produces a polished, accessible, responsive site; project sites are published to a real host at stable URLs via a repeatable `markery`-driven deploy; additional Wikipedia articles are drafted and submitted from confirmed pairs; a documented monthly image-review process runs against project-scope marks; and image enhancement produces visibly better mark/figure images than the current pipeline.
 
 ---
 
-### P1 — D025: Photographic equipment project (Kodak / Ansco / Graflex, G03B, free model)
+### P1 — Site builder improvements
 
-1. `markery project init photographic-equipment`; set `project.json` `model` to `openai/gpt-oss-120b:free` and `class_hints` to `["G03B"]`.
-2. Entity registry — `entities.csv` (Eastman Kodak Company, Ansco / General Aniline & Film, Graflex Inc., Blair Camera Company) and `variants.csv` (patent-assignee and trademark-owner strings); `markery matchmaker build --data-dir projects/photographic-equipment`; `markery matchmaker validate-variants` clean.
-3. `markery patent coverage-check --classes G03B --year-start 1890 --year-end 1940` before any fetch; then `markery patent build --classes G03B --year-start 1890 --year-end 1940` (quota-paced over multiple days as needed).
-4. Resolve and fetch the target marks (KODAK, BROWNIE, KODACHROME, AUTOGRAPHIC, SPEEDEX, READYSET, GRAFLEX, SPEED GRAPHIC) via `markery trademark search-tsdr` (P3) → `markery trademark fetch <serial>`; set `focus_serials`.
-5. `markery match photographic-equipment` to generate candidates; review with the free model — `markery historian card --infer` / `digest --infer` (model from `project.json`); confirm pairs via `markery matchmaker confirm`.
-6. Draft essays with the free model (`markery historian draft`); each must validate **8/8** (`markery historian validate`). Human-finalize interpretive honesty where the validator can't (per the model-agnosticism boundary).
-7. `markery site build photographic-equipment`; `markery site check photographic-equipment` exits 0.
-8. `markery tokens report` over the project's token log — confirm $0 for all LLM steps; record token counts and any free-tier rate-limit interruptions in `projects/photographic-equipment/RESEARCH.md`.
+1. Audit the current publisher output (`src/markery/specialist/publisher/render/`) across the existing project sites for layout, navigation, accessibility, and responsiveness gaps; record findings in a `SITE-REVIEW.md` (REVIEW-file convention).
+2. Improve templates and CSS: responsive layout (mobile/tablet), accessibility (semantic landmarks, alt text, contrast, keyboard nav), and metadata/SEO (Open Graph, canonical URLs, sitemap). Keep `markery site check` green throughout.
+3. Add regression tests for any new render behavior; archive `SITE-REVIEW.md` on completion.
 
-### P2 — D026: Precision tools project (Snap-on / Starrett / Brown & Sharpe, G01B, free model) — CLOSED
+### P2 — Web hosting and deployment
 
-Same end-to-end sequence as P1, with:
-- Entities: Snap-on Tools Company, L.S. Starrett Company, Brown & Sharpe Manufacturing, Illinois Tool Works.
-- Marks: SNAP-ON, STARRETT, and the others surfaced via `search-tsdr`.
-- **CPC: `G01B` only** (measuring instruments — Starrett/Brown & Sharpe micrometers and gauges), 1910–1940. (B25B / B23B remain a future pass per D026.)
-- Model: `openai/gpt-oss-120b:free` for all LLM steps; site builds clean; `markery tokens report` shows $0.
+1. Select a static host (candidates: **GitHub Pages** — repos already live under `CosmoGSpacely` on GitHub; Cloudflare Pages; Netlify) and decide the URL scheme (per-project subpath vs. subdomain). Record the decision.
+2. Add a repeatable deploy path — a `markery site deploy <project>` command and/or a CI publish workflow — that builds and pushes the site to the host. Handle base-URL/path rewriting so internal links resolve when served under the host's path.
+3. Publish at least the two Phase 23 sites at stable public URLs; verify `site check` against the deployed output (no broken links, correct base URL).
 
-Results 2026-06-17: Built `precision-tools` end-to-end on `openai/gpt-oss-120b:free` — **3 confirmed pairs (L.S. Starrett), all essays validate 8/8, site clean (11 pages / 106 links / 0 broken), $0.0000** over 20 logged token records. Deviations from the plan: the marks were already in the local `trademarks.duckdb`, so `search-tsdr` (P3) was not needed — `suggest-variants` resolved them (14/14). The G01B 1910–1940 fetch loaded 3,766 patents in one clean pass (the P1 throttle fix held). Of the four entities, only Starrett and ITW had both a mark and a patent locally; Brown & Sharpe had patents but no local mark, Snap-on had marks but no G01B patents. The project anchored on Starrett (never acquired). **Two new findings:** (1) a *period-ownership anachronism* class the validator cannot catch — the free model confirmed MAGNAFLUX/DYKEM/DE VILBISS on ITW patents because the DB owner string reads `ILLINOIS TOOL WORKS INC.` today, but ITW acquired those brands decades later (Magnaflux 1987); rejected by the human gate on period-ownership grounds; (2) the three Starrett pairs are *owner-and-era*, not goods matches — the figurative mark's goods are hand tools, not the measuring instruments the patents cover — and every free-model "Connection" overclaimed an embodiment link, corrected by hand with editorial notes (as in P1). Also fixed a publisher bug this project surfaced: figurative marks (`trademark = NULL`) crashed `site build` in `landing.py`/`essays.py`/`queries.py`; now fall back to "(figurative)". Test count unchanged (publisher suite 145 green). D026 closed.
+### P3 — Wikipedia editing expansion
 
-### P3 — D028: `markery trademark search-tsdr <mark-text>`
+1. Identify confirmed pairs across existing projects suitable for Wikipedia contribution (notability, sourcing); prioritize a working list.
+2. Draft and submit articles via `markery wikipedia draft` / `markery wikipedia submit`, honoring Wikipedia sourcing/neutrality norms and the same fact-vs-interpretation discipline used in essays (no unsupported product-patent embodiment claims).
+3. Track submissions and outcomes (accepted / declined / pending) in each project's research record.
 
-1. Implement a text-search path that takes a mark name (e.g. "KODACHROME", "STARRETT") and returns matching serial numbers, owner names, and filing dates — using the USPTO trademark API (`developer.uspto.gov/trademark-api`) since TSDR's primary endpoint is serial-keyed. Falls back gracefully (clear message) when the API is unavailable.
-2. Register under `markery trademark search-tsdr`; MVO contract in `tests/benchmarks/mvo.md`; tests (mocked HTTP, like `tsdr_client`).
-3. This is the enabler for P1/P2 step 4 — it removes the manual external-TSDR-lookup bypass. If it lands after P1/P2 begin, the documented manual workaround (external search + `markery trademark fetch <serial>`) covers the gap.
+### P4 — Monthly image-review cadence
 
-### P4 — D057: markery-langgraph isolated environment — CLOSED
+1. Define a repeatable monthly image-review process over project-scope marks — what to check (live/dead and public-domain status via `markery trademark mark-status`; image presence/quality via `markery enhance gallery`), and how results are recorded.
+2. Add or extend tooling to make the review one command where possible (e.g., a gallery/status report that flags marks needing a fresh image pull or re-enrichment).
+3. Run the first cycle against the current projects and document the cadence (CLAUDE.md or a dedicated doc) so it recurs.
 
-1. `python3.12-venv`/`ensurepip` is unavailable and `sudo` was the blocker; establish isolation via a pip-installable manager that bundles its own pip — `virtualenv` (or `uv` if adopted) — creating `markery-langgraph/.venv` independent of the markery venv.
-2. Reinstall `langgraph-markery` (`pip install -e .`) into the isolated env; confirm the langgraph suite (30 tests) passes from it; `config.check_contract` resolves `MARKERY_ROOT` via the D056 resolver.
-3. Update `markery-langgraph/README.md` / `CLAUDE.md` setup to document the isolated-env step. Close D057.
+### P5 — Better image enhancement
 
-Results 2026-06-18: The pre-existing `markery-langgraph/.venv` was the broken stub from the D057 blocker — `python -m venv` had created it but `ensurepip` failed, so it had a python symlink but **no pip**. Bootstrapped `virtualenv` 21.5.1 (bundles its own pip) into the markery venv, removed the stub, and recreated `.venv` with a working pip 26.1.2. Installed `langgraph-markery` editable with dev extras (`pip install -e '.[dev]'` → langgraph, anthropic 0.109.2, duckdb 1.5.4, pytest 9.1.0). **All 30 tests pass from the isolated env.** Verified true isolation: `import markery` fails from `.venv` (the repo only shells out to the CLI, never imports it), `config.resolve_markery_root()` finds the sibling `/home/wccogswell/markery` via the D056 resolver, and `check_contract` confirms contract 1.1. Updated `markery-langgraph/README.md` and `CLAUDE.md` to document the virtualenv setup and fixed a stale contract-version reference (1.0 → 1.1) in the README. D057 closed.
+1. Review the current enhancement pipeline (`src/markery/specialist/.../enhance`) and baseline its output quality on a sample of mark images and patent figures.
+2. Improve enhancement (e.g., upscaling, denoise, deskew/contrast for scanned figures); keep the `markery enhance` (`enhance` | `batch` | `gallery`) interface stable.
+3. Re-enhance a sample, compare against baseline, and confirm the site picks up the improved images via `markery enhance gallery` / `site build`.
 
 ---
 
 ### Phase Gate
 
-P1 PASSED when: `photographic-equipment` has ≥1 confirmed pair whose free-model essay validates 8/8; `markery site build` exits 0 and `markery site check` passes; every LLM step ran on `openai/gpt-oss-120b:free` and `markery tokens report` shows $0 for them; D025 closed.
+P1 PASSED when: the publisher renders a responsive, accessible site with SEO/OG metadata; `markery site check` stays green; render regressions covered by tests; `SITE-REVIEW.md` archived.
 
-P2 PASSED when: the same holds for `precision-tools` (CPC G01B); D026 closed. — PASSED
+P2 PASSED when: a repeatable `markery`-driven deploy publishes a project site to the chosen host at a stable public URL, with internal links resolving against the deployed base URL.
 
-P3 PASSED when: `markery trademark search-tsdr <mark-text>` returns serial/owner/filing for a known mark and exits non-zero with an actionable message when unavailable; MVO contract + tests present; D028 closed.
+P3 PASSED when: at least one additional Wikipedia article is drafted and submitted from a confirmed pair via the `markery wikipedia` flow, with submission status recorded.
 
-P4 PASSED when: the markery-langgraph suite runs green from an isolated environment; setup docs updated; D057 closed. — PASSED
+P4 PASSED when: a documented monthly image-review process exists, is runnable (ideally one command), and has completed its first cycle against current projects.
 
-Phase PASSED when P1–P4 pass and `DEFERRED.md` is updated. After this phase, **D007 (`markery patent bulk-import`, PatentsView) is the only remaining open deferral.**
+P5 PASSED when: the enhancement pipeline produces measurably/visibly better images than the current baseline on a documented sample, with the `markery enhance` interface unchanged and the improved images surfaced in a built site.
+
+Phase PASSED when P1–P5 pass. Open deferrals independent of this phase: D007 (`markery patent bulk-import`, PatentsView) and D028 (`search-tsdr` live ODP endpoint, gated on a USPTO ODP/ID.me key).
 
 ---
