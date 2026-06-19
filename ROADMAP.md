@@ -36,11 +36,13 @@ Phase 23 closed 2026-06-18 (P3/D028 deferred to `DEFERRED.md`). Archived to `arc
 3. Surface acquired media to the **historian** so essays can reference/embed it, and to the **publisher** so the site renders it with a source caption and attribution. Apply the same fact-discipline as essays — captions state what the media is and where it came from, with no invented provenance.
 4. Run enrichment on at least one existing project; confirm media is correctly attributed, the licensing is sound, and `markery site build` / `site check` stay clean with embedded media.
 
-### P3 — Wikipedia editing expansion
+### P3 — Wikipedia editing expansion — IN PROGRESS
 
 1. Identify confirmed pairs across existing projects suitable for Wikipedia contribution (notability, sourcing); prioritize a working list.
 2. Draft and submit articles via `markery wikipedia draft` / `markery wikipedia submit`, honoring Wikipedia sourcing/neutrality norms and the same fact-vs-interpretation discipline used in essays (no unsupported product-patent embodiment claims).
 3. Track submissions and outcomes (accepted / declined / pending) in each project's research record.
+
+Progress 2026-06-19: Started a **one-edit-per-day** cadence (kept small so as not to disrupt the rest of the phase). Built a prioritized cross-project working list, `WIKIPEDIA-QUEUE.md`, surveying the 22 confirmed pairs across five projects against the proven "augment an existing notable article with a primary-source citation" pattern (the Soundex precedent). Dropped non-viable targets (Shannon/Yawman & Erbe — no Wikipedia article; Kardex — essay Connection never finalized) and flagged honesty constraints (e.g. Sterilamp's paired patent is a *stroboscopic* lamp, off-topic for the Germicidal-lamp article → trademark-only). **First daily edit submitted and live:** added a primary-source USPTO citation for the "John Deere Moline, Ill." trademark (Serial No. 71055630, filed 1911-04-08, registered 1912-09-10) to the **John Deere** article's logo/trademark paragraph — which previously carried zero USPTO citations — via `markery wikipedia replace` ([rev 1360151379](https://en.wikipedia.org/w/index.php?diff=1360151379), recorded to `projects/animal-marks-1930/wikipedia/submissions.jsonl`, verified live by `check-revision`). **Tooling lesson:** Wikipedia's AbuseFilter #50 ("Shouting") rejects edits whose added text is heavily uppercase — trademark names must be rendered in normal case in prose and edit summaries (per MOS:TM), not the all-caps DB form; the first attempt (all-caps mark) was warned and not saved, the title-case re-submit went through. The P3 gate criterion (≥1 article submitted, status recorded) is met; the daily cadence continues against `WIKIPEDIA-QUEUE.md`.
 
 ### P4 — Monthly image-review cadence
 
@@ -68,7 +70,7 @@ P1 PASSED when: the publisher renders a responsive, accessible site with SEO/OG 
 
 P2 PASSED when: the librarian acquires public-domain media (with source/license/attribution metadata) for a project, the historian/publisher embed it with source captions, and `markery site build` / `site check` stay clean on a media-enriched project.
 
-P3 PASSED when: at least one additional Wikipedia article is drafted and submitted from a confirmed pair via the `markery wikipedia` flow, with submission status recorded.
+P3 PASSED when: at least one additional Wikipedia article is drafted and submitted from a confirmed pair via the `markery wikipedia` flow, with submission status recorded. — PASSED (John Deere, rev 1360151379, 2026-06-19; daily cadence continues via `WIKIPEDIA-QUEUE.md`)
 
 P4 PASSED when: a documented monthly image-review process exists, is runnable (ideally one command), and has completed its first cycle against current projects.
 
