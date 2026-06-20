@@ -1,1 +1,1 @@
-{"type": "match-review-essay"}
+{"type": "match-review-essay", "model": "openai/gpt-oss-120b:free"}

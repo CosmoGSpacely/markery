@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import difflib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -64,6 +65,140 @@ def _draft_path(project: str, slug: str) -> Path:
     wiki_dir = proj.root / "wikipedia"
     wiki_dir.mkdir(exist_ok=True)
     return wiki_dir / f"{slug}.wiki"
+
+
+def _candidate_slug(record: dict) -> str:
+    """Derive the canonical slug for a confirmed-pair record (matches historian)."""
+    tm = record.get("trademark") or "figurative"
+    tm_slug = re.sub(r"[^a-z0-9]+", "-", tm.lower()).strip("-")
+    return f"{tm_slug}-{record['patent_no'].lower()}"
+
+
+def cmd_candidates(project: str) -> None:
+    """List a project's confirmed pairs as Wikipedia-edit candidates.
+
+    Deterministic (no API). Replaces reading confirmed.jsonl by hand: shows the
+    derived slug, normal-cased mark, patent, whether a finalized essay exists, and
+    whether the mark's serial has already been submitted to Wikipedia.
+    """
+    proj = Project(project)
+    if not proj.confirmed.exists():
+        print(f"No confirmed.jsonl for {project}.", file=sys.stderr)
+        sys.exit(1)
+
+    submitted: set[str] = set()
+    sub_path = proj.root / "wikipedia" / "submissions.jsonl"
+    if sub_path.exists():
+        for line in sub_path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                r = json.loads(line)
+                if r.get("serial_no"):
+                    submitted.add(str(r["serial_no"]))
+
+    rows: list[dict] = []
+    for line in proj.confirmed.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        m = json.loads(line)
+        slug = _candidate_slug(m)
+        essay = proj.content / f"{slug}.md"
+        serial = str(m.get("trademark_serial", ""))
+        rows.append({
+            "slug": slug,
+            "mark": m.get("trademark") or "(figurative)",
+            "patent": m.get("patent_no", ""),
+            "entity": m.get("entity", ""),
+            "essay": "yes" if essay.exists() else "NO",
+            "wp": "✓" if serial in submitted else "",
+        })
+
+    if not rows:
+        print(f"No confirmed pairs in {project}.")
+        return
+
+    print(f"Confirmed pairs in {project}  ({len(rows)} total; ✓ = already on Wikipedia)\n")
+    print(f"  {'slug':<34}{'mark':<26}{'patent':<11}{'essay':<6}{'wp':<4}entity")
+    for r in rows:
+        print(f"  {r['slug']:<34}{r['mark'][:24]:<26}{r['patent']:<11}{r['essay']:<6}{r['wp']:<4}{r['entity']}")
+
+
+_PROPOSE_SYSTEM = """You draft a single neutral, encyclopedic Wikipedia sentence that adds a primary-source trademark citation to an existing article, based on a Markery research essay.
+
+Output format:
+- Output WIKITEXT only for the sentence(s) to insert, then a final line beginning "SUMMARY: " with a short edit summary. No preamble, no markdown fences, no commentary.
+
+Hard rules:
+- Render the trademark name in NORMAL CASE (e.g. "John Deere Moline, Ill."), NEVER in all capitals. Wikipedia's MOS:TM forbids all-caps and its abuse filter rejects "shouting".
+- State ONLY what the essay's facts and "Primary Sources" support: the mark, its USPTO serial number, filing date, registration date, owner, and goods. Use the EXACT serial number and dates from the essay frontmatter.
+- Cite the trademark with exactly this template, substituting the serial, a normal-case MARK, and the given ACCESS-DATE:
+  <ref>{{cite web|url=https://tsdr.uspto.gov/#caseNumber=SERIAL&caseType=SERIAL_NO&searchType=statusSearch|title=Trademark Serial No. SERIAL — MARK|publisher=USPTO Trademark Status and Document Retrieval|access-date=ACCESS-DATE}}</ref>
+- Do NOT assert that any patent is embodied in, underlies, or is the technology behind the trademarked product UNLESS the essay's "The Connection" explicitly establishes documented goods-correspondence. Owner-and-era pairings get a trademark-only sentence with no patent claim.
+- One sentence (two only if necessary). Neutral tone; no marketing language.
+"""
+
+
+def cmd_propose_edit(project: str, slug: str, article: str, model_override: str | None) -> None:
+    """Draft a citation sentence for an existing article via the project's model.
+
+    Reads the human-gated match essay (the honest source of record), has the
+    configured model (the free model when project.json sets it) distill a neutral,
+    sourced Wikipedia sentence, and saves it for human review + anchor selection.
+    The human still picks the insertion point and runs `wikipedia replace`.
+    """
+    import time
+    from datetime import date
+
+    from markery.common.llm import call as llm_call
+    from markery.common.project import load_project
+    from markery.common.tokens import TokenRecord, emit as emit_tokens
+
+    proj = Project(project)
+    essay_path = proj.content / f"{slug}.md"
+    if not essay_path.exists():
+        print(f"No essay at {essay_path}.\n"
+              f"Run `markery wikipedia candidates {project}` to list slugs with essays.",
+              file=sys.stderr)
+        sys.exit(1)
+
+    model = model_override or load_project(proj.root).model
+    if not model:
+        print("No model set: project.json has no 'model' and no --model was given.",
+              file=sys.stderr)
+        sys.exit(1)
+
+    essay_text = essay_path.read_text(encoding="utf-8")
+    access = date.today().isoformat()
+    user = (f"TARGET ARTICLE: {article}\nACCESS-DATE: {access}\n\n"
+            f"--- MARKERY ESSAY ---\n{essay_text}")
+
+    print(f"Drafting Wikipedia citation for '{slug}' → article '{article}' with {model}…",
+          flush=True)
+    t0 = time.monotonic()
+    try:
+        text, ptok, ctok, cache_read, cache_create = llm_call(
+            model, _PROPOSE_SYSTEM, user, 600)
+    except RuntimeError as exc:
+        print(f"Inference error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    rec = TokenRecord(
+        model=model, prompt_tokens=ptok, completion_tokens=ctok,
+        cache_read_tokens=cache_read, cache_creation_tokens=cache_create,
+        wall_ms=int((time.monotonic() - t0) * 1000),
+    )
+    emit_tokens(rec, specialist="publisher", command="wikipedia-propose", tokens_flag=True)
+
+    out = proj.root / "wikipedia" / f"{slug}-propose.wiki"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text.strip() + "\n", encoding="utf-8")
+
+    print(f"\nProposed insertion → {out}\n")
+    print(text.strip())
+    print("\n— Review for honesty (esp. no unsupported patent-embodiment claim), then")
+    print("  choose a unique existing sentence in the article as the anchor and run:")
+    print(f"    markery wikipedia replace \"{article}\" --project {project} \\")
+    print("      --find '<exact existing sentence>' \\")
+    print("      --replace '<that sentence> <proposed wikitext>' --summary '<summary>'")
 
 
 def cmd_check_revision(project: str) -> None:
@@ -443,6 +578,19 @@ def wikipedia_main() -> None:
     draft.add_argument("project", help="Project name")
     draft.add_argument("slug",    help="Match essay slug")
 
+    cand = sub.add_parser("candidates",
+                          help="List confirmed pairs as Wikipedia-edit candidates (no API)")
+    cand.add_argument("project", help="Project name")
+
+    pe = sub.add_parser("propose-edit",
+                        help="Free-model draft of a citation sentence for an existing article")
+    pe.add_argument("project", help="Project name")
+    pe.add_argument("slug",    help="Confirmed pair slug (see `wikipedia candidates`)")
+    pe.add_argument("--article", required=True, metavar="TITLE",
+                    help="Target Wikipedia article title")
+    pe.add_argument("--model", default=None, metavar="MODEL",
+                    help="Override the project.json model for this draft")
+
     submit = sub.add_parser("submit", help="Show diff and POST to Wikipedia")
     submit.add_argument("project", help="Project name")
     submit.add_argument("slug",    help="Match essay slug")
@@ -501,6 +649,10 @@ def wikipedia_main() -> None:
 
     if args.action == "draft":
         cmd_draft(args.project, args.slug)
+    elif args.action == "candidates":
+        cmd_candidates(args.project)
+    elif args.action == "propose-edit":
+        cmd_propose_edit(args.project, args.slug, args.article, args.model)
     elif args.action == "submit":
         cmd_submit(args.project, args.slug, args.title, args.summary, args.yes)
     elif args.action == "from-essay":

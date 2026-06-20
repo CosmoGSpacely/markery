@@ -13,6 +13,30 @@ patent's subject genuinely matches the article topic. Owner-and-era pairs and
 off-topic patents get a **trademark-only** citation (or are skipped) — never an
 implied embodiment link.
 
+## Workflow (free-model drafting, human-gated)
+
+As of 2026-06-19 the mechanical steps are CLI + free-model driven; the human does the
+judgment:
+
+1. `markery wikipedia candidates <project>` — deterministic list of confirmed pairs
+   (slug, normal-cased mark, patent, essay present?, already on Wikipedia?). No API.
+2. `markery wikipedia propose-edit <project> <slug> --article "<Article>"` — the
+   **project model (now the free model)** drafts the neutral, sourced citation
+   sentence from the human-gated essay, in normal case (MOS:TM), with the TSDR
+   `{{cite web}}` template, and **no patent-embodiment claim** unless the essay's
+   Connection supports goods-correspondence. Writes `wikipedia/<slug>-propose.wiki`.
+3. **Human gate:** verify the facts (esp. filing-vs-registration dates), pick a unique
+   anchor sentence in the live article.
+4. `markery wikipedia replace "<Article>" --project <project> --find … --replace … --summary …`
+   — diff + confirm, POST, record to `submissions.jsonl`.
+
+**Proof (2026-06-19):** `propose-edit` on the John Deere pair (free model, $0) produced
+the correct normal-cased, trademark-only sentence with the right serial and TSDR cite —
+but stated the mark was "registered … on 8 April 1911" (that is the *filing* date;
+registration was 1912-09-10). The free model carries the drafting; the human gate
+catches the fact slip. Same thesis as the essays: facts are machine-checkable, judgment
+is human.
+
 ## Cadence
 
 One edit per day. After each submit: confirm the diff is live, wait for it to settle
