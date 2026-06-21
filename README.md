@@ -18,8 +18,7 @@ A generated essay page (`markery site build` → static HTML, no JavaScript fram
 
 *Every page carries breadcrumb navigation, a Primary Sources block linking the USPTO serial and patent numbers, and a sourced essay scaffolded from DB records and human-finalized. The factual frontmatter on each essay is checked against the live databases by `markery historian validate` (8/8) before it publishes.*
 
-- **Browse the live site** (published from this repo via GitHub Pages): <https://cosmogspacely.github.io/markery/>
-- **Or open it locally** without a build: [`projects/information-systems/site/index.html`](projects/information-systems/site/index.html) — the committed static site for the information-systems project.
+- **Build the site locally:** `markery site build-all` renders the Markery portal into `site/` (the root landing plus each project under `site/<project>/`); open `site/index.html`. Built sites are regenerable artifacts and are not committed.
 
 ---
 

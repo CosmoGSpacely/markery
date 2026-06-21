@@ -78,7 +78,7 @@ Tooling 2026-06-19: A review found the first edit leaned heavily on Claude with 
 
 ### P6 — Web hosting and deployment
 
-1. Select a static host (candidates: **GitHub Pages** — repos already live under `CosmoGSpacely` on GitHub; Cloudflare Pages; Netlify) and decide the URL scheme (per-project subpath vs. subdomain). Record the decision.
+1. Select a static host (candidates: **Cloudflare Pages**; Netlify — GitHub Pages dropped 2026-06-21 at the user's direction, deploy workflow removed) and decide the URL scheme (per-project subpath vs. subdomain). Record the decision.
 2. Add a repeatable deploy path — a `markery site deploy <project>` command and/or a CI publish workflow — that builds and pushes the site to the host. Handle base-URL/path rewriting so internal links resolve when served under the host's path.
 3. Publish at least the two Phase 23 sites — now carrying the P1–P5 improvements and public-domain media — at stable public URLs; verify `site check` against the deployed output (no broken links, correct base URL).
 
