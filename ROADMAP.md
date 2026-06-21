@@ -96,7 +96,7 @@ Tooling 2026-06-19: A review found the first edit leaned heavily on Claude with 
 
 ### Phase Gate
 
-P1 PASSED when: the publisher renders a responsive, accessible site with SEO/OG metadata; `markery site check` stays green; render regressions covered by tests; `SITE-REVIEW.md` archived.
+P1 PASSED when: the publisher renders a responsive, accessible site with SEO/OG metadata; `markery site check` stays green; render regressions covered by tests; `SITE-REVIEW.md` archived. — PASSED (2026-06-21; archived to `archive/SITE-REVIEW-2026-06-21.md`)
 
 P2 PASSED when: the librarian acquires public-domain media (with source/license/attribution metadata) for a project, the historian/publisher embed it with source captions, and `markery site build` / `site check` stay clean on a media-enriched project.
 
