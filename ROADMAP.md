@@ -25,9 +25,25 @@ Phase 23 closed 2026-06-18 (P3/D028 deferred to `DEFERRED.md`). Archived to `arc
 
 ### P1 — Site builder improvements
 
-1. Audit the current publisher output (`src/markery/specialist/publisher/render/`) across the existing project sites for layout, navigation, accessibility, and responsiveness gaps; record findings in a `SITE-REVIEW.md` (REVIEW-file convention).
-2. Improve templates and CSS: responsive layout (mobile/tablet), accessibility (semantic landmarks, alt text, contrast, keyboard nav), and metadata/SEO (Open Graph, canonical URLs, sitemap). Keep `markery site check` green throughout.
-3. Add regression tests for any new render behavior; archive `SITE-REVIEW.md` on completion.
+1. Audit the current publisher output (`src/markery/specialist/publisher/render/`) across the existing project sites for layout, navigation, accessibility, and responsiveness gaps; record findings in `SITE-REVIEW.md` (REVIEW-file convention). **Done** — see `SITE-REVIEW.md` (16 logged items; the Ink Wash palette and Guild Products footer are already applied).
+2. **Publisher-only render/CSS fixes** (no new data dependencies), each with `markery site check` kept green:
+   - Stat pills: restyle so they don't read as buttons (SITE-REVIEW #1).
+   - Trademark cards: fall back to the word mark — not the serial number — when no image (#2/#14); same for patent number on patent cards.
+   - Entity pill links to the entity page (#5).
+   - Drop redundant breadcrumbs on top-level Entities/Matches pages (#7).
+   - Rename the "Entities" nav item to "Companies" (the *rename* only; the People section is a separate phase) (#8).
+   - Fix link/accent contrast to meet WCAG AA on the cream background (#9).
+   - Active/current-page indicator in the nav (#10).
+   - Make cards clickable as a unit (#11).
+   - Full `goods` text via `title`/expand instead of a bare ellipsis (#12).
+   - Friendly empty/zero states (#13).
+   - Label classification ("Class G01B") and drawing code ("Drawing Code 5T07") on cards (#15).
+3. **Patent card illustrative figure** (#3): render the lead figure (historically Figure 1) on patent cards. Render side is publisher; identifying/selecting "Figure 1" may need a PATENT-specialist change if the lead figure isn't already distinguishable in-corpus — route that part to PATENT.
+4. **Vertical scrolling filing timeline** (#4): replace the inline horizontal SVG (galleries.py) with a prominent left-rail vertical timeline that advances with scroll alongside the cards.
+5. Also fold in the broader audit items from P1's original intent: responsive layout (mobile/tablet), semantic landmarks/alt text/keyboard nav, and metadata/SEO (Open Graph, canonical URLs, sitemap).
+6. Add regression tests for new render behavior; archive `SITE-REVIEW.md` on completion.
+
+Note: People-dependent items from SITE-REVIEW (#6 company-formation essay, #8 People nav, #16 inventor/registrant links) are deliberately excluded from P1 and tracked in Phase 25 below.
 
 ### P2 — Public-domain media enrichment (librarian + historian)
 
@@ -64,6 +80,16 @@ Tooling 2026-06-19: A review found the first edit leaned heavily on Claude with 
 2. Add a repeatable deploy path — a `markery site deploy <project>` command and/or a CI publish workflow — that builds and pushes the site to the host. Handle base-URL/path rewriting so internal links resolve when served under the host's path.
 3. Publish at least the two Phase 23 sites — now carrying the P1–P5 improvements and public-domain media — at stable public URLs; verify `site check` against the deployed output (no broken links, correct base URL).
 
+### P7 — Generative-engine optimization (citation in AI search)
+
+**Goal:** make project sites discoverable and *citable* by agentic/AI search (Google AI Overviews, ChatGPT search, Perplexity, Claude web search). These engines retrieve live pages at answer time (RAG) and cite the page carrying a clean, quotable fact — so the work is two jobs: get crawled/retrieved, and be extractable once retrieved. Markery's static-HTML, primary-source-cited, fact-atomic output is already well-suited; this stream closes the output-format gaps. Sequence **before or alongside P6** so deployed sites carry the markup.
+
+1. **Crawl access:** emit a `robots.txt` that permits the AI crawlers we want (`GPTBot`, `ClaudeBot`/`anthropic-ai`, `PerplexityBot`, `Google-Extended`, `CCBot`), plus a `sitemap.xml` and stable canonical URLs (coordinate with the SEO items already in P1).
+2. **Structured data:** emit schema.org JSON-LD per page — `Organization` (companies), `Person` (Phase 25 people), `Article`/`CreativeWork` (essays), and patent/trademark records with identifier and date fields — so engines can resolve entities and facts unambiguously.
+3. **Extractability:** keep facts as self-contained, dated, identifier-bearing sentences in the HTML text (no JS-painted content); answer-first phrasing and question-shaped headings where natural. (Largely already true; audit and tighten.)
+4. **Optional:** emit an `llms.txt` pointing crawlers at key clean-text pages (emerging convention; cheap to add).
+5. Keep `markery site check` green; add regression tests for emitted robots/sitemap/JSON-LD.
+
 ---
 
 ### Phase Gate
@@ -80,6 +106,54 @@ P5 PASSED when: the enhancement pipeline produces measurably/visibly better imag
 
 P6 PASSED when: a repeatable `markery`-driven deploy publishes a project site to the chosen host at a stable public URL, with internal links resolving against the deployed base URL.
 
-Phase PASSED when P1–P6 pass. Open deferrals independent of this phase: D007 (`markery patent bulk-import`, PatentsView) and D028 (`search-tsdr` live ODP endpoint, gated on a USPTO ODP/ID.me key).
+P7 PASSED when: built sites emit an AI-crawler-permissive `robots.txt`, a `sitemap.xml`, canonical URLs, and valid schema.org JSON-LD for their key entity/essay pages; `markery site check` stays green and the emitted markup is covered by tests.
+
+Phase PASSED when P1–P7 pass. Open deferrals independent of this phase: D007 (`markery patent bulk-import`, PatentsView) and D028 (`search-tsdr` live ODP endpoint, gated on a USPTO ODP/ID.me key).
+
+---
+
+## Phase 25 — People as first-class entities
+
+**Trigger:** Phase 24 P1 site-review surfaced People-dependent work that exceeds the publisher's scope. Items #6 (company-formation essay), #8 (a "People" nav section), and #16 (link inventors/registrants to a person essay) in `SITE-REVIEW.md` all require a person concept the corpus does not yet model. Promote when Phase 24 P1's publisher-only fixes are substantially done.
+
+**Scope:** Introduce *people* (founders, inventors, individual registrants) as a first-class concept spanning shared infrastructure and three specialists. It is rare in this period for an individual to register a trademark, but inventors appear routinely on patents and founders anchor company history. Four workstreams across tiers — they have a hard dependency order: data model → specialist content → publisher rendering.
+
+**Goal state:** People exist in the data model with stable slugs; inventors are surfaced from patent data; the historian writes person essays and company-formation essays; and the publisher renders a "People" section, links inventors/registrants from cards to their person essay, and shows a company-formation essay on each Company page.
+
+---
+
+### P1 — People data model and CLI (Markery infra)
+
+1. Decide how people are represented (a `person` entity type vs. a dedicated people table), with stable slugs and a link index the publisher can resolve — mirroring how companies/entities are addressed today.
+2. Add CLI surface for inspection and scaffolding (consistent with `markery project onboard` / entity commands); no hand-editing of person records.
+
+### P2 — Inventors from patents (PATENT specialist)
+
+1. Surface inventor names from in-corpus patent data as people, linkable to the patents they appear on. Identify the rare individual trademark registrant case as well so the publisher can link it (SITE-REVIEW #16).
+
+### P3 — Person and company-formation essays (HISTORIAN specialist)
+
+1. Write short company-formation essays for each company/entity page (SITE-REVIEW #6), under the same fact-vs-interpretation discipline used for existing essays.
+2. Write person essays for notable people (founders, key inventors — e.g. Mack, Remington), sourced and provenance-tracked.
+
+### P4 — Publisher rendering of people (PUBLISHER specialist)
+
+1. Add a "People" item to the nav and a People index + person-essay pages (SITE-REVIEW #8).
+2. Render the company-formation essay on each Company page (#6).
+3. Link inventors on patent cards — and the rare individual registrant on trademark cards — to their person essay (#16). Keep `markery site check` green; add regression tests.
+
+---
+
+### Phase Gate
+
+P1 PASSED when: people are representable in the data model with stable slugs and a resolvable link index, via CLI (no hand-edited records).
+
+P2 PASSED when: inventors are surfaced from patent data as linkable people, and the individual-registrant case is identifiable for trademarks.
+
+P3 PASSED when: company-formation essays exist for the companies in at least one project, and person essays exist for its notable people, all sourced.
+
+P4 PASSED when: the site renders a People section, Company pages show their formation essay, and patent cards (plus any individual-registrant trademark cards) link to person essays, with `site check` green and render regressions tested.
+
+Phase PASSED when P1–P4 pass.
 
 ---

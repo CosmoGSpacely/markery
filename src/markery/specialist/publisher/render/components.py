@@ -77,7 +77,10 @@ def _page(
     repo = site_repo or _MARKERY_REPO
     footer = (
         f'\n<footer class="site-footer">'
-        f'Built with <a href="{_esc(repo)}">Markery</a>'
+        f'History of commerce and technology is built by '
+        f'<a href="{_esc(repo)}">Markery</a>. '
+        f'Copyright {date.today().year} '
+        f'<a href="https://guildproducts.com">Guild Products</a>.'
         f'</footer>\n'
     )
     return (
