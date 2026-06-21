@@ -159,3 +159,47 @@ P4 PASSED when: the site renders a People section, Company pages show their form
 Phase PASSED when P1–P4 pass.
 
 ---
+
+## Phase 26 — Markery multi-project portal (site root)
+
+**Trigger:** Per-project sites each build standalone to `projects/<name>/site/` with no shared root. The product is "Markery Research" as a whole — readers should land on a portal that spans all projects, search across all of them, and navigate within a project under a persistent project header.
+
+**Scope (mostly PUBLISHER + a little Markery infra):** Introduce a unified site root and a two-tier page chrome. Decisions taken: **unified root build** (`site/index.html` portal + `site/<project>/` per project; add `markery site build-all`; `site build <project>` builds into the root) and **auto-derived portal metadata with project.json overrides**.
+
+**Goal state:**
+- **Root portal** (`site/index.html`): one card per project with an auto-derived scope blurb and a representative trademark image + patent figure; aggregated confirmed-pair **Matches** cards across all projects at the bottom.
+- **Two-tier chrome:** a short sticky global bar ("Markery Research" left, site-wide search right); below it a sticky **project sub-header** (project title + section links Trademarks/Patents/Companies/Matches with active state); the timeline/cards scroll beneath both.
+- **Global search** over the entire site (all projects), reached from the global bar.
+- Each project keeps its nested landing/galleries/detail pages; `markery site check` green across the root.
+
+---
+
+### P1 — Two-tier page chrome
+1. Refactor `_page` into a global bar + optional sticky project sub-header; thread project slug/title and root-relative paths through all render callers; adjust sticky offsets so timeline/detail markers clear both bars.
+
+### P2 — Unified root build
+1. Build each project into `site/<project>/`; add `markery site build-all` orchestrating per-project builds + the root portal + global search + a root sitemap; keep `site check` working against the root.
+
+### P3 — Root portal landing
+1. Render the portal: per-project cards (auto-derived scope blurb + representative mark/figure, with `summary`/`feature_serial`/`feature_patent` project.json overrides) and aggregated cross-project Matches at the bottom.
+
+### P4 — Global search
+1. One site-wide search over all projects (pagefind across `site/` + a combined record set), reached from the global bar.
+
+Results 2026-06-21: Built the multi-project portal. `_page` refactored into a short sticky global bar (Markery Research + site-wide search) and an optional sticky project sub-header (project title + section nav, active highlighted), with `<main>` scrolling beneath; root-relative paths thread through all 13 render call sites and timeline/detail sticky markers clear both bars. `markery site build-all` builds every match-review-essay project into `site/<project>/` and renders `site/index.html` (portal: per-project cards with auto-derived OBJECTIVES scope blurb + representative mark/figure, `summary`/`feature_serial`/`feature_patent` overrides, image-existence-guarded) plus aggregated cross-project Matches, a site-wide `search.html` + combined `search.json`, and a root `sitemap.xml` (with `--base-url`). Built artifact: 5 projects, 4797 pages, 62488 links, **0 broken / 0 orphans** via `site check --out site`. 12 new tests (portal + two-tier chrome); full suite 779 green. Deviations: `site build`/`check` default to `proj.site` for direct callers — the unified `site/<project>` path is resolved in the CLI/`build_all` (keeps existing check tests intact); built sites are now gitignored as regenerable artifacts (`/site/`, `projects/*/site/`) and the stale committed per-project builds were untracked; a root-spanning `site check` is run via `--out site` (a dedicated `check-all` could follow).
+
+---
+
+### Phase Gate
+
+P1 PASSED when: project pages render a sticky global bar + sticky project sub-header with the content scrolling beneath, active section highlighted, `site check` green. — PASSED
+
+P2 PASSED when: `markery site build-all` produces `site/index.html` + `site/<project>/...` and `site check` passes across the root. — PASSED
+
+P3 PASSED when: the portal shows every project with a scope blurb + representative mark/figure and the aggregated Matches section, overrides honored. — PASSED
+
+P4 PASSED when: a single search covers all projects from the global bar. — PASSED
+
+Phase PASSED when P1–P4 pass. — PASSED
+
+---

@@ -43,7 +43,7 @@ def render_sources_page(
         "url": f"{base_url}/{project}/sources.html",
     } if base_url else None
     out_path = out_dir / "sources.html"
-    out_path.write_text(_page(_page_title("Sources", project), body, nav, og=og), encoding="utf-8")
+    out_path.write_text(_page(_page_title("Sources", project), body, nav, project=project, project_title=project.replace('-', ' ').title(), og=og), encoding="utf-8")
     return out_path
 
 
@@ -109,20 +109,11 @@ def render_timeline_page(
         "url": f"{base_url}/{project}/timeline.html",
     } if base_url else None
     out_path = out_dir / "timeline.html"
-    out_path.write_text(_page(_page_title("Timeline", project), body, nav, og=og), encoding="utf-8")
+    out_path.write_text(_page(_page_title("Timeline", project), body, nav, project=project, project_title=project.replace('-', ' ').title(), og=og), encoding="utf-8")
     return out_path
 
 
-def render_search_page(
-    project: str,
-    out_dir: Path,
-    entities: list[dict],
-    extra_nav: dict[str, str] | None = None,
-) -> Path:
-    """Render a client-side search page backed by search.json."""
-    nav  = _nav_links(project, entities, extra_nav)
-
-    search_js = r"""
+_SEARCH_JS = r"""
 (function () {
   var idx = null;
   function load(cb) {
@@ -167,6 +158,16 @@ def render_search_page(
 })();
 """
 
+
+def render_search_page(
+    project: str,
+    out_dir: Path,
+    entities: list[dict],
+    extra_nav: dict[str, str] | None = None,
+) -> Path:
+    """Render a client-side search page backed by search.json."""
+    nav  = _nav_links(project, entities, extra_nav)
+
     body = (
         f'<div class="page-header">'
         f'<h1>Search</h1>'
@@ -178,10 +179,10 @@ def render_search_page(
         f'<button id="search-btn">Search</button>'
         f'</div>'
         f'<ul class="search-results" id="results"></ul>'
-        f'<script>{search_js}</script>'
+        f'<script>{_SEARCH_JS}</script>'
         f'</div>'
     )
 
     out_path = out_dir / "search.html"
-    out_path.write_text(_page(_page_title("Search", project), body, nav), encoding="utf-8")
+    out_path.write_text(_page(_page_title("Search", project), body, nav, project=project, project_title=project.replace('-', ' ').title()), encoding="utf-8")
     return out_path

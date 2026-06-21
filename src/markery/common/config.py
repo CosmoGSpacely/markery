@@ -19,6 +19,9 @@ def _find_root() -> Path:
 
 ROOT = _find_root()
 
+# Unified site root: the Markery portal and every project's nested site live here.
+SITE_ROOT = ROOT / "site"
+
 # Single definition site for the default LLM model. The dated ID is pinned for
 # reproducibility. Override per-call with --model or the MARKERY_MODEL env var.
 # Note: Haiku 4.5's cacheable-prefix minimum is 4096 tokens (see common/llm.py).

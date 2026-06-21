@@ -101,7 +101,7 @@ def render_entity_page(
     } if base_url else None
     (out_dir / "entities").mkdir(exist_ok=True)
     out_path = out_dir / "entities" / f"{slug}.html"
-    out_path.write_text(_page(_page_title(entity["canonical_name"], project), body, nav, depth=1, og=og,
+    out_path.write_text(_page(_page_title(entity["canonical_name"], project), body, nav, project=project, project_title=project.replace('-', ' ').title(), depth=1, og=og,
                               active="entities/index.html"), encoding="utf-8")
     return out_path
 

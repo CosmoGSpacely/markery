@@ -103,7 +103,7 @@ def render_trademark_detail(
     (out_dir / "trademarks").mkdir(exist_ok=True)
     out_path = out_dir / "trademarks" / f"{sn}.html"
     out_path.write_text(
-        _page(_page_title(mark_name, project), body, nav, depth=1, og=og,
+        _page(_page_title(mark_name, project), body, nav, project=project, project_title=project.replace('-', ' ').title(), depth=1, og=og,
               active="trademarks.html"),
         encoding="utf-8",
     )
@@ -185,7 +185,7 @@ def render_patent_detail(
     (out_dir / "patents").mkdir(exist_ok=True)
     out_path = out_dir / "patents" / f"{pn}.html"
     out_path.write_text(
-        _page(_page_title(title, project), body, nav, depth=1, og=og,
+        _page(_page_title(title, project), body, nav, project=project, project_title=project.replace('-', ' ').title(), depth=1, og=og,
               active="patents.html"),
         encoding="utf-8",
     )

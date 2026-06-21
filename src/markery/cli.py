@@ -175,11 +175,20 @@ def cmd_site(rest: list[str]) -> None:
     build = sub.add_parser("build", help="Render project to HTML")
     build.add_argument("project", help="Project name (directory under projects/)")
     build.add_argument("--out", metavar="DIR",
-                       help="Output directory (default: projects/<project>/site)")
+                       help="Output directory (default: site/<project>)")
     build.add_argument("--base-url", metavar="URL", default=None,
                        help="Absolute base URL for Open Graph og:url tags")
     build.add_argument("--no-prune", action="store_true",
                        help="Keep stale files from previous builds (default: prune)")
+
+    build_all = sub.add_parser("build-all",
+                               help="Build every project + the Markery portal into site/")
+    build_all.add_argument("--out", metavar="DIR",
+                           help="Site root (default: site/)")
+    build_all.add_argument("--base-url", metavar="URL", default=None,
+                           help="Absolute base URL for canonical/sitemap/OG tags")
+    build_all.add_argument("--no-prune", action="store_true",
+                           help="Keep stale files from previous builds (default: prune)")
 
     check = sub.add_parser("check", help="Validate built site links; exit non-zero on breakage")
     check.add_argument("project", help="Project name (directory under projects/)")
@@ -190,14 +199,21 @@ def cmd_site(rest: list[str]) -> None:
 
     args = parser.parse_args(rest)
 
+    from markery.common import config
+
     if args.action == "build":
         from markery.specialist.publisher.build import build_site
-        build_site(args.project, Path(args.out) if args.out else None,
+        out = Path(args.out) if args.out else config.SITE_ROOT / args.project
+        build_site(args.project, out,
                    base_url=args.base_url, prune=not args.no_prune)
+    elif args.action == "build-all":
+        from markery.specialist.publisher.build import build_all
+        build_all(Path(args.out) if args.out else None,
+                  base_url=args.base_url, prune=not args.no_prune)
     elif args.action == "check":
         from markery.specialist.publisher.check import run_check
-        sys.exit(run_check(args.project, Path(args.out) if args.out else None,
-                           strict=args.strict))
+        out = Path(args.out) if args.out else config.SITE_ROOT / args.project
+        sys.exit(run_check(args.project, out, strict=args.strict))
 
 
 def cmd_model(rest: list[str]) -> None:

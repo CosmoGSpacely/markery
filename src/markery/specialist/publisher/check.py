@@ -23,7 +23,7 @@ from urllib.parse import unquote, urlparse
 from markery.common.project import Project, load_project
 
 # Files that legitimately have no inbound link from another page.
-_ENTRY_POINTS = {"index.html", "search.json", "sitemap.xml", "robots.txt"}
+_ENTRY_POINTS = {"index.html", "search.html", "search.json", "sitemap.xml", "robots.txt"}
 # Directory prefixes whose contents are managed externally (search index, etc.).
 _IGNORED_DIRS = ("pagefind/",)
 

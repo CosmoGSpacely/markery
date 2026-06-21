@@ -61,15 +61,32 @@ def _page(
     og: dict | None = None,
     site_repo: str | None = None,
     active: str | None = None,
+    project: str | None = None,
+    project_title: str | None = None,
 ) -> str:
-    prefix = "../" * depth
+    # `depth` is the page's depth within its project. When the page belongs to a
+    # project (project is not None) the site root is one further level up, since
+    # projects nest under site/<project>/.
+    proj_prefix = "../" * depth
+    root_prefix = "../" * (depth + (1 if project else 0))
 
     def _nav_anchor(label: str, href: str) -> str:
         is_active = active is not None and href == active
         attrs = ' class="active" aria-current="page"' if is_active else ""
-        return f'<a href="{prefix}{href}"{attrs}>{_esc(label)}</a>'
+        return f'<a href="{proj_prefix}{href}"{attrs}>{_esc(label)}</a>'
 
     nav = "".join(_nav_anchor(label, href) for label, href in nav_links.items())
+    project_bar = ""
+    if project is not None:
+        title_html = (
+            f'<a class="project-bar-title" href="{proj_prefix}index.html">{_esc(project_title or "")}</a>'
+        )
+        project_bar = (
+            f'<div class="project-bar">'
+            f'{title_html}'
+            f'<nav class="project-nav" aria-label="Project sections">{nav}</nav>'
+            f'</div>\n'
+        )
     head_meta = ""
     if og:
         desc = og.get("description", "")
@@ -102,13 +119,13 @@ def _page(
         + f'<style>{_CSS}</style>\n'
         '</head>\n<body>\n'
         '<a class="skip-link" href="#main">Skip to content</a>\n'
-        f'<header class="site-header">'
-        f'<a class="site-title" href="{prefix}index.html">Markery Research</a>'
-        f'<nav aria-label="Primary">{nav}</nav>'
-        f'<form class="site-search" action="{prefix}search.html" method="get">'
-        f'<input type="search" name="q" placeholder="Search…" aria-label="Search"></form>'
+        f'<header class="global-bar">'
+        f'<a class="site-title" href="{root_prefix}index.html">Markery Research</a>'
+        f'<form class="site-search" action="{root_prefix}search.html" method="get">'
+        f'<input type="search" name="q" placeholder="Search Markery…" aria-label="Search Markery"></form>'
         '</header>\n'
-        '<main id="main">\n'
+        + project_bar
+        + '<main id="main">\n'
         + body
         + '</main>\n'
         + footer

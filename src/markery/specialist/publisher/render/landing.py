@@ -124,7 +124,7 @@ def render_landing(
         "url": f"{base_url}/{project}/index.html",
     } if base_url else None
     out_path = out_dir / "index.html"
-    out_path.write_text(_page(title, body, nav, og=og), encoding="utf-8")
+    out_path.write_text(_page(title, body, nav, project=project, project_title=project.replace('-', ' ').title(), og=og), encoding="utf-8")
     return out_path
 
 
@@ -173,7 +173,7 @@ def render_entities_index(
     } if base_url else None
     (out_dir / "entities").mkdir(exist_ok=True)
     out_path = out_dir / "entities" / "index.html"
-    out_path.write_text(_page(_page_title("Companies", project), body, nav, depth=1, og=og,
+    out_path.write_text(_page(_page_title("Companies", project), body, nav, project=project, project_title=project.replace('-', ' ').title(), depth=1, og=og,
                               active="entities/index.html"),
                         encoding="utf-8")
     return out_path
@@ -238,7 +238,7 @@ def render_matches_index(
     } if base_url else None
     (out_dir / "matches").mkdir(exist_ok=True)
     out_path = out_dir / "matches" / "index.html"
-    out_path.write_text(_page(_page_title("Confirmed Pairs", project), body, nav, depth=1, og=og,
+    out_path.write_text(_page(_page_title("Confirmed Pairs", project), body, nav, project=project, project_title=project.replace('-', ' ').title(), depth=1, og=og,
                               active="matches/index.html"),
                         encoding="utf-8")
     return out_path

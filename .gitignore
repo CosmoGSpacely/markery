@@ -56,3 +56,7 @@ library/cards/
 .coverage
 .coverage.*
 htmlcov/
+
+# Built site output (regenerable via `markery site build-all`; published at deploy/P6)
+/site/
+projects/*/site/

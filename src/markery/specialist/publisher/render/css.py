@@ -29,7 +29,8 @@ a:hover { color: #3a4656; }
 
 /* ── Small-screen layout ── */
 @media (max-width: 640px) {
-  .site-header { padding: 14px 18px; }
+  .global-bar { padding: 8px 18px; }
+  .project-bar { padding: 10px 18px; }
   .breadcrumb { padding: 8px 18px; }
   .page-header { padding: 28px 18px; }
   .page-header h1 { font-size: 1.6em; }
@@ -37,40 +38,62 @@ a:hover { color: #3a4656; }
   .essay-media { grid-template-columns: 1fr; }
 }
 
-/* ── Site header ── */
-.site-header {
-  background: #3a3a3a;
+/* ── Global bar (Markery Research + site-wide search) ── */
+.global-bar {
+  background: #2f2f2f;
   color: #FFFFE3;
-  padding: 18px 40px;
+  padding: 8px 40px;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 24px;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 110;
 }
-.site-header .site-title {
-  font-size: 1.1em;
+.global-bar .site-title {
+  font-size: 1.05em;
   font-weight: normal;
   letter-spacing: .04em;
   color: #FFFFE3;
   text-decoration: none;
 }
-.site-header nav {
+.global-bar .site-search { margin-left: auto; }
+
+/* ── Project sub-header (project title + section nav), sticky below the bar ── */
+.project-bar {
+  background: #3a3a3a;
+  color: #FFFFE3;
+  padding: 10px 40px;
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  position: sticky;
+  top: 39px;            /* clears the global bar */
+  z-index: 100;
+}
+.project-bar-title {
+  font-size: .95em;
+  font-weight: bold;
+  letter-spacing: .03em;
+  color: #FFFFE3;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.project-nav {
   overflow-x: auto;
   white-space: nowrap;
   -webkit-overflow-scrolling: touch;
   flex: 1;
   min-width: 0;
 }
-.site-header nav a {
+.project-nav a {
   color: #CBCBCB;
   text-decoration: none;
   font-size: .85em;
   margin-right: 16px;
 }
-.site-header nav a:hover { color: #FFFFE3; }
-.site-header nav a.active {
+.project-nav a:hover { color: #FFFFE3; }
+.project-nav a.active {
   color: #FFFFE3;
   border-bottom: 2px solid #6D8196;
   padding-bottom: 3px;
@@ -193,7 +216,7 @@ a:hover { color: #3a4656; }
    so it reads as a moving point on the rail — time advancing as you scroll. */
 .tl-year {
   position: sticky;
-  top: 72px;
+  top: 92px;
   align-self: start;
   text-align: right;
   padding-right: 18px;     /* keep the number clear of the dot on the rail */
@@ -497,6 +520,59 @@ blockquote p { margin: 0; }
 /* ── Small chip (inline stat tags) ── */
 .chip-sm { font-size: .75em; background: #CBCBCB; border-radius: 3px; padding: 1px 6px; color: #4A4A4A; white-space: nowrap; }
 
+/* ── Root portal (Markery landing across all projects) ── */
+.portal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  margin-bottom: 48px;
+}
+.portal-card {
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.portal-title { font-size: 1.2em; font-weight: normal; }
+.portal-title a { color: #4A4A4A; text-decoration: none; }
+.portal-title a:hover { color: #4F6076; text-decoration: underline; }
+.portal-thumbs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.portal-thumb {
+  width: 100%;
+  height: 120px;
+  object-fit: contain;
+  background: #FBFBF0;
+  border: 1px solid #CBCBCB;
+  border-radius: 4px;
+}
+.portal-thumb--ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10px;
+  background: #ECECDF;
+  color: #777;
+  font-size: .8em;
+  font-weight: bold;
+}
+.portal-summary { font-size: .9em; color: #444; line-height: 1.5; flex: 1; }
+.portal-stats { display: flex; flex-wrap: wrap; gap: 6px; }
+.portal-enter {
+  align-self: flex-start;
+  background: #6D8196;
+  color: #FFFFE3;
+  font-size: .85em;
+  font-weight: bold;
+  padding: 6px 14px;
+  border-radius: 4px;
+  text-decoration: none;
+}
+.portal-enter:hover { background: #56697d; color: #FFFFE3; }
+
 /* ── Per-record detail page (one trademark / one patent) ── */
 .detail-layout {
   display: grid;
@@ -504,7 +580,7 @@ blockquote p { margin: 0; }
   gap: 32px;
   align-items: start;
 }
-.detail-media { position: sticky; top: 72px; }
+.detail-media { position: sticky; top: 92px; }
 .detail-image {
   width: 100%;
   object-fit: contain;

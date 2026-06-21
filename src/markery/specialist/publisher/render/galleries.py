@@ -119,7 +119,7 @@ def render_trademark_gallery(
         "url": f"{base_url}/{project}/trademarks.html",
     } if base_url else None
     out_path = out_dir / "trademarks.html"
-    out_path.write_text(_page(_page_title("Trademark Gallery", project), body, nav, og=og,
+    out_path.write_text(_page(_page_title("Trademark Gallery", project), body, nav, project=project, project_title=project.replace('-', ' ').title(), og=og,
                               active="trademarks.html"), encoding="utf-8")
     return out_path
 
@@ -213,7 +213,7 @@ def render_patent_gallery(
         "url": f"{base_url}/{project}/patents.html",
     } if base_url else None
     out_path = out_dir / "patents.html"
-    out_path.write_text(_page(_page_title("Patent Gallery", project), body, nav, og=og,
+    out_path.write_text(_page(_page_title("Patent Gallery", project), body, nav, project=project, project_title=project.replace('-', ' ').title(), og=og,
                               active="patents.html"), encoding="utf-8")
     return out_path
 

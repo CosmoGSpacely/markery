@@ -7,7 +7,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from markery.common.project import Project, load_project
+from markery.common import config
+from markery.common.project import Project, ProjectType, load_project
 from markery.specialist.publisher import queries as q
 from markery.specialist.publisher import render as r
 
@@ -81,6 +82,201 @@ def _prune_stale(out: Path, written: set[Path]) -> list[Path]:
     return removed
 
 
+def _display_title(project: str) -> str:
+    return project.replace("-", " ").title()
+
+
+def discover_projects() -> list[str]:
+    """Return slugs of all match-review-essay projects under projects/, sorted."""
+    base = config.ROOT / "projects"
+    out: list[str] = []
+    for d in sorted(base.iterdir()) if base.exists() else []:
+        if not (d / "project.json").is_file():
+            continue
+        try:
+            proj = load_project(d)
+        except (ValueError, FileNotFoundError):
+            continue
+        if proj.type == ProjectType.MATCH_REVIEW_ESSAY:
+            out.append(d.name)
+    return out
+
+
+def _project_overrides(proj: Project) -> dict:
+    pj = proj.root / "project.json"
+    if not pj.exists():
+        return {}
+    try:
+        return json.loads(pj.read_text())
+    except (ValueError, OSError):
+        return {}
+
+
+def _auto_summary(proj: Project) -> str:
+    """First real paragraph of OBJECTIVES.md (heading + frontmatter stripped)."""
+    path = proj.objectives
+    if not path.exists():
+        return ""
+    text = r._strip_frontmatter(path.read_text())
+    for para in text.split("\n\n"):
+        block = " ".join(
+            ln.strip() for ln in para.splitlines() if not ln.lstrip().startswith("#")
+        ).strip()
+        if block:
+            return (block[:277] + "…") if len(block) > 280 else block
+    return ""
+
+
+def _representative_mark(project: str, tms: list[dict], pair_serials: set[str],
+                         override) -> tuple[str | None, str]:
+    mark = None
+    if override is not None:
+        mark = next((t for t in tms if str(t["serial_no"]) == str(override)), None)
+    if mark is None:
+        mark = next((t for t in tms if t.get("image_available")
+                     and str(t["serial_no"]) in pair_serials), None)
+    if mark is None:
+        mark = next((t for t in tms if t.get("image_available")), None)
+    if mark is None:
+        mark = tms[0] if tms else None
+    if mark is None:
+        return None, "No marks"
+    src = (f"{project}/images/marks/{mark['serial_no']}.png"
+           if mark.get("image_available") else None)
+    return src, (mark.get("mark_name") or "(design mark)")
+
+
+def _representative_figure(project: str, pats: list[dict], pair_patents: set[str],
+                           override) -> tuple[str | None, str]:
+    pat = None
+    if override is not None:
+        pat = next((p for p in pats if p["patent_no"] == override), None)
+    if pat is None:
+        pat = next((p for p in pats if p.get("figure_available")
+                    and p["patent_no"] in pair_patents), None)
+    if pat is None:
+        pat = next((p for p in pats if p.get("figure_available")), None)
+    if pat is None:
+        pat = pats[0] if pats else None
+    if pat is None:
+        return None, "No patents"
+    src = (f"{project}/images/patents/{pat['patent_no']}.png"
+           if pat.get("figure_available") else None)
+    return src, (pat.get("title") or pat["patent_no"])
+
+
+def build_all(out_dir: Path | None = None, base_url: str | None = None,
+              prune: bool = True) -> list[Path]:
+    """Build every project into the unified site root plus the Markery portal.
+
+    Produces site/index.html (portal), site/<project>/... (each project),
+    site/search.html + site/search.json (site-wide search), and site/sitemap.xml
+    (when base_url is given).
+    """
+    site_root = out_dir if out_dir is not None else config.SITE_ROOT
+    site_root.mkdir(parents=True, exist_ok=True)
+
+    projects = discover_projects()
+    print(f"Building Markery portal for {len(projects)} project(s) → {site_root}/")
+
+    portal_projects: list[dict] = []
+    portal_matches: list[dict] = []
+    combined_search: list[dict] = []
+
+    for project in projects:
+        proj_out = site_root / project
+        proj_base = f"{base_url.rstrip('/')}/{project}" if base_url else None
+        build_site(project, proj_out, base_url=proj_base, prune=prune)
+
+        proj = load_project(Project(project).root)
+        ids = q.get_project_entity_ids(project)
+        entities = q.get_entities(ids)
+        tms = q.get_trademarks_for_project(ids)
+        pats = q.get_patents_for_project(ids)
+        matches = q.get_confirmed_matches(project)
+        overrides = _project_overrides(proj)
+
+        pair_serials = {str(m["trademark_serial"]) for m in matches}
+        pair_patents = {m["patent_no"] for m in matches}
+        mark_src, mark_label = _representative_mark(
+            project, tms, pair_serials, overrides.get("feature_serial"))
+        fig_src, fig_label = _representative_figure(
+            project, pats, pair_patents, overrides.get("feature_patent"))
+        # image_available can be set without bytes on disk — only link a file
+        # the project build actually wrote.
+        if mark_src and not (site_root / mark_src).exists():
+            mark_src = None
+        if fig_src and not (site_root / fig_src).exists():
+            fig_src = None
+
+        confirmed = [m for m in matches if m.get("essay_path")]
+        portal_projects.append({
+            "slug": project,
+            "title": _display_title(project),
+            "summary": overrides.get("summary") or _auto_summary(proj),
+            "counts": {
+                "companies": len(entities), "marks": len(tms),
+                "patents": len(pats), "pairs": len(confirmed),
+            },
+            "mark_src": mark_src, "mark_label": mark_label,
+            "fig_src": fig_src, "fig_label": fig_label,
+        })
+
+        seen: set[str] = set()
+        for m in confirmed:
+            slug = m.get("slug", "")
+            if not slug or slug in seen:
+                continue
+            seen.add(slug)
+            thumb_src = (f"{project}/images/marks/{m['trademark_serial']}.png"
+                         if m.get("has_image") else None)
+            if thumb_src and not (site_root / thumb_src).exists():
+                thumb_src = None
+            portal_matches.append({
+                "url": f"{project}/matches/{slug}.html",
+                "label": m.get("trademark") or "(figurative)",
+                "patent_no": m["patent_no"],
+                "project_title": _display_title(project),
+                "entity": m.get("entity", ""),
+                "note": m.get("note", ""),
+                "thumb_src": thumb_src,
+            })
+
+        sj = proj_out / "search.json"
+        if sj.exists():
+            for rec in json.loads(sj.read_text()):
+                rec = dict(rec)
+                rec["url"] = f"{project}/{rec['url']}"
+                rec["title"] = f"{rec['title']} · {_display_title(project)}"
+                combined_search.append(rec)
+
+    pages = [r.render_portal(site_root, portal_projects, portal_matches, base_url=base_url)]
+    print(f"  portal           → index.html ({len(portal_projects)} projects)")
+    pages.append(r.render_root_search(site_root))
+    print("  root search      → search.html")
+
+    (site_root / "search.json").write_text(
+        json.dumps(combined_search, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"  search.json      → {len(combined_search)} records")
+
+    if base_url:
+        base = base_url.rstrip("/")
+        locs = sorted(
+            f"{base}/{p.relative_to(site_root).as_posix()}"
+            for p in site_root.rglob("*.html")
+        )
+        urls = "".join(f"  <url><loc>{loc}</loc></url>\n" for loc in locs)
+        (site_root / "sitemap.xml").write_text(
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            f"{urls}</urlset>\n", encoding="utf-8")
+        print(f"  sitemap.xml      → {len(locs)} urls")
+
+    _run_pagefind(site_root)
+    print(f"\nMarkery portal built at {site_root}/")
+    return pages
+
+
 def build_site(project: str, out_dir: Path | None = None, base_url: str | None = None,
                prune: bool = True) -> list[Path]:
     """Render all pages for a project; return list of written paths.
@@ -90,6 +286,8 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
     deleted pages do not linger as orphans on disk.
     """
     proj = load_project(Project(project).root)
+    # The CLI and build_all pass an explicit out_dir under the unified site root
+    # (site/<project>/); proj.site remains the fallback for direct callers.
     out  = out_dir if out_dir is not None else proj.site
     out.mkdir(parents=True, exist_ok=True)
     (out / "entities").mkdir(exist_ok=True)

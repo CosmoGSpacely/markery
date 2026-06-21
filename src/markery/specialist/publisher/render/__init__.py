@@ -57,6 +57,10 @@ from markery.specialist.publisher.render.aux import (
     render_timeline_page,
     render_search_page,
 )
+from markery.specialist.publisher.render.portal import (
+    render_portal,
+    render_root_search,
+)
 
 __all__ = [
     "render_landing",
@@ -72,5 +76,7 @@ __all__ = [
     "render_sources_page",
     "render_timeline_page",
     "render_search_page",
+    "render_portal",
+    "render_root_search",
     "build_link_index",
 ]

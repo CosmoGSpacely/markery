@@ -125,7 +125,7 @@ def render_match_essay(
     } if base_url else None
     (out_dir / "matches").mkdir(exist_ok=True)
     out_path = out_dir / "matches" / f"{slug}.html"
-    out_path.write_text(_page(_page_title(essay_title, project), body, nav, depth=1, og=og), encoding="utf-8")
+    out_path.write_text(_page(_page_title(essay_title, project), body, nav, project=project, project_title=project.replace('-', ' ').title(), depth=1, og=og), encoding="utf-8")
     return out_path
 
 
@@ -168,7 +168,7 @@ def render_thematic_essay(
     } if base_url else None
     (out_dir / "themes").mkdir(exist_ok=True)
     out_path = out_dir / "themes" / f"{slug}.html"
-    out_path.write_text(_page(_page_title(essay_title, project), body, nav, depth=1, og=og), encoding="utf-8")
+    out_path.write_text(_page(_page_title(essay_title, project), body, nav, project=project, project_title=project.replace('-', ' ').title(), depth=1, og=og), encoding="utf-8")
     return out_path
 
 
