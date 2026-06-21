@@ -180,3 +180,33 @@ class TestCardDetails:
         html = _render(tmp_path, trademarks=[])
         assert "empty-state" in html
         assert "No trademarks recorded" in html
+
+
+class TestVerticalTimeline:
+    def test_timeline_layout_rendered(self, tmp_path):
+        # SITE-REVIEW #4: cards sit in the left-rail vertical timeline layout.
+        html = _render(tmp_path)
+        assert 'class="timeline-layout"' in html
+        assert 'class="tl-row"' in html
+
+    def test_years_appear_oldest_first(self, tmp_path):
+        from datetime import date
+        marks = [
+            dict(_tm("71000002", "LATER",   "Goodyear", 1), filing_dt=date(1922, 6, 1)),
+            dict(_tm("71000001", "EARLIER", "Goodyear", 1), filing_dt=date(1911, 3, 1)),
+        ]
+        html = _render(tmp_path, trademarks=marks)
+        assert '<div class="tl-year">1911</div>' in html
+        assert '<div class="tl-year">1922</div>' in html
+        # Chronological top-to-bottom: 1911 precedes 1922 in the document.
+        assert html.index(">1911<") < html.index(">1922<")
+
+    def test_undated_marks_grouped_last(self, tmp_path):
+        from datetime import date
+        marks = [
+            dict(_tm("71000001", "DATED",   "Goodyear", 1), filing_dt=date(1911, 3, 1)),
+            dict(_tm("71000002", "NODATE",  "Goodyear", 1), filing_dt=None),
+        ]
+        html = _render(tmp_path, trademarks=marks)
+        assert "tl-year--undated" in html
+        assert html.index(">1911<") < html.index(">undated<")

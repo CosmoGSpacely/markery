@@ -5,7 +5,7 @@ from pathlib import Path
 from markery.common.project import Project
 from markery.specialist.publisher.render.components import (
     _esc, _img_src, _page, _nav_links,
-    _read_narrative, _narrative_block, _page_title, _timeline_svg,
+    _read_narrative, _narrative_block, _page_title, _timeline_layout,
     _STATUS_LABELS,
 )
 
@@ -29,8 +29,6 @@ def render_trademark_gallery(
     match_serials = {str(m["trademark_serial"]): m["slug"] for m in matches if m.get("essay_path")}
     focus_set = {str(s) for s in focus_serials} if focus_serials else None
     slug_by_id = {e["entity_id"]: e["slug"] for e in entities}
-
-    timeline = _timeline_svg(trademarks, "filing_dt", "mark_name", "entity_id", entity_colors)
 
     def _make_card(tm: dict, is_focus: bool = False) -> str:
         sn  = tm["serial_no"]
@@ -80,15 +78,15 @@ def render_trademark_gallery(
         other_tms = [tm for tm in trademarks if tm["serial_no"] not in focus_set]
         gallery_html = (
             f'<p class="section-title">Project Marks</p>'
-            f'<div class="card-grid">{"".join(_make_card(tm, True) for tm in focus_tms)}</div>'
+            + _timeline_layout(focus_tms, "filing_dt", lambda tm: _make_card(tm, True))
             + (f'<p class="section-title">All Entity Trademarks</p>'
-               f'<div class="card-grid">{"".join(_make_card(tm) for tm in other_tms)}</div>'
+               + _timeline_layout(other_tms, "filing_dt", _make_card)
                if other_tms else "")
         )
     elif trademarks:
         gallery_html = (
             f'<p class="section-title">All Marks</p>'
-            f'<div class="card-grid">{"".join(_make_card(tm) for tm in trademarks)}</div>'
+            + _timeline_layout(trademarks, "filing_dt", _make_card)
         )
     else:
         gallery_html = '<p class="empty-state">No trademarks recorded for this project yet.</p>'
@@ -109,7 +107,6 @@ def render_trademark_gallery(
         f'</div>'
         f'<div class="page-body">'
         f'{_narrative_block(narrative)}'
-        f'<div class="timeline-section"><p class="section-title">Filing Timeline</p>{timeline}</div>'
         f'{gallery_html}'
         f'</div>'
     )
@@ -143,10 +140,7 @@ def render_patent_gallery(
     match_patents = {m["patent_no"]: m["slug"] for m in matches if m.get("essay_path")}
     slug_by_id = {e["entity_id"]: e["slug"] for e in entities}
 
-    timeline = _timeline_svg(patents, "grant_dt", "title", "entity_id", entity_colors)
-
-    cards = []
-    for pat in patents:
+    def _make_card(pat: dict) -> str:
         pn  = pat["patent_no"]
         title_full = pat.get("title") or ""
         src = _img_src("patent", pn, 0, images_dir) if pat.get("figure_available") else None
@@ -176,7 +170,7 @@ def render_patent_gallery(
             if slug else f'<span class="entity-badge">{_esc(pat["entity_name"])}</span>'
         )
 
-        cards.append(
+        return (
             f'<div class="card" id="pat-{pn}">'
             f'{img_html}'
             f'<div class="card-body">'
@@ -203,10 +197,9 @@ def render_patent_gallery(
         f'</div>'
         f'<div class="page-body">'
         f'{_narrative_block(narrative)}'
-        f'<div class="timeline-section"><p class="section-title">Grant Timeline</p>{timeline}</div>'
         + (f'<p class="section-title">All Patents</p>'
-           f'<div class="card-grid">{"".join(cards)}</div>'
-           if cards else '<p class="empty-state">No patents recorded for this project yet.</p>')
+           + _timeline_layout(patents, "grant_dt", _make_card)
+           if patents else '<p class="empty-state">No patents recorded for this project yet.</p>')
         + f'</div>'
     )
 

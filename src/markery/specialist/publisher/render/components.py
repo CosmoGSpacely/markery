@@ -420,6 +420,40 @@ def _timeline_svg(records: list[dict], date_field: str, label_field: str,
     return "\n".join(svg)
 
 
+def _timeline_layout(records: list[dict], date_field: str,
+                     card_fn: "callable") -> str:
+    """Vertical scroll timeline: records grouped by year (oldest→newest) in a
+    left-rail layout, each year's cards in a grid to its right. Time advances as
+    the reader scrolls down. `card_fn(rec) -> str` renders one card.
+
+    Returns '' when there are no records (caller supplies the empty state).
+    """
+    from itertools import groupby
+
+    def _yr(r: dict) -> int | None:
+        return _year_from_dt(r.get(date_field))
+
+    dated   = sorted((r for r in records if _yr(r) is not None), key=_yr)
+    undated = [r for r in records if _yr(r) is None]
+
+    rows: list[str] = []
+    for year, group in groupby(dated, key=_yr):
+        cards = "".join(card_fn(r) for r in group)
+        rows.append(
+            f'<div class="tl-row"><div class="tl-year">{year}</div>'
+            f'<div class="tl-cards card-grid">{cards}</div></div>'
+        )
+    if undated:
+        cards = "".join(card_fn(r) for r in undated)
+        rows.append(
+            f'<div class="tl-row"><div class="tl-year tl-year--undated">undated</div>'
+            f'<div class="tl-cards card-grid">{cards}</div></div>'
+        )
+    if not rows:
+        return ""
+    return f'<div class="timeline-layout">{"".join(rows)}</div>'
+
+
 def _entity_color_map(entity_ids: list[int]) -> dict[int, str]:
     palette = ["#8b5e3c", "#5a7a3e", "#3e5a8b", "#7a3e5a", "#3e7a6b", "#7a6b3e"]
     return {eid: palette[i % len(palette)] for i, eid in enumerate(entity_ids)}

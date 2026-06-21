@@ -220,7 +220,9 @@ def get_patent_figure_bytes(patent_no: str) -> bytes | None:
     conn = duckdb.connect(str(DB["patents"]), read_only=True)
     try:
         row = conn.execute(
-            "SELECT figure_data FROM patent_figures WHERE patent_no = ? LIMIT 1", [patent_no]
+            "SELECT figure_data FROM patent_figures "
+            "WHERE patent_no = ? AND figure_data IS NOT NULL "
+            "ORDER BY figure_no LIMIT 1", [patent_no]
         ).fetchone()
     except Exception:
         row = None
@@ -245,7 +247,9 @@ def get_patent_figure_b64(patent_no: str) -> str | None:
     conn = duckdb.connect(str(DB["patents"]), read_only=True)
     try:
         row = conn.execute(
-            "SELECT figure_data FROM patent_figures WHERE patent_no = ? LIMIT 1", [patent_no]
+            "SELECT figure_data FROM patent_figures "
+            "WHERE patent_no = ? AND figure_data IS NOT NULL "
+            "ORDER BY figure_no LIMIT 1", [patent_no]
         ).fetchone()
     except Exception:
         row = None

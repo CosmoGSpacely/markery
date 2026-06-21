@@ -152,6 +152,49 @@ a:hover { color: #3a4656; }
 }
 .timeline-svg { width: 100%; overflow: visible; }
 
+/* ── Vertical scroll timeline (left rail + chronological card column) ── */
+.timeline-layout { position: relative; margin-bottom: 48px; }
+.timeline-layout::before {
+  content: "";
+  position: absolute;
+  top: 6px; bottom: 6px; left: 72px;
+  width: 2px;
+  background: #CBCBCB;
+}
+.tl-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.tl-row::before {
+  content: "";
+  position: absolute;
+  left: 67px; top: 5px;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: #6D8196;
+  border: 2px solid #FFFFE3;
+}
+.tl-year {
+  text-align: right;
+  padding-top: 1px;
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 1.05em;
+  color: #4A4A4A;
+}
+.tl-year--undated { color: #999; font-weight: normal; font-size: .85em; }
+.tl-cards { min-width: 0; }
+.tl-cards.card-grid { margin-bottom: 0; }
+@media (max-width: 560px) {
+  .timeline-layout::before { left: 48px; }
+  .tl-row { grid-template-columns: 48px 1fr; gap: 14px; }
+  .tl-row::before { left: 43px; }
+  .tl-year { font-size: .9em; }
+}
+
 /* ── Card grid ── */
 .section-title {
   font-size: 1em;

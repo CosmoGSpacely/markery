@@ -76,4 +76,9 @@ Implemented and verified against a rebuilt `precision-tools` site (`markery site
 - **#13** friendly empty-state copy for empty galleries and the Companies index (`galleries.py`, `landing.py`, `css.py`).
 - **#15** code fields labeled: "Drawing Code …" on trademark cards, "Class/Classes …" on patent cards (`galleries.py`).
 
-Remaining in P1 (not in this batch): **#3** patent lead-figure (#3 needs PATENT-side Figure-1 identification), **#4** vertical scroll timeline (larger redesign), **#11** clickable cards (needs a per-record detail page target), plus the broader responsive / semantic-landmark / SEO-metadata items and their tests.
+### Phase 24 P1 batch 2 (#3 figures, #4 vertical timeline)
+
+- **#3** patent lead-figure — publisher `get_patent_figure_b64`/`_bytes` now deterministically pick **Figure 1** (`ORDER BY figure_no`, non-null). The render already showed a figure when present; the real gap was missing data, so figures were fetched via `markery patent fetch precision-tools` (EPO OPS) — the project went from 0 → figures on its confirmed pairs and several others (DB now has 38 patents with figure data; 7 figures render in the precision-tools patent gallery, the rest fall back to the title).
+- **#4** vertical scroll timeline — replaced the inline horizontal SVG on both galleries with a **rail + chronological column** layout (`_timeline_layout` in `components.py`, styles in `css.py`): a sticky-feeling left rail with year labels and dots, cards grouped by year oldest→newest, undated grouped last. Time advances as the reader scrolls down. The standalone `timeline.html` page keeps its horizontal SVG.
+
+Remaining in P1: **#11** clickable cards (needs a per-record detail page target to link to), plus the broader **responsive / semantic-landmark / SEO-metadata** items (P1 step 5) and their tests. Note: trademark images are still absent for precision-tools (0 with images) — a data/enrichment matter, not a render gap.

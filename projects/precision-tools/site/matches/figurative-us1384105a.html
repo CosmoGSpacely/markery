@@ -152,6 +152,49 @@ a:hover { color: #3a4656; }
 }
 .timeline-svg { width: 100%; overflow: visible; }
 
+/* ── Vertical scroll timeline (left rail + chronological card column) ── */
+.timeline-layout { position: relative; margin-bottom: 48px; }
+.timeline-layout::before {
+  content: "";
+  position: absolute;
+  top: 6px; bottom: 6px; left: 72px;
+  width: 2px;
+  background: #CBCBCB;
+}
+.tl-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.tl-row::before {
+  content: "";
+  position: absolute;
+  left: 67px; top: 5px;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: #6D8196;
+  border: 2px solid #FFFFE3;
+}
+.tl-year {
+  text-align: right;
+  padding-top: 1px;
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 1.05em;
+  color: #4A4A4A;
+}
+.tl-year--undated { color: #999; font-weight: normal; font-size: .85em; }
+.tl-cards { min-width: 0; }
+.tl-cards.card-grid { margin-bottom: 0; }
+@media (max-width: 560px) {
+  .timeline-layout::before { left: 48px; }
+  .tl-row { grid-template-columns: 48px 1fr; gap: 14px; }
+  .tl-row::before { left: 43px; }
+  .tl-year { font-size: .9em; }
+}
+
 /* ── Card grid ── */
 .section-title {
   font-size: 1em;
@@ -430,7 +473,7 @@ blockquote p { margin: 0; }
 </head>
 <body>
 <header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html">Patents</a><a href="../entities/index.html">Companies</a><a href="../matches/index.html">Matches</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
-<nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="../index.html">Home</a></li><li><a href="index.html">Matches</a></li><li aria-current="page">(figurative) ↔ US1384105A</li></ol></nav><div class="page-header"><h1>(figurative) ↔ US1384105A</h1><div class="subtitle">Confirmed patent-trademark pair · Precision Tools</div><div class="stat-chips"><span class="chip"><a href="../entities/ls-starrett-company.html">Filed by: L.S. Starrett Company</a></span><span class="chip">Patent 1921-07-12</span><span class="chip">Mark filed 1923-08-29</span></div></div><div class="page-body"><div class="essay"><h2>Primary Sources</h2>
+<nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="../index.html">Home</a></li><li><a href="index.html">Matches</a></li><li aria-current="page">(figurative) ↔ US1384105A</li></ol></nav><div class="page-header"><h1>(figurative) ↔ US1384105A</h1><div class="subtitle">Confirmed patent-trademark pair · Precision Tools</div><div class="stat-chips"><span class="chip"><a href="../entities/ls-starrett-company.html">Filed by: L.S. Starrett Company</a></span><span class="chip">Patent 1921-07-12</span><span class="chip">Mark filed 1923-08-29</span></div></div><div class="page-body"><div class="essay"><div class="essay-media"><div><img src="../images/patents/US1384105A.png" alt="US1384105A"><div class="media-label">US1384105A · Patent figure</div></div></div><h2>Primary Sources</h2>
 <ul>
 <li>USPTO Trademark Serial No. 71185153 — <a href="https://tsdr.uspto.gov/#caseNumber=71185153&caseType=SERIAL_NO&searchType=statusSearch" target="_blank" rel="noopener">(figurative)</a></li>
 </ul>
@@ -466,7 +509,8 @@ By the early 1920s the L.S. Starrett Company (founded 1880) was an established A
 <h2>Significance</h2>
 <p>
 With the largest date gap of the three pairs, this case is the clearest reminder that co-ownership plus rough contemporaneity is not the same as a product-patent link. It earns its place in the project as an owner-and-era correspondence within Starrett's precision-tool catalog — and as a demonstration that the honest reading depends on the goods record, not on the suggestive alignment of dates. 
-</p><div class="sources"><h2>Primary Sources</h2><dl><dt>Trademark</dt><dd>Serial No. 71185153 · (figurative) · Filed 1923-08-29</dd><dt>Patent</dt><dd>US1384105A · Fine-Adjustment Bevel-Protractor And The Like · Granted 1921-07-12</dd></dl></div></div></div>
+</p>
+<figure class="patent-figure"><img src="../images/patents/US1384105A.png" alt="Patent drawing: US1384105A"><figcaption>Patent drawing: US1384105A</figcaption></figure><div class="sources"><h2>Primary Sources</h2><dl><dt>Trademark</dt><dd>Serial No. 71185153 · (figurative) · Filed 1923-08-29</dd><dt>Patent</dt><dd>US1384105A · Fine-Adjustment Bevel-Protractor And The Like · Granted 1921-07-12</dd></dl></div></div></div>
 <footer class="site-footer">History of commerce and technology is built by <a href="https://github.com/CosmoGSpacely/markery">Markery</a>. Copyright 2026 <a href="https://guildproducts.com">Guild Products</a>.</footer>
 </body>
 </html>
