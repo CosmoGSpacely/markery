@@ -158,6 +158,12 @@ class TestCardDetails:
         html = _render(tmp_path)
         assert '<a class="entity-badge" href="entities/goodyear.html">Goodyear</a>' in html
 
+    def test_card_image_and_title_link_to_detail_page(self, tmp_path):
+        # SITE-REVIEW #11: the card image and title link to the per-mark detail page.
+        html = _render(tmp_path)
+        assert '<a class="card-image-link" href="trademarks/71273695.html">' in html
+        assert '<div class="card-name"><a href="trademarks/71273695.html">EAGLE</a></div>' in html
+
     def test_drawing_code_labeled(self, tmp_path):
         # SITE-REVIEW #15: the drawing code carries an explicit label.
         marks = [dict(_tm("71273695", "EAGLE", "Goodyear", 1), draw_cd="5T07")]

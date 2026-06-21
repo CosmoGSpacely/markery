@@ -32,13 +32,15 @@ def render_trademark_gallery(
 
     def _make_card(tm: dict, is_focus: bool = False) -> str:
         sn  = tm["serial_no"]
+        detail_url = f"trademarks/{sn}.html"
         src = _img_src("mark", sn, 0, images_dir) if tm.get("image_available") else None
         if src:
-            img_html = f'<img class="card-image" loading="lazy" src="{src}" alt="{_esc(tm["mark_name"])}">'
+            inner = f'<img class="card-image" loading="lazy" src="{src}" alt="{_esc(tm["mark_name"])}">'
         else:
             # No image: fall back to the word mark, not the (meaningless) serial number.
             word_mark = tm["mark_name"] or "(design mark)"
-            img_html = f'<div class="card-image-placeholder">{_esc(word_mark)}</div>'
+            inner = f'<div class="card-image-placeholder">{_esc(word_mark)}</div>'
+        img_html = f'<a class="card-image-link" href="{detail_url}">{inner}</a>'
 
         match_slug = match_serials.get(sn)
         match_html = (f'<a class="match-link" href="matches/{match_slug}.html">Confirmed pair →</a>'
@@ -63,7 +65,7 @@ def render_trademark_gallery(
             f'<div class="{card_class}" id="sn-{sn}">'
             f'{img_html}'
             f'<div class="card-body">'
-            f'<div class="card-name">{_esc(tm["mark_name"] or "(design mark)")}</div>'
+            f'<div class="card-name"><a href="{detail_url}">{_esc(tm["mark_name"] or "(design mark)")}</a></div>'
             f'<div class="card-meta">Filed {_esc(filing)} · {_esc(status)}</div>'
             f'{entity_badge}'
             f'{focus_badge}'
@@ -142,19 +144,21 @@ def render_patent_gallery(
 
     def _make_card(pat: dict) -> str:
         pn  = pat["patent_no"]
+        detail_url = f"patents/{pn}.html"
         title_full = pat.get("title") or ""
         src = _img_src("patent", pn, 0, images_dir) if pat.get("figure_available") else None
         if src:
-            img_html = f'<img class="card-image" loading="lazy" src="{src}" alt="{_esc(title_full or pn)}">'
+            inner = f'<img class="card-image" loading="lazy" src="{src}" alt="{_esc(title_full or pn)}">'
         else:
             # No figure: fall back to the patent title, not the bare patent number.
-            img_html = f'<div class="card-image-placeholder">{_esc(title_full or pn)}</div>'
+            inner = f'<div class="card-image-placeholder">{_esc(title_full or pn)}</div>'
+        img_html = f'<a class="card-image-link" href="{detail_url}">{inner}</a>'
 
         match_slug = match_patents.get(pn)
         match_html = (f'<a class="match-link" href="matches/{match_slug}.html">Confirmed pair →</a>'
                       if match_slug else "")
 
-        grant = pat["grant_dt"].strftime("%Y") if pat["grant_dt"] else ""
+        grant = pat["grant_dt"].strftime("%B %d, %Y") if pat["grant_dt"] else ""
         inventors_full = ", ".join(pat["inventors"])
         inventors = ", ".join(pat["inventors"][:2]) + ("…" if len(pat["inventors"]) > 2 else "")
         inv_attr = f' title="{_esc(inventors_full)}"' if inventors_full else ""
@@ -174,7 +178,7 @@ def render_patent_gallery(
             f'<div class="card" id="pat-{pn}">'
             f'{img_html}'
             f'<div class="card-body">'
-            f'<div class="card-name"{title_attr}>{_esc(title)}</div>'
+            f'<div class="card-name"{title_attr}><a href="{detail_url}">{_esc(title)}</a></div>'
             f'<div class="card-meta">{_esc(pn)} · Granted {_esc(grant)}</div>'
             f'{entity_badge}'
             f'<div class="card-goods"{inv_attr}>{_esc(inventors)}</div>'

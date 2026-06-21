@@ -95,6 +95,8 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
     (out / "entities").mkdir(exist_ok=True)
     (out / "matches").mkdir(exist_ok=True)
     (out / "themes").mkdir(exist_ok=True)
+    (out / "trademarks").mkdir(exist_ok=True)
+    (out / "patents").mkdir(exist_ok=True)
 
     focus_serials: set[int] | None = set(proj.focus_serials) if proj.focus_serials else None
     rq_path = proj.content / "research-question.md"
@@ -169,6 +171,32 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
         images_dir=images_dir,
     ))
     print(f"  patent gallery   → {pages[-1].name}")
+
+    for tm in trademarks:
+        p = r.render_trademark_detail(
+            project, tm, entities, matches, out,
+            base_url=base_url, link_index=link_index, extra_nav=extra_nav,
+            images_dir=images_dir,
+        )
+        pages.append(p)
+        search_records.append(_build_search_record(
+            tm["mark_name"] or "(design mark)", "trademark",
+            f"trademarks/{tm['serial_no']}.html", None,
+        ))
+    print(f"  trademark detail → {len(trademarks)} page(s)")
+
+    for pat in patents:
+        p = r.render_patent_detail(
+            project, pat, entities, matches, out,
+            base_url=base_url, link_index=link_index, extra_nav=extra_nav,
+            images_dir=images_dir,
+        )
+        pages.append(p)
+        search_records.append(_build_search_record(
+            pat.get("title") or pat["patent_no"], "patent",
+            f"patents/{pat['patent_no']}.html", None,
+        ))
+    print(f"  patent detail    → {len(patents)} page(s)")
 
     pages.append(r.render_entities_index(
         project, entities, stats, out,

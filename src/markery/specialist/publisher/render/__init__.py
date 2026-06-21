@@ -44,6 +44,10 @@ from markery.specialist.publisher.render.galleries import (
     render_patent_gallery,
 )
 from markery.specialist.publisher.render.entity import render_entity_page
+from markery.specialist.publisher.render.detail import (
+    render_trademark_detail,
+    render_patent_detail,
+)
 from markery.specialist.publisher.render.essays import (
     render_match_essay,
     render_thematic_essay,
@@ -61,6 +65,8 @@ __all__ = [
     "render_trademark_gallery",
     "render_patent_gallery",
     "render_entity_page",
+    "render_trademark_detail",
+    "render_patent_detail",
     "render_match_essay",
     "render_thematic_essay",
     "render_sources_page",

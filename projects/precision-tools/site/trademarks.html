@@ -26,6 +26,9 @@ a:hover { color: #3a4656; }
   display: flex;
   align-items: baseline;
   gap: 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 .site-header .site-title {
   font-size: 1.1em;
@@ -157,41 +160,45 @@ a:hover { color: #3a4656; }
 .timeline-layout::before {
   content: "";
   position: absolute;
-  top: 6px; bottom: 6px; left: 72px;
+  top: 8px; bottom: 8px; left: 64px;
   width: 2px;
   background: #CBCBCB;
 }
 .tl-row {
-  position: relative;
   display: grid;
-  grid-template-columns: 72px 1fr;
-  gap: 24px;
+  grid-template-columns: 64px 1fr;
+  gap: 28px;
   margin-bottom: 28px;
 }
-.tl-row::before {
+/* The year marker sticks to the top of the viewport while its cards scroll past,
+   so it reads as a moving point on the rail — time advancing as you scroll. */
+.tl-year {
+  position: sticky;
+  top: 72px;
+  align-self: start;
+  text-align: right;
+  line-height: 1.3;
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 1em;
+  color: #4A4A4A;
+}
+.tl-year::after {
   content: "";
   position: absolute;
-  left: 67px; top: 5px;
+  right: -7px; top: 4px;
   width: 11px; height: 11px;
   border-radius: 50%;
   background: #6D8196;
   border: 2px solid #FFFFE3;
 }
-.tl-year {
-  text-align: right;
-  padding-top: 1px;
-  font-family: monospace;
-  font-weight: bold;
-  font-size: 1.05em;
-  color: #4A4A4A;
-}
 .tl-year--undated { color: #999; font-weight: normal; font-size: .85em; }
+.tl-year--undated::after { background: #CBCBCB; }
 .tl-cards { min-width: 0; }
 .tl-cards.card-grid { margin-bottom: 0; }
 @media (max-width: 560px) {
-  .timeline-layout::before { left: 48px; }
-  .tl-row { grid-template-columns: 48px 1fr; gap: 14px; }
-  .tl-row::before { left: 43px; }
+  .timeline-layout::before { left: 44px; }
+  .tl-row { grid-template-columns: 44px 1fr; gap: 16px; }
   .tl-year { font-size: .9em; }
 }
 
@@ -298,13 +305,21 @@ a.entity-badge:hover { background: #6D8196; color: #FFFFE3; }
   display: inline-block;
   background: #6D8196;
   color: #FFFFE3;
-  font-size: .68em;
-  padding: 2px 8px;
-  border-radius: 3px;
+  font-size: .8em;
+  font-weight: bold;
+  padding: 5px 12px;
+  border-radius: 4px;
   text-decoration: none;
-  margin-top: 4px;
+  margin-top: 8px;
+  letter-spacing: .02em;
 }
 .match-link:hover { background: #56697d; color: #FFFFE3; }
+.match-link--lg { font-size: .95em; padding: 9px 18px; margin-top: 14px; }
+
+/* Card image and title link to the per-record detail page (SITE-REVIEW #11). */
+.card-image-link { display: block; }
+.card-name a { color: inherit; text-decoration: none; }
+.card-name a:hover { color: #4F6076; text-decoration: underline; }
 
 /* ── Entity grid ── */
 .entity-grid {
@@ -462,6 +477,49 @@ blockquote p { margin: 0; }
 /* ── Small chip (inline stat tags) ── */
 .chip-sm { font-size: .75em; background: #CBCBCB; border-radius: 3px; padding: 1px 6px; color: #4A4A4A; white-space: nowrap; }
 
+/* ── Per-record detail page (one trademark / one patent) ── */
+.detail-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+.detail-media { position: sticky; top: 72px; }
+.detail-image {
+  width: 100%;
+  object-fit: contain;
+  background: #FBFBF0;
+  border: 1px solid #CBCBCB;
+  border-radius: 4px;
+  display: block;
+}
+.detail-image-placeholder {
+  width: 100%;
+  min-height: 220px;
+  background: #ECECDF;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  color: #777;
+  font-weight: bold;
+}
+.detail-media .match-link { display: block; text-align: center; }
+.detail-fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 20px;
+  font-size: .92em;
+}
+.detail-fields dt { font-weight: bold; color: #555; }
+.detail-fields dd { margin: 0; }
+@media (max-width: 640px) {
+  .detail-layout { grid-template-columns: 1fr; }
+  .detail-media { position: static; }
+}
+
 /* ── Site footer ── */
 .site-footer {
   margin-top: 48px; padding: 20px 24px; border-top: 1px solid #CBCBCB;
@@ -473,7 +531,7 @@ blockquote p { margin: 0; }
 </head>
 <body>
 <header class="site-header"><a class="site-title" href="index.html">Markery Research</a><nav><a href="trademarks.html" class="active" aria-current="page">Trademarks</a><a href="patents.html">Patents</a><a href="entities/index.html">Companies</a><a href="matches/index.html">Matches</a><a href="search.html">Search</a></nav><form class="site-search" action="search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
-<div class="page-header"><h1>Trademark Gallery</h1><div class="subtitle">Precision Tools</div><div class="stat-chips"><span class="chip">11 marks</span><span class="chip">0 with images</span><span class="chip">1 confirmed pairs</span></div></div><div class="page-body"><p class="section-title">All Marks</p><div class="timeline-layout"><div class="tl-row"><div class="tl-year">1911</div><div class="tl-cards card-grid"><div class="card" id="sn-71056841"><div class="card-image-placeholder">STARRETT</div><div class="card-body"><div class="card-name">STARRETT</div><div class="card-meta">Filed June 05, 1911 · Registered</div><a class="entity-badge" href="entities/ls-starrett-company.html">L.S. Starrett Company</a><div class="card-goods" title="BALL POINTS, BRAD SETS, TOOL MAKERS' BUTTONS, CENTER PUNCHES, CLAMPS, COUNTERSINKS, CUT-NIPPERS, DRILL BLOCKS, HACK SAWS AND FRAMES, NAIL SETS, PIN VISES, ATTACHMENTS FOR WRENCH JAWS FOR HOLDING PIPES, PLUMB BOMBS, PLIERS, SAWS, SCRAPERS, SCREW DRIVERS, SCRIBERS, STRAIGHT EDGES, TAP WRENCHES, TRAMMELS, VISES AND WRENCHES">BALL POINTS, BRAD SETS, TOOL MAKERS' BUTTONS, CENTER PUNCHES, CLAMPS, COUNTERSINKS, CUT-NIPPERS, DRILL BLOCKS, HACK SAWS…</div><div class="card-footer">71056841 · Drawing Code 1000</div></div></div><div class="card" id="sn-71059640"><div class="card-image-placeholder">STARRETT</div><div class="card-body"><div class="card-name">STARRETT</div><div class="card-meta">Filed November 10, 1911 · Registered</div><a class="entity-badge" href="entities/ls-starrett-company.html">L.S. Starrett Company</a><div class="card-goods" title="BEVELS, CALIPERS, DIVIDERS, CENTER TESTERS, GAGES, INCLINOMETERS, MICROMETERS, MICROMETER STANDS, PARALLELS, PROTRACTORS, STEEL RULES, SECTION LINERS, SPEED INDICATORS, SQUARES, TEST INDICATORS, TRANSITS, TAPE MEASURES, AND COMBINATION SQUARES AND BEVELS">BEVELS, CALIPERS, DIVIDERS, CENTER TESTERS, GAGES, INCLINOMETERS, MICROMETERS, MICROMETER STANDS, PARALLELS, PROTRACTORS…</div><div class="card-footer">71059640 · Drawing Code 1000</div></div></div></div></div><div class="tl-row"><div class="tl-year">1917</div><div class="tl-cards card-grid"><div class="card" id="sn-71102517"><div class="card-image-placeholder">IDEAL</div><div class="card-body"><div class="card-name">IDEAL</div><div class="card-meta">Filed March 28, 1917 · Registered</div><a class="entity-badge" href="entities/illinois-tool-works.html">Illinois Tool Works</a><div class="card-goods" title="STENCIL-CUTTING MACHINES">STENCIL-CUTTING MACHINES</div><div class="card-footer">71102517 · Drawing Code 5T07</div></div></div></div></div><div class="tl-row"><div class="tl-year">1919</div><div class="tl-cards card-grid"><div class="card" id="sn-71115920"><div class="card-image-placeholder">LAST WORD</div><div class="card-body"><div class="card-name">LAST WORD</div><div class="card-meta">Filed February 17, 1919 · Registered</div><a class="entity-badge" href="entities/ls-starrett-company.html">L.S. Starrett Company</a><div class="card-goods" title="MACHINISTS' AND TOOL-MAKERS' TEST-INDICATORS">MACHINISTS' AND TOOL-MAKERS' TEST-INDICATORS</div><div class="card-footer">71115920 · Drawing Code 5S09</div></div></div></div></div><div class="tl-row"><div class="tl-year">1922</div><div class="tl-cards card-grid"><div class="card" id="sn-71161177"><div class="card-image-placeholder">DE VILBISS</div><div class="card-body"><div class="card-name">DE VILBISS</div><div class="card-meta">Filed March 24, 1922 · Registered</div><a class="entity-badge" href="entities/illinois-tool-works.html">Illinois Tool Works</a><div class="card-goods" title="Compressed-Air Spraying Machines for Applying Paints, Varnishes, Lacquer, Enamels, and the Like, and Parts Thereof, and Air-Operated Agitators, Hose Cleaners, Air-Regulating Devices, Air-Washing Devices, Exhaust Fans and Hoods Used Therewith, Turntables, and Power-Driven Air-Compressing Outfits (Portable and Stationary) for Use in Connection with Such Machines">Compressed-Air Spraying Machines for Applying Paints, Varnishes, Lacquer, Enamels, and the Like, and Parts Thereof, and …</div><div class="card-footer">71161177 · Drawing Code 5000</div></div></div></div></div><div class="tl-row"><div class="tl-year">1923</div><div class="tl-cards card-grid"><div class="card" id="sn-71176789"><div class="card-image-placeholder">&quot;DYKEM&quot;</div><div class="card-body"><div class="card-name">&quot;DYKEM&quot;</div><div class="card-meta">Filed March 01, 1923 · Registered</div><a class="entity-badge" href="entities/illinois-tool-works.html">Illinois Tool Works</a><div class="card-goods" title="Coal-Tar Dyes, Colors, and Intermediates">Coal-Tar Dyes, Colors, and Intermediates</div><div class="card-footer">71176789 · Drawing Code 1000</div></div></div><div class="card" id="sn-71185152"><div class="card-image-placeholder">(design mark)</div><div class="card-body"><div class="card-name">(design mark)</div><div class="card-meta">Filed August 29, 1923 · Expired</div><a class="entity-badge" href="entities/ls-starrett-company.html">L.S. Starrett Company</a><div class="card-goods" title="BEVELS, CALIPERS, DIVIDERS, CENTER TESTERS, BENCH MICROMETER GAUGES, BUTTON GAUGES, CALIPER GAUGES, CENTER GAUGES, CIRCUMFERENCE GAUGES, DEPTH GAUGES, DRILL GAUGES, TAP AND WIRE GAUGES, END-MEASURING GAUGES, ENGINEERS' GAUGES, FILLET OR RADIUS GAUGES, HEIGHT-GAUGE ATTACHMENTS, VERNIER HEIGHT GAUGES, HUB GAUGES, INSIDE GAUGES,INSPECTOR'S GAUGES, MICROMETER-CALIPERS GAUGES, PAPER GAUGES, PLANER AND SHAPER GAUGES, SCRATCH GAUGES, SCREW PITCH GAUGES, SOLE GAUGES, STAIR GAUGES, SURFACE GAUGES, TAPER GAUGES, TELESCOPING GAUGES, SPRING DEPTH GAUGES, DIAL-SHEET GAUGES, THICKNESS OR FEELER GAUGES, WIRE GAUGES, 29D SCREW-THREAD GAUGES, ROLLING-MILL GAUGES, AND PROTRACTOR AND DEPTH GAUGES, INCLINOMETERS, MICROMETERS, MICROMETER STANDS, PARALLELS, PROTRACTORS, STEEL RULES, SECTION LINERS, SPEED INDICATORS, SQUARES, TEST INDICATORS, TRANSITS, TAPE MEASURES, COMBINATION SQUARES AND BEVELS, BALL POINTS, TOOL-MAKERS' BUTTONS, PLUMB BOBS, STRAIGHTEDGES, AND TRAMMELS">BEVELS, CALIPERS, DIVIDERS, CENTER TESTERS, BENCH MICROMETER GAUGES, BUTTON GAUGES, CALIPER GAUGES, CENTER GAUGES, CIRCU…</div><div class="card-footer">71185152 · Drawing Code 5W23</div></div></div><div class="card" id="sn-71185153"><div class="card-image-placeholder">(design mark)</div><div class="card-body"><div class="card-name">(design mark)</div><div class="card-meta">Filed August 29, 1923 · Expired</div><a class="entity-badge" href="entities/ls-starrett-company.html">L.S. Starrett Company</a><div class="card-goods" title="BRAD SETS, CENTER PUNCHES, CLAMPS, COUNTERSINKS, CUT NIPPERS, DRILL BLOCKS, HACK SAWS AND FRAMES, NAIL SETS, PIN VISES, ATTACHMENTS FOR WRENCH JAWS FOR HOLDING PIPES, PLIERS, SAWS,SCRAPERS, SCREW DRIVERS, SCRIBERS, TAP WRENCHES, VISES, AND WRENCHES">BRAD SETS, CENTER PUNCHES, CLAMPS, COUNTERSINKS, CUT NIPPERS, DRILL BLOCKS, HACK SAWS AND FRAMES, NAIL SETS, PIN VISES, …</div><a class="match-link" href="matches/figurative-us1384105a.html">Confirmed pair →</a><div class="card-footer">71185153 · Drawing Code 2000</div></div></div></div></div><div class="tl-row"><div class="tl-year">1933</div><div class="tl-cards card-grid"><div class="card" id="sn-71336019"><div class="card-image-placeholder">INDIAN HEAD</div><div class="card-body"><div class="card-name">INDIAN HEAD</div><div class="card-meta">Filed March 23, 1933 · Registered</div><a class="entity-badge" href="entities/illinois-tool-works.html">Illinois Tool Works</a><div class="card-goods" title="GASKET SHELLAC COMPOUND">GASKET SHELLAC COMPOUND</div><div class="card-footer">71336019 · Drawing Code 3U20</div></div></div></div></div><div class="tl-row"><div class="tl-year">1937</div><div class="tl-cards card-grid"><div class="card" id="sn-71389684"><div class="card-image-placeholder">ILLINITE</div><div class="card-body"><div class="card-name">ILLINITE</div><div class="card-meta">Filed March 05, 1937 · Expired</div><a class="entity-badge" href="entities/illinois-tool-works.html">Illinois Tool Works</a><div class="card-goods" title="CUTTING TOOLS IN CONNECTION WITH MACHINE TOOLS, TOOL BITS IN CONNECTION WITH MACHINE TOOLS, MILLING CUTTERS, PLANER TOOLS, DRAWING AND EXTRUDING DIES, AND FRICTION RESISTING PARTS OF MACHINERY SUCH AS BEARING SURFACES IN GENERAL">CUTTING TOOLS IN CONNECTION WITH MACHINE TOOLS, TOOL BITS IN CONNECTION WITH MACHINE TOOLS, MILLING CUTTERS, PLANER TOOL…</div><div class="card-footer">71389684 · Drawing Code 5000</div></div></div></div></div><div class="tl-row"><div class="tl-year">1938</div><div class="tl-cards card-grid"><div class="card" id="sn-71411127"><div class="card-image-placeholder">MAGNAFLUX</div><div class="card-body"><div class="card-name">MAGNAFLUX</div><div class="card-meta">Filed September 30, 1938 · Registered</div><a class="entity-badge" href="entities/illinois-tool-works.html">Illinois Tool Works</a><div class="card-goods" title="ELECTRICAL APPARATUS FOR MAGNETIC TESTING OF METAL ARTICLES">ELECTRICAL APPARATUS FOR MAGNETIC TESTING OF METAL ARTICLES</div><div class="card-footer">71411127 · Drawing Code 5W23</div></div></div></div></div></div></div>
+<div class="page-header"><h1>Trademark Gallery</h1><div class="subtitle">Precision Tools</div><div class="stat-chips"><span class="chip">11 marks</span><span class="chip">11 with images</span><span class="chip">1 confirmed pairs</span></div></div><div class="page-body"><p class="section-title">All Marks</p><div class="timeline-layout"><div class="tl-row"><div class="tl-year">1911</div><div class="tl-cards card-grid"><div class="card" id="sn-71056841"><a class="card-image-link" href="trademarks/71056841.html"><img class="card-image" loading="lazy" src="images/marks/71056841.png" alt="STARRETT"></a><div class="card-body"><div class="card-name"><a href="trademarks/71056841.html">STARRETT</a></div><div class="card-meta">Filed June 05, 1911 · Registered</div><a class="entity-badge" href="entities/ls-starrett-company.html">L.S. Starrett Company</a><div class="card-goods" title="BALL POINTS, BRAD SETS, TOOL MAKERS' BUTTONS, CENTER PUNCHES, CLAMPS, COUNTERSINKS, CUT-NIPPERS, DRILL BLOCKS, HACK SAWS AND FRAMES, NAIL SETS, PIN VISES, ATTACHMENTS FOR WRENCH JAWS FOR HOLDING PIPES, PLUMB BOMBS, PLIERS, SAWS, SCRAPERS, SCREW DRIVERS, SCRIBERS, STRAIGHT EDGES, TAP WRENCHES, TRAMMELS, VISES AND WRENCHES">BALL POINTS, BRAD SETS, TOOL MAKERS' BUTTONS, CENTER PUNCHES, CLAMPS, COUNTERSINKS, CUT-NIPPERS, DRILL BLOCKS, HACK SAWS…</div><div class="card-footer">71056841 · Drawing Code 1000</div></div></div><div class="card" id="sn-71059640"><a class="card-image-link" href="trademarks/71059640.html"><img class="card-image" loading="lazy" src="images/marks/71059640.png" alt="STARRETT"></a><div class="card-body"><div class="card-name"><a href="trademarks/71059640.html">STARRETT</a></div><div class="card-meta">Filed November 10, 1911 · Registered</div><a class="entity-badge" href="entities/ls-starrett-company.html">L.S. Starrett Company</a><div class="card-goods" title="BEVELS, CALIPERS, DIVIDERS, CENTER TESTERS, GAGES, INCLINOMETERS, MICROMETERS, MICROMETER STANDS, PARALLELS, PROTRACTORS, STEEL RULES, SECTION LINERS, SPEED INDICATORS, SQUARES, TEST INDICATORS, TRANSITS, TAPE MEASURES, AND COMBINATION SQUARES AND BEVELS">BEVELS, CALIPERS, DIVIDERS, CENTER TESTERS, GAGES, INCLINOMETERS, MICROMETERS, MICROMETER STANDS, PARALLELS, PROTRACTORS…</div><div class="card-footer">71059640 · Drawing Code 1000</div></div></div></div></div><div class="tl-row"><div class="tl-year">1917</div><div class="tl-cards card-grid"><div class="card" id="sn-71102517"><a class="card-image-link" href="trademarks/71102517.html"><img class="card-image" loading="lazy" src="images/marks/71102517.png" alt="IDEAL"></a><div class="card-body"><div class="card-name"><a href="trademarks/71102517.html">IDEAL</a></div><div class="card-meta">Filed March 28, 1917 · Registered</div><a class="entity-badge" href="entities/illinois-tool-works.html">Illinois Tool Works</a><div class="card-goods" title="STENCIL-CUTTING MACHINES">STENCIL-CUTTING MACHINES</div><div class="card-footer">71102517 · Drawing Code 5T07</div></div></div></div></div><div class="tl-row"><div class="tl-year">1919</div><div class="tl-cards card-grid"><div class="card" id="sn-71115920"><a class="card-image-link" href="trademarks/71115920.html"><img class="card-image" loading="lazy" src="images/marks/71115920.png" alt="LAST WORD"></a><div class="card-body"><div class="card-name"><a href="trademarks/71115920.html">LAST WORD</a></div><div class="card-meta">Filed February 17, 1919 · Registered</div><a class="entity-badge" href="entities/ls-starrett-company.html">L.S. Starrett Company</a><div class="card-goods" title="MACHINISTS' AND TOOL-MAKERS' TEST-INDICATORS">MACHINISTS' AND TOOL-MAKERS' TEST-INDICATORS</div><div class="card-footer">71115920 · Drawing Code 5S09</div></div></div></div></div><div class="tl-row"><div class="tl-year">1922</div><div class="tl-cards card-grid"><div class="card" id="sn-71161177"><a class="card-image-link" href="trademarks/71161177.html"><img class="card-image" loading="lazy" src="images/marks/71161177.png" alt="DE VILBISS"></a><div class="card-body"><div class="card-name"><a href="trademarks/71161177.html">DE VILBISS</a></div><div class="card-meta">Filed March 24, 1922 · Registered</div><a class="entity-badge" href="entities/illinois-tool-works.html">Illinois Tool Works</a><div class="card-goods" title="Compressed-Air Spraying Machines for Applying Paints, Varnishes, Lacquer, Enamels, and the Like, and Parts Thereof, and Air-Operated Agitators, Hose Cleaners, Air-Regulating Devices, Air-Washing Devices, Exhaust Fans and Hoods Used Therewith, Turntables, and Power-Driven Air-Compressing Outfits (Portable and Stationary) for Use in Connection with Such Machines">Compressed-Air Spraying Machines for Applying Paints, Varnishes, Lacquer, Enamels, and the Like, and Parts Thereof, and …</div><div class="card-footer">71161177 · Drawing Code 5000</div></div></div></div></div><div class="tl-row"><div class="tl-year">1923</div><div class="tl-cards card-grid"><div class="card" id="sn-71176789"><a class="card-image-link" href="trademarks/71176789.html"><img class="card-image" loading="lazy" src="images/marks/71176789.png" alt="&quot;DYKEM&quot;"></a><div class="card-body"><div class="card-name"><a href="trademarks/71176789.html">&quot;DYKEM&quot;</a></div><div class="card-meta">Filed March 01, 1923 · Registered</div><a class="entity-badge" href="entities/illinois-tool-works.html">Illinois Tool Works</a><div class="card-goods" title="Coal-Tar Dyes, Colors, and Intermediates">Coal-Tar Dyes, Colors, and Intermediates</div><div class="card-footer">71176789 · Drawing Code 1000</div></div></div><div class="card" id="sn-71185152"><a class="card-image-link" href="trademarks/71185152.html"><img class="card-image" loading="lazy" src="images/marks/71185152.png" alt=""></a><div class="card-body"><div class="card-name"><a href="trademarks/71185152.html">(design mark)</a></div><div class="card-meta">Filed August 29, 1923 · Expired</div><a class="entity-badge" href="entities/ls-starrett-company.html">L.S. Starrett Company</a><div class="card-goods" title="BEVELS, CALIPERS, DIVIDERS, CENTER TESTERS, BENCH MICROMETER GAUGES, BUTTON GAUGES, CALIPER GAUGES, CENTER GAUGES, CIRCUMFERENCE GAUGES, DEPTH GAUGES, DRILL GAUGES, TAP AND WIRE GAUGES, END-MEASURING GAUGES, ENGINEERS' GAUGES, FILLET OR RADIUS GAUGES, HEIGHT-GAUGE ATTACHMENTS, VERNIER HEIGHT GAUGES, HUB GAUGES, INSIDE GAUGES,INSPECTOR'S GAUGES, MICROMETER-CALIPERS GAUGES, PAPER GAUGES, PLANER AND SHAPER GAUGES, SCRATCH GAUGES, SCREW PITCH GAUGES, SOLE GAUGES, STAIR GAUGES, SURFACE GAUGES, TAPER GAUGES, TELESCOPING GAUGES, SPRING DEPTH GAUGES, DIAL-SHEET GAUGES, THICKNESS OR FEELER GAUGES, WIRE GAUGES, 29D SCREW-THREAD GAUGES, ROLLING-MILL GAUGES, AND PROTRACTOR AND DEPTH GAUGES, INCLINOMETERS, MICROMETERS, MICROMETER STANDS, PARALLELS, PROTRACTORS, STEEL RULES, SECTION LINERS, SPEED INDICATORS, SQUARES, TEST INDICATORS, TRANSITS, TAPE MEASURES, COMBINATION SQUARES AND BEVELS, BALL POINTS, TOOL-MAKERS' BUTTONS, PLUMB BOBS, STRAIGHTEDGES, AND TRAMMELS">BEVELS, CALIPERS, DIVIDERS, CENTER TESTERS, BENCH MICROMETER GAUGES, BUTTON GAUGES, CALIPER GAUGES, CENTER GAUGES, CIRCU…</div><div class="card-footer">71185152 · Drawing Code 5W23</div></div></div><div class="card" id="sn-71185153"><a class="card-image-link" href="trademarks/71185153.html"><img class="card-image" loading="lazy" src="images/marks/71185153.png" alt=""></a><div class="card-body"><div class="card-name"><a href="trademarks/71185153.html">(design mark)</a></div><div class="card-meta">Filed August 29, 1923 · Expired</div><a class="entity-badge" href="entities/ls-starrett-company.html">L.S. Starrett Company</a><div class="card-goods" title="BRAD SETS, CENTER PUNCHES, CLAMPS, COUNTERSINKS, CUT NIPPERS, DRILL BLOCKS, HACK SAWS AND FRAMES, NAIL SETS, PIN VISES, ATTACHMENTS FOR WRENCH JAWS FOR HOLDING PIPES, PLIERS, SAWS,SCRAPERS, SCREW DRIVERS, SCRIBERS, TAP WRENCHES, VISES, AND WRENCHES">BRAD SETS, CENTER PUNCHES, CLAMPS, COUNTERSINKS, CUT NIPPERS, DRILL BLOCKS, HACK SAWS AND FRAMES, NAIL SETS, PIN VISES, …</div><a class="match-link" href="matches/figurative-us1384105a.html">Confirmed pair →</a><div class="card-footer">71185153 · Drawing Code 2000</div></div></div></div></div><div class="tl-row"><div class="tl-year">1933</div><div class="tl-cards card-grid"><div class="card" id="sn-71336019"><a class="card-image-link" href="trademarks/71336019.html"><img class="card-image" loading="lazy" src="images/marks/71336019.png" alt="INDIAN HEAD"></a><div class="card-body"><div class="card-name"><a href="trademarks/71336019.html">INDIAN HEAD</a></div><div class="card-meta">Filed March 23, 1933 · Registered</div><a class="entity-badge" href="entities/illinois-tool-works.html">Illinois Tool Works</a><div class="card-goods" title="GASKET SHELLAC COMPOUND">GASKET SHELLAC COMPOUND</div><div class="card-footer">71336019 · Drawing Code 3U20</div></div></div></div></div><div class="tl-row"><div class="tl-year">1937</div><div class="tl-cards card-grid"><div class="card" id="sn-71389684"><a class="card-image-link" href="trademarks/71389684.html"><img class="card-image" loading="lazy" src="images/marks/71389684.png" alt="ILLINITE"></a><div class="card-body"><div class="card-name"><a href="trademarks/71389684.html">ILLINITE</a></div><div class="card-meta">Filed March 05, 1937 · Expired</div><a class="entity-badge" href="entities/illinois-tool-works.html">Illinois Tool Works</a><div class="card-goods" title="CUTTING TOOLS IN CONNECTION WITH MACHINE TOOLS, TOOL BITS IN CONNECTION WITH MACHINE TOOLS, MILLING CUTTERS, PLANER TOOLS, DRAWING AND EXTRUDING DIES, AND FRICTION RESISTING PARTS OF MACHINERY SUCH AS BEARING SURFACES IN GENERAL">CUTTING TOOLS IN CONNECTION WITH MACHINE TOOLS, TOOL BITS IN CONNECTION WITH MACHINE TOOLS, MILLING CUTTERS, PLANER TOOL…</div><div class="card-footer">71389684 · Drawing Code 5000</div></div></div></div></div><div class="tl-row"><div class="tl-year">1938</div><div class="tl-cards card-grid"><div class="card" id="sn-71411127"><a class="card-image-link" href="trademarks/71411127.html"><img class="card-image" loading="lazy" src="images/marks/71411127.png" alt="MAGNAFLUX"></a><div class="card-body"><div class="card-name"><a href="trademarks/71411127.html">MAGNAFLUX</a></div><div class="card-meta">Filed September 30, 1938 · Registered</div><a class="entity-badge" href="entities/illinois-tool-works.html">Illinois Tool Works</a><div class="card-goods" title="ELECTRICAL APPARATUS FOR MAGNETIC TESTING OF METAL ARTICLES">ELECTRICAL APPARATUS FOR MAGNETIC TESTING OF METAL ARTICLES</div><div class="card-footer">71411127 · Drawing Code 5W23</div></div></div></div></div></div></div>
 <footer class="site-footer">History of commerce and technology is built by <a href="https://github.com/CosmoGSpacely/markery">Markery</a>. Copyright 2026 <a href="https://guildproducts.com">Guild Products</a>.</footer>
 </body>
 </html>
