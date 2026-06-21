@@ -79,6 +79,28 @@ def test_page_with_og_tags():
     assert 'content="article"' in result
 
 
+def test_page_has_landmarks_and_skip_link():
+    # P1 step 5 accessibility: skip link + <main> landmark.
+    result = _page("Title", "<p>body</p>", {})
+    assert '<a class="skip-link" href="#main">' in result
+    assert '<main id="main">' in result
+    assert "</main>" in result
+
+
+def test_page_canonical_and_meta_description():
+    # P1 step 5 SEO: canonical link + standard meta description from og.
+    og = {"title": "T", "description": "D", "url": "https://example.com/page.html"}
+    result = _page("Title", "<p>body</p>", {}, og=og)
+    assert '<link rel="canonical" href="https://example.com/page.html">' in result
+    assert '<meta name="description" content="D">' in result
+
+
+def test_page_no_canonical_without_og():
+    result = _page("Title", "<p>body</p>", {})
+    assert "rel=\"canonical\"" not in result
+    assert '<meta name="description"' not in result
+
+
 # Group 2: list, blockquote, external link rendering
 
 def test_render_markdown_unordered_list():

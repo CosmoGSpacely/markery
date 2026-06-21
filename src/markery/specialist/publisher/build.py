@@ -300,6 +300,22 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
     )
     print(f"  search.json      → {len(search_records)} records")
 
+    if base_url:
+        base = base_url.rstrip("/")
+        locs = [
+            f"{base}/{project}/{p.relative_to(out).as_posix()}"
+            for p in pages
+        ]
+        urls = "".join(f"  <url><loc>{loc}</loc></url>\n" for loc in sorted(locs))
+        (out / "sitemap.xml").write_text(
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            f"{urls}"
+            "</urlset>\n",
+            encoding="utf-8",
+        )
+        print(f"  sitemap.xml      → {len(locs)} urls")
+
     if prune:
         written = {p.resolve() for p in pages} | written_images
         removed = _prune_stale(out, written)

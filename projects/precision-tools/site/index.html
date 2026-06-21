@@ -18,6 +18,27 @@ body {
 a { color: #4F6076; text-decoration: underline; }
 a:hover { color: #3a4656; }
 
+/* ── Accessibility ── */
+.skip-link {
+  position: absolute;
+  left: -9999px; top: 0;
+  background: #4A4A4A; color: #FFFFE3;
+  padding: 8px 14px; z-index: 200;
+  text-decoration: none;
+}
+.skip-link:focus { left: 8px; top: 8px; }
+:focus-visible { outline: 2px solid #6D8196; outline-offset: 2px; }
+
+/* ── Small-screen layout ── */
+@media (max-width: 640px) {
+  .site-header { padding: 14px 18px; }
+  .breadcrumb { padding: 8px 18px; }
+  .page-header { padding: 28px 18px; }
+  .page-header h1 { font-size: 1.6em; }
+  .page-body { padding: 28px 18px; }
+  .essay-media { grid-template-columns: 1fr; }
+}
+
 /* ── Site header ── */
 .site-header {
   background: #3a3a3a;
@@ -160,13 +181,13 @@ a:hover { color: #3a4656; }
 .timeline-layout::before {
   content: "";
   position: absolute;
-  top: 8px; bottom: 8px; left: 64px;
+  top: 8px; bottom: 8px; left: 74px;
   width: 2px;
   background: #CBCBCB;
 }
 .tl-row {
   display: grid;
-  grid-template-columns: 64px 1fr;
+  grid-template-columns: 74px 1fr;
   gap: 28px;
   margin-bottom: 28px;
 }
@@ -177,6 +198,7 @@ a:hover { color: #3a4656; }
   top: 72px;
   align-self: start;
   text-align: right;
+  padding-right: 18px;     /* keep the number clear of the dot on the rail */
   line-height: 1.3;
   font-family: monospace;
   font-weight: bold;
@@ -197,9 +219,9 @@ a:hover { color: #3a4656; }
 .tl-cards { min-width: 0; }
 .tl-cards.card-grid { margin-bottom: 0; }
 @media (max-width: 560px) {
-  .timeline-layout::before { left: 44px; }
-  .tl-row { grid-template-columns: 44px 1fr; gap: 16px; }
-  .tl-year { font-size: .9em; }
+  .timeline-layout::before { left: 58px; }
+  .tl-row { grid-template-columns: 58px 1fr; gap: 16px; }
+  .tl-year { font-size: .85em; padding-right: 12px; }
 }
 
 /* ── Card grid ── */
@@ -530,8 +552,11 @@ blockquote p { margin: 0; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="index.html">Markery Research</a><nav><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a><a href="entities/index.html">Companies</a><a href="matches/index.html">Matches</a><a href="search.html">Search</a></nav><form class="site-search" action="search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
-<div class="page-header"><h1>Precision Tools</h1><div class="subtitle">USPTO Patent-Trademark Research Project · 1900–1939</div><div class="stat-chips"><span class="chip">2 companies</span><span class="chip">11 marks</span><span class="chip">39 patents</span><span class="chip">3 confirmed pairs</span></div></div><div class="page-body"><p class="section-title">Confirmed Pairs</p><div class="match-cards"><div class="match-card"><img class="match-card-thumb" loading="lazy" src="images/marks/71185153.png" alt="(figurative)"><div class="match-card-body"><div class="match-card-title">(figurative) ↔ US1419306A</div><div class="match-card-meta">L.S. Starrett Company · Patent 1922-06-13 · Mark filed 1923-08-29 <span class="chip-sm">1 yr gap</span></div><div class="match-card-note">Starrett indicating surface gauge patent (1922) ↔ Starrett figurative mark (1923) covering its measuring-tool catalog; same company, contemporaneous.</div><a href="matches/figurative-us1419306a.html">Read essay →</a></div></div><div class="match-card"><img class="match-card-thumb" loading="lazy" src="images/marks/71185153.png" alt="(figurative)"><div class="match-card-body"><div class="match-card-title">(figurative) ↔ US1438617A</div><div class="match-card-meta">L.S. Starrett Company · Patent 1922-12-12 · Mark filed 1923-08-29 <span class="chip-sm">1 yr gap</span></div><div class="match-card-note">Starrett steel-rule-with-holder patent (1922) ↔ Starrett figurative mark; measuring instrument in mark's goods.</div><a href="matches/figurative-us1438617a.html">Read essay →</a></div></div><div class="match-card"><img class="match-card-thumb" loading="lazy" src="images/marks/71185153.png" alt="(figurative)"><div class="match-card-body"><div class="match-card-title">(figurative) ↔ US1384105A</div><div class="match-card-meta">L.S. Starrett Company · Patent 1921-07-12 · Mark filed 1923-08-29 <span class="chip-sm">2 yr gap</span></div><div class="match-card-note">Starrett fine-adjustment bevel-protractor patent (1921) ↔ Starrett figurative mark; measuring instrument.</div><a href="matches/figurative-us1384105a.html">Read essay →</a></div></div></div><p class="section-title">Companies</p><div class="entity-grid"><div class="entity-card"><h3><a href="entities/ls-starrett-company.html">L.S. Starrett Company</a></h3><div class="entity-meta">precision tools · company</div><div class="entity-stats"><span><span class="stat-val">5</span> marks</span><span><span class="stat-val">29</span> patents</span><span><span class="stat-val">3</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div><div class="entity-card"><h3><a href="entities/illinois-tool-works.html">Illinois Tool Works</a></h3><div class="entity-meta">precision tools · company</div><div class="entity-stats"><span><span class="stat-val">6</span> marks</span><span><span class="stat-val">10</span> patents</span><span><span class="stat-val">0</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div></div></div>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><a class="site-title" href="index.html">Markery Research</a><nav aria-label="Primary"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a><a href="entities/index.html">Companies</a><a href="matches/index.html">Matches</a><a href="search.html">Search</a></nav><form class="site-search" action="search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<main id="main">
+<div class="page-header"><h1>Precision Tools</h1><div class="subtitle">USPTO Patent-Trademark Research Project · 1900–1939</div><div class="stat-chips"><span class="chip">2 companies</span><span class="chip">11 marks</span><span class="chip">39 patents</span><span class="chip">3 confirmed pairs</span></div></div><div class="page-body"><p class="section-title">Confirmed Pairs</p><div class="match-cards"><div class="match-card"><img class="match-card-thumb" loading="lazy" src="images/marks/71185153.png" alt="(figurative)"><div class="match-card-body"><div class="match-card-title">(figurative) ↔ US1419306A</div><div class="match-card-meta">L.S. Starrett Company · Patent 1922-06-13 · Mark filed 1923-08-29 <span class="chip-sm">1 yr gap</span></div><div class="match-card-note">Starrett indicating surface gauge patent (1922) ↔ Starrett figurative mark (1923) covering its measuring-tool catalog; same company, contemporaneous.</div><a href="matches/figurative-us1419306a.html">Read essay →</a></div></div><div class="match-card"><img class="match-card-thumb" loading="lazy" src="images/marks/71185153.png" alt="(figurative)"><div class="match-card-body"><div class="match-card-title">(figurative) ↔ US1438617A</div><div class="match-card-meta">L.S. Starrett Company · Patent 1922-12-12 · Mark filed 1923-08-29 <span class="chip-sm">1 yr gap</span></div><div class="match-card-note">Starrett steel-rule-with-holder patent (1922) ↔ Starrett figurative mark; measuring instrument in mark's goods.</div><a href="matches/figurative-us1438617a.html">Read essay →</a></div></div><div class="match-card"><img class="match-card-thumb" loading="lazy" src="images/marks/71185153.png" alt="(figurative)"><div class="match-card-body"><div class="match-card-title">(figurative) ↔ US1384105A</div><div class="match-card-meta">L.S. Starrett Company · Patent 1921-07-12 · Mark filed 1923-08-29 <span class="chip-sm">2 yr gap</span></div><div class="match-card-note">Starrett fine-adjustment bevel-protractor patent (1921) ↔ Starrett figurative mark; measuring instrument.</div><a href="matches/figurative-us1384105a.html">Read essay →</a></div></div></div><p class="section-title">Companies</p><div class="entity-grid"><div class="entity-card"><h3><a href="entities/ls-starrett-company.html">L.S. Starrett Company</a></h3><div class="entity-meta">precision tools · company</div><div class="entity-stats"><span><span class="stat-val">5</span> marks</span><span><span class="stat-val">29</span> patents</span><span><span class="stat-val">3</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div><div class="entity-card"><h3><a href="entities/illinois-tool-works.html">Illinois Tool Works</a></h3><div class="entity-meta">precision tools · company</div><div class="entity-stats"><span><span class="stat-val">6</span> marks</span><span><span class="stat-val">10</span> patents</span><span><span class="stat-val">0</span> confirmed</span></div><div class="links"><a href="trademarks.html">Trademarks</a><a href="patents.html">Patents</a></div></div></div></div></main>
+
 <footer class="site-footer">History of commerce and technology is built by <a href="https://github.com/CosmoGSpacely/markery">Markery</a>. Copyright 2026 <a href="https://guildproducts.com">Guild Products</a>.</footer>
 </body>
 </html>

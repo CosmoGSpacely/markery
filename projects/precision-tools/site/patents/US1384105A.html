@@ -18,6 +18,27 @@ body {
 a { color: #4F6076; text-decoration: underline; }
 a:hover { color: #3a4656; }
 
+/* ── Accessibility ── */
+.skip-link {
+  position: absolute;
+  left: -9999px; top: 0;
+  background: #4A4A4A; color: #FFFFE3;
+  padding: 8px 14px; z-index: 200;
+  text-decoration: none;
+}
+.skip-link:focus { left: 8px; top: 8px; }
+:focus-visible { outline: 2px solid #6D8196; outline-offset: 2px; }
+
+/* ── Small-screen layout ── */
+@media (max-width: 640px) {
+  .site-header { padding: 14px 18px; }
+  .breadcrumb { padding: 8px 18px; }
+  .page-header { padding: 28px 18px; }
+  .page-header h1 { font-size: 1.6em; }
+  .page-body { padding: 28px 18px; }
+  .essay-media { grid-template-columns: 1fr; }
+}
+
 /* ── Site header ── */
 .site-header {
   background: #3a3a3a;
@@ -160,13 +181,13 @@ a:hover { color: #3a4656; }
 .timeline-layout::before {
   content: "";
   position: absolute;
-  top: 8px; bottom: 8px; left: 64px;
+  top: 8px; bottom: 8px; left: 74px;
   width: 2px;
   background: #CBCBCB;
 }
 .tl-row {
   display: grid;
-  grid-template-columns: 64px 1fr;
+  grid-template-columns: 74px 1fr;
   gap: 28px;
   margin-bottom: 28px;
 }
@@ -177,6 +198,7 @@ a:hover { color: #3a4656; }
   top: 72px;
   align-self: start;
   text-align: right;
+  padding-right: 18px;     /* keep the number clear of the dot on the rail */
   line-height: 1.3;
   font-family: monospace;
   font-weight: bold;
@@ -197,9 +219,9 @@ a:hover { color: #3a4656; }
 .tl-cards { min-width: 0; }
 .tl-cards.card-grid { margin-bottom: 0; }
 @media (max-width: 560px) {
-  .timeline-layout::before { left: 44px; }
-  .tl-row { grid-template-columns: 44px 1fr; gap: 16px; }
-  .tl-year { font-size: .9em; }
+  .timeline-layout::before { left: 58px; }
+  .tl-row { grid-template-columns: 58px 1fr; gap: 16px; }
+  .tl-year { font-size: .85em; padding-right: 12px; }
 }
 
 /* ── Card grid ── */
@@ -530,8 +552,11 @@ blockquote p { margin: 0; }
 </style>
 </head>
 <body>
-<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav><a href="../trademarks.html">Trademarks</a><a href="../patents.html" class="active" aria-current="page">Patents</a><a href="../entities/index.html">Companies</a><a href="../matches/index.html">Matches</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
-<nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="../index.html">Home</a></li><li><a href="../patents.html">Patents</a></li><li aria-current="page">Fine-Adjustment Bevel-Protractor And The Like</li></ol></nav><div class="page-header"><h1>Fine-Adjustment Bevel-Protractor And The Like</h1><div class="subtitle">Patent US1384105A · L.S. Starrett Company</div></div><div class="page-body"><div class="detail-layout"><div class="detail-media"><img class="detail-image" src="../images/patents/US1384105A.png" alt="Fine-Adjustment Bevel-Protractor And The Like"><a class="match-link match-link--lg" href="../matches/figurative-us1384105a.html">Confirmed pair → read the essay</a></div><div class="detail-body"><dl class="detail-fields"><dt>Patent No.</dt><dd>US1384105A</dd><dt>Assignee</dt><dd>STARRETT L S CO</dd><dt>Company</dt><dd><a href="../entities/ls-starrett-company.html">L.S. Starrett Company</a></dd><dt>Granted</dt><dd>July 12, 1921</dd><dt>Filed</dt><dd>March 06, 1920</dd><dt>Inventors</dt><dd>ADELL JOHN A, STARRETT LAROY S</dd><dt>Classification</dt><dd>G01B</dd></dl></div></div></div>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><a class="site-title" href="../index.html">Markery Research</a><nav aria-label="Primary"><a href="../trademarks.html">Trademarks</a><a href="../patents.html" class="active" aria-current="page">Patents</a><a href="../entities/index.html">Companies</a><a href="../matches/index.html">Matches</a><a href="../search.html">Search</a></nav><form class="site-search" action="../search.html" method="get"><input type="search" name="q" placeholder="Search…" aria-label="Search"></form></header>
+<main id="main">
+<nav class="breadcrumb" aria-label="Breadcrumb"><ol><li><a href="../index.html">Home</a></li><li><a href="../patents.html">Patents</a></li><li aria-current="page">Fine-Adjustment Bevel-Protractor And The Like</li></ol></nav><div class="page-header"><h1>Fine-Adjustment Bevel-Protractor And The Like</h1><div class="subtitle">Patent US1384105A · L.S. Starrett Company</div></div><div class="page-body"><div class="detail-layout"><div class="detail-media"><img class="detail-image" src="../images/patents/US1384105A.png" alt="Fine-Adjustment Bevel-Protractor And The Like"><a class="match-link match-link--lg" href="../matches/figurative-us1384105a.html">Confirmed pair → read the essay</a></div><div class="detail-body"><dl class="detail-fields"><dt>Patent No.</dt><dd>US1384105A</dd><dt>Assignee</dt><dd>STARRETT L S CO</dd><dt>Company</dt><dd><a href="../entities/ls-starrett-company.html">L.S. Starrett Company</a></dd><dt>Granted</dt><dd>July 12, 1921</dd><dt>Filed</dt><dd>March 06, 1920</dd><dt>Inventors</dt><dd>STARRETT LAROY S, ADELL JOHN A</dd><dt>Classification</dt><dd>G01B</dd></dl></div></div></div></main>
+
 <footer class="site-footer">History of commerce and technology is built by <a href="https://github.com/CosmoGSpacely/markery">Markery</a>. Copyright 2026 <a href="https://guildproducts.com">Guild Products</a>.</footer>
 </body>
 </html>

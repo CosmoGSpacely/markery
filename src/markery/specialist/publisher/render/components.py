@@ -70,12 +70,18 @@ def _page(
         return f'<a href="{prefix}{href}"{attrs}>{_esc(label)}</a>'
 
     nav = "".join(_nav_anchor(label, href) for label, href in nav_links.items())
-    og_tags = ""
+    head_meta = ""
     if og:
-        og_tags = (
+        desc = og.get("description", "")
+        url  = og.get("url", "")
+        if desc:
+            head_meta += f'<meta name="description" content="{_esc(desc)}">\n'
+        if url:
+            head_meta += f'<link rel="canonical" href="{_esc(url)}">\n'
+        head_meta += (
             f'<meta property="og:title"       content="{_esc(og.get("title", title))}">\n'
-            f'<meta property="og:description" content="{_esc(og.get("description", ""))}">\n'
-            f'<meta property="og:url"         content="{_esc(og.get("url", ""))}">\n'
+            f'<meta property="og:description" content="{_esc(desc)}">\n'
+            f'<meta property="og:url"         content="{_esc(url)}">\n'
             f'<meta property="og:type"        content="article">\n'
         )
     repo = site_repo or _MARKERY_REPO
@@ -92,16 +98,19 @@ def _page(
         '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         f'<title>{_esc(title)}</title>\n'
-        + og_tags
+        + head_meta
         + f'<style>{_CSS}</style>\n'
         '</head>\n<body>\n'
+        '<a class="skip-link" href="#main">Skip to content</a>\n'
         f'<header class="site-header">'
         f'<a class="site-title" href="{prefix}index.html">Markery Research</a>'
-        f'<nav>{nav}</nav>'
+        f'<nav aria-label="Primary">{nav}</nav>'
         f'<form class="site-search" action="{prefix}search.html" method="get">'
         f'<input type="search" name="q" placeholder="Search…" aria-label="Search"></form>'
         '</header>\n'
+        '<main id="main">\n'
         + body
+        + '</main>\n'
         + footer
         + '</body>\n</html>\n'
     )

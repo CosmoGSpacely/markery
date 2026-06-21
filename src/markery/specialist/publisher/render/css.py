@@ -16,6 +16,27 @@ body {
 a { color: #4F6076; text-decoration: underline; }
 a:hover { color: #3a4656; }
 
+/* ── Accessibility ── */
+.skip-link {
+  position: absolute;
+  left: -9999px; top: 0;
+  background: #4A4A4A; color: #FFFFE3;
+  padding: 8px 14px; z-index: 200;
+  text-decoration: none;
+}
+.skip-link:focus { left: 8px; top: 8px; }
+:focus-visible { outline: 2px solid #6D8196; outline-offset: 2px; }
+
+/* ── Small-screen layout ── */
+@media (max-width: 640px) {
+  .site-header { padding: 14px 18px; }
+  .breadcrumb { padding: 8px 18px; }
+  .page-header { padding: 28px 18px; }
+  .page-header h1 { font-size: 1.6em; }
+  .page-body { padding: 28px 18px; }
+  .essay-media { grid-template-columns: 1fr; }
+}
+
 /* ── Site header ── */
 .site-header {
   background: #3a3a3a;
@@ -158,13 +179,13 @@ a:hover { color: #3a4656; }
 .timeline-layout::before {
   content: "";
   position: absolute;
-  top: 8px; bottom: 8px; left: 64px;
+  top: 8px; bottom: 8px; left: 74px;
   width: 2px;
   background: #CBCBCB;
 }
 .tl-row {
   display: grid;
-  grid-template-columns: 64px 1fr;
+  grid-template-columns: 74px 1fr;
   gap: 28px;
   margin-bottom: 28px;
 }
@@ -175,6 +196,7 @@ a:hover { color: #3a4656; }
   top: 72px;
   align-self: start;
   text-align: right;
+  padding-right: 18px;     /* keep the number clear of the dot on the rail */
   line-height: 1.3;
   font-family: monospace;
   font-weight: bold;
@@ -195,9 +217,9 @@ a:hover { color: #3a4656; }
 .tl-cards { min-width: 0; }
 .tl-cards.card-grid { margin-bottom: 0; }
 @media (max-width: 560px) {
-  .timeline-layout::before { left: 44px; }
-  .tl-row { grid-template-columns: 44px 1fr; gap: 16px; }
-  .tl-year { font-size: .9em; }
+  .timeline-layout::before { left: 58px; }
+  .tl-row { grid-template-columns: 58px 1fr; gap: 16px; }
+  .tl-year { font-size: .85em; padding-right: 12px; }
 }
 
 /* ── Card grid ── */
