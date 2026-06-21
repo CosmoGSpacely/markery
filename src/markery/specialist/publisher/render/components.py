@@ -60,12 +60,16 @@ def _page(
     depth: int = 0,
     og: dict | None = None,
     site_repo: str | None = None,
+    active: str | None = None,
 ) -> str:
     prefix = "../" * depth
-    nav = "".join(
-        f'<a href="{prefix}{href}">{_esc(label)}</a>'
-        for label, href in nav_links.items()
-    )
+
+    def _nav_anchor(label: str, href: str) -> str:
+        is_active = active is not None and href == active
+        attrs = ' class="active" aria-current="page"' if is_active else ""
+        return f'<a href="{prefix}{href}"{attrs}>{_esc(label)}</a>'
+
+    nav = "".join(_nav_anchor(label, href) for label, href in nav_links.items())
     og_tags = ""
     if og:
         og_tags = (
@@ -117,7 +121,7 @@ def _nav_links(
     links: dict[str, str] = {
         "Trademarks": "trademarks.html",
         "Patents": "patents.html",
-        "Entities": "entities/index.html",
+        "Companies": "entities/index.html",
         "Matches": "matches/index.html",
     }
     if extra:

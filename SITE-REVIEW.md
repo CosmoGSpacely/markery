@@ -60,3 +60,20 @@ When an important person — e.g. a founder — appears as an inventor on a pate
 
 - **Ink Wash color scheme** — remapped the site palette in `src/markery/specialist/publisher/render/css.py` from the warm brown/cream scheme to Ink Wash: charcoal `#4A4A4A` (headers, text), light gray `#CBCBCB` (borders), cream `#FFFFE3` (page background), slate blue `#6D8196` (links, buttons, badges). Two derived tints added for contrast: `#56697d` (slate hover) and `#ECECDF` (panel fill).
 - **Footer affiliation** — updated the footer in `src/markery/specialist/publisher/render/components.py` to read: "History of commerce and technology is built by Markery. Copyright [current year] Guild Products." Year is dynamic (`date.today().year`); "Markery" links to the repo, "Guild Products" links to guildproducts.com.
+
+### Phase 24 P1 batch (publisher-only render/CSS)
+
+Implemented and verified against a rebuilt `precision-tools` site (`markery site check`: 11 pages, 154 links, 0 broken) with the full suite green (761 tests, incl. new regression tests):
+
+- **#1** stat pills restyled — no border, square-ish corners — so they no longer read as buttons (`css.py`).
+- **#2/#14** image placeholders now fall back to the word mark (trademark) / patent title (patent) instead of the serial/patent number (`galleries.py`).
+- **#5** entity pills on cards link to the company page (`galleries.py`).
+- **#7** breadcrumbs removed from the Companies and Matches index pages (`landing.py`).
+- **#8** (rename only) "Entities" → "Companies" in the nav, headings, page titles, breadcrumb, and stat chips (`components.py`, `landing.py`, `entity.py`). The People nav item remains Phase 25.
+- **#9** link/accent text color darkened to `#4F6076` (≈6.4:1 on cream) to meet WCAG AA; slate `#6D8196` retained for badges/buttons on dark fills (`css.py`).
+- **#10** active/current-page nav indicator via `class="active"` + `aria-current="page"` (`components.py` `_page`, threaded from each render fn).
+- **#12** full goods/title/inventor text preserved in a `title` tooltip when truncated (`galleries.py`).
+- **#13** friendly empty-state copy for empty galleries and the Companies index (`galleries.py`, `landing.py`, `css.py`).
+- **#15** code fields labeled: "Drawing Code …" on trademark cards, "Class/Classes …" on patent cards (`galleries.py`).
+
+Remaining in P1 (not in this batch): **#3** patent lead-figure (#3 needs PATENT-side Figure-1 identification), **#4** vertical scroll timeline (larger redesign), **#11** clickable cards (needs a per-record detail page target), plus the broader responsive / semantic-landmark / SEO-metadata items and their tests.

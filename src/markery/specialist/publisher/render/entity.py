@@ -67,7 +67,7 @@ def render_entity_page(
 
     breadcrumb = _breadcrumb([
         ("Home", "../index.html"),
-        ("Entities", "index.html"),
+        ("Companies", "index.html"),
         (entity["canonical_name"], None),
     ])
 
@@ -101,7 +101,8 @@ def render_entity_page(
     } if base_url else None
     (out_dir / "entities").mkdir(exist_ok=True)
     out_path = out_dir / "entities" / f"{slug}.html"
-    out_path.write_text(_page(_page_title(entity["canonical_name"], project), body, nav, depth=1, og=og), encoding="utf-8")
+    out_path.write_text(_page(_page_title(entity["canonical_name"], project), body, nav, depth=1, og=og,
+                              active="entities/index.html"), encoding="utf-8")
     return out_path
 
 

@@ -6,7 +6,7 @@ from pathlib import Path
 from markery.common.project import Project
 from markery.specialist.publisher.render.components import (
     _esc, _img_src, _page, _nav_links,
-    _read_narrative, _narrative_block, _page_title, _breadcrumb,
+    _read_narrative, _narrative_block, _page_title,
     _year_from_dt,
 )
 
@@ -80,7 +80,7 @@ def render_landing(
         )
 
     stat_chips = (
-        f'<span class="chip">{len(entities)} entities</span>'
+        f'<span class="chip">{len(entities)} companies</span>'
         f'<span class="chip">{len(trademarks)} marks</span>'
         f'<span class="chip">{len(patents)} patents</span>'
         f'<span class="chip">{len(matches)} confirmed pairs</span>'
@@ -108,7 +108,7 @@ def render_landing(
         f'{_narrative_block(narrative)}'
         + (f'<p class="section-title">Confirmed Pairs</p>'
            f'<div class="match-cards">{"".join(match_cards)}</div>' if match_cards else '')
-        + f'<p class="section-title">Entities</p>'
+        + f'<p class="section-title">Companies</p>'
         f'<div class="entity-grid">{"".join(entity_cards)}</div>'
         f'</div>'
     )
@@ -137,9 +137,8 @@ def render_entities_index(
     link_index: dict[str, str] | None = None,
     extra_nav: dict[str, str] | None = None,
 ) -> Path:
-    """Render the Entities section index → entities/index.html (depth 1)."""
+    """Render the Companies section index → entities/index.html (depth 1)."""
     nav = _nav_links(project, entities, extra_nav)
-    breadcrumb = _breadcrumb([("Home", "../index.html"), ("Entities", None)])
 
     cards = []
     for e in entities:
@@ -155,25 +154,27 @@ def render_entities_index(
             f'</div></div>'
         )
 
-    body = (
-        f'{breadcrumb}'
-        f'<div class="page-header">'
-        f'<h1>Entities</h1>'
-        f'<div class="subtitle">{_esc(project.replace("-", " ").title())} · {len(entities)} entities</div>'
-        f'</div>'
-        f'<div class="page-body">'
+    listing = (
         f'<div class="entity-grid">{"".join(cards)}</div>'
+        if cards else '<p class="empty-state">No companies recorded for this project yet.</p>'
+    )
+    body = (
+        f'<div class="page-header">'
+        f'<h1>Companies</h1>'
+        f'<div class="subtitle">{_esc(project.replace("-", " ").title())} · {len(entities)} companies</div>'
         f'</div>'
+        f'<div class="page-body">{listing}</div>'
     )
 
     og = {
-        "title": "Entities",
-        "description": f"All {len(entities)} entities in the {project.replace('-', ' ').title()} project",
+        "title": "Companies",
+        "description": f"All {len(entities)} companies in the {project.replace('-', ' ').title()} project",
         "url": f"{base_url}/{project}/entities/index.html",
     } if base_url else None
     (out_dir / "entities").mkdir(exist_ok=True)
     out_path = out_dir / "entities" / "index.html"
-    out_path.write_text(_page(_page_title("Entities", project), body, nav, depth=1, og=og),
+    out_path.write_text(_page(_page_title("Companies", project), body, nav, depth=1, og=og,
+                              active="entities/index.html"),
                         encoding="utf-8")
     return out_path
 
@@ -190,7 +191,6 @@ def render_matches_index(
 ) -> Path:
     """Render the Matches section index → matches/index.html (depth 1)."""
     nav = _nav_links(project, entities, extra_nav)
-    breadcrumb = _breadcrumb([("Home", "../index.html"), ("Matches", None)])
 
     cards = []
     seen: set[str] = set()
@@ -224,7 +224,6 @@ def render_matches_index(
         if cards else '<p>No confirmed pairs yet.</p>'
     )
     body = (
-        f'{breadcrumb}'
         f'<div class="page-header">'
         f'<h1>Confirmed Pairs</h1>'
         f'<div class="subtitle">{_esc(project.replace("-", " ").title())} · {len(seen)} pairs</div>'
@@ -239,7 +238,8 @@ def render_matches_index(
     } if base_url else None
     (out_dir / "matches").mkdir(exist_ok=True)
     out_path = out_dir / "matches" / "index.html"
-    out_path.write_text(_page(_page_title("Confirmed Pairs", project), body, nav, depth=1, og=og),
+    out_path.write_text(_page(_page_title("Confirmed Pairs", project), body, nav, depth=1, og=og,
+                              active="matches/index.html"),
                         encoding="utf-8")
     return out_path
 

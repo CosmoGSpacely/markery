@@ -36,7 +36,9 @@ MATCHES = [
 
 def test_nav_links_point_to_section_indexes():
     links = _nav_links("p", ENTITIES)
-    assert links["Entities"] == "entities/index.html"
+    # "Entities" was renamed to "Companies" (SITE-REVIEW #8); the URL is unchanged.
+    assert links["Companies"] == "entities/index.html"
+    assert "Entities" not in links
     assert links["Matches"] == "matches/index.html"
 
 
@@ -58,10 +60,24 @@ def test_entities_index_lists_every_entity(tmp_path: Path):
     assert "Radio Corp" in html and "Mack Trucks" in html
 
 
-def test_entities_index_has_breadcrumb(tmp_path: Path):
+def test_entities_index_has_no_breadcrumb(tmp_path: Path):
+    # SITE-REVIEW #7: the breadcrumb on top-level index pages duplicates the nav
+    # directly above it, so it was dropped.
     html = render_entities_index("radio-pioneers", ENTITIES, STATS, tmp_path).read_text()
-    assert 'aria-label="Breadcrumb"' in html
-    assert 'href="../index.html">Home</a>' in html
+    assert 'aria-label="Breadcrumb"' not in html
+
+
+def test_entities_index_titled_companies(tmp_path: Path):
+    # SITE-REVIEW #8: "Entities" is presented to readers as "Companies".
+    html = render_entities_index("radio-pioneers", ENTITIES, STATS, tmp_path).read_text()
+    assert "<h1>Companies</h1>" in html
+    # The active-nav marker highlights the current section (SITE-REVIEW #10).
+    assert 'class="active" aria-current="page"' in html
+
+
+def test_matches_index_has_no_breadcrumb(tmp_path: Path):
+    html = render_matches_index("radio-pioneers", MATCHES, ENTITIES, tmp_path).read_text()
+    assert 'aria-label="Breadcrumb"' not in html
 
 
 # ── matches index ────────────────────────────────────────────────────────

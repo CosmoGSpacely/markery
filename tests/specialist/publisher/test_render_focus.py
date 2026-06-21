@@ -61,7 +61,7 @@ def out_dir(tmp_path: Path) -> Path:
         yield tmp_path / "out"
 
 
-def _render(out_dir: Path, focus_serials=None) -> str:
+def _render(out_dir: Path, focus_serials=None, trademarks=TRADEMARKS) -> str:
     with patch.object(_cfg_mod, "ROOT", out_dir.parent), \
          patch.object(_proj_mod, "ROOT", out_dir.parent):
         project_dir = out_dir.parent / "projects" / "test-proj"
@@ -70,7 +70,7 @@ def _render(out_dir: Path, focus_serials=None) -> str:
         render_trademark_gallery(
             project="test-proj",
             entities=ENTITIES,
-            trademarks=TRADEMARKS,
+            trademarks=trademarks,
             matches=[],
             entity_colors={1: "#a00", 2: "#0a0", 3: "#00a"},
             out_dir=out_dir,
@@ -143,3 +143,40 @@ class TestNoFocusSerialsGallery:
         assert "sn-71273695" in html
         assert "sn-71247861" in html
         assert "sn-71199224" in html
+
+
+class TestCardDetails:
+    def test_placeholder_shows_word_mark_not_serial(self, tmp_path):
+        # SITE-REVIEW #2/#14: no image -> the placeholder shows the word mark,
+        # not the meaningless serial number.
+        html = _render(tmp_path)
+        assert '<div class="card-image-placeholder">EAGLE</div>' in html
+        assert '<div class="card-image-placeholder">71273695</div>' not in html
+
+    def test_entity_badge_links_to_entity_page(self, tmp_path):
+        # SITE-REVIEW #5: the entity pill links to the company page.
+        html = _render(tmp_path)
+        assert '<a class="entity-badge" href="entities/goodyear.html">Goodyear</a>' in html
+
+    def test_drawing_code_labeled(self, tmp_path):
+        # SITE-REVIEW #15: the drawing code carries an explicit label.
+        marks = [dict(_tm("71273695", "EAGLE", "Goodyear", 1), draw_cd="5T07")]
+        html = _render(tmp_path, trademarks=marks)
+        assert "Drawing Code 5T07" in html
+
+    def test_goods_full_text_in_title_attr(self, tmp_path):
+        # SITE-REVIEW #12: the full goods text is preserved in a title tooltip.
+        long_goods = "automobile tires and inner tubes " * 6
+        marks = [dict(_tm("71273695", "EAGLE", "Goodyear", 1), goods=long_goods)]
+        html = _render(tmp_path, trademarks=marks)
+        assert f'title="{long_goods}"' in html
+
+    def test_active_nav_marks_trademarks(self, tmp_path):
+        # SITE-REVIEW #10: the current section is marked active in the nav.
+        html = _render(tmp_path)
+        assert '<a href="trademarks.html" class="active" aria-current="page">' in html
+
+    def test_empty_gallery_shows_empty_state(self, tmp_path):
+        html = _render(tmp_path, trademarks=[])
+        assert "empty-state" in html
+        assert "No trademarks recorded" in html

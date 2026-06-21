@@ -28,6 +28,7 @@ def render_trademark_gallery(
     nav = _nav_links(project, entities, extra_nav)
     match_serials = {str(m["trademark_serial"]): m["slug"] for m in matches if m.get("essay_path")}
     focus_set = {str(s) for s in focus_serials} if focus_serials else None
+    slug_by_id = {e["entity_id"]: e["slug"] for e in entities}
 
     timeline = _timeline_svg(trademarks, "filing_dt", "mark_name", "entity_id", entity_colors)
 
@@ -37,7 +38,9 @@ def render_trademark_gallery(
         if src:
             img_html = f'<img class="card-image" loading="lazy" src="{src}" alt="{_esc(tm["mark_name"])}">'
         else:
-            img_html = f'<div class="card-image-placeholder">{_esc(sn)}</div>'
+            # No image: fall back to the word mark, not the (meaningless) serial number.
+            word_mark = tm["mark_name"] or "(design mark)"
+            img_html = f'<div class="card-image-placeholder">{_esc(word_mark)}</div>'
 
         match_slug = match_serials.get(sn)
         match_html = (f'<a class="match-link" href="matches/{match_slug}.html">Confirmed pair →</a>'
@@ -45,9 +48,18 @@ def render_trademark_gallery(
 
         filing = tm["filing_dt"].strftime("%B %d, %Y") if tm["filing_dt"] else ""
         status = _STATUS_LABELS.get(tm["status_cd"], str(tm["status_cd"]) if tm["status_cd"] else "")
-        goods = (tm.get("goods") or "")[:120] + ("…" if (tm.get("goods") or "") and len(tm.get("goods", "")) > 120 else "")
+        goods_full = tm.get("goods") or ""
+        goods = goods_full[:120] + ("…" if len(goods_full) > 120 else "")
+        goods_attr = f' title="{_esc(goods_full)}"' if goods_full else ""
         focus_badge = '<span class="focus-badge">Project Mark</span>' if is_focus else ""
         card_class = "card card--focus" if is_focus else "card"
+
+        slug = slug_by_id.get(tm["entity_id"])
+        entity_badge = (
+            f'<a class="entity-badge" href="entities/{slug}.html">{_esc(tm["entity_name"])}</a>'
+            if slug else f'<span class="entity-badge">{_esc(tm["entity_name"])}</span>'
+        )
+        draw_footer = f' · Drawing Code {_esc(tm["draw_cd"])}' if tm.get("draw_cd") else ""
 
         return (
             f'<div class="{card_class}" id="sn-{sn}">'
@@ -55,11 +67,11 @@ def render_trademark_gallery(
             f'<div class="card-body">'
             f'<div class="card-name">{_esc(tm["mark_name"] or "(design mark)")}</div>'
             f'<div class="card-meta">Filed {_esc(filing)} · {_esc(status)}</div>'
-            f'<span class="entity-badge">{_esc(tm["entity_name"])}</span>'
+            f'{entity_badge}'
             f'{focus_badge}'
-            f'<div class="card-goods">{_esc(goods)}</div>'
+            f'<div class="card-goods"{goods_attr}>{_esc(goods)}</div>'
             f'{match_html}'
-            f'<div class="card-footer">{_esc(sn)} · Draw {_esc(tm["draw_cd"])}</div>'
+            f'<div class="card-footer">{_esc(sn)}{draw_footer}</div>'
             f'</div></div>'
         )
 
@@ -73,11 +85,13 @@ def render_trademark_gallery(
                f'<div class="card-grid">{"".join(_make_card(tm) for tm in other_tms)}</div>'
                if other_tms else "")
         )
-    else:
+    elif trademarks:
         gallery_html = (
             f'<p class="section-title">All Marks</p>'
             f'<div class="card-grid">{"".join(_make_card(tm) for tm in trademarks)}</div>'
         )
+    else:
+        gallery_html = '<p class="empty-state">No trademarks recorded for this project yet.</p>'
 
     stat_chips = (
         f'<span class="chip">{len(trademarks)} marks</span>'
@@ -106,7 +120,8 @@ def render_trademark_gallery(
         "url": f"{base_url}/{project}/trademarks.html",
     } if base_url else None
     out_path = out_dir / "trademarks.html"
-    out_path.write_text(_page(_page_title("Trademark Gallery", project), body, nav, og=og), encoding="utf-8")
+    out_path.write_text(_page(_page_title("Trademark Gallery", project), body, nav, og=og,
+                              active="trademarks.html"), encoding="utf-8")
     return out_path
 
 
@@ -126,37 +141,51 @@ def render_patent_gallery(
                                 link_index=link_index, depth=0)
     nav = _nav_links(project, entities, extra_nav)
     match_patents = {m["patent_no"]: m["slug"] for m in matches if m.get("essay_path")}
+    slug_by_id = {e["entity_id"]: e["slug"] for e in entities}
 
     timeline = _timeline_svg(patents, "grant_dt", "title", "entity_id", entity_colors)
 
     cards = []
     for pat in patents:
         pn  = pat["patent_no"]
+        title_full = pat.get("title") or ""
         src = _img_src("patent", pn, 0, images_dir) if pat.get("figure_available") else None
         if src:
-            img_html = f'<img class="card-image" loading="lazy" src="{src}" alt="{_esc(pn)}">'
+            img_html = f'<img class="card-image" loading="lazy" src="{src}" alt="{_esc(title_full or pn)}">'
         else:
-            img_html = f'<div class="card-image-placeholder">{_esc(pn)}</div>'
+            # No figure: fall back to the patent title, not the bare patent number.
+            img_html = f'<div class="card-image-placeholder">{_esc(title_full or pn)}</div>'
 
         match_slug = match_patents.get(pn)
         match_html = (f'<a class="match-link" href="matches/{match_slug}.html">Confirmed pair →</a>'
                       if match_slug else "")
 
         grant = pat["grant_dt"].strftime("%Y") if pat["grant_dt"] else ""
+        inventors_full = ", ".join(pat["inventors"])
         inventors = ", ".join(pat["inventors"][:2]) + ("…" if len(pat["inventors"]) > 2 else "")
+        inv_attr = f' title="{_esc(inventors_full)}"' if inventors_full else ""
         classes = " · ".join(pat["cpc_classes"][:3])
-        title = (pat.get("title") or "")[:70] + ("…" if len(pat.get("title") or "") > 70 else "")
+        class_label = "Class" if len(pat["cpc_classes"]) == 1 else "Classes"
+        class_footer = f'{class_label} {_esc(classes)}' if classes else ""
+        title = title_full[:70] + ("…" if len(title_full) > 70 else "")
+        title_attr = f' title="{_esc(title_full)}"' if title_full else ""
+
+        slug = slug_by_id.get(pat["entity_id"])
+        entity_badge = (
+            f'<a class="entity-badge" href="entities/{slug}.html">{_esc(pat["entity_name"])}</a>'
+            if slug else f'<span class="entity-badge">{_esc(pat["entity_name"])}</span>'
+        )
 
         cards.append(
             f'<div class="card" id="pat-{pn}">'
             f'{img_html}'
             f'<div class="card-body">'
-            f'<div class="card-name">{_esc(title)}</div>'
+            f'<div class="card-name"{title_attr}>{_esc(title)}</div>'
             f'<div class="card-meta">{_esc(pn)} · Granted {_esc(grant)}</div>'
-            f'<span class="entity-badge">{_esc(pat["entity_name"])}</span>'
-            f'<div class="card-goods">{_esc(inventors)}</div>'
+            f'{entity_badge}'
+            f'<div class="card-goods"{inv_attr}>{_esc(inventors)}</div>'
             f'{match_html}'
-            f'<div class="card-footer">{_esc(classes)}</div>'
+            f'<div class="card-footer">{class_footer}</div>'
             f'</div></div>'
         )
 
@@ -175,9 +204,10 @@ def render_patent_gallery(
         f'<div class="page-body">'
         f'{_narrative_block(narrative)}'
         f'<div class="timeline-section"><p class="section-title">Grant Timeline</p>{timeline}</div>'
-        f'<p class="section-title">All Patents</p>'
-        f'<div class="card-grid">{"".join(cards)}</div>'
-        f'</div>'
+        + (f'<p class="section-title">All Patents</p>'
+           f'<div class="card-grid">{"".join(cards)}</div>'
+           if cards else '<p class="empty-state">No patents recorded for this project yet.</p>')
+        + f'</div>'
     )
 
     og = {
@@ -186,7 +216,8 @@ def render_patent_gallery(
         "url": f"{base_url}/{project}/patents.html",
     } if base_url else None
     out_path = out_dir / "patents.html"
-    out_path.write_text(_page(_page_title("Patent Gallery", project), body, nav, og=og), encoding="utf-8")
+    out_path.write_text(_page(_page_title("Patent Gallery", project), body, nav, og=og,
+                              active="patents.html"), encoding="utf-8")
     return out_path
 
 

@@ -13,8 +13,8 @@ body {
   font-size: 16px;
 }
 
-a { color: #6D8196; text-decoration: underline; }
-a:hover { color: #56697d; }
+a { color: #4F6076; text-decoration: underline; }
+a:hover { color: #3a4656; }
 
 /* ── Site header ── */
 .site-header {
@@ -46,6 +46,11 @@ a:hover { color: #56697d; }
   margin-right: 16px;
 }
 .site-header nav a:hover { color: #FFFFE3; }
+.site-header nav a.active {
+  color: #FFFFE3;
+  border-bottom: 2px solid #6D8196;
+  padding-bottom: 3px;
+}
 
 /* ── Breadcrumb ── */
 .breadcrumb {
@@ -57,7 +62,7 @@ a:hover { color: #56697d; }
 .breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0; margin: 0; padding: 0; }
 .breadcrumb li { color: #888; }
 .breadcrumb li:not(:last-child)::after { content: "›"; margin: 0 8px; color: #6D8196; }
-.breadcrumb a { color: #6D8196; text-decoration: none; }
+.breadcrumb a { color: #4F6076; text-decoration: none; }
 .breadcrumb a:hover { text-decoration: underline; }
 
 /* ── Page header ── */
@@ -81,12 +86,13 @@ a:hover { color: #56697d; }
   gap: 10px;
   margin-top: 18px;
 }
+/* Inline stat labels — deliberately not pill/button-shaped (no border,
+   square-ish corners) so they don't read as interactive controls. */
 .chip {
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08);
   color: #FFFFE3;
-  padding: 3px 10px;
-  border-radius: 12px;
+  padding: 2px 8px;
+  border-radius: 3px;
   font-size: .8em;
   font-family: monospace;
 }
@@ -193,7 +199,7 @@ a:hover { color: #56697d; }
   font-size: .72em;
   letter-spacing: .12em;
   text-transform: uppercase;
-  color: #6D8196;
+  color: #4F6076;
   margin-bottom: 8px;
 }
 .research-question p { margin-bottom: .7em; }
@@ -233,6 +239,15 @@ a:hover { color: #56697d; }
   border-radius: 10px;
   margin-top: 2px;
   font-family: monospace;
+}
+a.entity-badge { text-decoration: none; }
+a.entity-badge:hover { background: #6D8196; color: #FFFFE3; }
+
+/* Empty-state copy when a section has no records. */
+.empty-state {
+  color: #777;
+  font-style: italic;
+  padding: 20px 0;
 }
 .match-link {
   display: inline-block;
