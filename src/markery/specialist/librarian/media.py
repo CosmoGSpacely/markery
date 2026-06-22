@@ -72,7 +72,7 @@ def acquire_commons(project: str, file_title: str, kind: str = "photo") -> Optio
         "source_url": f"https://commons.wikimedia.org/wiki/{file_title.replace(' ', '_')}",
         "file_url": result.url,
         "file": file_path.name,
-        "title": re.sub(r"^File:", "", file_title),
+        "title": re.sub(r"\.[A-Za-z0-9]+$", "", re.sub(r"^File:", "", file_title)),
         "creator": result.creator,
         "license": result.license,
         "license_url": result.license_url,
