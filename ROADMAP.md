@@ -66,11 +66,15 @@ Progress 2026-06-19: Started a **one-edit-per-day** cadence (kept small so as no
 
 Tooling 2026-06-19: A review found the first edit leaned heavily on Claude with the free model unused, plus some CLI bypasses (raw `confirmed.jsonl`/essay reads; never running `markery wikipedia draft`). Closed the gaps: (1) added `markery wikipedia candidates <project>` — a deterministic confirmed-pair list (slug, normal-cased mark, patent, essay-present, already-on-Wikipedia) that replaces reading `confirmed.jsonl` by hand; (2) added `markery wikipedia propose-edit <project> <slug> --article <title>` — the **project model drafts the citation sentence** from the human-gated essay, enforcing normal-case mark names (MOS:TM / shouting-filter) and **no patent-embodiment claim** unless the essay's Connection supports goods-correspondence, logging tokens; (3) flipped the P3-relevant project models (`animal-marks-1930` was `claude-haiku-4-5`; `radio-pioneers`, `information-systems` had none) to `openai/gpt-oss-120b:free` so the drafting runs free. **Proof:** `propose-edit` on the John Deere pair (free model, $0) reproduced the correct normal-cased, trademark-only, TSDR-cited sentence — and re-demonstrated the human gate by stating the *filing* date as the registration date (a checkable slip a human corrects). 7 new tests; full suite 753 green. The division now matches the thesis: free model drafts, CLI lists/inspects, human judges.
 
-### P4 — Monthly image-review cadence
+### P4 — Annual design-mark review
 
-1. Define a repeatable monthly image-review process over project-scope marks — what to check (live/dead and public-domain status via `markery trademark mark-status`; image presence/quality via `markery enhance gallery`), and how results are recorded.
-2. Add or extend tooling to make the review one command where possible (e.g., a gallery/status report that flags marks needing a fresh image pull or re-enrichment).
-3. Run the first cycle against the current projects and document the cadence (CLAUDE.md or a dedicated doc) so it recurs.
+Reconfigured 2026-06-22 (user direction): the design-mark review cadence is now **annual**, starting 1930, rather than monthly. Monthly galleries are retained, grouped under a **year landing page**; each annual landing is a **card on the Markery root portal**.
+
+1. Build an annual review per year at `site/reviews/<year>/`: a year landing page linking the twelve monthly design-mark galleries (mark_draw_cd LIKE '3%', by filing month), rendered in the site chrome (global bar) so it sits under the Markery portal.
+2. Surface each annual review as a card on the Markery root portal (year, design-mark count, a representative mark image), linking to the year landing.
+3. Build the **1930** and **1929** annual reviews (fetch the design-mark images for both years), and keep `markery site check` green across the root.
+
+Results 2026-06-22: Reconfigured the design-mark review from monthly to **annual**. New `render/reviews.py` renders, per year, a landing page linking twelve monthly galleries of design marks (mark_draw_cd LIKE '3%', by filing month) in the site chrome (`site/reviews/<year>/index.html` + `NN.html`), with mark images written to `reviews/<year>/img/`. `build_all` builds the reviews for `REVIEW_YEARS = [1929, 1930]` and `render_portal` shows a **Design-Mark Reviews** section with a card per year (year, design-mark count, representative image) linking the landing. Fetched the design-mark images for both years via `markery trademark enrich` (360 marks; 1929 and 1930 now at 100% image coverage — 254 and 240). Built: portal + 5 projects + 2 reviews (26 review pages) = **4823 pages**, `site check` clean (63070 links, 0 broken/orphans). 3 new tests; full suite 792 green. Note: the older standalone `projects/monthly-image-review/output/*` monthly galleries are superseded by the in-site annual reviews; the `enhance gallery` tool remains for ad-hoc exploration.
 
 ### P5 — Better image enhancement
 
@@ -104,7 +108,7 @@ P2 PASSED when: the librarian acquires public-domain media (with source/license/
 
 P3 PASSED when: at least one additional Wikipedia article is drafted and submitted from a confirmed pair via the `markery wikipedia` flow, with submission status recorded. — PASSED (John Deere, rev 1360151379, 2026-06-19). **Closed 2026-06-22:** the daily cadence is paused — the current confirmed pairs are largely exhausted of clean "augment an existing article" targets (Sterilamp/Victor assessed non-viable, see `WIKIPEDIA-QUEUE.md`). Re-open the queue and resume the cadence after more projects add fresh confirmed pairs (more candidate articles).
 
-P4 PASSED when: a documented monthly image-review process exists, is runnable (ideally one command), and has completed its first cycle against current projects.
+P4 PASSED when: annual design-mark reviews exist for 1929 and 1930 (year landing + monthly galleries) under `site/reviews/<year>/`, each surfaced as a card on the Markery root portal, with `markery site check` green across the root. — PASSED (2026-06-22)
 
 P5 PASSED when: the enhancement pipeline produces measurably/visibly better images than the current baseline on a documented sample, with the `markery enhance` interface unchanged and the improved images surfaced in a built site.
 

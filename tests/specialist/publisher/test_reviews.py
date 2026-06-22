@@ -1,0 +1,65 @@
+"""Tests for annual design-mark review pages (Phase 24 P4)."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+from markery.specialist.publisher.render import reviews, render_portal
+from markery.specialist.publisher import queries as q
+
+
+@pytest.fixture()
+def stub_marks(monkeypatch):
+    def fake_design_marks(year, month):
+        # Two marks per month; one with an image, one without.
+        return [
+            {"serial": f"7{year}{month:02d}1", "mark": "EAGLE", "owner": "Acme Co.",
+             "state": "NY", "has_img": True},
+            {"serial": f"7{year}{month:02d}2", "mark": "", "owner": "Beta Inc.",
+             "state": "IL", "has_img": False},
+        ]
+    monkeypatch.setattr(reviews, "design_marks", fake_design_marks)
+    monkeypatch.setattr(q, "get_mark_image_bytes", lambda sn: b"\x89PNG fake")
+
+
+def test_render_review_year_creates_landing_and_months(tmp_path, stub_marks):
+    path, summary, written = reviews.render_review_year(1930, tmp_path)
+    assert path == tmp_path / "reviews" / "1930" / "index.html"
+    # 12 monthly pages + the landing exist
+    for mm in range(1, 13):
+        assert (tmp_path / "reviews" / "1930" / f"{mm:02d}.html").exists()
+    html = path.read_text()
+    assert "<h1>1930 Design-Mark Review</h1>" in html
+    assert html.count('class="review-month"') == 12
+    # 24 marks total (2/month), 12 with images
+    assert summary["count"] == 24
+    assert summary["with_images"] == 12
+    assert summary["url"] == "reviews/1930/index.html"
+    assert summary["thumb_src"].startswith("reviews/1930/img/")
+    assert len(written) == 12  # one image written per month
+
+
+def test_review_month_page_depth_and_back_link(tmp_path, stub_marks):
+    reviews.render_review_year(1930, tmp_path)
+    july = (tmp_path / "reviews" / "1930" / "07.html").read_text()
+    assert "<h1>July 1930</h1>" in july
+    assert july.count('class="card"') == 2
+    assert 'src="img/' in july                     # image relative to month dir
+    assert 'href="index.html">← 1930 review' in july
+    # depth 2 → site root is two levels up; no project bar on review pages
+    assert 'class="site-title" href="../../index.html"' in july
+    assert '<div class="project-bar">' not in july
+
+
+def test_portal_renders_review_cards(tmp_path):
+    reviews_summary = [{
+        "year": 1930, "url": "reviews/1930/index.html",
+        "title": "1930 Design-Mark Review", "count": 240, "with_images": 240,
+        "thumb_src": "reviews/1930/img/71930011.png",
+    }]
+    html = render_portal(tmp_path, [], [], reviews=reviews_summary).read_text()
+    assert "Design-Mark Reviews" in html
+    assert 'href="reviews/1930/index.html"' in html
+    assert "240 design marks" in html

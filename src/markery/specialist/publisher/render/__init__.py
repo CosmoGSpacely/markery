@@ -61,6 +61,7 @@ from markery.specialist.publisher.render.portal import (
     render_portal,
     render_root_search,
 )
+from markery.specialist.publisher.render.reviews import render_review_year
 
 __all__ = [
     "render_landing",
@@ -78,5 +79,6 @@ __all__ = [
     "render_search_page",
     "render_portal",
     "render_root_search",
+    "render_review_year",
     "build_link_index",
 ]

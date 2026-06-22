@@ -579,6 +579,29 @@ blockquote p { margin: 0; }
 }
 .portal-enter:hover { background: #56697d; color: #FFFFE3; }
 
+/* ── Annual design-mark review (year landing month grid) ── */
+.review-months {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 20px 0 40px;
+}
+.review-month {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  text-decoration: none;
+  color: #4A4A4A;
+}
+.review-month:hover { box-shadow: 0 2px 8px rgba(109,129,150,.25); }
+.review-month-name { font-weight: bold; }
+.review-month-count { font-size: .8em; color: #666; }
+.breadcrumb-inline { font-size: .85em; margin-bottom: 16px; }
+
 /* ── Per-record detail page (one trademark / one patent) ── */
 .detail-layout {
   display: grid;

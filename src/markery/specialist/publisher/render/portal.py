@@ -21,6 +21,7 @@ def render_portal(
     projects: list[dict],
     matches: list[dict],
     base_url: str | None = None,
+    reviews: list[dict] | None = None,
 ) -> Path:
     """Render the root portal index.
 
@@ -66,6 +67,22 @@ def render_portal(
             f'</div></div>'
         )
 
+    review_cards = []
+    for r in (reviews or []):
+        review_cards.append(
+            f'<div class="portal-card">'
+            f'<h2 class="portal-title"><a href="{r["url"]}">{_esc(r["title"])}</a></h2>'
+            f'<div class="portal-thumbs">{_thumb(r.get("thumb_src"), str(r.get("year", "")))}</div>'
+            f'<p class="portal-summary">USPTO design marks filed in {r.get("year", "")}, '
+            f'in monthly galleries.</p>'
+            f'<div class="portal-stats">'
+            f'<span class="chip-sm">{r.get("count", 0)} design marks</span>'
+            f'<span class="chip-sm">{r.get("with_images", 0)} with images</span>'
+            f'</div>'
+            f'<a class="portal-enter" href="{r["url"]}">Explore →</a>'
+            f'</div>'
+        )
+
     body = (
         '<div class="page-header">'
         '<h1>Markery Research</h1>'
@@ -74,6 +91,8 @@ def render_portal(
         '<div class="page-body">'
         '<p class="section-title">Projects</p>'
         f'<div class="portal-grid">{"".join(cards)}</div>'
+        + ('<p class="section-title">Design-Mark Reviews</p>'
+           f'<div class="portal-grid">{"".join(review_cards)}</div>' if review_cards else '')
         + ('<p class="section-title">Confirmed Pairs — All Projects</p>'
            f'<div class="match-cards">{"".join(match_cards)}</div>' if match_cards else '')
         + '</div>'

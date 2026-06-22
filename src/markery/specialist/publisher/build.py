@@ -12,6 +12,9 @@ from markery.common.project import Project, ProjectType, load_project
 from markery.specialist.publisher import queries as q
 from markery.specialist.publisher import render as r
 
+# Years to build annual design-mark reviews for (Phase 24 P4).
+REVIEW_YEARS = [1929, 1930]
+
 
 def _collect_theme_slugs(proj: Project) -> list[str]:
     """Return slugs for all content/theme-<slug>.md files."""
@@ -251,8 +254,21 @@ def build_all(out_dir: Path | None = None, base_url: str | None = None,
                 rec["title"] = f"{rec['title']} · {_display_title(project)}"
                 combined_search.append(rec)
 
-    pages = [r.render_portal(site_root, portal_projects, portal_matches, base_url=base_url)]
-    print(f"  portal           → index.html ({len(portal_projects)} projects)")
+    # Annual design-mark reviews (Phase 24 P4): one year landing + 12 monthly
+    # galleries each, surfaced as portal cards.
+    pages: list[Path] = []
+    review_summaries: list[dict] = []
+    for year in REVIEW_YEARS:
+        y_path, y_summary, _ = r.render_review_year(year, site_root, base_url=base_url)
+        review_summaries.append(y_summary)
+        pages.append(y_path)
+        for mm in range(1, 13):
+            pages.append(site_root / "reviews" / str(year) / f"{mm:02d}.html")
+        print(f"  review {year}      → reviews/{year}/ (12 months, {y_summary['count']} marks)")
+
+    pages.insert(0, r.render_portal(site_root, portal_projects, portal_matches,
+                                    base_url=base_url, reviews=review_summaries))
+    print(f"  portal           → index.html ({len(portal_projects)} projects, {len(review_summaries)} reviews)")
     pages.append(r.render_root_search(site_root))
     print("  root search      → search.html")
 
