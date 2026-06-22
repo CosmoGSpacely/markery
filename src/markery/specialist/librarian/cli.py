@@ -609,6 +609,45 @@ def cmd_card(args: argparse.Namespace) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Media (Phase 24 P2): public-domain / free-licensed image, map, drawing, video
+# ---------------------------------------------------------------------------
+
+def cmd_media_search(args: argparse.Namespace) -> None:
+    from markery.specialist.librarian.sources import commons
+    titles = commons.search(args.query, args.max_results)
+    if not titles:
+        print("No results.")
+        return
+    for t in titles:
+        print(t)
+
+
+def cmd_media_acquire(args: argparse.Namespace) -> None:
+    from markery.specialist.librarian import media
+    meta = media.acquire_commons(args.project, args.title, kind=args.kind)
+    if meta is None:
+        print(
+            f"Rejected: '{args.title}' — license not admitted (PD/CC0/CC-BY/CC-BY-SA "
+            "only) or carries usage restrictions.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    print(f"Acquired: {meta['slug']}  [{meta['license']}]")
+    print(f"  attribution: {meta['attribution_text']}")
+    print(f"  → {media.media_dir(args.project) / meta['slug']}")
+
+
+def cmd_media_list(args: argparse.Namespace) -> None:
+    from markery.specialist.librarian import media
+    items = media.list_media(args.project)
+    if not items:
+        print("No media acquired for this project.")
+        return
+    for m in items:
+        print(f"{m['slug']:42} {m['kind']:7} {m['license']:10} {m['title']}")
+
+
+# ---------------------------------------------------------------------------
 # CLI wiring
 # ---------------------------------------------------------------------------
 
@@ -747,10 +786,29 @@ def librarian_main() -> None:
     p_card.add_argument("--tokens", action="store_true",
                         help="Print estimated token count to stderr")
 
+    # media-search / media-acquire / media-list (Phase 24 P2)
+    p_msrch = sub.add_parser("media-search",
+                             help="Search Wikimedia Commons for media (no download)")
+    p_msrch.add_argument("query", help="Search query")
+    p_msrch.add_argument("--max-results", type=int, default=10)
+
+    p_macq = sub.add_parser("media-acquire",
+                            help="Acquire a Commons file into a project's media library")
+    p_macq.add_argument("title", help="Commons File: title (e.g. 'File:Foo.jpg')")
+    p_macq.add_argument("--project", required=True, help="Target project")
+    p_macq.add_argument("--kind", default="photo",
+                        choices=["photo", "map", "drawing", "video"])
+
+    p_mlist = sub.add_parser("media-list", help="List acquired media in a project")
+    p_mlist.add_argument("--project", required=True, help="Project to list")
+
     args = parser.parse_args()
 
     dispatch = {
         "search-sources": cmd_search_sources,
+        "media-search":   cmd_media_search,
+        "media-acquire":  cmd_media_acquire,
+        "media-list":     cmd_media_list,
         "discover":       cmd_discover,
         "wants":          cmd_wants,
         "wants-update":   cmd_wants_update,
