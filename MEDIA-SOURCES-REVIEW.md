@@ -63,7 +63,8 @@ is auditable:
   Reject if `Restrictions` is non-empty (trademark/personality/etc.) or license is NC/ND.
 - **Attribution:** even for PD, store `Artist` + Commons file URL.
 - **Caveat:** a file can be PD in the US but restricted elsewhere; we publish US-scoped, so
-  `PD-US-expired` (pre-1929 publication, well within our 1900–1939 scope) is the safe core.
+  `PD-US-expired` (works **published before 1931** — i.e. 1930 or earlier, as of 2026) is
+  the safe core. The cutoff advances one year every January 1.
 
 ### 3. Library of Congress (loc.gov) — Prints & Photographs
 - **Media:** historical photographs, maps, posters (PPOC, Panoramic Maps, etc.).
@@ -113,9 +114,13 @@ Normalize everything to two URI families plus a small PD vocabulary:
   (No Known Copyright) map to `PD`/`NoKnownCopyright`.
 - Commons PD templates (`PD-US-expired`, `PD-Art`, `PD-USGov`, `PD-old-70`) → `PD`.
 
-For our 1900–1939 scope the dominant, safest basis is **US copyright expiration**
-(works published before 1929 are PD in the US; the rolling cutoff advances yearly), which
-covers most period photographs/maps/drawings on Commons, LoC, and NARA.
+For our 1900–1939 scope the dominant, safest basis is **US copyright expiration**:
+**works published before 1931 (1930 or earlier) are public domain in the US as of 2026**
+(95-year term; the cutoff advances one year each January 1). This covers most period
+photographs/maps/drawings from 1900–1930 on Commons, LoC, and NARA. **Works from
+1931–1939 are not yet PD by expiration** (they enter the public domain in 2027–2035) — for
+those, admit only on another positive basis: US-government authorship (`PD-USGov`), an
+explicit PD dedication / `CC0`, or a free CC-BY/CC-BY-SA license.
 
 ---
 
