@@ -102,7 +102,7 @@ P1 PASSED when: the publisher renders a responsive, accessible site with SEO/OG 
 
 P2 PASSED when: the librarian acquires public-domain media (with source/license/attribution metadata) for a project, the historian/publisher embed it with source captions, and `markery site build` / `site check` stay clean on a media-enriched project. — PASSED (2026-06-22; Wikimedia Commons implemented, other sources deferred to D069)
 
-P3 PASSED when: at least one additional Wikipedia article is drafted and submitted from a confirmed pair via the `markery wikipedia` flow, with submission status recorded. — PASSED (John Deere, rev 1360151379, 2026-06-19; daily cadence continues via `WIKIPEDIA-QUEUE.md`)
+P3 PASSED when: at least one additional Wikipedia article is drafted and submitted from a confirmed pair via the `markery wikipedia` flow, with submission status recorded. — PASSED (John Deere, rev 1360151379, 2026-06-19). **Closed 2026-06-22:** the daily cadence is paused — the current confirmed pairs are largely exhausted of clean "augment an existing article" targets (Sterilamp/Victor assessed non-viable, see `WIKIPEDIA-QUEUE.md`). Re-open the queue and resume the cadence after more projects add fresh confirmed pairs (more candidate articles).
 
 P4 PASSED when: a documented monthly image-review process exists, is runnable (ideally one command), and has completed its first cycle against current projects.
 

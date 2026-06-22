@@ -1,5 +1,11 @@
 # Wikipedia Edit Queue (Phase 24 P3)
 
+> **Status: PAUSED (P3 closed 2026-06-22).** One edit live (John Deere). The current
+> confirmed pairs are largely exhausted of clean "augment an existing article" targets
+> (Sterilamp/Victor assessed non-viable below). Resume this cadence after more projects
+> add fresh confirmed pairs.
+
+
 A living working list for the **one-edit-per-day** Wikipedia contribution cadence.
 Each edit follows the proven Soundex pattern (live 2026-06-06, unreverted): a small,
 **primary-source-cited** addition to an **existing notable article**, period-correct
