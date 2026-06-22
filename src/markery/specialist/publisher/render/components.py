@@ -160,12 +160,15 @@ def _render_markdown(
     link_index: dict[str, str] | None = None,
     depth: int = 0,
     figure_index: dict[str, str] | None = None,
+    media_index: dict[str, dict] | None = None,
 ) -> str:
     """Minimal Markdown → HTML: headings, paragraphs, bold, inline code, fenced blocks,
     unordered/ordered lists, blockquotes, and external links.
 
     link_index maps slug → root-relative URL; [[Slug]] resolves to <a>.
     figure_index maps patent_no → root-relative image path; [[figure:patent_no]] renders <figure>.
+    media_index maps slug → {file, title, attribution_text, license, source_url};
+      [[media:slug]] renders a sourced, attributed <figure>.
     depth controls how many ../ prefixes to prepend to root-relative URLs.
     """
     stash: dict[str, str] = {}
@@ -189,12 +192,32 @@ def _render_markdown(
 
     text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', _stash_ext_link, text)
 
-    if link_index or figure_index:
+    if link_index or figure_index or media_index:
         prefix = "../" * depth
 
         def _stash_link(m: re.Match) -> str:
             raw = m.group(1)
             key = f"\x00LINK{len(stash)}\x00"
+            if media_index is not None and raw.startswith("media:"):
+                slug = raw[6:]
+                item = media_index.get(slug)
+                if item:
+                    cap = _esc(item.get("title", slug))
+                    attr = _esc(item.get("attribution_text", ""))
+                    src_url = item.get("source_url", "")
+                    credit = (
+                        f'{attr} · <a href="{src_url}" target="_blank" rel="noopener">source</a>'
+                        if src_url else attr
+                    )
+                    stash[key] = (
+                        f'<figure class="media-figure">'
+                        f'<img src="{prefix}{item["file"]}" alt="{cap}">'
+                        f'<figcaption>{cap} — {credit}</figcaption>'
+                        f'</figure>'
+                    )
+                else:
+                    stash[key] = ""
+                return key
             if figure_index is not None and raw.startswith("figure:"):
                 pno      = raw[7:]
                 img_path = figure_index.get(pno)
@@ -297,10 +320,12 @@ def _read_narrative(
     link_index: dict[str, str] | None = None,
     depth: int = 0,
     figure_index: dict[str, str] | None = None,
+    media_index: dict[str, dict] | None = None,
 ) -> str:
     if path.exists():
         return _render_markdown(path.read_text(), link_index=link_index,
-                                depth=depth, figure_index=figure_index)
+                                depth=depth, figure_index=figure_index,
+                                media_index=media_index)
     # Missing narrative source: suppress the section entirely (no placeholder prose).
     return ""
 

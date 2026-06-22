@@ -21,6 +21,7 @@ def render_match_essay(
     extra_nav: dict[str, str] | None = None,
     images_dir: Path | None = None,
     figure_index: dict[str, str] | None = None,
+    media_index: dict[str, dict] | None = None,
 ) -> Path:
     slug = match["slug"]
     nav = _nav_links(project, entities, extra_nav)
@@ -29,7 +30,7 @@ def render_match_essay(
     if match.get("essay_path") and Path(match["essay_path"]).exists():
         raw_essay = _strip_frontmatter(Path(match["essay_path"]).read_text())
         essay_md = _render_markdown(raw_essay, link_index=link_index, depth=1,
-                                    figure_index=figure_index)
+                                    figure_index=figure_index, media_index=media_index)
         # Auto-embed: append figure below essay when no [[figure:]] tag but figure exists.
         pno = match.get("patent_no", "")
         if figure_index and pno and pno in figure_index and f"[[figure:{pno}]]" not in raw_essay:
@@ -137,6 +138,7 @@ def render_thematic_essay(
     base_url: str | None = None,
     link_index: dict[str, str] | None = None,
     extra_nav: dict[str, str] | None = None,
+    media_index: dict[str, dict] | None = None,
 ) -> Path:
     """Render a thematic essay from content/theme-<slug>.md → themes/<slug>.html."""
     proj = Project(project)
@@ -147,7 +149,7 @@ def render_thematic_essay(
     title_match = re.search(r'^#\s+(.+)', raw, re.MULTILINE)
     essay_title = title_match.group(1).strip() if title_match else slug.replace("-", " ").title()
 
-    essay_html = _render_markdown(raw, link_index=link_index, depth=1) if raw else (
+    essay_html = _render_markdown(raw, link_index=link_index, depth=1, media_index=media_index) if raw else (
         '<p style="color:#999;font-style:italic">Essay not yet written.</p>'
     )
 

@@ -63,18 +63,19 @@ def _run_pagefind(out_dir: Path) -> None:
 
 
 def _prune_stale(out: Path, written: set[Path]) -> list[Path]:
-    """Remove HTML and image files under `out` not written this run.
+    """Remove HTML, image, and media files under `out` not written this run.
 
-    Only `.html` pages and files under `images/` are pruned — these are the
-    outputs whose names track project state (match slugs, mark serials) and so
-    go stale when that state changes. The pagefind index and `search.json` are
-    rewritten every build and left alone.
+    Only `.html` pages and files under `images/` and `media/` are pruned — these
+    are the outputs whose names track project state (match slugs, mark serials,
+    media slugs) and so go stale when that state changes. The pagefind index and
+    `search.json` are rewritten every build and left alone.
     """
     removed: list[Path] = []
     candidates = list(out.rglob("*.html"))
-    images_dir = out / "images"
-    if images_dir.exists():
-        candidates += [p for p in images_dir.rglob("*") if p.is_file()]
+    for sub in ("images", "media"):
+        d = out / sub
+        if d.exists():
+            candidates += [p for p in d.rglob("*") if p.is_file()]
     for f in candidates:
         if f.resolve() not in written:
             f.unlink()
@@ -342,6 +343,31 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
                 figure_index[pat["patent_no"]] = f"images/patents/{pat['patent_no']}.png"
                 written_images.add(dest.resolve())
 
+    # Copy acquired public-domain/free media and build media_index for [[media:]] embeds.
+    media_index: dict[str, dict] = {}
+    media_src = proj.root / "library" / "media"
+    media_idx_file = media_src / "index.jsonl"
+    if media_idx_file.exists():
+        out_media = out / "media"
+        for line in media_idx_file.read_text().splitlines():
+            if not line.strip():
+                continue
+            item = json.loads(line)
+            srcfile = media_src / item["slug"] / item["file"]
+            if not srcfile.exists():
+                continue
+            dest = out_media / item["file"]
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(srcfile.read_bytes())
+            written_images.add(dest.resolve())
+            media_index[item["slug"]] = {
+                "file": f"media/{item['file']}",
+                "title": item.get("title", ""),
+                "attribution_text": item.get("attribution_text", ""),
+                "license": item.get("license", ""),
+                "source_url": item.get("source_url", ""),
+            }
+
     pages: list[Path] = []
     search_records: list[dict] = []
 
@@ -349,6 +375,7 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
         project, entities, trademarks, patents, matches, stats, out,
         base_url=base_url, link_index=link_index, extra_nav=extra_nav,
         images_dir=images_dir, research_question=research_question,
+        media_index=media_index,
     ))
     print(f"  landing          → {pages[-1].name}")
     search_records.append(_build_search_record(
@@ -360,13 +387,14 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
         project, entities, trademarks, matches, colors, out,
         base_url=base_url, link_index=link_index, extra_nav=extra_nav,
         images_dir=images_dir, focus_serials=focus_serials,
+        media_index=media_index,
     ))
     print(f"  trademark gallery → {pages[-1].name}")
 
     pages.append(r.render_patent_gallery(
         project, entities, patents, matches, colors, out,
         base_url=base_url, link_index=link_index, extra_nav=extra_nav,
-        images_dir=images_dir,
+        images_dir=images_dir, media_index=media_index,
     ))
     print(f"  patent gallery   → {pages[-1].name}")
 
@@ -413,6 +441,7 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
         p = r.render_entity_page(
             project, entity, entities, ent_tms, ent_pats, ent_mats, ent_stats, out,
             base_url=base_url, link_index=link_index, extra_nav=extra_nav,
+            media_index=media_index,
         )
         pages.append(p)
         print(f"  entity           → entities/{p.name}")
@@ -442,6 +471,7 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
             project, match, entities, out,
             base_url=base_url, link_index=link_index, extra_nav=extra_nav,
             images_dir=images_dir, figure_index=figure_index,
+            media_index=media_index,
         )
         pages.append(p)
         print(f"  match essay      → matches/{p.name}")
@@ -457,6 +487,7 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
         p = r.render_thematic_essay(
             project, slug, out, entities,
             base_url=base_url, link_index=link_index, extra_nav=extra_nav,
+            media_index=media_index,
         )
         pages.append(p)
         print(f"  thematic essay   → themes/{p.name}")

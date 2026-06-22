@@ -513,6 +513,12 @@ a.entity-badge:hover { background: #6D8196; color: #FFFFE3; }
 .patent-figure img { max-width: 100%; background: #FBFBF0; display: block; margin: 0 auto; }
 .patent-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
 
+/* ── Embedded public-domain / free-licensed media ([[media:slug]]) ── */
+.media-figure { margin: 24px auto; text-align: center; max-width: 600px; border: 1px solid #CBCBCB; border-radius: 4px; padding: 8px; }
+.media-figure img { max-width: 100%; background: #FBFBF0; display: block; margin: 0 auto; }
+.media-figure figcaption { font-size: .78em; color: #888; margin-top: 6px; font-style: italic; }
+.media-figure figcaption a { color: #4F6076; }
+
 /* ── Blockquotes ── */
 blockquote { border-left: 3px solid #6D8196; margin: 16px 0; padding: 8px 16px; color: #555; font-style: italic; }
 blockquote p { margin: 0; }

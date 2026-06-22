@@ -22,9 +22,10 @@ def render_trademark_gallery(
     extra_nav: dict[str, str] | None = None,
     images_dir: Path | None = None,
     focus_serials: set[int] | None = None,
+    media_index: dict[str, dict] | None = None,
 ) -> Path:
     narrative = _read_narrative(Project(project).content / "trademarks-narrative.md",
-                                link_index=link_index, depth=0)
+                                link_index=link_index, depth=0, media_index=media_index)
     nav = _nav_links(project, entities, extra_nav)
     match_serials = {str(m["trademark_serial"]): m["slug"] for m in matches if m.get("essay_path")}
     focus_set = {str(s) for s in focus_serials} if focus_serials else None
@@ -135,9 +136,10 @@ def render_patent_gallery(
     link_index: dict[str, str] | None = None,
     extra_nav: dict[str, str] | None = None,
     images_dir: Path | None = None,
+    media_index: dict[str, dict] | None = None,
 ) -> Path:
     narrative = _read_narrative(Project(project).content / "patents-narrative.md",
-                                link_index=link_index, depth=0)
+                                link_index=link_index, depth=0, media_index=media_index)
     nav = _nav_links(project, entities, extra_nav)
     match_patents = {m["patent_no"]: m["slug"] for m in matches if m.get("essay_path")}
     slug_by_id = {e["entity_id"]: e["slug"] for e in entities}

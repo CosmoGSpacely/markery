@@ -103,6 +103,31 @@ def test_page_no_canonical_without_og():
 
 # Group 2: list, blockquote, external link rendering
 
+def test_render_markdown_media_token():
+    # P2: [[media:slug]] renders a sourced, attributed <figure>.
+    mi = {"deere-plow": {"file": "media/deere.jpg", "title": "Deere plow",
+                         "attribution_text": "Jane Roe / CC BY 4.0", "license": "CC-BY",
+                         "source_url": "https://commons.wikimedia.org/wiki/File:Deere.jpg"}}
+    html = _render_markdown("Intro.\n\n[[media:deere-plow]]\n\nMore.", media_index=mi)
+    assert 'class="media-figure"' in html
+    assert 'src="media/deere.jpg"' in html
+    assert "Deere plow" in html
+    assert "Jane Roe / CC BY 4.0" in html
+    assert 'href="https://commons.wikimedia.org/wiki/File:Deere.jpg"' in html
+
+
+def test_render_markdown_media_token_depth_prefix():
+    mi = {"x": {"file": "media/x.jpg", "title": "X", "attribution_text": "PD",
+                "license": "PD", "source_url": ""}}
+    html = _render_markdown("[[media:x]]", depth=1, media_index=mi)
+    assert 'src="../media/x.jpg"' in html
+
+
+def test_render_markdown_media_token_unknown_is_empty():
+    html = _render_markdown("[[media:missing]]", media_index={})
+    assert "media-figure" not in html
+
+
 def test_render_markdown_unordered_list():
     result = _render_markdown("- Alpha\n- Beta\n- Gamma")
     assert "<ul>" in result

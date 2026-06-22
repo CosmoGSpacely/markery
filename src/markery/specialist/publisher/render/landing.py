@@ -24,9 +24,10 @@ def render_landing(
     extra_nav: dict[str, str] | None = None,
     images_dir: Path | None = None,
     research_question: str | None = None,
+    media_index: dict[str, dict] | None = None,
 ) -> Path:
     narrative = _read_narrative(Project(project).content / "index-narrative.md",
-                                link_index=link_index, depth=0)
+                                link_index=link_index, depth=0, media_index=media_index)
     nav = _nav_links(project, entities, extra_nav)
 
     match_cards = []

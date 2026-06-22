@@ -21,10 +21,11 @@ def render_entity_page(
     base_url: str | None = None,
     link_index: dict[str, str] | None = None,
     extra_nav: dict[str, str] | None = None,
+    media_index: dict[str, dict] | None = None,
 ) -> Path:
     slug = entity["slug"]
     narrative = _read_narrative(Project(project).content / f"entity-{slug}.md",
-                                link_index=link_index, depth=1)
+                                link_index=link_index, depth=1, media_index=media_index)
     nav = _nav_links(project, entities, extra_nav)
 
     variants_rows = "".join(
