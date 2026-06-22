@@ -25,14 +25,19 @@ def design_marks(year: int, month: int) -> list[dict]:
     last = calendar.monthrange(year, month)[1]
     conn = duckdb.connect(str(config.DB["trademarks"]), read_only=True)
     rows = conn.execute(f"""
-        SELECT cf.serial_no, cf.mark_id_char,
+        SELECT cf.serial_no, cf.mark_id_char, cf.filing_dt,
                o.own_name, o.own_addr_state_cd,
+               gs.goods,
                CASE WHEN mi.serial_no IS NOT NULL THEN 1 ELSE 0 END AS has_img
         FROM case_file cf
         LEFT JOIN (
             SELECT serial_no, own_name, own_addr_state_cd FROM owner
             WHERE own_id IN (SELECT MIN(own_id) FROM owner GROUP BY serial_no)
         ) o ON cf.serial_no = o.serial_no
+        LEFT JOIN (
+            SELECT serial_no, string_agg(statement_text, ' ') AS goods
+            FROM statement WHERE statement_type_cd LIKE 'GS%' GROUP BY serial_no
+        ) gs ON cf.serial_no = gs.serial_no
         LEFT JOIN mark_images mi ON cf.serial_no = mi.serial_no
         WHERE cf.mark_draw_cd LIKE '3%'
           AND cf.filing_dt BETWEEN DATE '{year}-{month:02d}-01'
@@ -41,8 +46,9 @@ def design_marks(year: int, month: int) -> list[dict]:
     """).fetchall()
     conn.close()
     return [
-        {"serial": str(r[0]), "mark": r[1] or "", "owner": r[2] or "",
-         "state": r[3] or "", "has_img": bool(r[4])}
+        {"serial": str(r[0]), "mark": r[1] or "", "filing": r[2],
+         "owner": r[3] or "", "state": r[4] or "", "goods": r[5] or "",
+         "has_img": bool(r[6])}
         for r in rows
     ]
 
@@ -53,11 +59,19 @@ def _card(m: dict, img_rel: str | None) -> str:
     else:
         inner = f'<div class="card-image-placeholder">{_esc(m["mark"] or m["serial"])}</div>'
     owner = m["owner"] + (f' · {m["state"]}' if m["state"] else "")
+    filing = m.get("filing")
+    filing_str = filing.strftime("%B %d, %Y") if hasattr(filing, "strftime") else (str(filing) if filing else "")
+    goods_full = m.get("goods") or ""
+    goods = goods_full[:120] + ("…" if len(goods_full) > 120 else "")
+    goods_attr = f' title="{_esc(goods_full)}"' if goods_full else ""
+    goods_html = f'<div class="card-goods"{goods_attr}>{_esc(goods)}</div>' if goods_full else ""
     return (
         f'<div class="card" id="sn-{m["serial"]}">{inner}'
         f'<div class="card-body">'
         f'<div class="card-name">{_esc(m["mark"] or "(design mark)")}</div>'
         f'<div class="card-meta">{_esc(owner)}</div>'
+        f'<div class="card-meta">Filed {_esc(filing_str)}</div>'
+        f'{goods_html}'
         f'<div class="card-footer">{_esc(m["serial"])}</div>'
         f'</div></div>'
     )

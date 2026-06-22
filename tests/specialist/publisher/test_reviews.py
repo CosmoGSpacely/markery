@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -15,10 +16,10 @@ def stub_marks(monkeypatch):
     def fake_design_marks(year, month):
         # Two marks per month; one with an image, one without.
         return [
-            {"serial": f"7{year}{month:02d}1", "mark": "EAGLE", "owner": "Acme Co.",
-             "state": "NY", "has_img": True},
-            {"serial": f"7{year}{month:02d}2", "mark": "", "owner": "Beta Inc.",
-             "state": "IL", "has_img": False},
+            {"serial": f"7{year}{month:02d}1", "mark": "EAGLE", "filing": date(year, month, 4),
+             "owner": "Acme Co.", "state": "NY", "goods": "boots and shoes", "has_img": True},
+            {"serial": f"7{year}{month:02d}2", "mark": "", "filing": date(year, month, 9),
+             "owner": "Beta Inc.", "state": "IL", "goods": "", "has_img": False},
         ]
     monkeypatch.setattr(reviews, "design_marks", fake_design_marks)
     monkeypatch.setattr(q, "get_mark_image_bytes", lambda sn: b"\x89PNG fake")
@@ -48,6 +49,9 @@ def test_review_month_page_depth_and_back_link(tmp_path, stub_marks):
     assert july.count('class="card"') == 2
     assert 'src="img/' in july                     # image relative to month dir
     assert 'href="index.html">← 1930 review' in july
+    # filing date and goods/services on the design-mark cards
+    assert "Filed July 04, 1930" in july
+    assert "boots and shoes" in july
     # depth 2 → site root is two levels up; no project bar on review pages
     assert 'class="site-title" href="../../index.html"' in july
     assert '<div class="project-bar">' not in july
