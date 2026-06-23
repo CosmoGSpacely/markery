@@ -76,11 +76,33 @@ Reconfigured 2026-06-22 (user direction): the design-mark review cadence is now 
 
 Results 2026-06-22: Reconfigured the design-mark review from monthly to **annual**. New `render/reviews.py` renders, per year, a landing page linking twelve monthly galleries of design marks (mark_draw_cd LIKE '3%', by filing month) in the site chrome (`site/reviews/<year>/index.html` + `NN.html`), with mark images written to `reviews/<year>/img/`. `build_all` builds the reviews for `REVIEW_YEARS = [1929, 1930]` and `render_portal` shows a **Design-Mark Reviews** section with a card per year (year, design-mark count, representative image) linking the landing. Fetched the design-mark images for both years via `markery trademark enrich` (360 marks; 1929 and 1930 now at 100% image coverage — 254 and 240). Built: portal + 5 projects + 2 reviews (26 review pages) = **4823 pages**, `site check` clean (63070 links, 0 broken/orphans). 3 new tests; full suite 792 green. Note: the older standalone `projects/monthly-image-review/output/*` monthly galleries are superseded by the in-site annual reviews; the `enhance gallery` tool remains for ad-hoc exploration.
 
-### P5 — Better image enhancement
+### P5 — Print-ready image files for on-demand printing (Amazon Merch)
 
-1. Review the current enhancement pipeline (`src/markery/specialist/.../enhance`) and baseline its output quality on a sample of mark images and patent figures.
-2. Improve enhancement (e.g., upscaling, denoise, deskew/contrast for scanned figures); keep the `markery enhance` (`enhance` | `batch` | `gallery`) interface stable.
-3. Re-enhance a sample, compare against baseline, and confirm the site picks up the improved images via `markery enhance gallery` / `site build`.
+Reframed 2026-06-23 (user direction): the goal is for Markery to build a **print-ready image
+file** from a public-domain corpus image (a design mark or a patent figure) suitable for
+upload to an on-demand printing service like **Amazon Merch on Demand**. Image-enhancement
+work (upscale/denoise/deskew) folds in here as the means to reach print resolution.
+
+1. **Define the print spec** (Amazon Merch on Demand as the reference target; other POD
+   services are similar and configurable): PNG, **sRGB**, **transparent background**,
+   ~**4500×5400 px @ 300 DPI**, **< 25 MB**. Record the spec (and which products/sizes it
+   covers) in a reference doc.
+2. **Build the asset pipeline from a source image:** clean + **upscale to print resolution**
+   (denoise/deskew/contrast so line art is crisp at 300 DPI), **remove the background to
+   transparency**, threshold/recolor for a clean print, and place on the target canvas at the
+   right size/DPI/color profile. New command, e.g. `markery enhance print <serial|patent_no>
+   [--spec merch] --out <file>`, reusing the existing `enhance` pipeline for the upscaling step.
+3. **Source eligibility (legal discipline — two distinct rights):** print only from sources
+   that are clear on **both** axes:
+   - **Copyright:** PD/CC0 artwork only (pre-1931 by expiration, or CC0). CC-BY/CC-BY-SA are
+     *excluded for merch* — POD products carry no attribution surface to satisfy the license.
+   - **Trademark:** a historical design mark may have PD *artwork* yet still carry **live
+     trademark rights** — selling merch bearing a live mark risks infringement. Restrict
+     design-mark sources to **dead/abandoned** marks via `markery trademark mark-status`.
+     Patent figures have no trademark issue and are freely printable when PD.
+4. **Produce a verified sample sheet** of print-ready files from eligible PD sources (e.g.
+   dead design marks from the 1929/1930 reviews and PD patent figures); confirm each meets the
+   Merch spec (dimensions, DPI, sRGB, transparency, file size).
 
 ### P6 — Web hosting and deployment
 
@@ -110,7 +132,7 @@ P3 PASSED when: at least one additional Wikipedia article is drafted and submitt
 
 P4 PASSED when: annual design-mark reviews exist for 1929 and 1930 (year landing + monthly galleries) under `site/reviews/<year>/`, each surfaced as a card on the Markery root portal, with `markery site check` green across the root. — PASSED (2026-06-22)
 
-P5 PASSED when: the enhancement pipeline produces measurably/visibly better images than the current baseline on a documented sample, with the `markery enhance` interface unchanged and the improved images surfaced in a built site.
+P5 PASSED when: `markery` produces a print-ready PNG from a public-domain corpus image that meets the Amazon Merch on Demand spec (PNG, sRGB, transparent background, ~4500×5400 px @ 300 DPI, < 25 MB), built only from copyright-clear **and** trademark-clear sources (PD/CC0 artwork; dead/abandoned marks or patent figures), with a documented sample verified against the spec.
 
 P6 PASSED when: a repeatable `markery`-driven deploy publishes a project site to the chosen host at a stable public URL, with internal links resolving against the deployed base URL.
 
