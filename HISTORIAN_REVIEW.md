@@ -181,7 +181,38 @@ discipline · caveats.
   alone; keep eBay images visibly in the "for sale" frame, never mixed into the PD media.
 - **Caveat:** app key + rate limits; **use the API, never scrape**; hotlinked images and the
   listings themselves are ephemeral (snapshot metadata + retrieved-at; expect dead links over
-  time); sold-price history needs the restricted Marketplace Insights API (apply, or omit).
+  time).
+
+- **Sold-price history (completed listings) — automatable vs. human-only.** The Browse API
+  above covers *active* listings only. For *sold/completed* prices (what a period artifact
+  actually fetches), the candidate sources split sharply by whether the unattended loop can
+  use them within terms of service:
+  - **eBay Marketplace Insights API** — the **only ToS-compliant automated** route to
+    sold-listing data (last-90-day sales: price, condition, date). Requires a *restricted*
+    application grant from eBay (business justification). **This is the source the loop uses
+    if we get the grant.** Without it, the loop does *not* fetch sold prices automatically.
+  - **Terapeak** (eBay's own, in Seller Hub) — rich completed-listing analytics (avg price,
+    sell-through), but access is the **logged-in web UI**, not a general public API (the
+    legacy Terapeak API was folded into Marketplace Insights). Programmatic scraping of the
+    Seller Hub violates eBay ToS → **human-only tool**, not for the loop.
+  - **eBay Advanced Search → Completed/Sold listings** — the built-in web UI for sold items.
+    No official API for it; scraping eBay search result pages violates eBay ToS →
+    **human-only**.
+  - **WatchCount.com** — third-party index of eBay sold/popular items. No public API;
+    scraping carries its own ToS exposure → **human-only**.
+  - **SoldListings.com** — third-party historic sold-listing archive. No API → **human-only**.
+- **How the human-only tools fit the loop (handoff, not scraping):** when the loop surfaces a
+  for-sale or wanted artifact, it **deep-links the price-research query** on each tool so a
+  person can check sold prices in one click, and records the figure they report back into the
+  lead. The loop generates URLs like:
+  - eBay completed/sold: `https://www.ebay.com/sch/i.html?_nkw=<query>&LH_Complete=1&LH_Sold=1`
+  - WatchCount: `https://www.watchcount.com/sold/<query>` (sold filter)
+  - Terapeak: link to Seller-Hub Product Research (user must be logged in)
+  - SoldListings: `https://www.soldlistings.com/?q=<query>`
+
+  These belong in the lead card / discovery log as **"check sold prices →" links**, never as
+  an automated fetch. If Marketplace Insights is later granted, the loop fills the sold-price
+  field directly and the handoff links become a fallback.
 
 ### 4d. Pre-1931 books — WorldCat discovery → digitized full text → ILL
 - **Provides:** trade catalogs, company histories, industry directories, biographies.
@@ -284,8 +315,12 @@ item, queues a want, logs a lead, and human-gates a purchase/ILL on a real proje
 
 ## 9. Open questions / decisions for the user
 
-1. **eBay scope:** active listings only (Browse API), or pursue sold-price history
-   (Marketplace Insights — restricted application)? Recommend active-only first.
+1. **eBay scope / sold prices:** start with **active** listings (Browse API) plus
+   **deep-link handoffs** to the sold-price tools (eBay completed-listings, WatchCount,
+   Terapeak, SoldListings) for a human to check — recommended first step. Do we also want to
+   apply for the **Marketplace Insights API** restricted grant so the loop can fetch
+   sold/completed prices automatically (the only ToS-compliant automated route; the
+   web/3rd-party tools are human-only, scraping them is off the table)?
 2. **OCLC WorldCat key:** do we have/want institutional access, or rely on keyless Open
    Library + HathiTrust + IA for book discovery initially?
 3. **ILL submission:** confirm it stays a local institution-specific script (per the ILL
