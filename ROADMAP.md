@@ -91,7 +91,9 @@ work (upscale/denoise/deskew) folds in here as the means to reach print resoluti
    (denoise/deskew/contrast so line art is crisp at 300 DPI), **remove the background to
    transparency**, threshold/recolor for a clean print, and place on the target canvas at the
    right size/DPI/color profile. New command, e.g. `markery enhance print <serial|patent_no>
-   [--spec merch] --out <file>`, reusing the existing `enhance` pipeline for the upscaling step.
+   [--spec merch]`, reusing the existing `enhance` pipeline for the upscaling step. Output is
+   written to a **print-images folder under the project** (e.g. `projects/<name>/print/`) — a
+   local export for uploading to the POD service, **not** surfaced on the built site.
 3. **Source eligibility (legal discipline — two distinct rights):** print only from sources
    that are clear on **both** axes:
    - **Copyright:** PD/CC0 artwork only (pre-1931 by expiration, or CC0). CC-BY/CC-BY-SA are
@@ -132,7 +134,7 @@ P3 PASSED when: at least one additional Wikipedia article is drafted and submitt
 
 P4 PASSED when: annual design-mark reviews exist for 1929 and 1930 (year landing + monthly galleries) under `site/reviews/<year>/`, each surfaced as a card on the Markery root portal, with `markery site check` green across the root. — PASSED (2026-06-22)
 
-P5 PASSED when: `markery` produces a print-ready PNG from a public-domain corpus image that meets the Amazon Merch on Demand spec (PNG, sRGB, transparent background, ~4500×5400 px @ 300 DPI, < 25 MB), built only from copyright-clear **and** trademark-clear sources (PD/CC0 artwork; dead/abandoned marks or patent figures), with a documented sample verified against the spec.
+P5 PASSED when: `markery` produces a print-ready PNG into a project print-images folder (e.g. `projects/<name>/print/`, not surfaced on the site) from a public-domain corpus image that meets the Amazon Merch on Demand spec (PNG, sRGB, transparent background, ~4500×5400 px @ 300 DPI, < 25 MB), built only from copyright-clear **and** trademark-clear sources (PD/CC0 artwork; dead/abandoned marks or patent figures), with a documented sample verified against the spec.
 
 P6 PASSED when: a repeatable `markery`-driven deploy publishes a project site to the chosen host at a stable public URL, with internal links resolving against the deployed base URL.
 
