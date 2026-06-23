@@ -108,39 +108,80 @@ discipline · caveats.
 ### 4b. Pre-1931 newspapers — Chronicling America (Library of Congress)
 - **Provides:** OCR full text **and** page images of historic US newspapers; ideal for
   contemporaneous coverage of a company/mark/product (ads, notices, articles).
-- **Access:** Chronicling America API — `https://chroniclingamerica.loc.gov/search/pages/
-  results/?andtext=<query>&date1=1900&date2=1930&format=json`; each hit has OCR text + a
-  page image (JP2/PDF) + a stable citation URL.
 - **License/usage:** LoC states the digitized content is **public domain / no known
   restrictions**, and pre-1931 dates put it firmly in PD by expiration. **Admit as PD media
-  + citable text.**
-- **Maps to:** two outputs — (1) a **newspaper clipping** as `library/media` (kind=`clipping`,
-  the page image cropped/linked, with the citation as attribution) embeddable via
-  `[[media:slug]]`; (2) a **citation/excerpt** the historian can quote in an essay (with the
-  paper name, date, page). New CLI: `markery librarian newspapers search <query> [--year-max
-  1930]` and `… newspapers acquire <loc-page-id> --project <p>`.
-- **Discipline:** quote OCR faithfully; cite paper/date/page; no invented attribution.
-- **Caveat:** OCR is noisy — store raw OCR + the image; cap date at the rolling PD cutoff
-  (currently <1931).
+  + citable text** (same status as our other PD media — fully embeddable).
 
-### 4c. eBay listings — research/provenance **leads only** (never site media)
-- **Provides:** signals that period artifacts exist and what they look/sell for — original
-  advertising, signs, catalogs, letterheads, packaging, ephemera tied to a mark/company.
-- **Access:** eBay **Browse API** (`buy.browse` — active listings by keyword; OAuth app
-  token) for current items; sold/historical needs the restricted Marketplace Insights API
-  (apply, or omit). Requires an eBay developer app key.
-- **License/usage — important:** eBay listing **images and text are copyrighted** (seller /
-  eBay) and are **not** admissible as site media. eBay is a **discovery and provenance
-  signal only**: "an original 1925 STARRETT catalog is offered for sale" → a research lead,
-  optionally a `wants`/acquisition candidate, never an embedded image.
-- **Maps to:** the **discovery log / research leads** (title, price, URL, seller location,
-  date if datable) and, where the historian judges it worth owning for research, a
-  `wants.jsonl` entry. **No auto-purchase** — purchase is always a human gate, and Markery
-  does not transact.
-- **Discipline:** treat as a lead, not a fact; never copy eBay images into the site; never
-  assert provenance from a listing alone.
-- **Caveat:** key + rate limits; ToS forbids scraping (use the API); listings are
-  ephemeral — snapshot the lead with a retrieved-at date.
+- **Retrieval mechanics (how the bytes come down):**
+  1. **Search.** `GET https://chroniclingamerica.loc.gov/search/pages/results/?andtext=
+     <query>&date1=1900&date2=1930&dateFilterType=yearRange&format=json&rows=20`. Each item
+     in `.items[]` gives the page identity: `lccn`, `date` (YYYYMMDD), `edition`, `sequence`,
+     a `title` (paper name), and `ocr_eng` (the page's OCR text — already in the search
+     payload, so relevance scoring needs no extra call).
+  2. **Resolve the page base URL** from those fields:
+     `https://chroniclingamerica.loc.gov/lccn/<lccn>/<YYYY-MM-DD>/ed-<edition>/seq-<sequence>/`.
+  3. **Fetch the assets** off that base:
+     - full page image — append `.jp2` (archival) or, simpler for the web, the JPEG via the
+       built-in deliverable (`…/seq-<n>.jp2` → convert) or the IIIF endpoint
+       `…/image_<region>_<size>.jpg`;
+     - OCR text — append `/ocr.txt`;
+     - **word-coordinate boxes** — `/coordinates/` (JSON mapping OCR words → pixel boxes).
+  4. **Crop to a clipping (optional but preferred).** Use the coordinate boxes for the
+     matched query terms to compute a bounding region and crop the page image to just the
+     relevant article/ad — a real "clipping" rather than a whole broadsheet. Store both the
+     crop and a link to the full page. (Pillow for the crop; fall back to the full page if
+     coordinates are unavailable.)
+  5. **Store.** Write the clipping (and/or full page) to `projects/<name>/library/media/`
+     with `kind="clipping"`, `license="PD"`, `source_url` = the page URL, `attribution_text`
+     = "<Paper>, <date>, p.<seq> — Chronicling America (Library of Congress)", plus the OCR
+     excerpt saved alongside for quoting.
+- **Maps to:** (1) a **clipping** in `library/media`, embeddable via `[[media:slug]]`;
+  (2) a **citation + OCR excerpt** the historian quotes in an essay. New CLI:
+  `markery librarian newspapers search <query> [--year-max 1930]` and
+  `… newspapers acquire <lccn>/<date>/<ed>/<seq> --project <p> [--crop]`.
+- **Discipline:** quote OCR faithfully; cite paper/date/page; no invented attribution.
+- **Caveat:** OCR is noisy — store raw OCR + the image; cap the date at the rolling PD
+  cutoff (<1931); JP2 may need conversion to JPEG/PNG for the site (note the dependency).
+
+### 4c. eBay listings — for-sale artifact leads (images shown as listing cards, not PD media)
+- **Provides:** signals that period artifacts exist and what they look like / sell for —
+  original advertising, signs, catalogs, letterheads, packaging, ephemera tied to a
+  mark/company. The **images are the point** here: a photo of an actual 1925 Starrett
+  catalog is a genuine research signal even though it isn't ours to relicense.
+
+- **Retrieval mechanics (how the images come down):**
+  1. **Auth.** eBay OAuth2 *application* token from the dev app key/secret
+     (`POST https://api.ebay.com/identity/v1/oauth2/token`, client-credentials grant,
+     scope `buy.browse`). Cache the token; refresh on expiry.
+  2. **Search.** `GET https://api.ebay.com/buy/browse/v1/item_summary/search?q=<query>
+     &filter=...&limit=20` with the bearer token. Each `.itemSummaries[]` carries
+     `title`, `price`, `itemWebUrl` (the live listing), `itemLocation`, `seller`, and
+     **`image.imageUrl`** + `thumbnailImages[]` (eBay-hosted image URLs).
+  3. **Detail (optional).** `GET …/buy/browse/v1/item/<itemId>` returns `additionalImages[]`
+     for the full image set.
+  4. **What we store:** the **image URL(s)** plus listing metadata — not, by default, a
+     copied binary. eBay's API terms allow *displaying* item images **in the context of the
+     listing** (linking back to the item for sale); they do **not** allow repurposing them as
+     our own content. So we **hotlink** the eBay-hosted thumbnail and link the card to
+     `itemWebUrl`. (If a local snapshot is needed for the leads log, store it private to the
+     repo's working data with a `© seller / via eBay` note and a retrieved-at date — never
+     promoted into `library/media`.)
+- **Display model — separate from PD media:** eBay items render as **"For-sale artifact"
+  lead cards** in a clearly-labeled research-leads surface (e.g. a per-entity "Related
+  artifacts offered for sale" strip, or the discovery log), each card = hotlinked eBay
+  thumbnail + title + price + **"View listing on eBay →"** linking to `itemWebUrl`, with a
+  "© seller, via eBay" credit. They are **not** `[[media:slug]]` encyclopedic media, are
+  **not** cited as evidence in essays, and carry `rel="nofollow noopener"`. This keeps the
+  images visible (what you asked for) without relicensing them or asserting provenance.
+- **Maps to:** the **discovery log** (`library/leads.jsonl`: title, price, image_url,
+  item_web_url, seller, location, retrieved_at) and the for-sale lead cards; where the
+  historian judges an item worth owning, a `wants.jsonl` entry. **No auto-purchase** —
+  acquisition is always a human gate; Markery never transacts.
+- **Discipline:** a listing is a lead, not a fact; don't assert provenance from a listing
+  alone; keep eBay images visibly in the "for sale" frame, never mixed into the PD media.
+- **Caveat:** app key + rate limits; **use the API, never scrape**; hotlinked images and the
+  listings themselves are ephemeral (snapshot metadata + retrieved-at; expect dead links over
+  time); sold-price history needs the restricted Marketplace Insights API (apply, or omit).
 
 ### 4d. Pre-1931 books — WorldCat discovery → digitized full text → ILL
 - **Provides:** trade catalogs, company histories, industry directories, biographies.
@@ -200,9 +241,11 @@ from*; eBay is a lead, never evidence; nothing invented.
 
 ## 7. Risks & constraints
 
-- **Licensing is the central risk.** Only 4a/4b/4d yield embeddable/quotable content (PD/free).
-  **eBay (4c) is leads-only** — a hard rule, enforced in code (the eBay adapter has no
-  `acquire`-to-media path).
+- **Licensing is the central risk.** Only 4a/4b/4d yield embeddable/quotable **PD** content.
+  **eBay (4c) images are shown only as hotlinked "for-sale" lead cards that link back to the
+  listing** (allowed in-context use), never copied into `library/media`, never `[[media:]]`
+  encyclopedic content, never cited as evidence — a hard rule, enforced in code (the eBay
+  adapter has no `acquire`-to-PD-media path; it emits lead records with image URLs only).
 - **API keys / quotas:** eBay (app key + OAuth), OCLC WorldCat (membership). Skip gracefully
   without them; the free spine (Commons, LoC/Chronicling America, IA/HathiTrust, Open Library)
   works keyless.
@@ -225,7 +268,8 @@ from*; eBay is a lead, never evidence; nothing invented.
   relevance` scoring (reuse `card --infer` contract).
 - **P4 — WorldCat/book pipeline.** `librarian worldcat search` → digitized `acquire` (IA/
   HathiTrust) → else `wants`; keyless fallbacks first, OCLC key optional.
-- **P5 — eBay leads.** `librarian ebay search` (Browse API, key-gated) → leads/wants only.
+- **P5 — eBay leads.** `librarian ebay search` (Browse API + OAuth, key-gated) → for-sale
+  lead cards (hotlinked eBay image + link to listing) and `wants`; never PD media.
 - **P6 — The loop.** `discovery_graph.py` in markery-langgraph: seed → discover → score →
   route → acquire/gate/log, with cadence, dedup, budgets, and human gates. Run scheduled.
 - **P7 — Cadence + docs.** Document the run cadence and the local ILL-submission script
