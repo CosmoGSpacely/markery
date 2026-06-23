@@ -35,6 +35,25 @@ def cmd_enhance(args) -> None:
     print(_result_line(result))
 
 
+def cmd_print(args) -> None:
+    import sys
+    from .print_asset import build_print_asset, SPECS
+    spec = SPECS.get(args.spec)
+    try:
+        out = build_print_asset(
+            args.ident, args.project, kind=args.kind, spec_name=args.spec,
+            upscale_first=not args.no_upscale,
+        )
+    except PermissionError as e:
+        print(f"  SKIP  {e}", file=sys.stderr)
+        sys.exit(1)
+    except (FileNotFoundError, ValueError) as e:
+        print(f"  ERROR  {e}", file=sys.stderr)
+        sys.exit(1)
+    dims = f"{spec['w']}x{spec['h']}@{spec['dpi']}dpi" if spec else args.spec
+    print(f"  OK  {args.ident}  →  {out}  ({dims}, {out.stat().st_size // 1024} KB)")
+
+
 def cmd_batch(args) -> None:
     from .pipeline import process_mark
     conn = duckdb.connect(args.db, read_only=True)
@@ -163,5 +182,19 @@ def main() -> None:
     p_gallery.add_argument("--title", default="Trademark Marks")
     p_gallery.add_argument("--subtitle", default="")
 
+    p_print = sub.add_parser(
+        "print",
+        help="Build a print-ready PNG for on-demand printing (Amazon Merch) "
+             "from an eligible PD source → projects/<project>/print/",
+    )
+    p_print.add_argument("ident", help="Trademark serial number or patent number (e.g. US1525813A)")
+    p_print.add_argument("--project", required=True, help="Target project (output → projects/<p>/print/)")
+    p_print.add_argument("--kind", choices=["mark", "patent"], default=None,
+                         help="Source kind (auto-detected from the identifier if omitted)")
+    p_print.add_argument("--spec", default="merch", help="Print spec (default: merch)")
+    p_print.add_argument("--no-upscale", action="store_true",
+                         help="Skip the upscale step (faster; lower print resolution)")
+
     args = parser.parse_args()
-    {"enhance": cmd_enhance, "batch": cmd_batch, "gallery": cmd_gallery}[args.cmd](args)
+    {"enhance": cmd_enhance, "batch": cmd_batch, "gallery": cmd_gallery,
+     "print": cmd_print}[args.cmd](args)

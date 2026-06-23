@@ -60,3 +60,6 @@ htmlcov/
 # Built site output (regenerable via `markery site build-all`; published at deploy/P6)
 /site/
 projects/*/site/
+
+# Print-ready exports (regenerable via `markery enhance print`; uploaded to POD services)
+projects/*/print/
