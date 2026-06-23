@@ -57,14 +57,29 @@ The pipeline is continuous, idempotent, budget-aware (EPO quota is the scarce re
 
 ### Stage 1 — Triage *technological* design marks  ·  owner: **TRADEMARK**
 Not every design mark is worth a patent search — a stylized logo for a soap is branding, not
-technology. Keep only marks whose **goods/services and international class** indicate an
-apparatus/device/method. Deterministic first cut: admit marks in the technology Nice classes
-(e.g. **7** machinery, **9** electrical/scientific, **10** medical apparatus, **11** lighting/
-heating, **12** vehicles, **21** apparatus) **and/or** whose goods text matches an
-apparatus lexicon (machine, device, apparatus, instrument, engine, motor, electric, tool,
-meter, valve…). Borderline marks go to a HISTORIAN judgment (stage 3's scorer in "is this
-technological?" mode). Output: a ranked list of technological design marks (serial, owner,
-goods, class).
+technology. The selection rule is a **two-signal filter** (see §5 for the exact lists),
+grounded in the 1929–1930 review data: a cheap deterministic **class gate** narrows the field,
+then the **free model judges the goods/services text** on the survivors.
+
+These marks predate Nice classification, so the class signal is the **old US class schedule**.
+In the review data the field is dominated by branding classes — US 46 foods (106 marks) and
+US 39 clothing (67) — while the apparatus classes are exactly the technology ones. **Class gate
+(auto-pass):** US **19** vehicles, **21** electrical apparatus/machines/supplies, **23**
+cutlery, machinery & tools, **26** measuring & scientific appliances, **34** heating/lighting/
+ventilating apparatus, **44** dental/medical/surgical appliances; **borderline (reach the
+model, must show a clear apparatus in goods):** US **13** hardware & plumbing/steam-fitting,
+**31** filters/refrigerators, **35** belting/hose/machinery packing. Everything else is skipped
+without a model call.
+
+**Free-model judgment (the actual rule it applies):** for each class-gated mark, read the
+goods/services and decide *"does this describe something a utility patent would cover — a
+machine, apparatus, device, instrument, mechanism, engine, electrical equipment, or a
+method/process — as opposed to a consumable, material, content/media, or simple
+non-mechanical article?"* This is needed because the class gate is necessary but not
+sufficient: US 26 holds both *"weighing scales"* (include) and *"motion pictures reproduced in
+copies for sale"* (exclude); US 23 holds *"centrifugal and vacuum pumps"* (include) alongside
+*"razor blades"* (a simple article — exclude/low). Output: a ranked list of technological
+design marks (serial, owner, goods, class, model verdict + one-line reason).
 
 ### Stage 2 — Seed a patent match  ·  owner: **MATCHMAKER** (+ **PATENT** auto-fetch)
 For each technological mark, resolve its **owner → entity** (`matchmaker suggest-variants`
@@ -110,7 +125,7 @@ matches (MATCHMAKER + HISTORIAN review), draft essays (HISTORIAN), then **PUBLIS
 
 | Stage | Owns it | Command(s) | Produces |
 |---|---|---|---|
-| 1 Technological triage | **TRADEMARK** | new `trademark tech-marks --year <Y>` (int'l class + goods lexicon); HISTORIAN for borderline | list of technological design marks |
+| 1 Technological triage | **TRADEMARK** (free model) | new `trademark tech-marks --year <Y>` — US-class gate + free-model goods/services judgment (§5) | list of technological design marks (+ reason) |
 | 2 Seed match | **MATCHMAKER** + PATENT | `matchmaker suggest-variants`/`build`, `match --serials/--entity --auto-fetch` | seed candidate pairs |
 | 3 Good-match filter | **HISTORIAN** | `historian card --infer --json` + threshold | good pairs + their CPC subclasses |
 | 4 Subclass expansion + re-match | **PATENT** + MATCHMAKER | `patent coverage-check`, `patent build --cpc <subclass>` (new flag), `match --all` | widened corpus + more pairs |
@@ -124,8 +139,28 @@ only cross-cutting actor and it only calls CLI commands.
 
 ## 5. Decision rules & thresholds (tunable)
 
-- **Technological** (stage 1): int'l class ∈ {7,9,10,11,12,21,…} OR goods matches the
-  apparatus lexicon. Conservative; widen later.
+- **Technological** (stage 1) — the rule the free model applies, in two parts:
+  - **Class gate (deterministic, US class schedule):** keep a mark if any US class is in
+    `TECH_CLASSES = {19, 21, 23, 26, 34, 44}` (auto-pass) or
+    `TECH_BORDERLINE = {13, 31, 35}` (pass to the model). All other classes → skip (no model
+    call). This alone drops the food/clothing/tobacco/cosmetic/chemical branding majority.
+  - **Goods judgment (free model):** INCLUDE when the goods/services name an **apparatus,
+    machine, device, instrument, appliance, mechanism, engine/motor, electrical/electronic
+    equipment, or a method/process** (patentable subject matter). EXCLUDE when they are a
+    **consumable** (food, drink, drug/cosmetic/chemical *preparation*, fuel), a **material**
+    (ore, metal stock, fabric), **content/media** (films, recordings, prints "for sale"),
+    **apparel/textile**, or a **simple non-mechanical article** (plain container, jewelry).
+    - *positive lexicon (cues, not a whitelist):* machine, apparatus, device, instrument,
+      appliance, mechanism, engine, motor, generator, dynamo, pump, valve, meter, gauge,
+      regulator, transformer, battery, switch, breaker, scale, projector, camera, typewriter,
+      welding, refrigerating, ventilating, tool (powered/precision).
+    - *negative lexicon (cues):* canned/food/cereal/syrup/beverage, preparation/compound/
+      powder/cream/soap/paint, fabric/garment/coat/hosiery/hat, film/picture/recording/
+      publication "for sale", ore/sheet/casting/metal stock.
+  - The model returns `technological: yes|no` + a one-line reason; the lexicons steer it but
+    the *judgment on the goods text is the rule* (so it handles the US-26 scales-vs-films and
+    US-23 pumps-vs-razor-blades cases the class gate cannot). Conservative start; widen the
+    class set / loosen the bar later if recall is too low.
 - **Good match** (stage 3): `card --infer` score ≥ `GOOD_MATCH_FLOOR` (start ≈ 4/5) with
   honest goods↔subject correspondence; ≥1 good match to proceed.
 - **Rich vs sparse** (stage 5): `RICH` when distinct entities ≥ `MIN_ENTITIES` (e.g. 3) **and**
