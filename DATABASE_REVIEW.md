@@ -81,13 +81,21 @@ Committed, git-tracked binaries (~70 MB) + `data/patents_fetch_log.json`:
 
 ## 4. Phased plan
 
-- **P1 — Provenance + freshness.** Add record load `fetched_dt`/`source`; `… refresh` for
-  status; coverage counts surfaced (extend `patents_fetch_log` into a real coverage manifest).
-- **P2 — Auto entity registration.** Corpus → `company_entity`/`entity_name_variant` with
-  variant ranking + human-confirm; remove the hand-CSV requirement for new projects. (Direct
-  dependency of the spawning pipeline.)
-- **P3 — Asset storage + DB commit policy.** Resolve blobs-in-DB vs files (with the Library
-  phase); decide commit-vs-rebuild; document the rebuild recipe; add the synthetic test fixture.
+- **P1 — Provenance + freshness. DONE 2026-06-24.** `fetched_dt`/`source` on
+  patents + case_file (insert-stamped / build-stamped; idempotent self-migration on
+  writable open); `markery patent coverage` / `markery trademark coverage` local
+  manifest (counts, ranges, live/dead, provenance breakdown; degrades on
+  un-migrated DBs). Status freshness rides the existing extended_marks +
+  `trademark fetch` path. Committed `5264b19`.
+- **P2 — Auto entity registration. DONE 2026-06-24.** `matchmaker/autoregister.py`
+  (propose/commit split + confirm gate): companies from owner/assignee strings
+  (`matchmaker register`), people from `patent_inventors` with stable slugs
+  (`matchmaker register-people`); `person_entity`/`person_name_variant` added.
+  Removes the hand-CSV requirement. Committed `a728d97`.
+- **P3 — Asset storage + DB commit policy.** Decided (2026-06-24): externalize
+  record images (`mark_images`/`patent_figures` BLOBs) to files referenced by the
+  DB; gitignore + rebuild the (now-small) DBs; document the rebuild recipe; reuse
+  the Phase 27 synthetic fixture. *Coupled to Phase 29 (Library) — see open Q.*
 - **P4 — Coverage/expansion hooks.** A queryable coverage model the discovery/spawning loops
   consult before fetching; wire EPO/TSDR expansion (and evaluate D007 PatentsView) behind the
   loops' budget/gates.
