@@ -56,7 +56,18 @@ projects/<name>/
 
 **Durable artifacts:** `README.md`, `STATUS.md`. Output is gitignored and regenerable.
 
-**Example project:** `monthly-image-review`
+---
+
+## Annual Review
+
+**Purpose:** An *annual* design-mark review (`type: annual-review`). Per year in
+`project.json`'s `review_years`, the publisher builds a year landing page linking twelve
+monthly design-mark galleries into `site/<project>/<year>/`, surfaced as a card on the
+Markery root portal. Built by `markery site build-all`, driven by the project's config.
+
+**Specialists involved:** TRADEMARK (design-mark data/images), PUBLISHER (review rendering).
+
+**Example project:** `annual-design-review` (`review_years: [1929, 1930]`).
 
 ---
 

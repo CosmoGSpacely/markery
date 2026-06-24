@@ -33,7 +33,7 @@ TODAY      = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 LOG_PATH   = BENCH_DIR / f"p4-haiku-{TODAY}.jsonl"
 
 PERSONA_PATH = REPO_ROOT / "src/markery/specialist/historian/persona/identity.md"
-ESSAY_PATH   = REPO_ROOT / "projects/monthly-image-review/essays/chicago-pneumatic-cp.md"
+ESSAY_PATH   = REPO_ROOT / "projects/annual-design-review/essays/chicago-pneumatic-cp.md"
 
 HISTORIAN_CARD_SLUGS = [
     "remington-us2168802a",

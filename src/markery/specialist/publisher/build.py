@@ -12,8 +12,21 @@ from markery.common.project import Project, ProjectType, load_project
 from markery.specialist.publisher import queries as q
 from markery.specialist.publisher import render as r
 
-# Years to build annual design-mark reviews for (Phase 24 P4).
-REVIEW_YEARS = [1929, 1930]
+
+def discover_annual_reviews() -> list[Project]:
+    """Return loaded annual-review projects (type 'annual-review'), sorted by name."""
+    base = config.ROOT / "projects"
+    out: list[Project] = []
+    for d in sorted(base.iterdir()) if base.exists() else []:
+        if not (d / "project.json").is_file():
+            continue
+        try:
+            proj = load_project(d)
+        except (ValueError, FileNotFoundError):
+            continue
+        if proj.type == ProjectType.ANNUAL_REVIEW:
+            out.append(proj)
+    return out
 
 
 def _collect_theme_slugs(proj: Project) -> list[str]:
@@ -254,17 +267,19 @@ def build_all(out_dir: Path | None = None, base_url: str | None = None,
                 rec["title"] = f"{rec['title']} · {_display_title(project)}"
                 combined_search.append(rec)
 
-    # Annual design-mark reviews (Phase 24 P4): one year landing + 12 monthly
-    # galleries each, surfaced as portal cards.
+    # Annual design-mark reviews (Phase 24 P4): driven by each annual-review
+    # project's `review_years`. One year landing + 12 monthly galleries per year,
+    # built under site/<project>/<year>/ and surfaced as portal cards.
     pages: list[Path] = []
     review_summaries: list[dict] = []
-    for year in REVIEW_YEARS:
-        y_path, y_summary, _ = r.render_review_year(year, site_root, base_url=base_url)
-        review_summaries.append(y_summary)
-        pages.append(y_path)
-        for mm in range(1, 13):
-            pages.append(site_root / "reviews" / str(year) / f"{mm:02d}.html")
-        print(f"  review {year}      → reviews/{year}/ (12 months, {y_summary['count']} marks)")
+    for proj in discover_annual_reviews():
+        for year in proj.review_years:
+            y_path, y_summary, _ = r.render_review_year(year, site_root, proj.name, base_url=base_url)
+            review_summaries.append(y_summary)
+            pages.append(y_path)
+            for mm in range(1, 13):
+                pages.append(site_root / proj.name / str(year) / f"{mm:02d}.html")
+            print(f"  review {year}      → {proj.name}/{year}/ (12 months, {y_summary['count']} marks)")
 
     pages.insert(0, r.render_portal(site_root, portal_projects, portal_matches,
                                     base_url=base_url, reviews=review_summaries))

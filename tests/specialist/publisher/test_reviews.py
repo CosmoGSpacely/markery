@@ -26,25 +26,25 @@ def stub_marks(monkeypatch):
 
 
 def test_render_review_year_creates_landing_and_months(tmp_path, stub_marks):
-    path, summary, written = reviews.render_review_year(1930, tmp_path)
-    assert path == tmp_path / "reviews" / "1930" / "index.html"
+    path, summary, written = reviews.render_review_year(1930, tmp_path, "annual-design-review")
+    assert path == tmp_path / "annual-design-review" / "1930" / "index.html"
     # 12 monthly pages + the landing exist
     for mm in range(1, 13):
-        assert (tmp_path / "reviews" / "1930" / f"{mm:02d}.html").exists()
+        assert (tmp_path / "annual-design-review" / "1930" / f"{mm:02d}.html").exists()
     html = path.read_text()
     assert "<h1>1930 Design-Mark Review</h1>" in html
     assert html.count('class="review-month"') == 12
     # 24 marks total (2/month), 12 with images
     assert summary["count"] == 24
     assert summary["with_images"] == 12
-    assert summary["url"] == "reviews/1930/index.html"
-    assert summary["thumb_src"].startswith("reviews/1930/img/")
+    assert summary["url"] == "annual-design-review/1930/index.html"
+    assert summary["thumb_src"].startswith("annual-design-review/1930/img/")
     assert len(written) == 12  # one image written per month
 
 
 def test_review_month_page_depth_and_back_link(tmp_path, stub_marks):
-    reviews.render_review_year(1930, tmp_path)
-    july = (tmp_path / "reviews" / "1930" / "07.html").read_text()
+    reviews.render_review_year(1930, tmp_path, "annual-design-review")
+    july = (tmp_path / "annual-design-review" / "1930" / "07.html").read_text()
     assert "<h1>July 1930</h1>" in july
     assert july.count('class="card"') == 2
     assert 'src="img/' in july                     # image relative to month dir

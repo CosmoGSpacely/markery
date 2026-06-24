@@ -128,13 +128,14 @@ def render_review_month(
 
 
 def render_review_year(
-    year: int, site_root: Path, base_url: str | None = None,
+    year: int, site_root: Path, project_slug: str, base_url: str | None = None,
 ) -> tuple[Path, dict, list[Path]]:
-    """Render a year's review (12 monthly galleries + landing).
+    """Render a year's review (12 monthly galleries + landing) under the annual-review
+    project's site dir: site/<project_slug>/<year>/.
 
     Returns (year_index_path, portal_summary, all_written_paths).
     """
-    year_dir = site_root / "reviews" / str(year)
+    year_dir = site_root / project_slug / str(year)
     year_dir.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
     months: list[dict] = []
@@ -172,9 +173,9 @@ def render_review_year(
     )
     summary = {
         "year": year,
-        "url": f"reviews/{year}/index.html",
+        "url": f"{project_slug}/{year}/index.html",
         "title": f"{year} Design-Mark Review",
         "count": total, "with_images": total_img,
-        "thumb_src": f"reviews/{year}/{year_thumb}" if year_thumb else None,
+        "thumb_src": f"{project_slug}/{year}/{year_thumb}" if year_thumb else None,
     }
     return out_path, summary, written

@@ -55,6 +55,7 @@ def validate_serial_no(serial_no: str) -> str:
 class ProjectType(str, Enum):
     MATCH_REVIEW_ESSAY = "match-review-essay"
     GALLERY_EXPLORATION = "gallery-exploration"
+    ANNUAL_REVIEW = "annual-review"
 
 
 @dataclass
@@ -77,6 +78,7 @@ class Project:
     class_hints: list[str] = field(default_factory=list)
     model: str | None = field(default=None)
     prior_brand_serials: list[str] = field(default_factory=list)
+    review_years: list[int] = field(default_factory=list)
 
     def _require_type(self, required: ProjectType, attr: str) -> None:
         if self.type is not None and self.type != required:
@@ -180,9 +182,10 @@ def load_project(path: Path) -> Project:
     class_hints = [str(c) for c in data.get("class_hints", [])]
     model = data.get("model") or None
     prior_brand_serials = [str(s) for s in data.get("prior_brand_serials", [])]
+    review_years = [int(y) for y in data.get("review_years", [])]
     return Project(name=path.name, type=project_type, focus_serials=focus_serials,
                    class_hints=class_hints, model=model,
-                   prior_brand_serials=prior_brand_serials)
+                   prior_brand_serials=prior_brand_serials, review_years=review_years)
 
 
 def scaffold_project(root: Path, project_type: ProjectType) -> list[Path]:
