@@ -154,20 +154,31 @@ green; the migrated media still renders with attribution.
 
 ---
 
-## 9. Open questions — RESOLVED 2026-06-24
+## 9. Open questions — RESOLVED 2026-06-24 (reviewed for scalability + loop-readiness)
 
-1. **Reference mechanism: a dedicated `references/library.jsonl`** — one row per
-   referenced library item id; simplest for the build to consume. (Not `see:` lines.)
-2. **Binary policy: gitignore media** — treat `library/media/` files as re-acquirable
-   (like `raw_text.txt` and the Phase 28 `data/assets/`). Only the catalog metadata
-   (provenance/license/attribution) is committed; the binaries are rebuildable.
-3. **Catalog vs index: JSONL only, no database yet** — keep `catalog.jsonl`
-   (item-level) + `index.jsonl` (passage-level) as flat files. Do **not** fold media
-   into a DuckDB catalog table for now (revisit if/when querying needs demand it).
-4. **Acquire UX: global acquire + separate `use --project`** — `media-acquire`
-   fetches once into the global library + catalog (no project); `librarian use <id>
-   --project <name>` appends the id to that project's `references/library.jsonl`.
-   Chosen because it scales (one acquire → many project references, no duplication)
-   and fits the historian loop (acquire into the shared substrate before projects
-   exist; clean acquire-vs-reference dedup and loop nodes). A one-shot
-   `media-acquire --project` may be added later as thin sugar (acquire-then-`use`).
+1. **Reference mechanism: a dedicated `references/library.jsonl`.** One row per
+   referenced item, as a small **object** (not a bare string) so per-reference
+   context can be added without a format break:
+   `{"id", "added_by", "added_at", "note"}`. Append **idempotently** (no dup ids).
+2. **Binary policy: gitignore media, guarded for durability.** `library/media/`
+   binaries are gitignored (an autonomous loop must not bloat git history per tick).
+   Guard against source rot: the catalog stores `source` + `source_url` + `sha256`
+   (re-fetch path + integrity + dedup); admit media **only from durably
+   re-fetchable sources** (Commons/LoC/NARA/IA — non-re-fetchable items are *leads*,
+   not assets); and keep a **periodic `library/media` snapshot** beside the corpus
+   archive until object-storage hosting (D070). Only catalog metadata is committed.
+3. **Catalog vs index: JSONL only, made loop-safe.** Keep `catalog.jsonl`
+   (item-level) + `index.jsonl` (passage-level) + the existing `index.duckdb`
+   (embeddings). No DuckDB *catalog* table yet. Loop-safety requirements: the loop
+   loads `catalog.jsonl` into an **in-memory dict once per run**, keyed by
+   `source_id` **and** `sha256` for O(1) dedup; writes are an **atomic rewrite**
+   (temp file + rename), **last-row-wins per id**; **single-writer** (loop or human,
+   not both). Migration trigger to a DuckDB catalog → **D073** (below).
+4. **Acquire UX: global acquire + separate `use --project`.** `media-acquire`
+   fetches once into the global library + catalog (no project), **deduping on
+   `source_id`+`sha256` so the loop never re-acquires**; `librarian use <id>
+   --project <name>` idempotently appends the id to `references/library.jsonl`.
+   Chosen because it scales (one acquire → many references, no duplication) and fits
+   the historian loop (grow the shared substrate before projects exist; clean
+   acquire-vs-reference nodes). A one-shot `media-acquire --project` may be added
+   later as thin sugar (acquire-then-`use`).
