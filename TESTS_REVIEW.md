@@ -127,11 +127,15 @@ moved aside (the archivability check).
 ## 6. Open questions
 
 1. **Committed DBs:** keep `data/*.duckdb` committed (so optional data-QA can run in CI on
-   dispatch) or drop them from the repo and rely on synthetic fixtures everywhere? (Lean:
-   keep them for local/`dataqa`, but the **hermetic lane must not need them**.)
-2. **Two CI lanes?** A fast hermetic `test` job (always) + an optional `dataqa` job
-   (`workflow_dispatch`, needs data) — mirroring the existing `mvo` job pattern.
+   dispatch) or drop them from the repo and rely on synthetic fixtures everywhere?
+   **Resolved 2026-06-24:** the hermetic lane needs **neither** real DBs nor `projects/`
+   (P1 done — it runs against `tests/fixtures/synthetic.py`). The large DBs become
+   **gitignore + rebuild** artifacts; that move lands in **Phase 28 P3** (with the rebuild
+   recipe). Until then they stay committed so the `dataqa` job has data.
+2. **Two CI lanes?** **Resolved 2026-06-24:** yes — a hermetic `test` job (`-m "not dataqa"`,
+   always, +coverage) and a `dataqa` job (`-m dataqa`). Both wired in `ci.yml`.
 3. **Coverage target:** is ~70% the right sustained floor, or higher for the core
-   (`render/`, `build.py`, `queries.py`) and lower for thin CLI glue?
+   (`render/`, `build.py`, `queries.py`) and lower for thin CLI glue? (Still open — decide
+   during P5 ratchet.)
 4. **markery-langgraph:** bring its suite under the same hermetic discipline + a coverage
-   floor (it shells the CLI; its tests already mock tool calls)?
+   floor (it shells the CLI; its tests already mock tool calls)? (Still open.)

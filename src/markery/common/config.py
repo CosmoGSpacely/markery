@@ -6,11 +6,19 @@ markery.common.project. Import Project from there.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 
 def _find_root() -> Path:
-    """Walk up from this file until pyproject.toml is found."""
+    """Resolve the project root.
+
+    Honour MARKERY_ROOT if set (used by hermetic tests to point the CLI at a
+    synthetic repo); otherwise walk up from this file until pyproject.toml.
+    """
+    env = os.environ.get("MARKERY_ROOT")
+    if env:
+        return Path(env).expanduser().resolve()
     for parent in Path(__file__).resolve().parents:
         if (parent / "pyproject.toml").exists():
             return parent
@@ -27,10 +35,18 @@ SITE_ROOT = ROOT / "site"
 # Note: Haiku 4.5's cacheable-prefix minimum is 4096 tokens (see common/llm.py).
 DEFAULT_MODEL = "claude-haiku-4-5-20251001"
 
+# Data directory holding the corpus DBs. Honour MARKERY_DATA_DIR if set (hermetic
+# tests point this at a synthetic-fixture dir); otherwise it is ROOT/data.
+_DATA_DIR = (
+    Path(os.environ["MARKERY_DATA_DIR"]).expanduser().resolve()
+    if os.environ.get("MARKERY_DATA_DIR")
+    else ROOT / "data"
+)
+
 DB = {
-    "patents":    ROOT / "data" / "patents.duckdb",
-    "trademarks": ROOT / "data" / "trademarks.duckdb",
-    "entities":   ROOT / "data" / "entities.duckdb",
+    "patents":    _DATA_DIR / "patents.duckdb",
+    "trademarks": _DATA_DIR / "trademarks.duckdb",
+    "entities":   _DATA_DIR / "entities.duckdb",
 }
 
 _SETUP_HINTS = {

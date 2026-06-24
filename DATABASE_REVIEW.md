@@ -112,12 +112,15 @@ Tests → Database → Library → Discovery loop → Spawning pipeline
 
 ## 6. Open questions
 
-1. **Commit vs rebuild the DBs?** Keep ~70 MB binaries in git, or gitignore + rebuild from
-   versioned source (and where does the source live)? (Lean: stop committing the large blobs;
-   keep a small synthetic fixture in-repo; document/automate the rebuild.)
-2. **Record images: DB blobs or files?** (Lean: externalize to files referenced by the DB —
-   shrinks the DBs, aligns with the library's file assets — but confirm the publisher/print
-   paths are fine reading from files.)
+1. **Commit vs rebuild the DBs?** **Resolved 2026-06-24: gitignore + rebuild.** Stop
+   committing the ~70 MB binaries; keep a small synthetic fixture in-repo
+   (`tests/fixtures/synthetic.py`, added in Phase 27 P1); document/automate the rebuild from
+   versioned source. Executed in **P3** (alongside the asset-storage move, since externalizing
+   blobs is what makes the rebuilt DBs small enough to reason about).
+2. **Record images: DB blobs or files?** **Resolved 2026-06-24: externalize to files**
+   referenced by the DB — shrinks the DBs and aligns with the library's file assets. P3 must
+   update the publisher/print read paths (and the now-graceful `get_mark_image_b64` /
+   `get_patent_figure_b64` getters) to read from files.
 3. **Expansion engine:** EPO/TSDR on-demand only, or adopt PatentsView bulk (D007) for breadth?
 4. **Refresh cadence:** how often to re-pull trademark status (the merch/live-dead gate) — and
    is that a `dataqa`/scheduled job rather than on every build?

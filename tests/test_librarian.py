@@ -603,6 +603,7 @@ def _cli(*args: str) -> tuple[str, int]:
     return result.stdout + result.stderr, result.returncode
 
 
+@pytest.mark.dataqa
 @requires_library
 class TestMVOLibrarian:
     def test_index_exit_zero(self):

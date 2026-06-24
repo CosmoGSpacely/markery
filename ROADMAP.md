@@ -43,6 +43,22 @@ hermetic-MVO rewrite is the prerequisite for archiving `projects/` and "starting
    orchestrator), CLI-dispatch tests, mocked-HTTP source adapters, enhancement transforms.
 3. **Ratchet** `--cov-fail-under` 50 → 60 → 70 as coverage lands.
 
+Results 2026-06-24 (P1 — Hermetic MVO): added `MARKERY_ROOT`/`MARKERY_DATA_DIR`
+env overrides to `common/config.py` so the CLI can be pointed at a synthetic repo;
+added `tests/fixtures/synthetic.py` (temp corpus DBs + a synthetic project,
+invented serials/patents) and rewrote `test_mvo.py` so card/digest/validate/scaffold
+run hermetically against it. Real-corpus checks (`trademark inspect`, librarian,
+all of `test_contract.py`'s DB/JSONL classes, `test_librarian`'s MVO class) moved
+to a new `@pytest.mark.dataqa` lane (registered in `pyproject.toml`); fixed
+`test_phase11_commands.py` to use a synthetic entities DB; made
+`publisher/queries.py` image getters degrade gracefully when a DB file is absent.
+CI split into a hermetic `test` job (`-m "not dataqa"`, +coverage) and a `dataqa`
+job (`-m dataqa`). **Gate met:** hermetic lane is 744 passed with `data/` and
+`projects/` moved aside; coverage held at 53% (floor 50). Decisions settled this
+session: hermetic lane needs neither real DBs nor `projects/`; record images will
+externalize to files (Phase 28 P3); the large DBs become gitignore+rebuild
+artifacts (Phase 28 P3). P2–P5 remain.
+
 **Gate:** `pytest` green with `projects/` moved aside; coverage non-decreasing and floor raised.
 
 ---

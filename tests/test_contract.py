@@ -48,6 +48,7 @@ requires_library = pytest.mark.skipif(
 # 1. patents.duckdb
 # ---------------------------------------------------------------------------
 
+@pytest.mark.dataqa
 @requires_dbs
 class TestPatentsDB:
     PATENT_NO = "US1261167A"
@@ -81,6 +82,7 @@ class TestPatentsDB:
 # 2. trademarks.duckdb
 # ---------------------------------------------------------------------------
 
+@pytest.mark.dataqa
 @requires_dbs
 class TestTrademarksDB:
     SERIAL_INT = 71246709
@@ -138,6 +140,7 @@ class TestTrademarksDB:
 # 3. entities.duckdb
 # ---------------------------------------------------------------------------
 
+@pytest.mark.dataqa
 @requires_dbs
 class TestEntitiesDB:
     def test_company_entity_guaranteed_fields(self):
@@ -172,6 +175,7 @@ class TestEntitiesDB:
 # 4. candidates.jsonl
 # ---------------------------------------------------------------------------
 
+@pytest.mark.dataqa
 class TestCandidatesJsonl:
     GUARANTEED = {
         "entity_id", "entity", "patent_no", "cpc_classes",
@@ -219,6 +223,7 @@ class TestCandidatesJsonl:
 # 5. confirmed.jsonl
 # ---------------------------------------------------------------------------
 
+@pytest.mark.dataqa
 class TestConfirmedJsonl:
     GUARANTEED = {"patent_no", "trademark_serial", "entity_id", "entity", "type", "note"}
 
@@ -253,6 +258,7 @@ class TestConfirmedJsonl:
 # 7. Essay frontmatter
 # ---------------------------------------------------------------------------
 
+@pytest.mark.dataqa
 @requires_dbs
 class TestEssayFrontmatter:
     SLUG = "soundex-us1261167a"
@@ -331,6 +337,7 @@ class TestEssayFrontmatter:
 # 8. library/index.jsonl
 # ---------------------------------------------------------------------------
 
+@pytest.mark.dataqa
 class TestLibraryIndexJsonl:
     GUARANTEED = {"work_slug", "section", "passage", "context", "indexed_at"}
 
@@ -370,6 +377,7 @@ class TestLibraryIndexJsonl:
 # 9. library/index.duckdb — passage_embeddings
 # ---------------------------------------------------------------------------
 
+@pytest.mark.dataqa
 @requires_library
 class TestPassageEmbeddings:
     def test_passage_embeddings_fields(self):

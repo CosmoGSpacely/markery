@@ -33,3 +33,6 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "dataqa: real-corpus data-validation tests; require committed data/ or library/ and are excluded from the hermetic CI lane (run with -m dataqa).",
+]

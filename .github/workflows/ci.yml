@@ -24,8 +24,24 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install
         run: pip install -e ".[dev]"
-      - name: Test (with coverage)
-        run: python -m pytest -q --cov=markery --cov-report=term-missing:skip-covered --cov-fail-under=50
+      - name: Test — hermetic lane (with coverage)
+        run: python -m pytest -q -m "not dataqa" --cov=markery --cov-report=term-missing:skip-covered --cov-fail-under=50
+
+  dataqa:
+    # Optional real-corpus data-validation lane: the @pytest.mark.dataqa tests
+    # against the committed data/ and library/. Kept separate from the hermetic
+    # `test` job so the latter proves the machinery works for any data, not that
+    # one committed corpus happens to be well-formed.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Data-QA lane
+        run: python -m pytest -q -m dataqa
 
   mvo:
     runs-on: ubuntu-latest

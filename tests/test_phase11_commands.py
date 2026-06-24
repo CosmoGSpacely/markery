@@ -368,6 +368,21 @@ def _tm_db(tmp_path: Path):
     return p
 
 
+def _ent_db(tmp_path: Path):
+    """Minimal entities DB so validate's entity check is hermetic."""
+    import duckdb as _duckdb
+    p = tmp_path / "entities.duckdb"
+    conn = _duckdb.connect(str(p))
+    conn.execute("CREATE TABLE company_entity (entity_id INTEGER, canonical_name VARCHAR)")
+    conn.execute(
+        "CREATE TABLE entity_name_variant "
+        "(entity_id INTEGER, variant_name VARCHAR, source VARCHAR)"
+    )
+    conn.execute("INSERT INTO company_entity VALUES (1, 'Odell Associates')")
+    conn.close()
+    return p
+
+
 def test_card_outputs_to_stdout(tmp_path, capsys):
     root = _make_mre_project(tmp_path)
     (root / "matches" / "candidates.jsonl").write_text(
@@ -382,7 +397,7 @@ def test_card_outputs_to_stdout(tmp_path, capsys):
     with patch.object(cfg_mod, "ROOT", tmp_path), \
          patch.object(proj_mod, "ROOT", tmp_path), \
          patch.object(cfg_mod, "DB", {"patents": pat_path, "trademarks": tm_path,
-                                       "entities": cfg_mod.DB["entities"]}):
+                                       "entities": _ent_db(tmp_path)}):
         from markery.specialist.historian.cli import cmd_card
         args = MagicMock()
         args.project = "test-proj"
@@ -472,7 +487,7 @@ def test_scaffold_creates_essay_file(tmp_path):
     with patch.object(cfg_mod, "ROOT", tmp_path), \
          patch.object(proj_mod, "ROOT", tmp_path), \
          patch.object(cfg_mod, "DB", {"patents": pat_path, "trademarks": tm_path,
-                                       "entities": cfg_mod.DB["entities"]}):
+                                       "entities": _ent_db(tmp_path)}):
         from markery.specialist.historian.cli import cmd_scaffold
         args = MagicMock()
         args.project = "test-proj"
@@ -533,7 +548,7 @@ def test_validate_passes_for_valid_essay(tmp_path):
     import markery.common.project as proj_mod
     import markery.specialist.historian.cli as _hist_cli
     db_patch = {"patents": pat_path, "trademarks": tm_path,
-                "entities": cfg_mod.DB["entities"]}
+                "entities": _ent_db(tmp_path)}
     with patch.object(cfg_mod, "ROOT", tmp_path), \
          patch.object(proj_mod, "ROOT", tmp_path), \
          patch.object(_hist_cli, "DB", db_patch):
@@ -585,7 +600,7 @@ def _validate_essay(tmp_path: Path, essay_text: str) -> list[tuple[str, bool]]:
     ).close()
 
     db_patch = {"patents": pat_path, "trademarks": tm_path,
-                "entities": cfg_mod.DB["entities"]}
+                "entities": _ent_db(tmp_path)}
 
     captured: list[tuple[str, bool]] = []
     original_append = list.append
@@ -656,7 +671,7 @@ Filed: 1927-03-31. The mark SOUNDEX was filed in 1927.
     ).close()
 
     db_patch = {"patents": pat_path, "trademarks": tm_path,
-                "entities": cfg_mod.DB["entities"]}
+                "entities": _ent_db(tmp_path)}
 
     with patch.object(cfg_mod, "ROOT", tmp_path), \
          patch.object(proj_mod, "ROOT", tmp_path), \
@@ -701,7 +716,7 @@ Filed: 1927-03-31. The mark was filed in 1927.
     ).close()
 
     db_patch = {"patents": pat_path, "trademarks": tm_path,
-                "entities": cfg_mod.DB["entities"]}
+                "entities": _ent_db(tmp_path)}
 
     with patch.object(cfg_mod, "ROOT", tmp_path), \
          patch.object(proj_mod, "ROOT", tmp_path), \
@@ -746,7 +761,7 @@ The mark was filed at some point.
     ).close()
 
     db_patch = {"patents": pat_path, "trademarks": tm_path,
-                "entities": cfg_mod.DB["entities"]}
+                "entities": _ent_db(tmp_path)}
 
     with patch.object(cfg_mod, "ROOT", tmp_path), \
          patch.object(proj_mod, "ROOT", tmp_path), \
