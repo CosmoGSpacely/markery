@@ -162,10 +162,34 @@ project spawn and a clean portal build.
 
 ---
 
+## Phase 32 — Site design pass + rebuild annual-review project/site  ·  plan: TBD (stub)
+
+**Trigger:** `projects/` and `site/` were archived 2026-06-24 (see
+`archive/PROJECTS-ARCHIVED-2026-06-24.md`); the first real rebuild is also the moment
+to refresh the site design before publishing again.
+
+Brief: do another **site design pass** (chrome, cards, timeline, typography — carry
+forward the open items from the archived `SITE-REVIEW`), **then rebuild the
+annual-review project and its site** on the improved database/library. Write the full
+plan to a `SITE-REVIEW.md` when this phase opens.
+
+**Gate:** the annual-review project rebuilds against the new data/library; the refreshed
+design renders; `site check` clean.
+
+---
+
 ## Notes
 
-- Sequence: **27 Tests → 28 Database → 29 Library → 30 Discovery loop → 31 Spawning pipeline**
-  (foundations → backbone → acquisition → autonomous growth). `projects/` and `site/` can be
-  archived and rebuilt once Phase 27 (hermetic tests) lands.
+- Sequence: **27 Tests → 28 Database → 29 Library → 30 Discovery loop → 31 Spawning
+  pipeline → 32 Site design + rebuild** (foundations → backbone → acquisition → autonomous
+  growth → publish). `projects/` and `site/` were archived 2026-06-24 (Phase 27 made the
+  suite hermetic); they rebuild in Phases 31–32.
+- **When is a real project/site first needed?** Not until the end. Phases 28–30 validate
+  against the hermetic synthetic-fixture project (`tests/fixtures/synthetic.py`), which
+  already builds a full site + portal and passes `site check` — so their "site check green"
+  gates are satisfiable without a rebuilt real project. The first phase that *requires* a
+  real, non-synthetic project end-to-end is **Phase 31** (the spawning pipeline creates one
+  and builds the portal); **Phase 32** is the deliberate design refresh + annual-review
+  rebuild. Net: the corpus/library work (28–30) proceeds with `projects/`/`site/` archived.
 - Deferred, independent of these phases: D070 (hosting), D071 (GEO), D072 (People), plus
   D007/D028/D068/D069.

@@ -1,2 +1,0 @@
-# photographic-equipment
-

@@ -1,7 +1,0 @@
-# Entity IDs in scope for this project.
-# Each line is an entity_id from entities.duckdb / company_entity.
-
-31  # Eastman Kodak Company
-32  # Ansco
-33  # Graflex
-# 34 Blair Camera Company — no marks/patents in the local DB; omitted until data exists

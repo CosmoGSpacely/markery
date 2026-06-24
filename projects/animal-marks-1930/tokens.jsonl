@@ -1,1 +1,0 @@
-{"timestamp": "2026-06-19T18:17:33.499749+00:00", "specialist": "publisher", "command": "wikipedia-propose", "model": "openai/gpt-oss-120b:free", "prompt_tokens": 1299, "completion_tokens": 216, "cache_read_tokens": 0, "cache_creation_tokens": 0, "wall_ms": 10365, "batch": false}
