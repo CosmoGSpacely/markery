@@ -163,6 +163,19 @@ def cmd_status(args: argparse.Namespace) -> None:
     conn.close()
 
 
+def cmd_coverage(args: argparse.Namespace) -> None:
+    """Print the local trademark-corpus coverage + freshness manifest."""
+    import duckdb
+    from markery.common.config import require_db
+    from markery.common.coverage import trademark_coverage, format_coverage
+
+    db_path = require_db("trademarks")
+    conn = duckdb.connect(str(db_path), read_only=True)
+    cov = trademark_coverage(conn)
+    conn.close()
+    print(format_coverage("trademark", cov))
+
+
 def cmd_load_assignment(args: argparse.Namespace) -> None:
     from markery.specialist.trademark.build import open_db, load_assignment
     conn = open_db()
@@ -488,6 +501,12 @@ def main() -> None:
     # status
     sub.add_parser("status", help="Print row counts for all trademark tables")
 
+    # coverage (local manifest)
+    sub.add_parser(
+        "coverage",
+        help="Local corpus coverage + freshness manifest (records, live/dead, provenance)",
+    )
+
     args = ap.parse_args()
     {
         "build":               cmd_build,
@@ -505,4 +524,5 @@ def main() -> None:
         "reparse":             cmd_reparse,
         "verify-credentials":  cmd_verify_credentials,
         "status":              cmd_status,
+        "coverage":            cmd_coverage,
     }[args.cmd](args)

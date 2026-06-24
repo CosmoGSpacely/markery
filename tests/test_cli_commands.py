@@ -67,6 +67,22 @@ def test_historian_prepare(repo, monkeypatch, capsys):
     assert brief.exists()
 
 
+def test_patent_coverage(repo, monkeypatch, capsys):
+    assert _run(monkeypatch, ["patent", "coverage"]) == 0
+    out = capsys.readouterr().out
+    assert "patent coverage" in out
+    assert "epo_ops" in out          # provenance source surfaced
+    assert "provenance" in out
+
+
+def test_trademark_coverage(repo, monkeypatch, capsys):
+    assert _run(monkeypatch, ["trademark", "coverage"]) == 0
+    out = capsys.readouterr().out
+    assert "trademark coverage" in out
+    assert "live / dead" in out
+    assert "uspto_bulk_csv" in out   # provenance source surfaced
+
+
 def test_site_build_all_and_check_via_cli(repo, monkeypatch, capsys):
     # Exercise cmd_site build-all + check through the CLI dispatch.
     assert _run(monkeypatch, ["site", "build-all"]) == 0

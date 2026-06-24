@@ -10,6 +10,7 @@ Entry point: build(csv_dir, db_path, date_start, date_end)
 from __future__ import annotations
 
 import time
+from datetime import date
 from pathlib import Path
 
 import duckdb
@@ -214,12 +215,26 @@ def _rc(csv_dir: Path, name: str) -> str:
     )
 
 
+def _migrate_provenance(conn: duckdb.DuckDBPyConnection) -> None:
+    """Idempotently add Markery provenance columns to case_file (when it exists).
+
+    case_file is CSV-derived (CREATE TABLE AS), so provenance is bolted on after
+    load; pre-provenance DBs self-upgrade on the next writable open. Existing rows
+    keep NULL provenance until the next full build."""
+    tables = {r[0] for r in conn.execute("SHOW TABLES").fetchall()}
+    if "case_file" not in tables:
+        return
+    conn.execute("ALTER TABLE case_file ADD COLUMN IF NOT EXISTS fetched_dt DATE")
+    conn.execute("ALTER TABLE case_file ADD COLUMN IF NOT EXISTS source VARCHAR")
+
+
 def open_db(db_path: str | Path | None = None) -> duckdb.DuckDBPyConnection:
     """Open (or create) trademarks.duckdb and ensure enrichment tables exist."""
     path = str(db_path or DB["trademarks"])
     conn = duckdb.connect(path)
     conn.execute(_ENRICHMENT_DDL)
     _migrate_mark_case_status(conn)
+    _migrate_provenance(conn)
     return conn
 
 
@@ -266,6 +281,13 @@ def build(
         FROM {_rc(csv_dir, 'case_file')}
         {_where}
     """)
+    # Markery provenance: stamp every row with the load date + source.
+    conn.execute("ALTER TABLE case_file ADD COLUMN fetched_dt DATE")
+    conn.execute("ALTER TABLE case_file ADD COLUMN source VARCHAR")
+    conn.execute(
+        "UPDATE case_file SET fetched_dt = ?, source = 'uspto_bulk_csv'",
+        [date.today()],
+    )
     conn.execute("CREATE INDEX idx_cf_serial ON case_file(serial_no)")
     conn.execute("CREATE INDEX idx_cf_filing  ON case_file(filing_dt)")
     conn.execute("CREATE INDEX idx_cf_draw    ON case_file(mark_draw_cd)")

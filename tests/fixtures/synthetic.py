@@ -167,6 +167,12 @@ def _build_trademarks(path: Path) -> None:
 
     # One mark carries an image so the image-write path is exercised.
     conn.execute("INSERT INTO mark_images VALUES (?, ?)", [CAND_SERIAL, _PNG_1PX])
+
+    # Markery provenance (Phase 28 P1): stamp every case_file row, mirroring the
+    # real build's ALTER + UPDATE approach.
+    conn.execute("ALTER TABLE case_file ADD COLUMN fetched_dt DATE")
+    conn.execute("ALTER TABLE case_file ADD COLUMN source VARCHAR")
+    conn.execute("UPDATE case_file SET fetched_dt = DATE '2026-06-01', source = 'uspto_bulk_csv'")
     conn.close()
 
 
@@ -196,6 +202,11 @@ def _build_patents(path: Path) -> None:
         conn.execute("INSERT INTO patent_inventors VALUES (?, 'Jane Synthex')", [pno])
     # One patent carries a figure so the figure-write path is exercised.
     conn.execute("INSERT INTO patent_figures VALUES (?, 1, ?)", [CAND_PATENT, _PNG_1PX])
+
+    # Markery provenance (Phase 28 P1).
+    conn.execute("ALTER TABLE patents ADD COLUMN fetched_dt DATE")
+    conn.execute("ALTER TABLE patents ADD COLUMN source VARCHAR")
+    conn.execute("UPDATE patents SET fetched_dt = DATE '2026-05-15', source = 'epo_ops'")
     conn.close()
 
 

@@ -242,6 +242,21 @@ def cmd_coverage_check(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def cmd_coverage(args: argparse.Namespace) -> None:
+    """Print the local patents-corpus coverage + freshness manifest."""
+    import duckdb
+    from markery.common.config import require_db
+    from markery.common.coverage import patent_coverage, format_coverage
+    from markery.specialist.patent.build import _fetch_log_path, _load_fetch_log
+
+    db_path = require_db("patents")
+    windows = len(_load_fetch_log(_fetch_log_path(str(db_path))))
+    conn = duckdb.connect(str(db_path), read_only=True)
+    cov = patent_coverage(conn, fetch_log_windows=windows)
+    conn.close()
+    print(format_coverage("patent", cov))
+
+
 # ---------------------------------------------------------------------------
 # Argument parser
 # ---------------------------------------------------------------------------
@@ -318,6 +333,12 @@ def main() -> None:
     p_cov.add_argument("--year-start", type=int, required=True, metavar="YEAR")
     p_cov.add_argument("--year-end",   type=int, required=True, metavar="YEAR")
 
+    # coverage (local manifest)
+    sub.add_parser(
+        "coverage",
+        help="Local corpus coverage + freshness manifest (what's loaded, how fresh)",
+    )
+
     args = ap.parse_args()
     {
         "build":               cmd_build,
@@ -329,4 +350,5 @@ def main() -> None:
         "signals":             cmd_signals,
         "search":              cmd_search,
         "coverage-check":      cmd_coverage_check,
+        "coverage":            cmd_coverage,
     }[args.cmd](args)

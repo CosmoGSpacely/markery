@@ -10,7 +10,7 @@ Entry point: build(classes, resume, year_start, year_end, seed_path, seed_only)
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 import duckdb
@@ -35,7 +35,9 @@ CREATE TABLE IF NOT EXISTS patents (
     abstract       VARCHAR,              -- contract: VARCHAR, nullable — populated by patent signals
     assignee_name  VARCHAR,              -- contract: VARCHAR, nullable — uppercase; may differ from entity canonical_name
     assignee_city  VARCHAR,
-    assignee_state VARCHAR
+    assignee_state VARCHAR,
+    fetched_dt     DATE,                 -- Markery load date (provenance) — when this row entered the corpus
+    source         VARCHAR               -- Markery load source (provenance), e.g. 'epo_ops', 'seed', 'patentsview'
 );
 
 CREATE TABLE IF NOT EXISTS patent_classes (
@@ -124,16 +126,31 @@ def _migrate_fetch_log(conn: duckdb.DuckDBPyConnection, db_path: str) -> None:
 # DB helpers
 # ---------------------------------------------------------------------------
 
+def _migrate_provenance(conn: duckdb.DuckDBPyConnection) -> None:
+    """Idempotently add the Markery provenance columns to an existing patents table.
+
+    DuckDB applies ADD COLUMN IF NOT EXISTS as a no-op when the column is present,
+    so pre-provenance DBs self-upgrade on the next writable open (existing rows
+    keep NULL provenance until refreshed/rebuilt)."""
+    conn.execute("ALTER TABLE patents ADD COLUMN IF NOT EXISTS fetched_dt DATE")
+    conn.execute("ALTER TABLE patents ADD COLUMN IF NOT EXISTS source VARCHAR")
+
+
 def open_db(db_path: str | Path | None = None) -> duckdb.DuckDBPyConnection:
     path = str(db_path or DB["patents"])
     conn = duckdb.connect(path)
     conn.execute(DDL)
     _migrate_fetch_log(conn, path)
+    _migrate_provenance(conn)
     return conn
 
 
-def insert_patent(conn: duckdb.DuckDBPyConnection, p: dict) -> bool:
-    """Insert one patent record. Returns True if newly inserted."""
+def insert_patent(conn: duckdb.DuckDBPyConnection, p: dict, source: str = "epo_ops") -> bool:
+    """Insert one patent record. Returns True if newly inserted.
+
+    Records Markery provenance: ``fetched_dt`` (today, unless the record carries
+    its own) and ``source`` (the acquisition route; ``p['source']`` overrides the
+    ``source`` argument)."""
     if conn.execute(
         "SELECT 1 FROM patents WHERE patent_no = ?", [p["patent_no"]]
     ).fetchone():
@@ -142,11 +159,12 @@ def insert_patent(conn: duckdb.DuckDBPyConnection, p: dict) -> bool:
     conn.execute(
         """INSERT INTO patents
            (patent_no, title, app_dt, grant_dt, abstract,
-            assignee_name, assignee_city, assignee_state)
-           VALUES (?,?,?,?,?,?,?,?)""",
+            assignee_name, assignee_city, assignee_state, fetched_dt, source)
+           VALUES (?,?,?,?,?,?,?,?,?,?)""",
         [p["patent_no"], p.get("title"),
          p.get("app_dt"), p.get("grant_dt"), p.get("abstract"),
-         p.get("assignee_name"), p.get("assignee_city"), p.get("assignee_state")],
+         p.get("assignee_name"), p.get("assignee_city"), p.get("assignee_state"),
+         p.get("fetched_dt") or date.today(), p.get("source") or source],
     )
     for inv in p.get("inventors", []):
         conn.execute(

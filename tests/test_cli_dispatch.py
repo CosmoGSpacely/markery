@@ -17,11 +17,11 @@ from markery.cli import main
 # area → its subcommands (from `markery <area> --help`).
 AREA_SUBCOMMANDS = {
     "patent": ["build", "fetch", "figures", "verify-credentials", "signals",
-               "pull", "citations", "search", "coverage-check"],
+               "pull", "citations", "search", "coverage-check", "coverage"],
     "trademark": ["build", "enrich", "enrich-project", "load-events", "load-foreign",
                   "fetch", "entity-forward", "mark-status", "load-assignment",
                   "design-search", "search-tsdr", "inspect", "reparse",
-                  "verify-credentials", "status"],
+                  "verify-credentials", "status", "coverage"],
     "matchmaker": ["build", "list", "status", "clear", "confirm", "unreject",
                    "suggest-variants", "validate-variants"],
     "historian": ["prepare", "card", "digest", "validate", "scaffold", "draft"],
