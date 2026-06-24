@@ -997,7 +997,7 @@ def historian_main() -> None:
                             help="Explicit path to essay file")
 
     iq_p = sub.add_parser("infer-queue",
-                          help="Batch card --infer over all unreviewed candidates (Batch API, 50%)")
+                          help="Batch card --infer over all unreviewed candidates (Batch API, 50%%)")
     iq_p.add_argument("project", help="Project name")
     iq_p.add_argument("--min-score", type=float, default=0.0, dest="min_score", metavar="S",
                       help="Only infer candidates with score ≥ S (default: 0.0)")
