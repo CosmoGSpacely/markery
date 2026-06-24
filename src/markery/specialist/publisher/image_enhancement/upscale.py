@@ -5,9 +5,12 @@ from __future__ import annotations
 import urllib.request
 from pathlib import Path
 
-import cv2
-import numpy as np
 from PIL import Image
+
+# cv2 and numpy are imported lazily inside upscale() — they are only needed on
+# the Real-ESRGAN path. The Lanczos fallback (and merely importing this module,
+# e.g. via print_asset) must not require opencv, which ships only in the optional
+# `enhance` extra, not in the base/dev install used by CI.
 
 WEIGHTS_DIR = Path(__file__).parent / "weights"
 
@@ -56,6 +59,9 @@ def upscale(img: Image.Image, model_name: str = "x4plus-anime") -> tuple[Image.I
         print("realesrgan/basicsr not installed — using Lanczos 4× fallback")
         w, h = img.size
         return img.resize((w * 4, h * 4), Image.LANCZOS), "lanczos-fallback"
+
+    import cv2
+    import numpy as np
 
     if model_name not in MODELS:
         raise ValueError(f"Unknown model '{model_name}'. Choose from: {list(MODELS)}")

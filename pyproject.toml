@@ -21,6 +21,7 @@ markery = "markery.cli:main"
 enhance = [
     "opencv-python-headless>=4.8.0",
     "vtracer>=0.6.0",
+    "numpy>=1.24",
 ]
 librarian = [
     "sentence-transformers>=2.2",
