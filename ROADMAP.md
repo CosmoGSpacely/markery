@@ -81,7 +81,7 @@ archivable. `TESTS_REVIEW.md` archived to `archive/TESTS_REVIEW-2026-06-24.md`.
 
 ---
 
-## Phase 28 — Database layer  ·  plan: `DATABASE_REVIEW.md` — CLOSED
+## Phase 28 — Database layer  ·  plan: `archive/DATABASE_REVIEW-2026-06-24.md` — CLOSED
 
 **Trigger:** the corpus is a curated, human-seeded slice committed as ~70 MB binaries, with
 partial provenance (records lack a load/refresh timestamp; status can go stale), a hand-built
