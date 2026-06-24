@@ -57,16 +57,19 @@ library refactor, and auto entity registration is a hard prerequisite for the sp
 
 1. **Provenance + freshness** — record `fetched_dt`/`source`; `… refresh` for status; a real
    coverage manifest.
-2. **Auto entity registration** — corpus owners/assignees → `company_entity`/variants (human-
-   confirm), removing the hand-CSV requirement for new projects.
+2. **Auto entity registration (companies + people)** — corpus owners/assignees →
+   `company_entity`/variants (human-confirm), removing the hand-CSV requirement for new
+   projects; and model **people** (inventors from `patent_inventors`, notable founders) as
+   first-class data-layer entities with stable slugs — the *data-model* half of D072 (its
+   essay/rendering half stays deferred).
 3. **Asset storage + commit policy** — resolve blobs-in-DB vs files (with Phase 29); decide
    commit-vs-rebuild; document the rebuild recipe; add a synthetic test fixture.
 4. **Coverage/expansion hooks** — a queryable coverage model the loops consult before fetching
    (EPO/TSDR; evaluate D007 PatentsView).
 
-**Gate:** records carry provenance + a refresh path; entities auto-register from the corpus
-(human-confirmed); the asset-storage + commit decisions are made and documented; existing
-specialist commands unregressed.
+**Gate:** records carry provenance + a refresh path; companies **and people** auto-register
+from the corpus (human-confirmed, stable slugs); the asset-storage + commit decisions are made
+and documented; existing specialist commands unregressed.
 
 ---
 
@@ -96,7 +99,7 @@ unbuilt.
 database's coverage/provenance hooks (Phase 28), and the first real agentic loop in
 markery-langgraph.
 
-1. PD media adapters (D069: LoC/NARA/DPLA/IA) + Chronicling America newspapers.
+1. PD media adapters — LoC/NARA/DPLA/IA (**closes D069**) + Chronicling America newspapers.
 2. Discovery log + historian relevance scoring; WorldCat/ILL book pipeline; eBay leads.
 3. The continuous loop (`discovery_graph.py`): seed → discover → score → acquire/gate/log,
    with dedup, budgets, and human gates; scheduled.
