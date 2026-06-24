@@ -154,15 +154,20 @@ green; the migrated media still renders with attribution.
 
 ---
 
-## 9. Open questions
+## 9. Open questions — RESOLVED 2026-06-24
 
-1. **Reference mechanism:** extend `references/` `see:` lines to media, or a dedicated
-   `references/library.jsonl`? (Lean: one `references/library.jsonl` of item ids — simplest
-   for the build to consume.)
-2. **Binary policy:** commit small PD media into `library/media/`, or gitignore and treat
-   as re-acquirable (like `raw_text.txt`)? (Lean: commit small images for portability; keep
-   a size cap; large/video gitignored + re-acquirable.)
-3. **Catalog vs index:** is `catalog.jsonl` (item-level) + `index.jsonl` (passage-level)
-   the right split, or fold media into a DuckDB catalog table for querying?
-4. **Acquire UX:** `media-acquire` global-only with a separate `use --project`, or keep a
-   one-shot `media-acquire --project` that acquires-then-references?
+1. **Reference mechanism: a dedicated `references/library.jsonl`** — one row per
+   referenced library item id; simplest for the build to consume. (Not `see:` lines.)
+2. **Binary policy: gitignore media** — treat `library/media/` files as re-acquirable
+   (like `raw_text.txt` and the Phase 28 `data/assets/`). Only the catalog metadata
+   (provenance/license/attribution) is committed; the binaries are rebuildable.
+3. **Catalog vs index: JSONL only, no database yet** — keep `catalog.jsonl`
+   (item-level) + `index.jsonl` (passage-level) as flat files. Do **not** fold media
+   into a DuckDB catalog table for now (revisit if/when querying needs demand it).
+4. **Acquire UX: global acquire + separate `use --project`** — `media-acquire`
+   fetches once into the global library + catalog (no project); `librarian use <id>
+   --project <name>` appends the id to that project's `references/library.jsonl`.
+   Chosen because it scales (one acquire → many project references, no duplication)
+   and fits the historian loop (acquire into the shared substrate before projects
+   exist; clean acquire-vs-reference dedup and loop nodes). A one-shot
+   `media-acquire --project` may be added later as thin sugar (acquire-then-`use`).
