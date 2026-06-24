@@ -23,7 +23,7 @@ AREA_SUBCOMMANDS = {
                   "design-search", "search-tsdr", "inspect", "reparse",
                   "verify-credentials", "status", "coverage"],
     "matchmaker": ["build", "list", "status", "clear", "confirm", "unreject",
-                   "suggest-variants", "validate-variants"],
+                   "suggest-variants", "validate-variants", "register", "register-people"],
     "historian": ["prepare", "card", "digest", "validate", "scaffold", "draft"],
     "librarian": ["search-sources", "discover", "wants", "wants-update", "acquire",
                   "enter", "raw-text", "extract", "review", "index", "search",

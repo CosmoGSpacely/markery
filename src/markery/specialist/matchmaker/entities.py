@@ -35,6 +35,23 @@ CREATE TABLE IF NOT EXISTS entity_name_variant (
     variant_name VARCHAR NOT NULL,  -- contract: VARCHAR, NOT NULL — uppercase string used in assignee/owner searches
     source       VARCHAR NOT NULL   -- contract: VARCHAR, NOT NULL — one of: patent_assignee | trademark_owner | trademark_search
 );
+
+-- People as first-class data-layer entities (Phase 28 P2 — data-model half of D072).
+-- Inventors (from patent_inventors) and notable founders, deduplicated to a stable
+-- identity with a stable slug. Narrative/rendering (essays, People nav) stays in D072.
+CREATE TABLE IF NOT EXISTS person_entity (
+    person_id      INTEGER PRIMARY KEY,
+    canonical_name VARCHAR NOT NULL,
+    slug           VARCHAR NOT NULL UNIQUE,  -- stable URL/identity slug
+    kind           VARCHAR                   -- 'inventor' | 'founder' | …
+);
+
+CREATE TABLE IF NOT EXISTS person_name_variant (
+    variant_id   INTEGER PRIMARY KEY,
+    person_id    INTEGER NOT NULL REFERENCES person_entity(person_id),
+    variant_name VARCHAR NOT NULL,           -- raw corpus string (e.g. patent_inventors.inventor_name)
+    source       VARCHAR NOT NULL            -- 'patent_inventor' | 'founder'
+);
 """
 
 

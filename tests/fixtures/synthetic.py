@@ -211,14 +211,19 @@ def _build_patents(path: Path) -> None:
 
 
 def _build_entities(path: Path) -> None:
+    # Schema mirrors matchmaker/entities.py DDL (PK + FK) so entities.open_db()
+    # works against the fixture.
     conn = duckdb.connect(str(path))
     conn.execute(
         "CREATE TABLE company_entity "
-        "(entity_id INTEGER, canonical_name VARCHAR, entity_type VARCHAR, industry VARCHAR)"
+        "(entity_id INTEGER PRIMARY KEY, canonical_name VARCHAR NOT NULL, "
+        "entity_type VARCHAR, industry VARCHAR)"
     )
     conn.execute(
         "CREATE TABLE entity_name_variant "
-        "(entity_id INTEGER, variant_name VARCHAR, source VARCHAR)"
+        "(variant_id INTEGER PRIMARY KEY, entity_id INTEGER NOT NULL "
+        "REFERENCES company_entity(entity_id), variant_name VARCHAR NOT NULL, "
+        "source VARCHAR NOT NULL)"
     )
     conn.execute(
         "INSERT INTO company_entity VALUES (?, ?, 'company', 'Precision instruments')",
@@ -226,11 +231,11 @@ def _build_entities(path: Path) -> None:
     )
     # The publisher joins marks via 'trademark_owner' and patents via 'patent_assignee'.
     conn.execute(
-        "INSERT INTO entity_name_variant VALUES (?, ?, 'trademark_owner')",
+        "INSERT INTO entity_name_variant VALUES (1, ?, ?, 'trademark_owner')",
         [ENTITY_ID, ENTITY_VARIANT],
     )
     conn.execute(
-        "INSERT INTO entity_name_variant VALUES (?, ?, 'patent_assignee')",
+        "INSERT INTO entity_name_variant VALUES (2, ?, ?, 'patent_assignee')",
         [ENTITY_ID, ENTITY_VARIANT],
     )
     conn.close()

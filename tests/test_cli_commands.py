@@ -67,6 +67,32 @@ def test_historian_prepare(repo, monkeypatch, capsys):
     assert brief.exists()
 
 
+def test_matchmaker_list(repo, monkeypatch, capsys):
+    assert _run(monkeypatch, ["matchmaker", "list"]) == 0
+    out = capsys.readouterr().out
+    assert "Synthex" in out
+
+
+def test_matchmaker_register_dry_run_then_confirm(repo, monkeypatch, capsys):
+    # Dry run proposes variants for a new canonical, writes nothing.
+    assert _run(monkeypatch, ["matchmaker", "register", "Synthex Works",
+                              "--min-score", "0.5"]) == 0
+    out = capsys.readouterr().out
+    assert "Dry run" in out and "patent_assignee" in out
+    # Confirm writes the new entity.
+    assert _run(monkeypatch, ["matchmaker", "register", "Synthex Works",
+                              "--min-score", "0.5", "--confirm"]) == 0
+    out = capsys.readouterr().out
+    assert "created" in out
+
+
+def test_matchmaker_register_people_confirm(repo, monkeypatch, capsys):
+    assert _run(monkeypatch, ["matchmaker", "register-people", "--confirm"]) == 0
+    out = capsys.readouterr().out
+    assert "jane-synthex" in out
+    assert "written" in out
+
+
 def test_patent_coverage(repo, monkeypatch, capsys):
     assert _run(monkeypatch, ["patent", "coverage"]) == 0
     out = capsys.readouterr().out

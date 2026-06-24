@@ -852,6 +852,73 @@ def _get_example_titles(
     return [(r[0], r[1]) for r in rows]
 
 
+def cmd_register(args: argparse.Namespace) -> None:
+    """Auto-register a company entity + variants from the corpus (human-confirm)."""
+    import duckdb
+    from markery.common.config import DB, require_db
+    from markery.specialist.matchmaker import autoregister as ar
+    from markery.specialist.matchmaker.entities import open_db
+
+    conn_pat = duckdb.connect(str(require_db("patents")), read_only=True)
+    conn_tm  = duckdb.connect(str(require_db("trademarks")), read_only=True)
+    proposal = ar.propose_company(conn_pat, conn_tm, args.name,
+                                  min_score=args.min_score, top=args.top)
+    conn_pat.close()
+    conn_tm.close()
+
+    print(f"Proposed company: {args.name!r}")
+    if not proposal["variants"]:
+        print("  No matching owner/assignee strings above threshold. "
+              "Lower --min-score or check the name.")
+        sys.exit(1)
+    for v in proposal["variants"]:
+        print(f"  {v['score']:.2f}  {v['count']:>5}×  [{v['source']}]  {v['name']}")
+
+    if not args.confirm:
+        print("\nDry run. Re-run with --confirm to write to entities.duckdb.")
+        return
+
+    conn_ent = open_db()
+    result = ar.commit_company(conn_ent, proposal, industry=args.industry)
+    conn_ent.close()
+    verb = "created" if result["created"] else "updated"
+    print(f"\nentity_id {result['entity_id']} {verb}  ·  "
+          f"{result['variants_added']} variant(s) added.")
+
+
+def cmd_register_people(args: argparse.Namespace) -> None:
+    """Auto-register inventors as person entities with stable slugs (human-confirm)."""
+    import duckdb
+    from markery.common.config import require_db
+    from markery.specialist.matchmaker import autoregister as ar
+    from markery.specialist.matchmaker.entities import open_db
+
+    conn_ent = open_db()
+    conn_pat = duckdb.connect(str(require_db("patents")), read_only=True)
+    proposals = ar.propose_people_from_inventors(
+        conn_ent, conn_pat, min_patents=args.min_patents, limit=args.limit)
+    conn_pat.close()
+
+    if not proposals:
+        print("No new inventors to register (all known, or none meet --min-patents).")
+        conn_ent.close()
+        return
+
+    print(f"Proposed {len(proposals)} person entit(ies):")
+    for p in proposals:
+        print(f"  {p['patent_count']:>4} patents  {p['slug']:<28}  {p['canonical']}")
+
+    if not args.confirm:
+        conn_ent.close()
+        print("\nDry run. Re-run with --confirm to write to entities.duckdb.")
+        return
+
+    result = ar.commit_people(conn_ent, proposals, kind="inventor")
+    conn_ent.close()
+    print(f"\n{result['people_added']} person(s), "
+          f"{result['variants_added']} variant(s) written.")
+
+
 def cmd_suggest_variants(args: argparse.Namespace) -> None:
     import re
     import duckdb
@@ -1115,6 +1182,26 @@ def matchmaker_main() -> None:
     p_vv.add_argument("--data-dir", metavar="DIR", required=True,
                       help="Directory containing entities.csv and variants.csv")
 
+    p_reg = sub.add_parser("register",
+                           help="Auto-register a company_entity + variants from the corpus (human-confirm)")
+    p_reg.add_argument("name", help="Canonical entity name to register")
+    p_reg.add_argument("--min-score", type=float, default=0.3, metavar="S",
+                       help="Minimum token-overlap score for a variant (default: 0.3)")
+    p_reg.add_argument("--top", type=int, default=10, metavar="N",
+                       help="Max variants per source (default: 10)")
+    p_reg.add_argument("--industry", default=None, help="Optional industry label")
+    p_reg.add_argument("--confirm", action="store_true",
+                       help="Write to entities.duckdb (default: dry-run preview)")
+
+    p_rp = sub.add_parser("register-people",
+                          help="Auto-register inventors from patent_inventors as person entities (human-confirm)")
+    p_rp.add_argument("--min-patents", type=int, default=1, metavar="N",
+                      help="Only inventors on at least N patents (default: 1)")
+    p_rp.add_argument("--limit", type=int, default=20, metavar="N",
+                      help="Max people to propose (default: 20)")
+    p_rp.add_argument("--confirm", action="store_true",
+                      help="Write to entities.duckdb (default: dry-run preview)")
+
     args = ap.parse_args()
     {
         "build":              cmd_build,
@@ -1125,4 +1212,6 @@ def matchmaker_main() -> None:
         "status":             cmd_status,
         "suggest-variants":   cmd_suggest_variants,
         "validate-variants":  cmd_validate_variants,
+        "register":           cmd_register,
+        "register-people":    cmd_register_people,
     }[args.cmd](args)
