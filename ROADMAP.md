@@ -20,9 +20,9 @@ A stock-take found Markery is a strong **toolkit** (clean CLI, specialist bounda
 layer) but thin on the thing it's meant to be: an **agentic pattern that grows a research
 platform with little supervision**. The orchestration layer (markery-langgraph) is ~3% of the
 code and runs one workflow; the autonomy lives in plan docs, not code. The next phases build
-the missing layer on solid foundations, in this order: **harden the tests → make the library
-real → build the discovery loop → build the spawning pipeline.** Each phase is fully specced
-in its `*_REVIEW.md`; the roadmap entries are the sequence + gates.
+the missing layer on solid foundations, in this order: **harden the tests → fix the database →
+make the library real → build the discovery loop → build the spawning pipeline.** Each phase is
+fully specced in its `*_REVIEW.md`; the roadmap entries are the sequence + gates.
 
 Foundations → backbone → acquisition → autonomous growth. After Phase 27 (hermetic tests),
 the `projects/` and `site/` trees can be archived and rebuilt from the improved library/loops.
@@ -47,12 +47,35 @@ hermetic-MVO rewrite is the prerequisite for archiving `projects/` and "starting
 
 ---
 
-## Phase 28 — Real digital library  ·  plan: `LIBRARY_REVIEW.md`
+## Phase 28 — Database layer  ·  plan: `DATABASE_REVIEW.md`
+
+**Trigger:** the corpus is a curated, human-seeded slice committed as ~70 MB binaries, with
+partial provenance (records lack a load/refresh timestamp; status can go stale), a hand-built
+entity registry (38), and image blobs inside the DBs.
+**Why second:** it's the deepest backbone; its asset-storage decision must be made *with* the
+library refactor, and auto entity registration is a hard prerequisite for the spawning pipeline.
+
+1. **Provenance + freshness** — record `fetched_dt`/`source`; `… refresh` for status; a real
+   coverage manifest.
+2. **Auto entity registration** — corpus owners/assignees → `company_entity`/variants (human-
+   confirm), removing the hand-CSV requirement for new projects.
+3. **Asset storage + commit policy** — resolve blobs-in-DB vs files (with Phase 29); decide
+   commit-vs-rebuild; document the rebuild recipe; add a synthetic test fixture.
+4. **Coverage/expansion hooks** — a queryable coverage model the loops consult before fetching
+   (EPO/TSDR; evaluate D007 PatentsView).
+
+**Gate:** records carry provenance + a refresh path; entities auto-register from the corpus
+(human-confirmed); the asset-storage + commit decisions are made and documented; existing
+specialist commands unregressed.
+
+---
+
+## Phase 29 — Real digital library  ·  plan: `LIBRARY_REVIEW.md`
 
 **Trigger:** "library" is fragmented — text works are global, P2 media is per-project (1 item),
 record images live in DBs; no single rights-curated catalog.
-**Why second:** it's the data backbone both loops depend on; refactor it on the now-hermetic
-suite, before the loops populate/consume it.
+**Why third:** it's the asset backbone both loops depend on; refactor it on the hermetic suite
+and the Phase 28 asset-storage decision, before the loops populate/consume it.
 
 1. **Global media collection + catalog** — `library/media/` + `catalog.jsonl`; migrate the P2
    item; `media.py`/`media-list` go global.
@@ -65,12 +88,13 @@ the publisher renders it with attribution; `site check` green.
 
 ---
 
-## Phase 29 — Continuous historian discovery loop  ·  plan: `HISTORIAN_REVIEW.md`
+## Phase 30 — Continuous historian discovery loop  ·  plan: `HISTORIAN_REVIEW.md`
 
 **Trigger:** acquisition (media/literature/figures) is hand-driven; the discovery autonomy is
 unbuilt.
-**Why third:** it's the acquisition engine that **populates the library** (Phase 28), and the
-first real agentic loop in markery-langgraph.
+**Why fourth:** it's the acquisition engine that **populates the library** (Phase 29) using the
+database's coverage/provenance hooks (Phase 28), and the first real agentic loop in
+markery-langgraph.
 
 1. PD media adapters (D069: LoC/NARA/DPLA/IA) + Chronicling America newspapers.
 2. Discovery log + historian relevance scoring; WorldCat/ILL book pipeline; eBay leads.
@@ -82,12 +106,13 @@ a lead, and human-gates a purchase/ILL on a real project; `site check` clean.
 
 ---
 
-## Phase 30 — Annual-review → project spawning pipeline  ·  plan: `PUBLISHER_REVIEW.md`
+## Phase 31 — Annual-review → project spawning pipeline  ·  plan: `PUBLISHER_REVIEW.md`
 
 **Trigger:** projects are created by hand; the "platform grows itself" capability is unbuilt.
-**Why last (the capstone):** it's the flagship agentic demonstration — it references the
-library (28), benefits from discovery having populated it (29), and rides the hermetic suite
-(27). Most complex (multi-specialist, EPO-quota), so it lands on solid foundations.
+**Why last (the capstone):** it's the flagship agentic demonstration — it auto-registers
+entities (28), references the library (29), benefits from discovery having populated it (30),
+and rides the hermetic suite (27). Most complex (multi-specialist, EPO-quota), so it lands on
+solid foundations.
 
 1. Technological-mark triage (`trademark tech-marks`: US-class gate + free-model goods rule).
 2. Seed match → good-match filter → CPC-subclass expansion + re-match.
@@ -102,9 +127,8 @@ project spawn and a clean portal build.
 
 ## Notes
 
-- **No `DATABASE_REVIEW` yet.** Data-layer improvements (more media/figures, corpus expansion
-  beyond the curated slice, auto entity registration) are folded into the loops: acquisition
-  in Phase 29, corpus/subclass expansion + entity registration in Phase 30. Promote a
-  standalone DB phase if the data model itself needs rework.
+- Sequence: **27 Tests → 28 Database → 29 Library → 30 Discovery loop → 31 Spawning pipeline**
+  (foundations → backbone → acquisition → autonomous growth). `projects/` and `site/` can be
+  archived and rebuilt once Phase 27 (hermetic tests) lands.
 - Deferred, independent of these phases: D070 (hosting), D071 (GEO), D072 (People), plus
   D007/D028/D068/D069.
