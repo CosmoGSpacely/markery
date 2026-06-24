@@ -624,7 +624,7 @@ def cmd_media_search(args: argparse.Namespace) -> None:
 
 def cmd_media_acquire(args: argparse.Namespace) -> None:
     from markery.specialist.librarian import media
-    meta = media.acquire_commons(args.project, args.title, kind=args.kind)
+    meta = media.acquire_commons(args.title, kind=args.kind)
     if meta is None:
         print(
             f"Rejected: '{args.title}' — license not admitted (PD/CC0/CC-BY/CC-BY-SA "
@@ -633,18 +633,34 @@ def cmd_media_acquire(args: argparse.Namespace) -> None:
         )
         sys.exit(1)
     print(f"Acquired: {meta['slug']}  [{meta['license']}]")
-    print(f"  attribution: {meta['attribution_text']}")
-    print(f"  → {media.media_dir(args.project) / meta['slug']}")
+    print(f"  attribution: {meta.get('attribution_text', '')}")
+    print(f"  → {media.media_dir() / meta['slug']}")
+    print("  reference it in a project: markery librarian use "
+          f"{meta['slug']} --project <name>")
 
 
 def cmd_media_list(args: argparse.Namespace) -> None:
     from markery.specialist.librarian import media
-    items = media.list_media(args.project)
+    items = media.list_media()
     if not items:
-        print("No media acquired for this project.")
+        print("No media in the global library.")
         return
     for m in items:
-        print(f"{m['slug']:42} {m['kind']:7} {m['license']:10} {m['title']}")
+        print(f"{m['id']:42} {m.get('kind',''):8} {(m.get('license') or ''):10} {m.get('title','')}")
+
+
+def cmd_catalog(args: argparse.Namespace) -> None:
+    from markery.specialist.librarian import catalog
+    if args.rebuild:
+        counts = catalog.rebuild()
+        print(f"Catalog rebuilt → {catalog.catalog_path()}")
+        print(f"  works: {counts['works']}  ·  media: {counts['media']}")
+        return
+    items = catalog.load()
+    works = sum(1 for i in items.values() if i.get("kind") in catalog.WORK_KINDS)
+    n_media = len(items) - works
+    print(f"library catalog: {len(items)} item(s)  ·  works: {works}  ·  media: {n_media}")
+    print(f"  {catalog.catalog_path()}")
 
 
 # ---------------------------------------------------------------------------
@@ -793,14 +809,16 @@ def librarian_main() -> None:
     p_msrch.add_argument("--max-results", type=int, default=10)
 
     p_macq = sub.add_parser("media-acquire",
-                            help="Acquire a Commons file into a project's media library")
+                            help="Acquire a Commons file into the global library (then `use` it in a project)")
     p_macq.add_argument("title", help="Commons File: title (e.g. 'File:Foo.jpg')")
-    p_macq.add_argument("--project", required=True, help="Target project")
     p_macq.add_argument("--kind", default="photo",
                         choices=["photo", "map", "drawing", "video"])
 
-    p_mlist = sub.add_parser("media-list", help="List acquired media in a project")
-    p_mlist.add_argument("--project", required=True, help="Project to list")
+    p_mlist = sub.add_parser("media-list", help="List media in the global library")
+
+    p_cat = sub.add_parser("catalog", help="Show or rebuild the global library catalog")
+    p_cat.add_argument("--rebuild", action="store_true",
+                       help="Regenerate catalog.jsonl from works/ + media/ metadata")
 
     args = parser.parse_args()
 
@@ -809,6 +827,7 @@ def librarian_main() -> None:
         "media-search":   cmd_media_search,
         "media-acquire":  cmd_media_acquire,
         "media-list":     cmd_media_list,
+        "catalog":        cmd_catalog,
         "discover":       cmd_discover,
         "wants":          cmd_wants,
         "wants-update":   cmd_wants_update,

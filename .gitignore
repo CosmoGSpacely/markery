@@ -51,6 +51,13 @@ library/works/*/candidates.md
 library/index.duckdb
 # Context cards — regenerable via markery librarian card <query>
 library/cards/
+# Media binaries (Phase 29) — gitignored + re-acquirable; only metadata.json and
+# the global catalog.jsonl are committed. Durability: sha256 in the catalog +
+# periodic library/media snapshot (until object-storage hosting, D070).
+library/media/**
+!library/media/
+!library/media/*/
+!library/media/*/metadata.json
 
 # Coverage
 .coverage

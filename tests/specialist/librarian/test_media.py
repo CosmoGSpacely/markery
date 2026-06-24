@@ -56,12 +56,15 @@ def test_pd_attribution_is_rights_only_when_creator_unknown():
 
 @pytest.fixture()
 def project_root(tmp_path, monkeypatch):
-    (tmp_path / "projects" / "demo").mkdir(parents=True)
+    # Phase 29: media is global — point config.ROOT at a tmp library/.
+    import markery.common.config as cfg
+    (tmp_path / "library" / "media").mkdir(parents=True)
+    monkeypatch.setattr(cfg, "ROOT", tmp_path)
     monkeypatch.setattr(_proj_mod, "ROOT", tmp_path)
     return tmp_path
 
 
-def test_acquire_commons_stores_metadata_and_index(project_root, monkeypatch):
+def test_acquire_commons_stores_metadata_and_catalog(project_root, monkeypatch):
     monkeypatch.setattr(commons, "fetch", lambda title: commons.CommonsResult(
         title=title, url="https://upload.wikimedia.org/x/Deere.jpg", license="PD",
         creator="Unknown", license_url="", rights_statement="Public domain",
@@ -71,22 +74,22 @@ def test_acquire_commons_stores_metadata_and_index(project_root, monkeypatch):
                         lambda url, dest: (dest.parent.mkdir(parents=True, exist_ok=True),
                                            dest.write_bytes(b"\x89PNG fake"), dest)[-1])
 
-    meta = media.acquire_commons("demo", "File:John Deere plow.jpg", kind="photo")
+    meta = media.acquire_commons("File:John Deere plow.jpg", kind="photo")
     assert meta is not None
     assert meta["license"] == "PD"
     assert meta["source"] == "wikimedia_commons"
     assert meta["format"] == "jpg"
     assert meta["sha256"]
-    # Files on disk
-    item = media.media_dir("demo") / meta["slug"]
+    # Files in the GLOBAL library/media.
+    item = media.media_dir() / meta["slug"]
     assert (item / "metadata.json").exists()
     assert (item / meta["file"]).exists()
-    # Index updated and listable
-    listed = media.list_media("demo")
-    assert len(listed) == 1 and listed[0]["slug"] == meta["slug"]
+    # Catalog updated and listable.
+    listed = media.list_media()
+    assert len(listed) == 1 and listed[0]["id"] == meta["slug"]
 
 
 def test_acquire_commons_rejects_unadmitted(project_root, monkeypatch):
     monkeypatch.setattr(commons, "fetch", lambda title: None)  # resolve_license rejected
-    assert media.acquire_commons("demo", "File:Copyrighted.jpg") is None
-    assert media.list_media("demo") == []
+    assert media.acquire_commons("File:Copyrighted.jpg") is None
+    assert media.list_media() == []

@@ -27,7 +27,7 @@ AREA_SUBCOMMANDS = {
     "historian": ["prepare", "card", "digest", "validate", "scaffold", "draft"],
     "librarian": ["search-sources", "discover", "wants", "wants-update", "acquire",
                   "enter", "raw-text", "extract", "review", "index", "search",
-                  "list", "card", "media-search", "media-acquire", "media-list"],
+                  "list", "card", "media-search", "media-acquire", "media-list", "catalog"],
     "site": ["build", "build-all", "check"],
     "wikipedia": ["draft", "candidates", "propose-edit", "submit", "from-essay",
                   "verify-credentials", "check-revision", "add-external-link", "replace"],
