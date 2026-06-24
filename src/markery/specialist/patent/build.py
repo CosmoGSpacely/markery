@@ -160,7 +160,25 @@ def _migrate_externalize_figures(conn: duckdb.DuckDBPyConnection) -> int:
                 [rel, sha, patent_no, figure_no],
             )
             exported += 1
-        conn.execute("ALTER TABLE patent_figures DROP COLUMN figure_data")
+        # DuckDB blocks DROP COLUMN on a PK table, so rebuild without figure_data.
+        conn.execute("""
+            CREATE TABLE patent_figures_new (
+                patent_no     VARCHAR NOT NULL,
+                figure_no     INTEGER NOT NULL,
+                file          VARCHAR,
+                sha256        VARCHAR,
+                figure_format VARCHAR DEFAULT 'PNG',
+                fetched_dt    DATE,
+                PRIMARY KEY (patent_no, figure_no)
+            )""")
+        conn.execute(
+            "INSERT INTO patent_figures_new "
+            "(patent_no, figure_no, file, sha256, figure_format, fetched_dt) "
+            "SELECT patent_no, figure_no, file, sha256, figure_format, fetched_dt "
+            "FROM patent_figures"
+        )
+        conn.execute("DROP TABLE patent_figures")
+        conn.execute("ALTER TABLE patent_figures_new RENAME TO patent_figures")
         conn.commit()
     return exported
 

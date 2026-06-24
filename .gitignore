@@ -26,10 +26,10 @@ wheels/
 *.egg
 .DS_Store
 csv/
+# Corpus DBs + externalized record-image assets are rebuildable artifacts
+# (Phase 28 P3) — not committed. See data/REBUILD.md + the archived snapshot.
 *.duckdb
-!data/trademarks.duckdb
-!data/patents.duckdb
-!data/entities.duckdb
+data/assets/
 # Ignore Claude Code runtime config but track project commands
 .claude/*.json
 .claude/*.local.*

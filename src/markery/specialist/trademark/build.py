@@ -243,7 +243,24 @@ def _migrate_externalize_images(conn: duckdb.DuckDBPyConnection) -> int:
                 [rel, sha, serial_no],
             )
             exported += 1
-        conn.execute("ALTER TABLE mark_images DROP COLUMN image_data")
+        # DuckDB blocks DROP COLUMN on a PK table, so rebuild without image_data.
+        conn.execute("""
+            CREATE TABLE mark_images_new (
+                serial_no    VARCHAR PRIMARY KEY,
+                file         VARCHAR,
+                sha256       VARCHAR,
+                image_format VARCHAR DEFAULT 'PNG',
+                image_size   INTEGER,
+                fetched_dt   DATE
+            )""")
+        conn.execute(
+            "INSERT INTO mark_images_new "
+            "(serial_no, file, sha256, image_format, image_size, fetched_dt) "
+            "SELECT serial_no, file, sha256, image_format, image_size, fetched_dt "
+            "FROM mark_images"
+        )
+        conn.execute("DROP TABLE mark_images")
+        conn.execute("ALTER TABLE mark_images_new RENAME TO mark_images")
         conn.commit()
     return exported
 
