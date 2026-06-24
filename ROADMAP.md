@@ -143,13 +143,30 @@ a lead, and human-gates a purchase/ILL on a real project; `site check` clean.
 
 ---
 
-## Phase 31 — Annual-review → project spawning pipeline  ·  plan: `PUBLISHER_REVIEW.md`
+## Phase 31 — Site design pass + rebuild annual-review project/site  ·  plan: TBD (stub)
+
+**Trigger:** `projects/` and `site/` were archived 2026-06-24 (see
+`archive/PROJECTS-ARCHIVED-2026-06-24.md`); the first real rebuild is also the moment
+to refresh the site design — and it must land **before** the spawning pipeline (32) so
+spawned projects publish into the refreshed design rather than the old one.
+
+Brief: do another **site design pass** (chrome, cards, timeline, typography — carry
+forward the open items from the archived `SITE-REVIEW`), **then rebuild the
+annual-review project and its site** on the improved database/library. Write the full
+plan to a `SITE-REVIEW.md` when this phase opens.
+
+**Gate:** the annual-review project rebuilds against the new data/library; the refreshed
+design renders; `site check` clean.
+
+---
+
+## Phase 32 — Annual-review → project spawning pipeline  ·  plan: `PUBLISHER_REVIEW.md`
 
 **Trigger:** projects are created by hand; the "platform grows itself" capability is unbuilt.
 **Why last (the capstone):** it's the flagship agentic demonstration — it auto-registers
 entities (28), references the library (29), benefits from discovery having populated it (30),
-and rides the hermetic suite (27). Most complex (multi-specialist, EPO-quota), so it lands on
-solid foundations.
+publishes into the refreshed design (31), and rides the hermetic suite (27). Most complex
+(multi-specialist, EPO-quota), so it lands on solid foundations.
 
 1. Technological-mark triage (`trademark tech-marks`: US-class gate + free-model goods rule).
 2. Seed match → good-match filter → CPC-subclass expansion + re-match.
@@ -162,34 +179,20 @@ project spawn and a clean portal build.
 
 ---
 
-## Phase 32 — Site design pass + rebuild annual-review project/site  ·  plan: TBD (stub)
-
-**Trigger:** `projects/` and `site/` were archived 2026-06-24 (see
-`archive/PROJECTS-ARCHIVED-2026-06-24.md`); the first real rebuild is also the moment
-to refresh the site design before publishing again.
-
-Brief: do another **site design pass** (chrome, cards, timeline, typography — carry
-forward the open items from the archived `SITE-REVIEW`), **then rebuild the
-annual-review project and its site** on the improved database/library. Write the full
-plan to a `SITE-REVIEW.md` when this phase opens.
-
-**Gate:** the annual-review project rebuilds against the new data/library; the refreshed
-design renders; `site check` clean.
-
----
-
 ## Notes
 
-- Sequence: **27 Tests → 28 Database → 29 Library → 30 Discovery loop → 31 Spawning
-  pipeline → 32 Site design + rebuild** (foundations → backbone → acquisition → autonomous
-  growth → publish). `projects/` and `site/` were archived 2026-06-24 (Phase 27 made the
-  suite hermetic); they rebuild in Phases 31–32.
+- Sequence: **27 Tests → 28 Database → 29 Library → 30 Discovery loop → 31 Site design +
+  rebuild → 32 Spawning pipeline** (foundations → backbone → acquisition → design refresh →
+  autonomous growth). `projects/` and `site/` were archived 2026-06-24 (Phase 27 made the
+  suite hermetic); they rebuild in Phases 31–32. The design pass (31) precedes spawning (32)
+  so auto-spawned projects publish into the refreshed design.
 - **When is a real project/site first needed?** Not until the end. Phases 28–30 validate
   against the hermetic synthetic-fixture project (`tests/fixtures/synthetic.py`), which
   already builds a full site + portal and passes `site check` — so their "site check green"
   gates are satisfiable without a rebuilt real project. The first phase that *requires* a
-  real, non-synthetic project end-to-end is **Phase 31** (the spawning pipeline creates one
-  and builds the portal); **Phase 32** is the deliberate design refresh + annual-review
-  rebuild. Net: the corpus/library work (28–30) proceeds with `projects/`/`site/` archived.
+  real, non-synthetic project end-to-end is **Phase 31** (the design refresh + annual-review
+  rebuild); **Phase 32** (the spawning pipeline) then auto-creates further projects on the
+  refreshed design. Net: the corpus/library work (28–30) proceeds with `projects/`/`site/`
+  archived.
 - Deferred, independent of these phases: D070 (hosting), D071 (GEO), D072 (People), plus
   D007/D028/D068/D069.
