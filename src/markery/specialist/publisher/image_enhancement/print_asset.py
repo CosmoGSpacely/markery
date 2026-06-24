@@ -202,3 +202,39 @@ def build_print_asset(
     if size > spec["max_bytes"]:
         raise ValueError(f"output {size} bytes exceeds spec max {spec['max_bytes']}")
     return out_path
+
+
+def build_print_batch(
+    where: str,
+    project: str,
+    *,
+    spec_name: str = "merch",
+    upscale_first: bool = True,
+) -> tuple[list[str], list[tuple[str, str]]]:
+    """Build print assets for every trademark drawing matching a SQL WHERE clause.
+
+    `where` is applied to ``case_file`` (aliased ``cf``), e.g.
+    "cf.mark_draw_cd LIKE '3%' AND cf.filing_dt BETWEEN DATE '1930-01-01' AND DATE '1930-12-31'".
+    Only marks with a stored image are attempted; ineligible ones (live, not PD)
+    are skipped with a reason. Returns (printed_serials, skipped[(serial, reason)]).
+    """
+    conn = duckdb.connect(str(config.DB["trademarks"]), read_only=True)
+    serials = [str(r[0]) for r in conn.execute(
+        f"SELECT cf.serial_no FROM case_file cf "
+        f"JOIN mark_images mi ON cf.serial_no = mi.serial_no "
+        f"WHERE {where} ORDER BY cf.serial_no"
+    ).fetchall()]
+    conn.close()
+
+    printed: list[str] = []
+    skipped: list[tuple[str, str]] = []
+    for sn in serials:
+        try:
+            build_print_asset(sn, project, kind="mark", spec_name=spec_name,
+                              upscale_first=upscale_first)
+            printed.append(sn)
+        except PermissionError as e:
+            skipped.append((sn, str(e)))
+        except (FileNotFoundError, ValueError) as e:
+            skipped.append((sn, str(e)))
+    return printed, skipped

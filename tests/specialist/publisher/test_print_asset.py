@@ -61,7 +61,10 @@ def temp_dbs(tmp_path, monkeypatch):
     c.execute("INSERT INTO case_file VALUES ('111', DATE '1925-01-01', '710', '3000')")
     c.execute("INSERT INTO case_file VALUES ('222', DATE '1925-01-01', '600', '3000')")
     c.execute("INSERT INTO case_file VALUES ('333', DATE '2000-01-01', '710', '3000')")
+    # 444: live + PD + has image — a design mark that batch must SKIP (trademark risk).
+    c.execute("INSERT INTO case_file VALUES ('444', DATE '1925-01-01', '600', '3000')")
     c.execute("INSERT INTO mark_images VALUES ('111', ?)", [_png_bytes()])
+    c.execute("INSERT INTO mark_images VALUES ('444', ?)", [_png_bytes()])
     c.close()
     p = duckdb.connect(str(pdb))
     p.execute("CREATE TABLE patents (patent_no VARCHAR, grant_dt DATE)")
@@ -104,4 +107,14 @@ def test_build_eligible_mark_writes_print_png(temp_dbs):
 
 def test_build_rejects_live_mark(temp_dbs):
     with pytest.raises(PermissionError):
-        pa.build_print_asset("222", "demo", upscale_first=False)
+        pa.build_print_asset("444", "demo", upscale_first=False)
+
+
+def test_build_print_batch_prints_eligible_skips_live(temp_dbs):
+    printed, skipped = pa.build_print_batch(
+        "cf.mark_draw_cd LIKE '3%'", "demo", upscale_first=False)
+    assert printed == ["111"]                     # dead + PD
+    assert [s for s, _ in skipped] == ["444"]     # live → skipped
+    assert "live" in skipped[0][1]
+    assert (temp_dbs / "projects" / "demo" / "print" / "111.png").exists()
+    assert not (temp_dbs / "projects" / "demo" / "print" / "444.png").exists()

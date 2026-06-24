@@ -37,8 +37,23 @@ def cmd_enhance(args) -> None:
 
 def cmd_print(args) -> None:
     import sys
-    from .print_asset import build_print_asset, SPECS
+    from .print_asset import build_print_asset, build_print_batch, SPECS
     spec = SPECS.get(args.spec)
+
+    if args.where:
+        printed, skipped = build_print_batch(
+            args.where, args.project, spec_name=args.spec,
+            upscale_first=not args.no_upscale,
+        )
+        for sn, reason in skipped:
+            print(f"  SKIP  {sn}: {reason.split(': ', 1)[-1]}", file=sys.stderr)
+        print(f"\n{len(printed)} printed, {len(skipped)} skipped "
+              f"→ projects/{args.project}/print/")
+        return
+
+    if not args.ident:
+        print("error: provide an identifier or --where", file=sys.stderr)
+        sys.exit(2)
     try:
         out = build_print_asset(
             args.ident, args.project, kind=args.kind, spec_name=args.spec,
@@ -187,8 +202,14 @@ def main() -> None:
         help="Build a print-ready PNG for on-demand printing (Amazon Merch) "
              "from an eligible PD source → projects/<project>/print/",
     )
-    p_print.add_argument("ident", help="Trademark serial number or patent number (e.g. US1525813A)")
+    p_print.add_argument("ident", nargs="?",
+                         help="Trademark serial number or patent number (e.g. US1525813A). "
+                              "Omit when using --where.")
     p_print.add_argument("--project", required=True, help="Target project (output → projects/<p>/print/)")
+    p_print.add_argument("--where", default=None,
+                         help="Batch: SQL WHERE on case_file (aliased cf) selecting trademark "
+                              "drawings to print, e.g. \"cf.mark_draw_cd LIKE '3%%' AND "
+                              "cf.filing_dt BETWEEN DATE '1930-01-01' AND DATE '1930-12-31'\"")
     p_print.add_argument("--kind", choices=["mark", "patent"], default=None,
                          help="Source kind (auto-detected from the identifier if omitted)")
     p_print.add_argument("--spec", default="merch", help="Print spec (default: merch)")
