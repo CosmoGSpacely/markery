@@ -321,6 +321,15 @@ def build_synthetic_repo(tmp_path: Path) -> SyntheticRepo:
         json.dumps({"type": "match-review-essay"}) + "\n"
     )
     (proj / "entities.txt").write_text(f"{ENTITY_ID}  # {ENTITY_CANON}\n")
+    (proj / "entities.csv").write_text(
+        "entity_id,canonical_name\n"
+        f"{ENTITY_ID},{ENTITY_CANON}\n"
+    )
+    (proj / "variants.csv").write_text(
+        "entity_id,variant_name,source\n"
+        f"{ENTITY_ID},{ENTITY_VARIANT},trademark_owner\n"
+        f"{ENTITY_ID},{ENTITY_VARIANT},patent_assignee\n"
+    )
 
     candidates = [
         _candidate(CAND_SERIAL, CAND_PATENT, "SYNTHEX", 0.87),
