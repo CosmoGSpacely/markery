@@ -29,7 +29,7 @@ the `projects/` and `site/` trees can be archived and rebuilt from the improved 
 
 ---
 
-## Phase 27 — Test hermeticity & CI coverage  ·  plan: `TESTS_REVIEW.md`
+## Phase 27 — Test hermeticity & CI coverage  ·  plan: `archive/TESTS_REVIEW-2026-06-24.md` — CLOSED
 
 **Trigger:** the suite couples to real `projects/`/corpus data (can't archive `projects/`;
 CI validates data, not code) and coverage is a mediocre 53% partly inflated by that coupling.
@@ -57,9 +57,27 @@ job (`-m dataqa`). **Gate met:** hermetic lane is 744 passed with `data/` and
 `projects/` moved aside; coverage held at 53% (floor 50). Decisions settled this
 session: hermetic lane needs neither real DBs nor `projects/`; record images will
 externalize to files (Phase 28 P3); the large DBs become gitignore+rebuild
-artifacts (Phase 28 P3). P2–P5 remain.
+artifacts (Phase 28 P3).
 
-**Gate:** `pytest` green with `projects/` moved aside; coverage non-decreasing and floor raised.
+Results 2026-06-24 (P2–P5): **P2** — `tests/specialist/publisher/test_build_orchestrator.py`
+drives the real `build_site`/`build_all`/`check_site` against the synthetic repo
+(extended to the full publisher schema + a 1px PNG blob + a second annual-review
+project); build.py 10%→78%, check.py 66%, reviews.py 86%. **P3** —
+`test_cli_dispatch.py` runs every area/subcommand `--help` in-process (caught and
+fixed a real crash: `markery historian --help` had an unescaped `%`); mocked-urlopen
+tests for the ia/gutenberg/wikipedia source adapters; `test_cli_commands.py` drives
+read-only commands (status, project onboard, historian prepare, site build-all+check)
+in-process; markery/cli.py 20%→61%. **P4** — `test_enhancement.py` (upscale Lanczos
+fallback, DB-backed gallery, binarize via importorskip). **P5** — ratcheted
+`--cov-fail-under` 50→65; documented the hermetic-vs-dataqa split in `CLAUDE.md`.
+Also fixed two latent test-isolation bugs in `test_phase11_commands.py` (card/scaffold
+patched `config.DB` by rebinding, which only worked if `historian.cli` was first
+imported under the patch — now patch the module's `DB` directly). **Gate met:** the
+hermetic lane is **891 passed with `data/` and `projects/` moved aside**, coverage
+**68%** (floor raised to 65); full suite 947 passed. `projects/` and `site/` are now
+archivable. `TESTS_REVIEW.md` archived to `archive/TESTS_REVIEW-2026-06-24.md`.
+
+**Gate:** `pytest` green with `projects/` moved aside; coverage non-decreasing and floor raised. — PASSED
 
 ---
 

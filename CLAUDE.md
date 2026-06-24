@@ -102,6 +102,28 @@ The only exception: research documents (`RESEARCH.md`, `RESEARCH-AGENDA.md`, `BR
 
 ---
 
+## Tests — hermetic vs. data-QA
+
+Two lanes, separated by the `dataqa` pytest marker:
+
+- **Hermetic lane (default, gating):** `pytest -m "not dataqa"`. Depends only on
+  the code under test plus fixtures it builds — `tmp_path`, the synthetic repo in
+  `tests/fixtures/synthetic.py` (temp corpus DBs + a synthetic project, driven
+  via the `MARKERY_ROOT` / `MARKERY_DATA_DIR` env overrides), and mocked HTTP.
+  **Never** reads the real `data/` or `projects/`. This is what CI gates, with a
+  coverage floor (`--cov-fail-under`, currently 65). It must stay green with
+  `data/` and `projects/` moved aside.
+- **Data-QA lane (optional):** `pytest -m dataqa`. Real-corpus validation against
+  the committed `data/` and `library/` — "is the *content* sound?", not "does the
+  machinery work?". Skips when that data is absent.
+
+When adding tests: default to hermetic. Mark a test `@pytest.mark.dataqa` only
+when it genuinely validates real committed corpus/library content. Heavy optional
+deps (the `enhance` extra: opencv, vtracer, realesrgan) must be `importorskip`-ed
+so the hermetic lane skips them cleanly.
+
+---
+
 ## Constraints
 
 - **Never commit `.env`** — contains `EPO_CONSUMER_KEY`, `EPO_CONSUMER_SECRET`, `USPTO_API_KEY`; gitignored

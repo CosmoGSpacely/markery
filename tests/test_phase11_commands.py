@@ -394,11 +394,12 @@ def test_card_outputs_to_stdout(tmp_path, capsys):
 
     import markery.common.config as cfg_mod
     import markery.common.project as proj_mod
+    import markery.specialist.historian.cli as _hist_cli
+    db_patch = {"patents": pat_path, "trademarks": tm_path, "entities": _ent_db(tmp_path)}
     with patch.object(cfg_mod, "ROOT", tmp_path), \
          patch.object(proj_mod, "ROOT", tmp_path), \
-         patch.object(cfg_mod, "DB", {"patents": pat_path, "trademarks": tm_path,
-                                       "entities": _ent_db(tmp_path)}):
-        from markery.specialist.historian.cli import cmd_card
+         patch.object(_hist_cli, "DB", db_patch):
+        cmd_card = _hist_cli.cmd_card
         args = MagicMock()
         args.project = "test-proj"
         args.slug    = "soundex-us1261167a"
@@ -484,11 +485,12 @@ def test_scaffold_creates_essay_file(tmp_path):
 
     import markery.common.config as cfg_mod
     import markery.common.project as proj_mod
+    import markery.specialist.historian.cli as _hist_cli
+    db_patch = {"patents": pat_path, "trademarks": tm_path, "entities": _ent_db(tmp_path)}
     with patch.object(cfg_mod, "ROOT", tmp_path), \
          patch.object(proj_mod, "ROOT", tmp_path), \
-         patch.object(cfg_mod, "DB", {"patents": pat_path, "trademarks": tm_path,
-                                       "entities": _ent_db(tmp_path)}):
-        from markery.specialist.historian.cli import cmd_scaffold
+         patch.object(_hist_cli, "DB", db_patch):
+        cmd_scaffold = _hist_cli.cmd_scaffold
         args = MagicMock()
         args.project = "test-proj"
         args.slug    = "soundex-us1261167a"

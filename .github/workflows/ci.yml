@@ -25,7 +25,7 @@ jobs:
       - name: Install
         run: pip install -e ".[dev]"
       - name: Test — hermetic lane (with coverage)
-        run: python -m pytest -q -m "not dataqa" --cov=markery --cov-report=term-missing:skip-covered --cov-fail-under=50
+        run: python -m pytest -q -m "not dataqa" --cov=markery --cov-report=term-missing:skip-covered --cov-fail-under=65
 
   dataqa:
     # Optional real-corpus data-validation lane: the @pytest.mark.dataqa tests
