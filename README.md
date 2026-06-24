@@ -10,15 +10,9 @@ Active research projects include the pre-computer information systems industry (
 
 ---
 
-## See the output — without running anything
+## See the output
 
-A generated essay page (`markery site build` → static HTML, no JavaScript framework):
-
-![A generated patent–trademark essay page](docs/img/essay-sterilamp.png)
-
-*Every page carries breadcrumb navigation, a Primary Sources block linking the USPTO serial and patent numbers, and a sourced essay scaffolded from DB records and human-finalized. The factual frontmatter on each essay is checked against the live databases by `markery historian validate` (8/8) before it publishes.*
-
-- **Build the site locally:** `markery site build-all` renders the Markery portal into `site/` (the root landing plus each project under `site/<project>/`); open `site/index.html`. Built sites are regenerable artifacts and are not committed.
+`markery site build-all` renders the Markery portal into `site/` (the root landing plus each project under `site/<project>/`); open `site/index.html`. Each page is static HTML (no JavaScript framework), with breadcrumb navigation, a Primary Sources block linking the USPTO serial and patent numbers, and sourced essays scaffolded from DB records and human-finalized; essay frontmatter is checked against the live databases by `markery historian validate` before it publishes. Built sites are regenerable artifacts and are not committed.
 
 ---
 
