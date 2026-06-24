@@ -117,10 +117,11 @@ def _build_trademarks(path: Path) -> None:
     conn.execute(
         "CREATE TABLE owner "
         "(own_id BIGINT, serial_no BIGINT, own_name VARCHAR, own_type_cd VARCHAR, "
-        "own_addr_state_cd VARCHAR)"
+        "own_addr_city VARCHAR, own_addr_state_cd VARCHAR)"
     )
     conn.execute("CREATE TABLE classification (serial_no BIGINT, first_use_com_dt DATE)")
     conn.execute("CREATE TABLE mark_images (serial_no BIGINT, image_data BLOB)")
+    conn.execute("CREATE TABLE design_search (serial_no BIGINT, design_search_cd VARCHAR)")
 
     meta = {
         CAND_SERIAL: ("SYNTHEX", "1935-03-15", "0331001"),
@@ -141,7 +142,7 @@ def _build_trademarks(path: Path) -> None:
         )
         conn.execute("INSERT INTO intl_class VALUES (?, '009')", [serial])
         conn.execute(
-            "INSERT INTO owner VALUES (?, ?, ?, '10', 'MA')",
+            "INSERT INTO owner VALUES (?, ?, ?, '10', 'Athol', 'MA')",
             [own_id, serial, ENTITY_VARIANT],
         )
         conn.execute("INSERT INTO classification VALUES (?, ?)", [serial, filed])
@@ -154,9 +155,11 @@ def _build_trademarks(path: Path) -> None:
         [REVIEW_SERIAL, "STARBURST", f"{REVIEW_YEAR}-06-10", "0340001"],
     )
     conn.execute(
-        "INSERT INTO owner VALUES (?, ?, 'ART DECO DESIGNS INC', '10', 'NY')",
+        "INSERT INTO owner VALUES (?, ?, 'ART DECO DESIGNS INC', '10', 'New York', 'NY')",
         [own_id, REVIEW_SERIAL],
     )
+    conn.execute("INSERT INTO design_search VALUES (?, '260101')", [REVIEW_SERIAL])
+    conn.execute("INSERT INTO design_search VALUES (?, '260102')", [CAND_SERIAL])
     conn.execute(
         "INSERT INTO statement VALUES (?, 'GS0', ?)",
         [REVIEW_SERIAL, "Decorative emblems and ornamental designs for packaging."],
