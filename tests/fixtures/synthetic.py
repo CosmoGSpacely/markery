@@ -48,6 +48,19 @@ ENTITY_ID = 1
 ENTITY_CANON = "Synthex Manufacturing Company"
 ENTITY_VARIANT = "SYNTHEX MFG CO"
 
+# Annual-review fixture: a design mark filed in REVIEW_YEAR, plus a second project
+# of type annual-review covering that year.
+REVIEW_PROJECT = "synth-annual-review"
+REVIEW_YEAR = 1935
+REVIEW_SERIAL = 71950001
+
+# A 1×1 transparent PNG — the smallest valid image, used for mark/figure blobs.
+_PNG_1PX = bytes.fromhex(
+    "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4"
+    "890000000d49444154789c6360000002000001a721be6f0000000049454e44ae"
+    "426082"
+)
+
 
 @dataclass
 class SyntheticRepo:
@@ -61,6 +74,8 @@ class SyntheticRepo:
     conf_serial: int = CONF_SERIAL
     cand_patent: str = CAND_PATENT
     conf_patent: str = CONF_PATENT
+    review_project: str = REVIEW_PROJECT
+    review_year: int = REVIEW_YEAR
 
     @property
     def env(self) -> dict[str, str]:
@@ -89,7 +104,11 @@ class SyntheticRepo:
 
 def _build_trademarks(path: Path) -> None:
     conn = duckdb.connect(str(path))
-    conn.execute("CREATE TABLE case_file (serial_no BIGINT)")
+    conn.execute(
+        "CREATE TABLE case_file (serial_no BIGINT, mark_id_char VARCHAR, "
+        "filing_dt DATE, mark_draw_cd VARCHAR, registration_no VARCHAR, "
+        "cfh_status_cd INTEGER)"
+    )
     conn.execute(
         "CREATE TABLE statement "
         "(serial_no BIGINT, statement_type_cd VARCHAR, statement_text VARCHAR)"
@@ -97,19 +116,54 @@ def _build_trademarks(path: Path) -> None:
     conn.execute("CREATE TABLE intl_class (serial_no BIGINT, intl_class VARCHAR)")
     conn.execute(
         "CREATE TABLE owner "
-        "(serial_no BIGINT, own_name VARCHAR, own_type_cd VARCHAR)"
+        "(own_id BIGINT, serial_no BIGINT, own_name VARCHAR, own_type_cd VARCHAR, "
+        "own_addr_state_cd VARCHAR)"
     )
+    conn.execute("CREATE TABLE classification (serial_no BIGINT, first_use_com_dt DATE)")
+    conn.execute("CREATE TABLE mark_images (serial_no BIGINT, image_data BLOB)")
 
-    for serial in (CAND_SERIAL, CONF_SERIAL, SCAF_SERIAL):
-        conn.execute("INSERT INTO case_file VALUES (?)", [serial])
+    meta = {
+        CAND_SERIAL: ("SYNTHEX", "1935-03-15", "0331001"),
+        CONF_SERIAL: ("GAUGEX", "1936-05-20", "0331002"),
+        SCAF_SERIAL: ("MEASUREX", "1937-04-10", "0331003"),
+    }
+    own_id = 1
+    for serial, (mark, filed, reg) in meta.items():
+        # cfh_status_cd 700+ = dead (gates merch); use a live status here.
+        # mark_draw_cd '4' = standard character (not a design mark).
+        conn.execute(
+            "INSERT INTO case_file VALUES (?, ?, ?, '4', ?, 630)",
+            [serial, mark, filed, reg],
+        )
         conn.execute(
             "INSERT INTO statement VALUES (?, 'GS0', ?)",
             [serial, "Synthetic precision measuring instruments for laboratory use."],
         )
         conn.execute("INSERT INTO intl_class VALUES (?, '009')", [serial])
         conn.execute(
-            "INSERT INTO owner VALUES (?, ?, '10')", [serial, ENTITY_VARIANT]
+            "INSERT INTO owner VALUES (?, ?, ?, '10', 'MA')",
+            [own_id, serial, ENTITY_VARIANT],
         )
+        conn.execute("INSERT INTO classification VALUES (?, ?)", [serial, filed])
+        own_id += 1
+
+    # A figurative design mark (mark_draw_cd '3%') for the annual-review path,
+    # owned by an unrelated party so it stays out of the match-review project.
+    conn.execute(
+        "INSERT INTO case_file VALUES (?, ?, ?, '3', ?, 630)",
+        [REVIEW_SERIAL, "STARBURST", f"{REVIEW_YEAR}-06-10", "0340001"],
+    )
+    conn.execute(
+        "INSERT INTO owner VALUES (?, ?, 'ART DECO DESIGNS INC', '10', 'NY')",
+        [own_id, REVIEW_SERIAL],
+    )
+    conn.execute(
+        "INSERT INTO statement VALUES (?, 'GS0', ?)",
+        [REVIEW_SERIAL, "Decorative emblems and ornamental designs for packaging."],
+    )
+
+    # One mark carries an image so the image-write path is exercised.
+    conn.execute("INSERT INTO mark_images VALUES (?, ?)", [CAND_SERIAL, _PNG_1PX])
     conn.close()
 
 
@@ -119,6 +173,9 @@ def _build_patents(path: Path) -> None:
         "CREATE TABLE patents (patent_no VARCHAR, title VARCHAR, abstract VARCHAR, "
         "grant_dt DATE, assignee_name VARCHAR, app_dt DATE)"
     )
+    conn.execute("CREATE TABLE patent_classes (patent_no VARCHAR, cpc_class VARCHAR)")
+    conn.execute("CREATE TABLE patent_inventors (patent_no VARCHAR, inventor_name VARCHAR)")
+    conn.execute("CREATE TABLE patent_figures (patent_no VARCHAR, figure_no INTEGER, figure_data BLOB)")
     rows = [
         (CAND_PATENT, "Synthetic Measuring Apparatus",
          "An apparatus for synthetic precision measurement employing a calibrated gauge.",
@@ -130,26 +187,36 @@ def _build_patents(path: Path) -> None:
          "A linear measurement instrument with a vernier scale and locking screw.",
          "1937-03-09", ENTITY_VARIANT, "1935-07-15"),
     ]
-    conn.executemany(
-        "INSERT INTO patents VALUES (?, ?, ?, ?, ?, ?)", rows
-    )
+    conn.executemany("INSERT INTO patents VALUES (?, ?, ?, ?, ?, ?)", rows)
+    for pno in (CAND_PATENT, CONF_PATENT, SCAF_PATENT):
+        conn.execute("INSERT INTO patent_classes VALUES (?, 'G01B0005')", [pno])
+        conn.execute("INSERT INTO patent_inventors VALUES (?, 'Jane Synthex')", [pno])
+    # One patent carries a figure so the figure-write path is exercised.
+    conn.execute("INSERT INTO patent_figures VALUES (?, 1, ?)", [CAND_PATENT, _PNG_1PX])
     conn.close()
 
 
 def _build_entities(path: Path) -> None:
     conn = duckdb.connect(str(path))
     conn.execute(
-        "CREATE TABLE company_entity (entity_id INTEGER, canonical_name VARCHAR)"
+        "CREATE TABLE company_entity "
+        "(entity_id INTEGER, canonical_name VARCHAR, entity_type VARCHAR, industry VARCHAR)"
     )
     conn.execute(
         "CREATE TABLE entity_name_variant "
         "(entity_id INTEGER, variant_name VARCHAR, source VARCHAR)"
     )
     conn.execute(
-        "INSERT INTO company_entity VALUES (?, ?)", [ENTITY_ID, ENTITY_CANON]
+        "INSERT INTO company_entity VALUES (?, ?, 'company', 'Precision instruments')",
+        [ENTITY_ID, ENTITY_CANON],
     )
+    # The publisher joins marks via 'trademark_owner' and patents via 'patent_assignee'.
     conn.execute(
         "INSERT INTO entity_name_variant VALUES (?, ?, 'trademark_owner')",
+        [ENTITY_ID, ENTITY_VARIANT],
+    )
+    conn.execute(
+        "INSERT INTO entity_name_variant VALUES (?, ?, 'patent_assignee')",
         [ENTITY_ID, ENTITY_VARIANT],
     )
     conn.close()
@@ -253,6 +320,7 @@ def build_synthetic_repo(tmp_path: Path) -> SyntheticRepo:
     (proj / "project.json").write_text(
         json.dumps({"type": "match-review-essay"}) + "\n"
     )
+    (proj / "entities.txt").write_text(f"{ENTITY_ID}  # {ENTITY_CANON}\n")
 
     candidates = [
         _candidate(CAND_SERIAL, CAND_PATENT, "SYNTHEX", 0.87),
@@ -272,6 +340,13 @@ def build_synthetic_repo(tmp_path: Path) -> SyntheticRepo:
     )
 
     (proj / "content" / f"{CONF_SLUG}.md").write_text(CONF_ESSAY)
+
+    # A second project of type annual-review, covering REVIEW_YEAR.
+    review = root / "projects" / REVIEW_PROJECT
+    review.mkdir(parents=True)
+    (review / "project.json").write_text(
+        json.dumps({"type": "annual-review", "review_years": [REVIEW_YEAR]}) + "\n"
+    )
 
     return SyntheticRepo(root=root, data_dir=data_dir)
 
