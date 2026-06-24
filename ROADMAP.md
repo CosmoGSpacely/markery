@@ -81,7 +81,7 @@ archivable. `TESTS_REVIEW.md` archived to `archive/TESTS_REVIEW-2026-06-24.md`.
 
 ---
 
-## Phase 28 — Database layer  ·  plan: `DATABASE_REVIEW.md`
+## Phase 28 — Database layer  ·  plan: `DATABASE_REVIEW.md` — CLOSED
 
 **Trigger:** the corpus is a curated, human-seeded slice committed as ~70 MB binaries, with
 partial provenance (records lack a load/refresh timestamp; status can go stale), a hand-built
@@ -101,9 +101,24 @@ library refactor, and auto entity registration is a hard prerequisite for the sp
 4. **Coverage/expansion hooks** — a queryable coverage model the loops consult before fetching
    (EPO/TSDR; evaluate D007 PatentsView).
 
+Results 2026-06-24: **P1** provenance (`fetched_dt`/`source` on patents+case_file,
+self-migrating; `markery {patent,trademark} coverage` manifest, degrades on
+un-migrated DBs). **P2** auto entity registration (`matchmaker/autoregister.py`;
+`matchmaker register` companies + `register-people` inventors→`person_entity` with
+stable slugs; removes hand-CSV). **P3** externalized record images to files
+(`common/assets.py`; `mark_images`/`patent_figures` → `file`+`sha256`; real corpus
+migrated 619 marks + 38 figures → 14 MB; DBs+`data/assets/` now gitignored
+rebuildable artifacts; pre-migration snapshot archived; `data/REBUILD.md`). **P4**
+queryable coverage model (`coverage_query`/`window_covered`/`missing_year_spans`;
+`markery patent coverage --class X --year-start/-end`) the loops consult before
+fetching — the EPO/TSDR expansion *fetch* itself lands in Phases 30–31. Hermetic
+lane 922 passed, coverage 69% (floor 65); dataqa lane green on the migrated DBs.
+Deferred: D007 PatentsView (unchanged); the asset/library interaction continues in
+Phase 29.
+
 **Gate:** records carry provenance + a refresh path; companies **and people** auto-register
 from the corpus (human-confirmed, stable slugs); the asset-storage + commit decisions are made
-and documented; existing specialist commands unregressed.
+and documented; existing specialist commands unregressed. — PASSED
 
 ---
 

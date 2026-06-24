@@ -8,7 +8,10 @@ import duckdb
 
 from markery.specialist.patent import open_db as pat_open_db, insert_patent
 from markery.specialist.trademark import open_db as tm_open_db
-from markery.common.coverage import patent_coverage, trademark_coverage, format_coverage
+from markery.common.coverage import (
+    patent_coverage, trademark_coverage, format_coverage,
+    window_covered, missing_year_spans, coverage_query,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -91,6 +94,41 @@ def test_patent_coverage_report(tmp_path):
     assert cov["fetch_log_windows"] == 3
     text = format_coverage("patent", cov)
     assert "patent coverage" in text and "epo_ops" in text
+
+
+# ---------------------------------------------------------------------------
+# queryable coverage model (P4)
+# ---------------------------------------------------------------------------
+
+def test_window_covered_and_missing_spans():
+    windows = [("G01B", 1920, 1924), ("G01B", 1925, 1929), ("H04N", 1930, 1934)]
+    assert window_covered(windows, "G01B", 1921, 1928) is True
+    assert window_covered(windows, "G01B", 1921, 1932) is False
+    # 1930–1932 unlogged for G01B → reported as the gap to fetch.
+    assert missing_year_spans(windows, "G01B", 1921, 1932) == [(1930, 1932)]
+    # disjoint gaps coalesce correctly.
+    assert missing_year_spans(windows, "G01B", 1918, 1931) == [(1918, 1919), (1930, 1931)]
+    # an entirely unlogged class is one big span.
+    assert missing_year_spans(windows, "Z99Z", 1920, 1922) == [(1920, 1922)]
+
+
+def test_coverage_query_reads_log_and_local_count(tmp_path):
+    db = tmp_path / "patents.duckdb"
+    conn = pat_open_db(db)
+    insert_patent(conn, {"patent_no": "US1A", "grant_dt": "1925-06-01", "cpc": ["G01B"]})
+    insert_patent(conn, {"patent_no": "US2A", "grant_dt": "1927-06-01", "cpc": ["G01B"]})
+    conn.close()
+    # Log a fetch window covering 1925–1929 for G01B.
+    import json
+    (tmp_path / "patents_fetch_log.json").write_text(json.dumps([
+        {"cpc_class": "G01B", "year_start": 1925, "year_end": 1929, "patents_added": 2}
+    ]))
+    q = coverage_query(db, "G01B", 1925, 1930)
+    assert q["covered"] is False           # 1930 not logged
+    assert q["missing_spans"] == [(1930, 1930)]
+    assert q["local_count"] == 2
+    q2 = coverage_query(db, "G01B", 1925, 1929)
+    assert q2["covered"] is True and q2["missing_spans"] == []
 
 
 def test_coverage_degrades_without_provenance_columns(tmp_path):

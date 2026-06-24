@@ -92,13 +92,21 @@ Committed, git-tracked binaries (~70 MB) + `data/patents_fetch_log.json`:
   (`matchmaker register`), people from `patent_inventors` with stable slugs
   (`matchmaker register-people`); `person_entity`/`person_name_variant` added.
   Removes the hand-CSV requirement. Committed `a728d97`.
-- **P3 — Asset storage + DB commit policy.** Decided (2026-06-24): externalize
-  record images (`mark_images`/`patent_figures` BLOBs) to files referenced by the
-  DB; gitignore + rebuild the (now-small) DBs; document the rebuild recipe; reuse
-  the Phase 27 synthetic fixture. *Coupled to Phase 29 (Library) — see open Q.*
-- **P4 — Coverage/expansion hooks.** A queryable coverage model the discovery/spawning loops
-  consult before fetching; wire EPO/TSDR expansion (and evaluate D007 PatentsView) behind the
-  loops' budget/gates.
+- **P3 — Asset storage + DB commit policy. DONE 2026-06-24.** `common/assets.py`
+  stores mark drawings + patent figures as files under `ASSETS_DIR`
+  (`data/assets/{marks,patents}/`), referenced by `file`+`sha256` on
+  `mark_images`/`patent_figures`; idempotent externalization migration on writable
+  open (rebuild-table, since DuckDB 1.5.2 blocks DROP COLUMN on a PK table). Real
+  corpus migrated (619 marks + 38 figures → 14 MB of files). DBs + `data/assets/`
+  are now **gitignored rebuildable artifacts**; a pre-migration snapshot archived
+  outside the repo; `data/REBUILD.md` documents restore/rebuild. Committed
+  `072a81c` + `4d1c43b`.
+- **P4 — Coverage/expansion hooks. DONE 2026-06-24.** Queryable coverage model the
+  loops consult before fetching: `coverage.window_covered` / `missing_year_spans` /
+  `coverage_query`, surfaced via `markery patent coverage --class X --year-start/-end`
+  (covered? local count? which windows still to fetch). The actual EPO/TSDR
+  expansion *fetch* (with budget/gates) is loop work — built in Phases 30–31 on
+  this query model; D007 PatentsView evaluation stays deferred. Committed below.
 
 Gate per P: deterministic, tested against a temp/synthetic DB; no regression in existing
 specialist commands.

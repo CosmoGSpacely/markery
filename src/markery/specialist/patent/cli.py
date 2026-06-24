@@ -243,13 +243,30 @@ def cmd_coverage_check(args: argparse.Namespace) -> None:
 
 
 def cmd_coverage(args: argparse.Namespace) -> None:
-    """Print the local patents-corpus coverage + freshness manifest."""
+    """Print the local patents-corpus manifest, or query one class×year slice."""
     import duckdb
     from markery.common.config import require_db
-    from markery.common.coverage import patent_coverage, format_coverage
+    from markery.common.coverage import patent_coverage, format_coverage, coverage_query
     from markery.specialist.patent.build import _fetch_log_path, _load_fetch_log
 
     db_path = require_db("patents")
+
+    # Query mode: answer the loop's "is this class×year covered?" question.
+    if args.cpc_class:
+        if args.year_start is None or args.year_end is None:
+            print("--class requires --year-start and --year-end.", file=sys.stderr)
+            sys.exit(1)
+        q = coverage_query(db_path, args.cpc_class, args.year_start, args.year_end)
+        print(f"coverage: {args.cpc_class}  {args.year_start}–{args.year_end}")
+        print(f"  fully covered: {'yes' if q['covered'] else 'no'}")
+        print(f"  local patents: {q['local_count']:,}")
+        if q["missing_spans"]:
+            spans = ", ".join(f"{a}–{b}" for a, b in q["missing_spans"])
+            print(f"  missing windows to fetch: {spans}")
+        else:
+            print("  missing windows to fetch: none")
+        return
+
     windows = len(_load_fetch_log(_fetch_log_path(str(db_path))))
     conn = duckdb.connect(str(db_path), read_only=True)
     cov = patent_coverage(conn, fetch_log_windows=windows)
@@ -333,11 +350,15 @@ def main() -> None:
     p_cov.add_argument("--year-start", type=int, required=True, metavar="YEAR")
     p_cov.add_argument("--year-end",   type=int, required=True, metavar="YEAR")
 
-    # coverage (local manifest)
-    sub.add_parser(
+    # coverage (local manifest; or a class×year query the loops consult)
+    p_lcov = sub.add_parser(
         "coverage",
         help="Local corpus coverage + freshness manifest (what's loaded, how fresh)",
     )
+    p_lcov.add_argument("--class", dest="cpc_class", metavar="CPC", default=None,
+                        help="Query coverage for one CPC class (with --year-start/--year-end)")
+    p_lcov.add_argument("--year-start", type=int, default=None, metavar="YEAR")
+    p_lcov.add_argument("--year-end", type=int, default=None, metavar="YEAR")
 
     args = ap.parse_args()
     {

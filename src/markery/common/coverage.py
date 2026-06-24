@@ -86,6 +86,74 @@ def trademark_coverage(conn: duckdb.DuckDBPyConnection) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# Queryable coverage model (Phase 28 P4) — what the loops consult before fetching
+# ---------------------------------------------------------------------------
+
+def load_fetch_windows(db_path) -> list[tuple[str, int, int]]:
+    """Return logged (cpc_class, year_start, year_end) fetch windows for a patents DB."""
+    from markery.specialist.patent.build import _fetch_log_path, _load_fetch_log
+    return sorted(_load_fetch_log(_fetch_log_path(str(db_path))))
+
+
+def _covered_years(windows: list[tuple[str, int, int]], cpc_class: str) -> set[int]:
+    years: set[int] = set()
+    for cls, ys, ye in windows:
+        if cls == cpc_class:
+            years.update(range(ys, ye + 1))
+    return years
+
+
+def window_covered(windows, cpc_class: str, year_start: int, year_end: int) -> bool:
+    """True if every year of [year_start, year_end] for cpc_class is logged."""
+    covered = _covered_years(windows, cpc_class)
+    return all(y in covered for y in range(year_start, year_end + 1))
+
+
+def missing_year_spans(windows, cpc_class: str, year_start: int,
+                       year_end: int) -> list[tuple[int, int]]:
+    """Return the contiguous year spans of [start, end] not yet fetched for cpc_class.
+
+    This is exactly what a discovery/spawning loop asks before fetching: "which
+    slices of this class×year request do I still need to pull?" Empty list = fully
+    covered."""
+    covered = _covered_years(windows, cpc_class)
+    spans: list[tuple[int, int]] = []
+    run_start: int | None = None
+    for y in range(year_start, year_end + 1):
+        if y not in covered:
+            run_start = y if run_start is None else run_start
+        elif run_start is not None:
+            spans.append((run_start, y - 1))
+            run_start = None
+    if run_start is not None:
+        spans.append((run_start, year_end))
+    return spans
+
+
+def coverage_query(db_path, cpc_class: str, year_start: int, year_end: int) -> dict:
+    """Programmatic coverage answer for one class×year request.
+
+    Returns {covered, missing_spans, local_count} — ``covered`` is the bool a loop
+    gates on, ``missing_spans`` the work it still needs, ``local_count`` the patents
+    of that class/range already in the corpus."""
+    import duckdb
+    windows = load_fetch_windows(db_path)
+    conn = duckdb.connect(str(db_path), read_only=True)
+    local = conn.execute(
+        "SELECT count(DISTINCT p.patent_no) FROM patents p "
+        "JOIN patent_classes pc ON p.patent_no = pc.patent_no "
+        "WHERE pc.cpc_class = ? AND EXTRACT(year FROM p.grant_dt) BETWEEN ? AND ?",
+        [cpc_class, year_start, year_end],
+    ).fetchone()[0]
+    conn.close()
+    return {
+        "covered": window_covered(windows, cpc_class, year_start, year_end),
+        "missing_spans": missing_year_spans(windows, cpc_class, year_start, year_end),
+        "local_count": local,
+    }
+
+
 def format_coverage(kind: str, cov: dict) -> str:
     """Render a coverage dict (patent|trademark) as a human-readable report."""
     f = cov["freshness"]

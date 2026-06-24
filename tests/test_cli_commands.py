@@ -102,6 +102,17 @@ def test_patent_coverage(repo, monkeypatch, capsys):
     assert "provenance" in out
 
 
+def test_patent_coverage_query_mode(repo, monkeypatch, capsys):
+    # The class×year query the loops consult before fetching.
+    rc = _run(monkeypatch, ["patent", "coverage", "--class", "G01B",
+                            "--year-start", "1933", "--year-end", "1938"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "coverage: G01B" in out
+    assert "fully covered" in out
+    assert "missing windows" in out
+
+
 def test_trademark_coverage(repo, monkeypatch, capsys):
     assert _run(monkeypatch, ["trademark", "coverage"]) == 0
     out = capsys.readouterr().out
