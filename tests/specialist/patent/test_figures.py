@@ -9,8 +9,16 @@ from unittest.mock import MagicMock
 import pytest
 from PIL import Image
 
+import markery.common.config as cfg
+from markery.common.assets import read_patent_figure
 from markery.specialist.patent.build import open_db
 from markery.specialist.patent.figures import fetch_and_store, migrate_path_figures, _tiff_to_png
+
+
+@pytest.fixture(autouse=True)
+def _assets(tmp_path, monkeypatch):
+    """Keep externalized figure files inside the test's tmp dir."""
+    monkeypatch.setattr(cfg, "ASSETS_DIR", tmp_path / "assets")
 
 
 # ---------------------------------------------------------------------------
@@ -49,11 +57,12 @@ def test_fetch_and_store_inserts_new_figure():
     assert result is True
 
     row = conn.execute(
-        "SELECT figure_data, figure_format FROM patent_figures WHERE patent_no = 'US1234567A'"
+        "SELECT file, figure_format FROM patent_figures WHERE patent_no = 'US1234567A'"
     ).fetchone()
     assert row is not None
-    assert row[0][:4] == b"\x89PNG"
+    assert row[0] == "patents/US1234567A.png"
     assert row[1] == "PNG"
+    assert read_patent_figure(conn, "US1234567A")[:4] == b"\x89PNG"
     conn.close()
 
 
@@ -99,10 +108,7 @@ def test_fetch_and_store_updates_existing_row_without_data():
     result = fetch_and_store("US1234567A", client, conn)
     assert result is True
 
-    row = conn.execute(
-        "SELECT figure_data FROM patent_figures WHERE patent_no = 'US1234567A' AND figure_no = 1"
-    ).fetchone()
-    assert row[0][:4] == b"\x89PNG"
+    assert read_patent_figure(conn, "US1234567A")[:4] == b"\x89PNG"
     conn.close()
 
 
@@ -133,10 +139,7 @@ def test_migrate_path_figures(tmp_path: Path):
         fig_mod.ROOT = original_root
 
     assert n == 1
-    row = conn.execute(
-        "SELECT figure_data FROM patent_figures WHERE patent_no = 'USTEST001A'"
-    ).fetchone()
-    assert row[0][:4] == b"\x89PNG"
+    assert read_patent_figure(conn, "USTEST001A")[:4] == b"\x89PNG"
     conn.close()
 
 

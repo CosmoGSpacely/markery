@@ -40,7 +40,8 @@ _COMPANION_TABLES = [
 _ENRICHMENT_DDL = """
 CREATE TABLE IF NOT EXISTS mark_images (
     serial_no    VARCHAR PRIMARY KEY,  -- contract: VARCHAR, NOT NULL — cast from BIGINT bulk serial when joining
-    image_data   BLOB,
+    file         VARCHAR,              -- path relative to config.ASSETS_DIR (Phase 28 P3 — externalized)
+    sha256       VARCHAR,              -- content hash of the asset file
     image_format VARCHAR DEFAULT 'PNG',
     image_size   INTEGER,
     fetched_dt   DATE
@@ -215,6 +216,38 @@ def _rc(csv_dir: Path, name: str) -> str:
     )
 
 
+def _migrate_externalize_images(conn: duckdb.DuckDBPyConnection) -> int:
+    """Move any mark_images BLOBs out to files and add the file/sha256 columns.
+
+    Idempotent: adds the new columns if absent, exports each remaining BLOB to a
+    file under ASSETS_DIR, then drops the legacy image_data column once empty.
+    Returns the number of images exported. Self-runs on writable open."""
+    tables = {r[0] for r in conn.execute("SHOW TABLES").fetchall()}
+    if "mark_images" not in tables:
+        return 0
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(mark_images)").fetchall()}
+    conn.execute("ALTER TABLE mark_images ADD COLUMN IF NOT EXISTS file VARCHAR")
+    conn.execute("ALTER TABLE mark_images ADD COLUMN IF NOT EXISTS sha256 VARCHAR")
+    exported = 0
+    if "image_data" in cols:
+        from markery.common.assets import mark_rel, write_asset
+        rows = conn.execute(
+            "SELECT serial_no, image_data FROM mark_images "
+            "WHERE image_data IS NOT NULL AND file IS NULL"
+        ).fetchall()
+        for serial_no, blob in rows:
+            rel = mark_rel(serial_no)
+            sha = write_asset(rel, bytes(blob))
+            conn.execute(
+                "UPDATE mark_images SET file = ?, sha256 = ? WHERE serial_no = ?",
+                [rel, sha, serial_no],
+            )
+            exported += 1
+        conn.execute("ALTER TABLE mark_images DROP COLUMN image_data")
+        conn.commit()
+    return exported
+
+
 def _migrate_provenance(conn: duckdb.DuckDBPyConnection) -> None:
     """Idempotently add Markery provenance columns to case_file (when it exists).
 
@@ -235,6 +268,7 @@ def open_db(db_path: str | Path | None = None) -> duckdb.DuckDBPyConnection:
     conn.execute(_ENRICHMENT_DDL)
     _migrate_mark_case_status(conn)
     _migrate_provenance(conn)
+    _migrate_externalize_images(conn)
     return conn
 
 

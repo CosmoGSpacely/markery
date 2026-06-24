@@ -39,8 +39,10 @@ def fetch_and_store(
     Returns True if a new figure was stored, False if the patent had no
     figure available or already has a BLOB stored.
     """
+    from markery.common.assets import store_patent_figure as _store
+
     existing = conn.execute(
-        "SELECT figure_data FROM patent_figures WHERE patent_no = ? AND figure_no = 1",
+        "SELECT file FROM patent_figures WHERE patent_no = ? AND figure_no = 1",
         [patent_no],
     ).fetchone()
     if existing and existing[0] is not None:
@@ -51,21 +53,7 @@ def fetch_and_store(
         return False
 
     png_bytes = _tiff_to_png(tiff_bytes)
-
-    if existing:
-        conn.execute(
-            """UPDATE patent_figures
-               SET figure_data = ?, figure_format = 'PNG', fetched_dt = ?
-               WHERE patent_no = ? AND figure_no = 1""",
-            [png_bytes, date.today(), patent_no],
-        )
-    else:
-        conn.execute(
-            """INSERT INTO patent_figures (patent_no, figure_no, figure_data, figure_format, fetched_dt)
-               VALUES (?, 1, ?, 'PNG', ?)""",
-            [patent_no, png_bytes, date.today()],
-        )
-    conn.commit()
+    _store(conn, patent_no, png_bytes, figure_no=1, fetched_dt=date.today())
     return True
 
 
@@ -81,26 +69,19 @@ def migrate_path_figures(project: str, conn: duckdb.DuckDBPyConnection) -> int:
         print(f"  No figures directory found at {fig_root}")
         return 0
 
+    from markery.common.assets import store_patent_figure as _store
+
     rows = conn.execute(
-        "SELECT patent_no FROM patent_figures WHERE figure_data IS NULL"
+        "SELECT patent_no FROM patent_figures WHERE file IS NULL"
     ).fetchall()
 
     inserted = 0
     for (patent_no,) in rows:
         png_path = fig_root / patent_no / "fig_001.png"
         if not png_path.exists():
-            png_path = None
-        if png_path is None:
             print(f"  {patent_no}: no PNG found, skipping")
             continue
-
-        png_bytes = png_path.read_bytes()  # type: ignore[union-attr]
-        conn.execute(
-            """UPDATE patent_figures
-               SET figure_data = ?, figure_format = 'PNG', fetched_dt = ?
-               WHERE patent_no = ? AND figure_no = 1""",
-            [png_bytes, date.today(), patent_no],
-        )
+        _store(conn, patent_no, png_path.read_bytes(), figure_no=1, fetched_dt=date.today())
         inserted += 1
 
     conn.commit()

@@ -26,6 +26,7 @@ def repo(tmp_path, monkeypatch):
 
     monkeypatch.setattr(cfg, "ROOT", r.root)
     monkeypatch.setattr(cfg, "SITE_ROOT", r.root / "site")
+    monkeypatch.setattr(cfg, "ASSETS_DIR", r.assets_dir)
     monkeypatch.setattr(pm, "ROOT", r.root)
     monkeypatch.setattr(status_mod, "ROOT", r.root)
     monkeypatch.setattr(project_cli, "ROOT", r.root)

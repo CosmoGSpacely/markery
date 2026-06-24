@@ -110,22 +110,22 @@ def test_has_figure_false_when_no_row():
     conn.close()
 
 
-def test_has_figure_true_when_blob_present():
+def test_has_figure_true_when_file_present():
     conn = _db()
     insert_patent(conn, _PATENT)
     conn.execute(
-        "INSERT INTO patent_figures (patent_no, figure_no, figure_data) VALUES (?,?,?)",
-        ["US1261167A", 1, b"\x89PNG\r\n"],
+        "INSERT INTO patent_figures (patent_no, figure_no, file) VALUES (?,?,?)",
+        ["US1261167A", 1, "patents/US1261167A.png"],
     )
     assert has_figure(conn, "US1261167A") is True
     conn.close()
 
 
-def test_has_figure_false_when_null_blob():
+def test_has_figure_false_when_null_file():
     conn = _db()
     insert_patent(conn, _PATENT)
     conn.execute(
-        "INSERT INTO patent_figures (patent_no, figure_no, figure_data) VALUES (?,?,?)",
+        "INSERT INTO patent_figures (patent_no, figure_no, file) VALUES (?,?,?)",
         ["US1261167A", 1, None],
     )
     assert has_figure(conn, "US1261167A") is False

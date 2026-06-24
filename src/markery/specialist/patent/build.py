@@ -54,7 +54,8 @@ CREATE TABLE IF NOT EXISTS patent_inventors (
 CREATE TABLE IF NOT EXISTS patent_figures (
     patent_no     VARCHAR  NOT NULL,
     figure_no     INTEGER  NOT NULL,
-    figure_data   BLOB,
+    file          VARCHAR,                 -- path relative to config.ASSETS_DIR (Phase 28 P3)
+    sha256        VARCHAR,                 -- content hash of the asset file
     figure_format VARCHAR DEFAULT 'PNG',
     fetched_dt    DATE,
     PRIMARY KEY (patent_no, figure_no)
@@ -136,12 +137,41 @@ def _migrate_provenance(conn: duckdb.DuckDBPyConnection) -> None:
     conn.execute("ALTER TABLE patents ADD COLUMN IF NOT EXISTS source VARCHAR")
 
 
+def _migrate_externalize_figures(conn: duckdb.DuckDBPyConnection) -> int:
+    """Move patent_figures BLOBs out to files; add file/sha256; drop figure_data.
+
+    Idempotent; self-runs on writable open. Returns the number exported."""
+    conn.execute("ALTER TABLE patent_figures ADD COLUMN IF NOT EXISTS file VARCHAR")
+    conn.execute("ALTER TABLE patent_figures ADD COLUMN IF NOT EXISTS sha256 VARCHAR")
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(patent_figures)").fetchall()}
+    exported = 0
+    if "figure_data" in cols:
+        from markery.common.assets import patent_rel, write_asset
+        rows = conn.execute(
+            "SELECT patent_no, figure_no, figure_data FROM patent_figures "
+            "WHERE figure_data IS NOT NULL AND file IS NULL"
+        ).fetchall()
+        for patent_no, figure_no, blob in rows:
+            rel = patent_rel(patent_no, figure_no)
+            sha = write_asset(rel, bytes(blob))
+            conn.execute(
+                "UPDATE patent_figures SET file = ?, sha256 = ? "
+                "WHERE patent_no = ? AND figure_no = ?",
+                [rel, sha, patent_no, figure_no],
+            )
+            exported += 1
+        conn.execute("ALTER TABLE patent_figures DROP COLUMN figure_data")
+        conn.commit()
+    return exported
+
+
 def open_db(db_path: str | Path | None = None) -> duckdb.DuckDBPyConnection:
     path = str(db_path or DB["patents"])
     conn = duckdb.connect(path)
     conn.execute(DDL)
     _migrate_fetch_log(conn, path)
     _migrate_provenance(conn)
+    _migrate_externalize_figures(conn)
     return conn
 
 

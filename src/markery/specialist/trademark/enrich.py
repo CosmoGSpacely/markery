@@ -30,9 +30,11 @@ def store_mark_image(
     conn: duckdb.DuckDBPyConnection,
     force: bool = False,
 ) -> bool:
-    """Fetch PNG from TSDR and upsert into mark_images. Returns True if stored."""
+    """Fetch PNG from TSDR and store as a file via the asset layer. Returns True if stored."""
+    from markery.common.assets import store_mark_image as _store
+
     existing = conn.execute(
-        "SELECT image_data FROM mark_images WHERE serial_no = ?", [serial_no]
+        "SELECT file FROM mark_images WHERE serial_no = ?", [serial_no]
     ).fetchone()
 
     if existing and existing[0] is not None and not force:
@@ -42,22 +44,7 @@ def store_mark_image(
     if png_bytes is None:
         return False
 
-    if existing:
-        conn.execute(
-            """UPDATE mark_images
-               SET image_data = ?, image_format = 'PNG',
-                   image_size = ?, fetched_dt = ?
-               WHERE serial_no = ?""",
-            [png_bytes, len(png_bytes), date.today(), serial_no],
-        )
-    else:
-        conn.execute(
-            """INSERT INTO mark_images
-               (serial_no, image_data, image_format, image_size, fetched_dt)
-               VALUES (?, ?, 'PNG', ?, ?)""",
-            [serial_no, png_bytes, len(png_bytes), date.today()],
-        )
-    conn.commit()
+    _store(conn, serial_no, png_bytes, fetched_dt=date.today())
     return True
 
 

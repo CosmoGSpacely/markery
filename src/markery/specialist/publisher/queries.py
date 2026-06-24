@@ -79,7 +79,7 @@ def get_trademarks_for_project(entity_ids: list[int]) -> list[dict]:
                c.first_use_com_dt,
                e.entity_id,
                e.canonical_name  AS entity_name,
-               mi.serial_no IS NOT NULL AS image_available
+               mi.file IS NOT NULL AS image_available
         FROM tm.case_file cf
         JOIN tm.owner o ON cf.serial_no = o.serial_no
         JOIN entity_name_variant v ON UPPER(o.own_name) = UPPER(v.variant_name)
@@ -92,7 +92,7 @@ def get_trademarks_for_project(entity_ids: list[int]) -> list[dict]:
         WHERE e.entity_id IN ({placeholders})
         GROUP BY cf.serial_no, cf.mark_id_char, cf.filing_dt, cf.mark_draw_cd,
                  cf.registration_no, cf.cfh_status_cd, s.statement_text,
-                 c.first_use_com_dt, e.entity_id, e.canonical_name, mi.serial_no
+                 c.first_use_com_dt, e.entity_id, e.canonical_name, mi.file
         ORDER BY cf.filing_dt, cf.serial_no
     """, entity_ids).fetchall()
     conn.close()
@@ -176,7 +176,7 @@ def get_confirmed_matches(project: str) -> list[dict]:
         row = conn.execute("""
             SELECT cf.filing_dt, cf.mark_id_char, cf.mark_draw_cd,
                    MIN(o.own_name), s.statement_text,
-                   mi.image_data IS NOT NULL AS has_image
+                   mi.file IS NOT NULL AS has_image
             FROM tm.case_file cf
             LEFT JOIN tm.owner o ON cf.serial_no = o.serial_no
             LEFT JOIN tm.statement s ON cf.serial_no = s.serial_no
@@ -184,7 +184,7 @@ def get_confirmed_matches(project: str) -> list[dict]:
             LEFT JOIN tm.mark_images mi ON cf.serial_no = mi.serial_no
             WHERE cf.serial_no = ?
             GROUP BY cf.filing_dt, cf.mark_id_char, cf.mark_draw_cd,
-                     s.statement_text, mi.image_data
+                     s.statement_text, mi.file
         """, [sn]).fetchone()
         if row:
             m["filing_dt"], m["mark_name"], m["draw_cd"] = row[0], row[1], row[2]
@@ -208,62 +208,41 @@ def get_confirmed_matches(project: str) -> list[dict]:
 
 
 def get_mark_image_bytes(serial_no: str) -> bytes | None:
+    if not DB["trademarks"].exists():
+        return None
+    from markery.common.assets import read_mark_image
     conn = duckdb.connect(str(DB["trademarks"]), read_only=True)
-    row = conn.execute(
-        "SELECT image_data FROM mark_images WHERE serial_no = ?", [serial_no]
-    ).fetchone()
+    try:
+        data = read_mark_image(conn, serial_no)
+    except Exception:
+        data = None
     conn.close()
-    return bytes(row[0]) if row else None
+    return data
 
 
 def get_patent_figure_bytes(patent_no: str) -> bytes | None:
+    if not DB["patents"].exists():
+        return None
+    from markery.common.assets import read_patent_figure
     conn = duckdb.connect(str(DB["patents"]), read_only=True)
     try:
-        row = conn.execute(
-            "SELECT figure_data FROM patent_figures "
-            "WHERE patent_no = ? AND figure_data IS NOT NULL "
-            "ORDER BY figure_no LIMIT 1", [patent_no]
-        ).fetchone()
+        data = read_patent_figure(conn, patent_no)
     except Exception:
-        row = None
+        data = None
     conn.close()
-    return bytes(row[0]) if row else None
+    return data
 
 
 def get_mark_image_b64(serial_no: str) -> str | None:
     import base64
-    if not DB["trademarks"].exists():
-        return None
-    conn = duckdb.connect(str(DB["trademarks"]), read_only=True)
-    try:
-        row = conn.execute(
-            "SELECT image_data FROM mark_images WHERE serial_no = ?", [serial_no]
-        ).fetchone()
-    except Exception:
-        row = None
-    conn.close()
-    if not row:
-        return None
-    return base64.b64encode(bytes(row[0])).decode()
+    data = get_mark_image_bytes(serial_no)
+    return base64.b64encode(data).decode() if data else None
 
 
 def get_patent_figure_b64(patent_no: str) -> str | None:
     import base64
-    if not DB["patents"].exists():
-        return None
-    conn = duckdb.connect(str(DB["patents"]), read_only=True)
-    try:
-        row = conn.execute(
-            "SELECT figure_data FROM patent_figures "
-            "WHERE patent_no = ? AND figure_data IS NOT NULL "
-            "ORDER BY figure_no LIMIT 1", [patent_no]
-        ).fetchone()
-    except Exception:
-        row = None
-    conn.close()
-    if not row:
-        return None
-    return base64.b64encode(bytes(row[0])).decode()
+    data = get_patent_figure_bytes(patent_no)
+    return base64.b64encode(data).decode() if data else None
 
 
 def get_content_gaps(project: str) -> list[dict]:

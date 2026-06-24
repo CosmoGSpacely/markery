@@ -48,14 +48,11 @@ def _classify(draw_cd: str, design_codes: list[str]) -> dict:
 
 
 def _fetch_from_db(serial_no: str, db_path: str) -> Image.Image | None:
+    from markery.common.assets import read_mark_image
     conn = duckdb.connect(db_path, read_only=True)
-    row = conn.execute(
-        "SELECT image_data FROM mark_images WHERE serial_no = ?", [serial_no]
-    ).fetchone()
+    data = read_mark_image(conn, serial_no)
     conn.close()
-    if row is None:
-        return None
-    return Image.open(io.BytesIO(bytes(row[0])))
+    return Image.open(io.BytesIO(data)) if data else None
 
 
 def _fetch_mark_meta(serial_no: str, db_path: str) -> tuple[str, list[str]]:

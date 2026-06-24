@@ -42,10 +42,10 @@ def get_mark(conn: duckdb.DuckDBPyConnection, serial_no: str) -> dict | None:
 
 
 def has_image(conn: duckdb.DuckDBPyConnection, serial_no: str) -> bool:
-    """True if a mark image blob exists in mark_images for this serial."""
+    """True if a mark image file is referenced in mark_images for this serial."""
     row = conn.execute(
         "SELECT 1 FROM mark_images "
-        "WHERE serial_no = ? AND image_data IS NOT NULL LIMIT 1",
+        "WHERE serial_no = ? AND file IS NOT NULL LIMIT 1",
         [serial_no],
     ).fetchone()
     return row is not None

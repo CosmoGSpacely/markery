@@ -25,6 +25,7 @@ def site(tmp_path, monkeypatch):
 
     monkeypatch.setattr(cfg, "ROOT", repo.root)
     monkeypatch.setattr(cfg, "SITE_ROOT", repo.root / "site")
+    monkeypatch.setattr(cfg, "ASSETS_DIR", repo.assets_dir)
     monkeypatch.setattr(pm, "ROOT", repo.root)
     for key in ("patents", "trademarks", "entities"):
         monkeypatch.setitem(cfg.DB, key, repo.data_dir / f"{key}.duckdb")

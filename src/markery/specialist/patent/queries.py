@@ -56,10 +56,10 @@ def has_abstract(conn: duckdb.DuckDBPyConnection, patent_no: str) -> bool:
 
 
 def has_figure(conn: duckdb.DuckDBPyConnection, patent_no: str) -> bool:
-    """True if a figure blob exists in patent_figures for this patent."""
+    """True if a figure file is referenced in patent_figures for this patent."""
     row = conn.execute(
         "SELECT 1 FROM patent_figures "
-        "WHERE patent_no = ? AND figure_data IS NOT NULL LIMIT 1",
+        "WHERE patent_no = ? AND file IS NOT NULL LIMIT 1",
         [patent_no],
     ).fetchone()
     return row is not None

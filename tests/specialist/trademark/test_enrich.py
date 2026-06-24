@@ -34,6 +34,13 @@ def _patch_root(tmp_path: Path):
         yield
 
 
+@pytest.fixture(autouse=True)
+def _assets(tmp_path, monkeypatch):
+    """Keep externalized mark-image files inside the test's tmp dir."""
+    import markery.common.config as cfg
+    monkeypatch.setattr(cfg, "ASSETS_DIR", tmp_path / "assets")
+
+
 def _in_memory_db():
     return open_db(":memory:")
 
@@ -65,12 +72,14 @@ def test_store_mark_image_inserts_new():
     result = store_mark_image("71165547", client, conn)
     assert result is True
 
+    from markery.common.assets import read_mark_image
     row = conn.execute(
-        "SELECT image_data, image_format, image_size FROM mark_images WHERE serial_no = '71165547'"
+        "SELECT file, image_format, image_size FROM mark_images WHERE serial_no = '71165547'"
     ).fetchone()
-    assert row[0][:4] == b"\x89PNG"
+    assert row[0] == "marks/71165547.png"
     assert row[1] == "PNG"
     assert row[2] == len(_PNG_BYTES)
+    assert read_mark_image(conn, "71165547")[:4] == b"\x89PNG"
     conn.close()
 
 
@@ -127,10 +136,8 @@ def test_store_mark_image_updates_existing_row_without_data():
     result = store_mark_image("71165547", client, conn)
     assert result is True
 
-    row = conn.execute(
-        "SELECT image_data FROM mark_images WHERE serial_no = '71165547'"
-    ).fetchone()
-    assert row[0][:4] == b"\x89PNG"
+    from markery.common.assets import read_mark_image
+    assert read_mark_image(conn, "71165547")[:4] == b"\x89PNG"
     conn.close()
 
 

@@ -96,6 +96,10 @@ class SyntheticRepo:
     def db_ent(self) -> Path:
         return self.data_dir / "entities.duckdb"
 
+    @property
+    def assets_dir(self) -> Path:
+        return self.data_dir / "assets"
+
 
 # ---------------------------------------------------------------------------
 # Database builders — minimal schemas covering only what the historian
@@ -120,8 +124,12 @@ def _build_trademarks(path: Path) -> None:
         "own_addr_city VARCHAR, own_addr_state_cd VARCHAR)"
     )
     conn.execute("CREATE TABLE classification (serial_no BIGINT, first_use_com_dt DATE)")
-    conn.execute("CREATE TABLE mark_images (serial_no BIGINT, image_data BLOB)")
+    conn.execute(
+        "CREATE TABLE mark_images (serial_no BIGINT, file VARCHAR, sha256 VARCHAR, "
+        "image_format VARCHAR, image_size INTEGER, fetched_dt DATE)"
+    )
     conn.execute("CREATE TABLE design_search (serial_no BIGINT, design_search_cd VARCHAR)")
+    assets = path.parent / "assets"
 
     meta = {
         CAND_SERIAL: ("SYNTHEX", "1935-03-15", "0331001"),
@@ -165,8 +173,15 @@ def _build_trademarks(path: Path) -> None:
         [REVIEW_SERIAL, "Decorative emblems and ornamental designs for packaging."],
     )
 
-    # One mark carries an image so the image-write path is exercised.
-    conn.execute("INSERT INTO mark_images VALUES (?, ?)", [CAND_SERIAL, _PNG_1PX])
+    # One mark carries an image (stored as a file, Phase 28 P3).
+    import hashlib
+    (assets / "marks").mkdir(parents=True, exist_ok=True)
+    (assets / "marks" / f"{CAND_SERIAL}.png").write_bytes(_PNG_1PX)
+    conn.execute(
+        "INSERT INTO mark_images VALUES (?, ?, ?, 'PNG', ?, DATE '2026-06-01')",
+        [CAND_SERIAL, f"marks/{CAND_SERIAL}.png",
+         hashlib.sha256(_PNG_1PX).hexdigest(), len(_PNG_1PX)],
+    )
 
     # Markery provenance (Phase 28 P1): stamp every case_file row, mirroring the
     # real build's ALTER + UPDATE approach.
@@ -184,7 +199,10 @@ def _build_patents(path: Path) -> None:
     )
     conn.execute("CREATE TABLE patent_classes (patent_no VARCHAR, cpc_class VARCHAR)")
     conn.execute("CREATE TABLE patent_inventors (patent_no VARCHAR, inventor_name VARCHAR)")
-    conn.execute("CREATE TABLE patent_figures (patent_no VARCHAR, figure_no INTEGER, figure_data BLOB)")
+    conn.execute(
+        "CREATE TABLE patent_figures (patent_no VARCHAR, figure_no INTEGER, "
+        "file VARCHAR, sha256 VARCHAR, figure_format VARCHAR, fetched_dt DATE)"
+    )
     rows = [
         (CAND_PATENT, "Synthetic Measuring Apparatus",
          "An apparatus for synthetic precision measurement employing a calibrated gauge.",
@@ -200,8 +218,15 @@ def _build_patents(path: Path) -> None:
     for pno in (CAND_PATENT, CONF_PATENT, SCAF_PATENT):
         conn.execute("INSERT INTO patent_classes VALUES (?, 'G01B0005')", [pno])
         conn.execute("INSERT INTO patent_inventors VALUES (?, 'Jane Synthex')", [pno])
-    # One patent carries a figure so the figure-write path is exercised.
-    conn.execute("INSERT INTO patent_figures VALUES (?, 1, ?)", [CAND_PATENT, _PNG_1PX])
+    # One patent carries a figure (stored as a file, Phase 28 P3).
+    import hashlib
+    assets = path.parent / "assets"
+    (assets / "patents").mkdir(parents=True, exist_ok=True)
+    (assets / "patents" / f"{CAND_PATENT}.png").write_bytes(_PNG_1PX)
+    conn.execute(
+        "INSERT INTO patent_figures VALUES (?, 1, ?, ?, 'PNG', DATE '2026-05-15')",
+        [CAND_PATENT, f"patents/{CAND_PATENT}.png", hashlib.sha256(_PNG_1PX).hexdigest()],
+    )
 
     # Markery provenance (Phase 28 P1).
     conn.execute("ALTER TABLE patents ADD COLUMN fetched_dt DATE")

@@ -49,6 +49,11 @@ DB = {
     "entities":   _DATA_DIR / "entities.duckdb",
 }
 
+# Record-image assets (mark drawings, patent figures) live as files alongside the
+# DBs (Phase 28 P3 — externalized from BLOBs). The DB rows reference paths relative
+# to this directory.
+ASSETS_DIR = _DATA_DIR / "assets"
+
 _SETUP_HINTS = {
     "patents":    "Run 'markery patent build' to populate patents.duckdb.",
     "trademarks": "Run 'markery trademark build' to populate trademarks.duckdb.",

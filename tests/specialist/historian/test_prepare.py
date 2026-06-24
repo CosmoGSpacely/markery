@@ -108,12 +108,12 @@ def test_gather_patent_state_figure_false_when_no_blob():
     conn.close()
 
 
-def test_gather_patent_state_figure_true_when_blob():
+def test_gather_patent_state_figure_true_when_file():
     conn = pat_open_db(":memory:")
     insert_patent(conn, _PATENT)
     conn.execute(
-        "INSERT INTO patent_figures (patent_no, figure_no, figure_data) VALUES (?,?,?)",
-        ["US1261167A", 1, b"\x89PNG"],
+        "INSERT INTO patent_figures (patent_no, figure_no, file) VALUES (?,?,?)",
+        ["US1261167A", 1, "patents/US1261167A.png"],
     )
     state = gather_patent_state(conn, ["US1261167A"])
     assert state["US1261167A"]["figure"] is True

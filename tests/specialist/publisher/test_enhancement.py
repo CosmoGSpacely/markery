@@ -38,8 +38,10 @@ def test_weights_path_pure():
 # gallery — DB-backed HTML emission
 # ---------------------------------------------------------------------------
 
-def test_build_gallery_embeds_mark(tmp_path):
+def test_build_gallery_embeds_mark(tmp_path, monkeypatch):
     repo = build_synthetic_repo(tmp_path)
+    import markery.common.config as cfg
+    monkeypatch.setattr(cfg, "ASSETS_DIR", repo.assets_dir)
     from markery.specialist.publisher.image_enhancement import gallery
     out = tmp_path / "gallery.html"
     result = gallery.build_gallery(
@@ -55,8 +57,10 @@ def test_build_gallery_embeds_mark(tmp_path):
     assert "SYNTHEX" in html
 
 
-def test_build_gallery_skips_serial_without_image(tmp_path):
+def test_build_gallery_skips_serial_without_image(tmp_path, monkeypatch):
     repo = build_synthetic_repo(tmp_path)
+    import markery.common.config as cfg
+    monkeypatch.setattr(cfg, "ASSETS_DIR", repo.assets_dir)
     from markery.specialist.publisher.image_enhancement import gallery
     out = tmp_path / "g2.html"
     # CONF_SERIAL has no mark_images row → no card, but the page still renders.

@@ -101,14 +101,12 @@ def fetch_patent(conn, patent_no: str) -> dict:
     cls = conn.execute(
         "SELECT DISTINCT cpc_full FROM patent_classes WHERE patent_no = ?", [patent_no]
     ).fetchall()
-    fig = conn.execute(
-        "SELECT figure_data FROM patent_figures WHERE patent_no = ? AND figure_no = 1",
-        [patent_no],
-    ).fetchone()
+    from markery.common.assets import read_patent_figure
+    fig_bytes = read_patent_figure(conn, patent_no)
     figure_path = None
-    if fig and fig[0]:
+    if fig_bytes:
         tf = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-        tf.write(bytes(fig[0]))
+        tf.write(fig_bytes)
         tf.close()
         figure_path = tf.name
     return {

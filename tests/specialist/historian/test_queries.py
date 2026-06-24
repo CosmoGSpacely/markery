@@ -35,8 +35,8 @@ CREATE TABLE patent_inventors (
     inventor_name VARCHAR
 );
 CREATE TABLE patent_figures (
-    patent_no   VARCHAR,
-    figure_data BLOB
+    patent_no VARCHAR,
+    file      VARCHAR
 );
 """
 
@@ -92,7 +92,7 @@ def test_patent_has_abstract_false_when_missing():
 
 def test_patent_has_figure_true():
     conn = _pat_conn()
-    conn.execute("INSERT INTO patent_figures VALUES ('US1A', X'89504E47')")
+    conn.execute("INSERT INTO patent_figures VALUES ('US1A', 'patents/US1A.png')")
     assert hq.patent_has_figure(conn, "US1A") is True
 
 

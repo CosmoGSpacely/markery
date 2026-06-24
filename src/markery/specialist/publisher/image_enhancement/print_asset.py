@@ -89,22 +89,19 @@ def check_patent_eligible(patent_no: str) -> tuple[bool, str]:
 # ---------------------------------------------------------------------------
 
 def _load_mark(serial_no: str) -> Image.Image | None:
+    from markery.common.assets import read_mark_image
     conn = duckdb.connect(str(config.DB["trademarks"]), read_only=True)
-    row = conn.execute(
-        "SELECT image_data FROM mark_images WHERE serial_no = ?", [serial_no]
-    ).fetchone()
+    data = read_mark_image(conn, serial_no)
     conn.close()
-    return Image.open(io.BytesIO(bytes(row[0]))) if row else None
+    return Image.open(io.BytesIO(data)) if data else None
 
 
 def _load_patent_figure(patent_no: str) -> Image.Image | None:
+    from markery.common.assets import read_patent_figure
     conn = duckdb.connect(str(config.DB["patents"]), read_only=True)
-    row = conn.execute(
-        "SELECT figure_data FROM patent_figures WHERE patent_no = ? AND figure_data IS NOT NULL "
-        "ORDER BY figure_no LIMIT 1", [patent_no],
-    ).fetchone()
+    data = read_patent_figure(conn, patent_no)
     conn.close()
-    return Image.open(io.BytesIO(bytes(row[0]))) if row else None
+    return Image.open(io.BytesIO(data)) if data else None
 
 
 # ---------------------------------------------------------------------------

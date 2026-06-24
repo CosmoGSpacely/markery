@@ -28,7 +28,7 @@ def design_marks(year: int, month: int) -> list[dict]:
         SELECT cf.serial_no, cf.mark_id_char, cf.filing_dt,
                o.own_name, o.own_addr_state_cd,
                gs.goods,
-               CASE WHEN mi.serial_no IS NOT NULL THEN 1 ELSE 0 END AS has_img
+               CASE WHEN mi.file IS NOT NULL THEN 1 ELSE 0 END AS has_img
         FROM case_file cf
         LEFT JOIN (
             SELECT serial_no, own_name, own_addr_state_cd FROM owner

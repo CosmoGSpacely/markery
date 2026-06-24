@@ -54,27 +54,36 @@ def test_pd_cutoff_is_95_years():
 def temp_dbs(tmp_path, monkeypatch):
     tdb = tmp_path / "trademarks.duckdb"
     pdb = tmp_path / "patents.duckdb"
+    # Externalized assets (Phase 28 P3): images live as files under ASSETS_DIR.
+    assets = tmp_path / "assets"
+    (assets / "marks").mkdir(parents=True)
+    (assets / "patents").mkdir(parents=True)
+    for sn in ("111", "444"):
+        (assets / "marks" / f"{sn}.png").write_bytes(_png_bytes())
+    (assets / "patents" / "US1525813A.png").write_bytes(_png_bytes())
+
     c = duckdb.connect(str(tdb))
     c.execute("CREATE TABLE case_file (serial_no VARCHAR, filing_dt DATE, cfh_status_cd VARCHAR, mark_draw_cd VARCHAR)")
-    c.execute("CREATE TABLE mark_images (serial_no VARCHAR, image_data BLOB)")
+    c.execute("CREATE TABLE mark_images (serial_no VARCHAR, file VARCHAR)")
     # dead + PD, live + PD, dead + too-new
     c.execute("INSERT INTO case_file VALUES ('111', DATE '1925-01-01', '710', '3000')")
     c.execute("INSERT INTO case_file VALUES ('222', DATE '1925-01-01', '600', '3000')")
     c.execute("INSERT INTO case_file VALUES ('333', DATE '2000-01-01', '710', '3000')")
     # 444: live + PD + has image — a design mark that batch must SKIP (trademark risk).
     c.execute("INSERT INTO case_file VALUES ('444', DATE '1925-01-01', '600', '3000')")
-    c.execute("INSERT INTO mark_images VALUES ('111', ?)", [_png_bytes()])
-    c.execute("INSERT INTO mark_images VALUES ('444', ?)", [_png_bytes()])
+    c.execute("INSERT INTO mark_images VALUES ('111', 'marks/111.png')")
+    c.execute("INSERT INTO mark_images VALUES ('444', 'marks/444.png')")
     c.close()
     p = duckdb.connect(str(pdb))
     p.execute("CREATE TABLE patents (patent_no VARCHAR, grant_dt DATE)")
-    p.execute("CREATE TABLE patent_figures (patent_no VARCHAR, figure_no INT, figure_data BLOB)")
+    p.execute("CREATE TABLE patent_figures (patent_no VARCHAR, figure_no INT, file VARCHAR)")
     p.execute("INSERT INTO patents VALUES ('US1525813A', DATE '1925-02-10')")
     p.execute("INSERT INTO patents VALUES ('US9999999A', DATE '2010-01-01')")
-    p.execute("INSERT INTO patent_figures VALUES ('US1525813A', 1, ?)", [_png_bytes()])
+    p.execute("INSERT INTO patent_figures VALUES ('US1525813A', 1, 'patents/US1525813A.png')")
     p.close()
     monkeypatch.setitem(cfg.DB, "trademarks", tdb)
     monkeypatch.setitem(cfg.DB, "patents", pdb)
+    monkeypatch.setattr(cfg, "ASSETS_DIR", assets)
     monkeypatch.setattr(projmod, "ROOT", tmp_path)
     (tmp_path / "projects" / "demo").mkdir(parents=True)
     return tmp_path

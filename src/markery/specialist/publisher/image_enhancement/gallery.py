@@ -130,12 +130,11 @@ def build_gallery(
             if p.exists():
                 img_bytes[sn] = p.read_bytes()
     else:
-        placeholders = ",".join("?" * len(serial_nos))
-        for sn, data in conn.execute(
-            f"SELECT serial_no, image_data FROM mark_images WHERE serial_no IN ({placeholders})",
-            serial_nos,
-        ).fetchall():
-            img_bytes[str(sn)] = bytes(data)
+        from markery.common.assets import read_mark_image
+        for sn in serial_nos:
+            data = read_mark_image(conn, sn)
+            if data:
+                img_bytes[str(sn)] = data
 
     conn.close()
 

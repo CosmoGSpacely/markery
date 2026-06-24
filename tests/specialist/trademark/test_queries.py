@@ -94,11 +94,11 @@ def test_has_image_false_when_null_data():
     conn.close()
 
 
-def test_has_image_true_when_blob_present():
+def test_has_image_true_when_file_present():
     conn = _db()
     conn.execute(
-        "INSERT INTO mark_images (serial_no, image_data) VALUES (?,?)",
-        ["71165547", b"\x89PNG\r\n"],
+        "INSERT INTO mark_images (serial_no, file) VALUES (?,?)",
+        ["71165547", "marks/71165547.png"],
     )
     assert has_image(conn, "71165547") is True
     conn.close()
