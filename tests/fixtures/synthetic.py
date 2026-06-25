@@ -336,6 +336,8 @@ The patent describes an improved gauge mechanism with better repeatability.
 
 GAUGEX named the company's flagship precision gauge, filed in 1936-05.
 
+[[media:{MEDIA_ID}]]
+
 ## The Connection
 
 The mark covered the very instrument the patent protected.

@@ -498,28 +498,44 @@ def cmd_search(args: argparse.Namespace) -> None:
 
 def cmd_list(args: argparse.Namespace) -> None:
     from markery.specialist.librarian.index import list_works
+    from markery.specialist.librarian import catalog
 
-    summaries = list_works(verbose=args.verbose)
-    if not summaries:
-        print("No works in library.")
+    kind = getattr(args, "kind", "all")
+    summaries = list_works(verbose=args.verbose) if kind in ("all", "works") else []
+    media = [it for it in catalog.load().values()
+             if it.get("kind") not in catalog.WORK_KINDS] if kind in ("all", "media") else []
+
+    if not summaries and not media:
+        print("No items in library.")
         return
 
-    if args.verbose:
-        for w in summaries:
-            yr = str(w["year"]) if w.get("year") else "?"
-            raw = "raw" if w["has_raw_text"] else "no-raw"
-            exc = f"{w['excerpt_count']} excerpt(s)"
-            print(f"{w['slug']}")
-            print(f"  {w['author']}, {yr} | {w['source']} | {exc} | {raw}")
-            print(f"  {w['title']}")
-            print()
-    else:
-        print(f"{'SLUG':<45} {'AUTHOR':<25} {'YEAR':<6} {'EXC':>4}  RAW")
+    if summaries:
+        if args.verbose:
+            print("WORKS\n")
+            for w in summaries:
+                yr = str(w["year"]) if w.get("year") else "?"
+                raw = "raw" if w["has_raw_text"] else "no-raw"
+                exc = f"{w['excerpt_count']} excerpt(s)"
+                print(f"{w['slug']}")
+                print(f"  {w['author']}, {yr} | {w['source']} | {exc} | {raw}")
+                print(f"  {w['title']}")
+                print()
+        else:
+            print(f"WORKS  ({len(summaries)})")
+            print(f"{'SLUG':<45} {'AUTHOR':<25} {'YEAR':<6} {'EXC':>4}  RAW")
+            print("-" * 90)
+            for w in summaries:
+                yr = str(w["year"]) if w.get("year") else "?"
+                raw = "✓" if w["has_raw_text"] else "-"
+                print(f"{w['slug']:<45} {w.get('author','?'):<25} {yr:<6} {w['excerpt_count']:>4}  {raw}")
+
+    if media:
+        print(f"\nMEDIA  ({len(media)})")
+        print(f"{'SLUG':<45} {'KIND':<9} {'LICENSE':<10} TITLE")
         print("-" * 90)
-        for w in summaries:
-            yr = str(w["year"]) if w.get("year") else "?"
-            raw = "✓" if w["has_raw_text"] else "-"
-            print(f"{w['slug']:<45} {w.get('author','?'):<25} {yr:<6} {w['excerpt_count']:>4}  {raw}")
+        for m in sorted(media, key=lambda x: x["id"]):
+            print(f"{m['id']:<45} {(m.get('kind') or ''):<9} "
+                  f"{(m.get('license') or ''):<10} {m.get('title','')}")
 
 
 # ---------------------------------------------------------------------------
@@ -798,8 +814,10 @@ def librarian_main() -> None:
     # list
     p_lst = sub.add_parser(
         "list",
-        help="List all works in the library",
+        help="List library items — works and media (via the catalog)",
     )
+    p_lst.add_argument("--kind", choices=["all", "works", "media"], default="all",
+                       help="Restrict to works or media (default: all)")
     p_lst.add_argument("--verbose", "-v", action="store_true",
                        help="Show title and source for each work")
     p_lst.add_argument("--tokens", action="store_true",

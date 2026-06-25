@@ -140,17 +140,28 @@ the per-project media silo that made the current setup look like hard-coded chan
 
 ## 8. Phased plan
 
-- **P1 — Global media collection + catalog.** Add `library/media/` + `catalog.jsonl`;
-  migrate the one P2 item; `media.py`/`media-list` global. Tests for catalog read/write.
-- **P2 — Project references + build.** Reference mechanism; publisher builds `media_index`
-  from global library + refs; rebuild precision-tools clean.
-- **P3 — Unify listing/search.** `librarian list`/`search` span works + media via the
-  catalog; `card` context includes media.
+- **P1 — Global media collection + catalog. DONE 2026-06-24.** `librarian/catalog.py`
+  (`library/catalog.jsonl`, in-memory dedup by id/source_url/sha256, atomic rewrite,
+  `rebuild()`); `media.py` global (`library/media/`, no `--project`, source_url
+  dedup); `media-list` + `librarian catalog [--rebuild]`. Media binaries gitignored.
+  (No P2 item to migrate — `projects/` was archived in Phase 27; catalog seeded from
+  the 13 works.) Committed `e49c5f2`.
+- **P2 — Project references + build. DONE 2026-06-24.** `references/library.jsonl`
+  (`catalog.add_ref`/`read_refs`, idempotent); `librarian use <id> --project`;
+  `publisher/build._resolve_project_media` resolves refs → global catalog → copies
+  into `site/<project>/media/` → `media_index`. Committed `2ce7c71`.
+- **P3 — Unify listing. DONE 2026-06-24.** `librarian list` spans works + media via
+  the catalog (`--kind all|works|media`). (Passage *search* + `card` over media is
+  additive enrichment — deferred with P4; works-passage search is unchanged.)
 - **P4 — Wire to the loops.** Discovery-loop acquisitions land in the global library;
-  spawned projects get reference lists. (Depends on the loops being built.)
+  spawned projects get reference lists. **Folded into Phase 30** (the loop's
+  acquire-into-library node *is* this wiring) — the primitives it needs
+  (`media.acquire_commons` global + dedup, `catalog.add_ref`) are ready.
 
 Gate per P: command works with mocked HTTP where relevant; `markery site check` stays
-green; the migrated media still renders with attribution.
+green; referenced media renders with attribution. **Met** — hermetic lane 940
+passed, 70% coverage; the synthetic project references a catalog item and the build
+renders `[[media:]]` with its attribution; `check_site` reports 0 broken links.
 
 ---
 

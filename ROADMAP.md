@@ -122,7 +122,7 @@ and documented; existing specialist commands unregressed. — PASSED
 
 ---
 
-## Phase 29 — Real digital library  ·  plan: `LIBRARY_REVIEW.md`
+## Phase 29 — Real digital library  ·  plan: `archive/LIBRARY_REVIEW-2026-06-24.md` — CLOSED
 
 **Trigger:** "library" is fragmented — text works are global, P2 media is per-project (1 item),
 record images live in DBs; no single rights-curated catalog.
@@ -135,8 +135,20 @@ and the Phase 28 asset-storage decision, before the loops populate/consume it.
    into `site/<project>/`. Records (mark images, patent figures) stay in the DBs.
 3. **Unify listing/search** across works + media.
 
+Results 2026-06-24: **P1** global `library/catalog.jsonl` (loop-safe flat JSONL —
+in-memory dedup by id/source_url/sha256, atomic rewrite; D073 trigger for a DB) +
+global `library/media/` (`media-acquire`/`media-list`/`catalog` go global; binaries
+gitignored, sha256 + snapshot for durability). **P2** `references/library.jsonl` +
+`librarian use <id> --project`; `publisher` resolves refs → catalog → copies media
+into `site/<project>/media/` + `media_index`. **P3** `librarian list` unifies works +
+media via the catalog (`--kind`). **P4** (loop wiring) folded into Phase 30 — the
+primitives (`media.acquire_commons` global+dedup, `catalog.add_ref`) are ready.
+Hermetic lane 940 passed, coverage 70%. Records (mark images, patent figures) stay
+in the DBs as files per Phase 28. `LIBRARY_REVIEW.md` archived to
+`archive/LIBRARY_REVIEW-2026-06-24.md`.
+
 **Gate:** one global rights-curated library (works + media); a project references an item and
-the publisher renders it with attribution; `site check` green.
+the publisher renders it with attribution; `site check` green. — PASSED
 
 ---
 

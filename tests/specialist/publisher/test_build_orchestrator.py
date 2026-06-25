@@ -131,6 +131,15 @@ def test_referenced_library_media_copied_into_site(site):
     assert media_file.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
 
 
+def test_media_embed_renders_with_attribution(site):
+    repo, root = site
+    # The confirmed essay embeds [[media:<id>]]; the rendered match essay must show
+    # the figure with its catalog attribution (Phase 29 gate).
+    essay = (root / repo.project / "matches" / f"{repo.conf_slug}.html").read_text()
+    assert f"media/{repo.media_id}.png" in essay
+    assert "public domain" in essay.lower()   # attribution_text from the catalog
+
+
 # ---------------------------------------------------------------------------
 # annual-review project (build_all review branch)
 # ---------------------------------------------------------------------------

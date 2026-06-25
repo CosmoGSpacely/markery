@@ -89,6 +89,20 @@ def test_librarian_catalog_lists_items(repo, monkeypatch, capsys):
     assert "library catalog" in capsys.readouterr().out
 
 
+def test_librarian_list_unifies_works_and_media(repo, monkeypatch, capsys):
+    # The synthetic library has no works but one media item; list shows the MEDIA
+    # section via the catalog (P3 unification).
+    assert _run(monkeypatch, ["librarian", "list"]) == 0
+    out = capsys.readouterr().out
+    assert "MEDIA" in out and repo.media_id in out
+
+
+def test_librarian_list_kind_media(repo, monkeypatch, capsys):
+    assert _run(monkeypatch, ["librarian", "list", "--kind", "media"]) == 0
+    out = capsys.readouterr().out
+    assert repo.media_id in out and "WORKS" not in out
+
+
 def test_matchmaker_list(repo, monkeypatch, capsys):
     assert _run(monkeypatch, ["matchmaker", "list"]) == 0
     out = capsys.readouterr().out
