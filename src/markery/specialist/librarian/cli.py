@@ -747,6 +747,26 @@ def cmd_books(args: argparse.Namespace) -> None:
         print(f"\nQueued {queued} item(s) to library/wants.jsonl for ILL.")
 
 
+def cmd_wants_add(args: argparse.Namespace) -> None:
+    """Append one item to wants.jsonl (the loop's ILL-queue primitive). Idempotent."""
+    from markery.specialist.librarian.sources.common import make_slug
+    from datetime import datetime, timezone
+    wants = _read_wants()
+    slug = make_slug(args.title, args.author or "")
+    if _find_wants_entry(wants, slug) != -1:
+        print(f"Already queued: {slug}")
+        return
+    wants.append({
+        "slug": slug, "title": args.title, "author": args.author or "",
+        "year": args.year, "isbn": args.isbn, "source_article": None,
+        "added_at": datetime.now(timezone.utc).isoformat(), "status": "wanted",
+        "note": args.note or "Discovery loop: ILL needed.",
+        "ill_request": args.ill_request or "",
+    })
+    _write_wants(wants)
+    print(f"Queued: {slug}")
+
+
 def cmd_leads(args: argparse.Namespace) -> None:
     """List discovery leads (filterable by project/status/source)."""
     from markery.specialist.librarian import leads as leads_mod
@@ -991,6 +1011,14 @@ def librarian_main() -> None:
     p_books.add_argument("--json", action="store_true", dest="json",
                          help="Emit a JSON array of candidates+routes (discovery-loop contract)")
 
+    p_wadd = sub.add_parser("wants-add", help="Append one ILL want (loop primitive)")
+    p_wadd.add_argument("--title", required=True)
+    p_wadd.add_argument("--author", default=None)
+    p_wadd.add_argument("--year", type=int, default=None)
+    p_wadd.add_argument("--isbn", default=None)
+    p_wadd.add_argument("--ill-request", dest="ill_request", default=None)
+    p_wadd.add_argument("--note", default=None)
+
     p_leads = sub.add_parser("leads", help="List discovery leads (the discovery log)")
     p_leads.add_argument("--project", default=None)
     p_leads.add_argument("--status", default=None,
@@ -1019,6 +1047,7 @@ def librarian_main() -> None:
         "use":            cmd_use,
         "leads":          cmd_leads,
         "leads-add":      cmd_leads_add,
+        "wants-add":      cmd_wants_add,
         "books":          cmd_books,
         "discover":       cmd_discover,
         "wants":          cmd_wants,

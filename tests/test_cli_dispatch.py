@@ -29,7 +29,7 @@ AREA_SUBCOMMANDS = {
     "librarian": ["search-sources", "discover", "wants", "wants-update", "acquire",
                   "enter", "raw-text", "extract", "review", "index", "search",
                   "list", "card", "media-search", "media-acquire", "media-list", "catalog",
-                  "use", "leads", "leads-add", "books"],
+                  "use", "leads", "leads-add", "books", "wants-add"],
     "site": ["build", "build-all", "check"],
     "wikipedia": ["draft", "candidates", "propose-edit", "submit", "from-essay",
                   "verify-credentials", "check-revision", "add-external-link", "replace"],
