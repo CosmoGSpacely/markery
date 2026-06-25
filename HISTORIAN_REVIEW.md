@@ -299,12 +299,14 @@ from*; eBay is a lead, never evidence; nothing invented.
   relevance` scoring (reuse `card --infer` contract).
 - **P4 — WorldCat/book pipeline.** `librarian worldcat search` → digitized `acquire` (IA/
   HathiTrust) → else `wants`; keyless fallbacks first, OCLC key optional.
-- **P5 — eBay leads.** `librarian ebay search` (Browse API + OAuth, key-gated) → for-sale
-  lead cards (hotlinked eBay image + link to listing) and `wants`; never PD media.
+- **P5 — eBay leads. DEFERRED → D074** (out of scope; market-signal leads, not library
+  acquisition). §4c kept as reference.
 - **P6 — The loop.** `discovery_graph.py` in markery-langgraph: seed → discover → score →
-  route → acquire/gate/log, with cadence, dedup, budgets, and human gates. Run scheduled.
-- **P7 — Cadence + docs.** Document the run cadence and the local ILL-submission script
-  contract (outside the repo); first full sweep over the published projects.
+  route → acquire/gate/log, with dedup, budgets, and human gates. Runs as a **persistent
+  service the user toggles** (`markery historian discovery {on|off|status|tick}` + a state
+  flag), not a fixed cron.
+- **P7 — Toggle + docs.** The on/off persistence + status; document the local
+  ILL-submission path contract; first full sweep over the published projects.
 
 Gates: each P closes when its CLI command works with mocked-HTTP tests and degrades
 gracefully without keys; P6 closes when an end-to-end loop tick discovers, acquires a free
@@ -313,20 +315,31 @@ item, queues a want, logs a lead, and human-gates a purchase/ILL on a real proje
 
 ---
 
-## 9. Open questions / decisions for the user
+## 9. Open questions / decisions — RESOLVED 2026-06-24
 
-1. **eBay scope / sold prices:** start with **active** listings (Browse API) plus
-   **deep-link handoffs** to the sold-price tools (eBay completed-listings, WatchCount,
-   Terapeak, SoldListings) for a human to check — recommended first step. Do we also want to
-   apply for the **Marketplace Insights API** restricted grant so the loop can fetch
-   sold/completed prices automatically (the only ToS-compliant automated route; the
-   web/3rd-party tools are human-only, scraping them is off the table)?
-2. **OCLC WorldCat key:** do we have/want institutional access, or rely on keyless Open
-   Library + HathiTrust + IA for book discovery initially?
-3. **ILL submission:** confirm it stays a local institution-specific script (per the ILL
-   reference) — Markery only manages `wants.jsonl`, never POSTs to a library.
-4. **Cadence + autonomy:** how often should the loop sweep, and is the auto-acquire-free /
-   gate-everything-else boundary correct (e.g. should *all* media admission be human-gated
-   at first, loosening as it proves out)?
-5. **Where the loop runs:** scheduled cron vs. a persistent service; and whether discovery
-   for the annual design-mark reviews (not just the essay projects) is in scope.
+1. **eBay scope:** **DEFERRED → D074.** eBay is market-signal leads, not library
+   acquisition; it's out of scope for the loop's "grow the rights-cleared library"
+   core. The full §4c design stays as reference for when D074 reopens; P5 drops out
+   of this phase.
+2. **OCLC WorldCat:** **pursue institutional access if obtainable** (an external,
+   user-side action). Build the book pipeline **key-gated with keyless fallbacks
+   first** (Open Library + HathiTrust + IA), degrading gracefully when no OCLC key
+   is present — same pattern as EPO/TSDR. WorldCat access is not a blocker to
+   starting (it's P4, after the free-acquisition core).
+3. **ILL:** **human-gated, and make a real request if possible.** Markery manages
+   `wants.jsonl` and *prepares* the ILL request; on human approval it submits via a
+   local institution-specific path **if one is available** (OCLC WorldShare / ILLiad
+   / RapidILL / ReShare — see `memory/reference_ill_automation.md`), otherwise it
+   emits the request for manual submission. Never auto-submits. (Institutional ILL
+   access is the same external, user-side dependency as WorldCat.)
+4. **Autonomy boundary: confirmed — auto-acquire-free / gate-everything-else.** The
+   loop auto-acquires free/PD items into the library; everything with cost or
+   commitment (ILL requests, any purchase) and ambiguous-license media interrupts
+   for a human.
+5. **Where the loop runs: a persistent service the user toggles on/off** (not a
+   fixed cron). Proposed mechanism: a state flag (e.g. `library/discovery_state.json`,
+   `{enabled, last_tick, ...}`) + `markery historian discovery {on|off|status|tick}`;
+   while enabled the markery-langgraph `discovery_graph` runs ticks (a long-running
+   loop with sleeps, or a scheduler firing `tick`, which no-ops when disabled).
+   *Still open (minor):* whether annual design-mark **review** projects are in
+   discovery scope, or essay projects only first.
