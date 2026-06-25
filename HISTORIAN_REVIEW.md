@@ -321,17 +321,19 @@ item, queues a want, logs a lead, and human-gates a purchase/ILL on a real proje
    acquisition; it's out of scope for the loop's "grow the rights-cleared library"
    core. The full §4c design stays as reference for when D074 reopens; P5 drops out
    of this phase.
-2. **OCLC WorldCat:** **pursue institutional access if obtainable** (an external,
-   user-side action). Build the book pipeline **key-gated with keyless fallbacks
-   first** (Open Library + HathiTrust + IA), degrading gracefully when no OCLC key
-   is present — same pattern as EPO/TSDR. WorldCat access is not a blocker to
-   starting (it's P4, after the free-acquisition core).
-3. **ILL:** **human-gated, and make a real request if possible.** Markery manages
-   `wants.jsonl` and *prepares* the ILL request; on human approval it submits via a
-   local institution-specific path **if one is available** (OCLC WorldShare / ILLiad
-   / RapidILL / ReShare — see `memory/reference_ill_automation.md`), otherwise it
-   emits the request for manual submission. Never auto-submits. (Institutional ILL
-   access is the same external, user-side dependency as WorldCat.)
+2. **OCLC WorldCat (refined 2026-06-24):** the user has a **personal worldcat.org
+   account, not an institutional OCLC WSKey** — i.e. website access, *not* an API
+   key. So programmatic discovery uses the **keyless** sources (Open Library +
+   HathiTrust + IA); WorldCat appears only as a **human deep-link**
+   (`search.worldcat.org/search?q=…`) for the user to check holdings/editions. A
+   key-gated OCLC client is still built (activates if an institutional WSKey ever
+   appears — same pattern as EPO/TSDR/DPLA), but it is not the primary path.
+3. **ILL (refined 2026-06-24): fully human-submitted.** The user must make the ILL
+   request themselves through their library (they have to request ILL access first).
+   Markery **prepares** the request — a formatted citation + a `wants.jsonl` entry —
+   and the human submits it. No programmatic submission path; Markery never POSTs to
+   any ILL system. (Refs in `memory/reference_ill_automation.md` are kept for if an
+   institutional ILL API ever becomes available.)
 4. **Autonomy boundary: confirmed — auto-acquire-free / gate-everything-else.** The
    loop auto-acquires free/PD items into the library; everything with cost or
    commitment (ILL requests, any purchase) and ambiguous-license media interrupts
