@@ -144,6 +144,12 @@ class Project:
         return self.root / "references"
 
     @property
+    def library_refs(self) -> Path:
+        # Phase 29 P2: ids of global library items this project references.
+        # Universal (any project type may reference library media).
+        return self.root / "references" / "library.jsonl"
+
+    @property
     def content(self) -> Path:
         self._require_type(ProjectType.MATCH_REVIEW_ESSAY, "content")
         return self.root / "content"

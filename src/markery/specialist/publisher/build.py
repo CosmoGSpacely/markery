@@ -144,6 +144,52 @@ def _auto_summary(proj: Project) -> str:
     return ""
 
 
+def _resolve_project_media(proj: Project, out: Path, written_images: set[Path]) -> dict[str, dict]:
+    """Resolve a project's library references against the global catalog.
+
+    Reads ``references/library.jsonl`` (Phase 29 P2), looks each id up in the global
+    ``library/catalog.jsonl``, copies referenced media files into ``site/<project>/
+    media/``, and returns the media_index for ``[[media:]]`` embeds. Missing files
+    are skipped (gitignored + re-acquirable)."""
+    refs_path = proj.library_refs
+    if not refs_path.exists():
+        return {}
+    catalog_path = config.ROOT / "library" / "catalog.jsonl"
+    if not catalog_path.exists():
+        return {}
+    catalog = {}
+    for line in catalog_path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            row = json.loads(line)
+            catalog[row["id"]] = row
+
+    media_root = config.ROOT / "library" / "media"
+    out_media = out / "media"
+    media_index: dict[str, dict] = {}
+    for line in refs_path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        ref = json.loads(line)
+        item = catalog.get(ref.get("id"))
+        if item is None or not item.get("file"):
+            continue
+        srcfile = media_root / item["id"] / item["file"]
+        if not srcfile.exists():
+            continue
+        dest = out_media / item["file"]
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(srcfile.read_bytes())
+        written_images.add(dest.resolve())
+        media_index[item["id"]] = {
+            "file": f"media/{item['file']}",
+            "title": item.get("title", ""),
+            "attribution_text": item.get("attribution_text", ""),
+            "license": item.get("license", ""),
+            "source_url": item.get("source_url", ""),
+        }
+    return media_index
+
+
 def _representative_mark(project: str, tms: list[dict], pair_serials: set[str],
                          override) -> tuple[str | None, str]:
     mark = None
@@ -374,30 +420,10 @@ def build_site(project: str, out_dir: Path | None = None, base_url: str | None =
                 figure_index[pat["patent_no"]] = f"images/patents/{pat['patent_no']}.png"
                 written_images.add(dest.resolve())
 
-    # Copy acquired public-domain/free media and build media_index for [[media:]] embeds.
-    media_index: dict[str, dict] = {}
-    media_src = proj.root / "library" / "media"
-    media_idx_file = media_src / "index.jsonl"
-    if media_idx_file.exists():
-        out_media = out / "media"
-        for line in media_idx_file.read_text().splitlines():
-            if not line.strip():
-                continue
-            item = json.loads(line)
-            srcfile = media_src / item["slug"] / item["file"]
-            if not srcfile.exists():
-                continue
-            dest = out_media / item["file"]
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_bytes(srcfile.read_bytes())
-            written_images.add(dest.resolve())
-            media_index[item["slug"]] = {
-                "file": f"media/{item['file']}",
-                "title": item.get("title", ""),
-                "attribution_text": item.get("attribution_text", ""),
-                "license": item.get("license", ""),
-                "source_url": item.get("source_url", ""),
-            }
+    # Resolve the project's library references (Phase 29 P2) against the GLOBAL
+    # catalog, copy each referenced media file into site/<project>/media/, and build
+    # media_index for [[media:]] embeds.
+    media_index = _resolve_project_media(proj, out, written_images)
 
     pages: list[Path] = []
     search_records: list[dict] = []

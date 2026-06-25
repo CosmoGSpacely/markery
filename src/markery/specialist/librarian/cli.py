@@ -649,6 +649,25 @@ def cmd_media_list(args: argparse.Namespace) -> None:
         print(f"{m['id']:42} {m.get('kind',''):8} {(m.get('license') or ''):10} {m.get('title','')}")
 
 
+def cmd_use(args: argparse.Namespace) -> None:
+    """Reference a global library item from a project (references/library.jsonl)."""
+    from markery.common.project import Project
+    from markery.specialist.librarian import catalog
+
+    items = catalog.load()
+    if args.id not in items:
+        print(f"No catalog item '{args.id}'. See: markery librarian catalog / media-list",
+              file=sys.stderr)
+        sys.exit(1)
+    root = Project(args.project).root
+    if not root.is_dir():
+        print(f"Project '{args.project}' not found at {root}", file=sys.stderr)
+        sys.exit(1)
+    added = catalog.add_ref(root, args.id, added_by="human")
+    verb = "Referenced" if added else "Already referenced"
+    print(f"{verb}: {args.id}  →  {args.project}")
+
+
 def cmd_catalog(args: argparse.Namespace) -> None:
     from markery.specialist.librarian import catalog
     if args.rebuild:
@@ -820,6 +839,10 @@ def librarian_main() -> None:
     p_cat.add_argument("--rebuild", action="store_true",
                        help="Regenerate catalog.jsonl from works/ + media/ metadata")
 
+    p_use = sub.add_parser("use", help="Reference a global library item from a project")
+    p_use.add_argument("id", help="Catalog item id (slug)")
+    p_use.add_argument("--project", required=True, help="Project that will reference the item")
+
     args = parser.parse_args()
 
     dispatch = {
@@ -828,6 +851,7 @@ def librarian_main() -> None:
         "media-acquire":  cmd_media_acquire,
         "media-list":     cmd_media_list,
         "catalog":        cmd_catalog,
+        "use":            cmd_use,
         "discover":       cmd_discover,
         "wants":          cmd_wants,
         "wants-update":   cmd_wants_update,

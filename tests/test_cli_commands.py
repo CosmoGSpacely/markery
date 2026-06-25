@@ -68,6 +68,27 @@ def test_historian_prepare(repo, monkeypatch, capsys):
     assert brief.exists()
 
 
+def test_librarian_use_references_catalog_item(repo, monkeypatch, capsys):
+    # Reference the global media item into the (ref-less) annual-review project.
+    rc = _run(monkeypatch, ["librarian", "use", repo.media_id,
+                            "--project", repo.review_project])
+    assert rc == 0
+    assert "Referenced" in capsys.readouterr().out
+    refs = (repo.root / "projects" / repo.review_project / "references" / "library.jsonl")
+    assert repo.media_id in refs.read_text()
+
+
+def test_librarian_use_rejects_unknown_item(repo, monkeypatch, capsys):
+    rc = _run(monkeypatch, ["librarian", "use", "no-such-item",
+                            "--project", repo.project])
+    assert rc == 1
+
+
+def test_librarian_catalog_lists_items(repo, monkeypatch, capsys):
+    assert _run(monkeypatch, ["librarian", "catalog"]) == 0
+    assert "library catalog" in capsys.readouterr().out
+
+
 def test_matchmaker_list(repo, monkeypatch, capsys):
     assert _run(monkeypatch, ["matchmaker", "list"]) == 0
     out = capsys.readouterr().out

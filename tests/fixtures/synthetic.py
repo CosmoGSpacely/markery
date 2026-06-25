@@ -54,6 +54,9 @@ REVIEW_PROJECT = "synth-annual-review"
 REVIEW_YEAR = 1935
 REVIEW_SERIAL = 71950001
 
+# A global library media item the match-review project references (Phase 29).
+MEDIA_ID = "synthex-works-1935"
+
 # A 1×1 transparent PNG — the smallest valid image, used for mark/figure blobs.
 _PNG_1PX = bytes.fromhex(
     "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4"
@@ -76,6 +79,7 @@ class SyntheticRepo:
     conf_patent: str = CONF_PATENT
     review_project: str = REVIEW_PROJECT
     review_year: int = REVIEW_YEAR
+    media_id: str = MEDIA_ID
 
     @property
     def env(self) -> dict[str, str]:
@@ -399,6 +403,29 @@ def build_synthetic_repo(tmp_path: Path) -> SyntheticRepo:
     review.mkdir(parents=True)
     (review / "project.json").write_text(
         json.dumps({"type": "annual-review", "review_years": [REVIEW_YEAR]}) + "\n"
+    )
+
+    # Global library (Phase 29): one media item + catalog row; the match-review
+    # project references it via references/library.jsonl.
+    import hashlib
+    lib = root / "library"
+    media_item_dir = lib / "media" / MEDIA_ID
+    media_item_dir.mkdir(parents=True)
+    (media_item_dir / f"{MEDIA_ID}.png").write_bytes(_PNG_1PX)
+    media_meta = {
+        "id": MEDIA_ID, "kind": "photo", "title": "Synthex Works, 1935",
+        "creator": "Anon", "date": 1935, "source": "wikimedia_commons",
+        "source_id": f"File:{MEDIA_ID}.png",
+        "source_url": f"https://commons.wikimedia.org/wiki/File:{MEDIA_ID}.png",
+        "license": "PD", "license_url": "https://pd",
+        "rights_statement": "Public domain", "attribution_text": "Anon, public domain",
+        "acquired_at": "2026-06-20", "sha256": hashlib.sha256(_PNG_1PX).hexdigest(),
+        "file": f"{MEDIA_ID}.png", "format": "png",
+    }
+    (lib / "catalog.jsonl").write_text(json.dumps(media_meta, ensure_ascii=False) + "\n")
+    (proj / "references").mkdir(parents=True)
+    (proj / "references" / "library.jsonl").write_text(
+        json.dumps({"id": MEDIA_ID, "added_by": "fixture", "added_at": "2026-06-20", "note": ""}) + "\n"
     )
 
     return SyntheticRepo(root=root, data_dir=data_dir)

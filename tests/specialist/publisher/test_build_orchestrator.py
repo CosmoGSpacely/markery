@@ -122,6 +122,15 @@ def test_site_search_emitted(site):
     assert (root / "search.html").exists()
 
 
+def test_referenced_library_media_copied_into_site(site):
+    repo, root = site
+    # The match-review project references one global library media item (P2);
+    # the build resolves the ref against the catalog and copies the file in.
+    media_file = root / repo.project / "media" / f"{repo.media_id}.png"
+    assert media_file.exists()
+    assert media_file.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+
+
 # ---------------------------------------------------------------------------
 # annual-review project (build_all review branch)
 # ---------------------------------------------------------------------------

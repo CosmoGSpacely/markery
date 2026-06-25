@@ -58,6 +58,21 @@ def test_atomic_write_leaves_no_temp(library):
 
 
 # ---------------------------------------------------------------------------
+# project references (P2)
+# ---------------------------------------------------------------------------
+
+def test_add_ref_idempotent_and_read(library, tmp_path):
+    proj_root = library / "projects" / "demo"
+    proj_root.mkdir(parents=True)
+    assert catalog.add_ref(proj_root, "item-a", added_by="loop") is True
+    assert catalog.add_ref(proj_root, "item-a") is False   # already referenced
+    assert catalog.add_ref(proj_root, "item-b") is True
+    refs = catalog.read_refs(proj_root)
+    assert [r["id"] for r in refs] == ["item-a", "item-b"]
+    assert refs[0]["added_by"] == "loop"
+
+
+# ---------------------------------------------------------------------------
 # catalog: rebuild from per-item metadata.json
 # ---------------------------------------------------------------------------
 

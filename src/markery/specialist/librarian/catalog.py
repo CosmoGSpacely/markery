@@ -143,6 +143,43 @@ def media_item(meta: dict) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# Project references (Phase 29 P2) — projects/<name>/references/library.jsonl
+# ---------------------------------------------------------------------------
+
+def project_refs_path(project_root: Path) -> Path:
+    return project_root / "references" / "library.jsonl"
+
+
+def read_refs(project_root: Path) -> list[dict]:
+    """Return a project's library references as a list of {id, ...} objects."""
+    p = project_refs_path(project_root)
+    if not p.exists():
+        return []
+    return [json.loads(line) for line in p.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def add_ref(project_root: Path, item_id: str, added_by: str = "human",
+            note: str = "") -> bool:
+    """Idempotently add a library item id to a project's references/library.jsonl.
+
+    Returns True if newly added, False if already referenced."""
+    from datetime import date
+    refs = read_refs(project_root)
+    if any(r.get("id") == item_id for r in refs):
+        return False
+    refs.append({
+        "id": item_id, "added_by": added_by,
+        "added_at": date.today().isoformat(), "note": note,
+    })
+    p = project_refs_path(project_root)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("w", encoding="utf-8") as fh:
+        for r in refs:
+            fh.write(json.dumps(r, ensure_ascii=False) + "\n")
+    return True
+
+
 def rebuild() -> dict[str, int]:
     """Regenerate catalog.jsonl from every works/ and media/ metadata.json.
 
