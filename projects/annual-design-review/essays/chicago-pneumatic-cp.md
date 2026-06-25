@@ -1,0 +1,45 @@
+# Chicago Pneumatic Tool Company — CP Design Mark
+
+**Serial No.** 71299042  
+**Filed** April 18, 1930  
+**Registration No.** 274,689  
+**Owner** Chicago Pneumatic Tool Company, New York City, NY  
+**Status** Expired / Cancelled  
+
+---
+
+## The Company
+
+Chicago Pneumatic Tool Company was among the most consequential American manufacturers of pneumatic and power tools in the first half of the twentieth century. By 1930 the company had relocated its principal offices from Chicago to New York City — a characteristic move for major industrial enterprises whose manufacturing remained in the interior while their commercial and administrative functions gravitated toward the financial capital. The company's roots lay in the rapid industrialization of the 1880s and 1890s, when compressed-air technology was transforming construction, mining, and heavy industry. Pneumatic riveting in shipbuilding, rock drilling in railroad tunneling, and chipping and calking in boilermaking were among the early applications that established a mass market for purpose-built pneumatic tools.
+
+Chicago Pneumatic built its position through a combination of manufacturing breadth and systematic branding. The CP monogram — two stylized initials rendered within an oval cartouche — became one of the more recognizable industrial marks of the interwar period, appearing on tool housings, company literature, and trade advertising throughout the 1920s and 1930s.
+
+## The Mark
+
+The April 1930 filing presents a composite design mark: the CP monogram set within an oval, encircled by the phrase "CHICAGO PNEUMATIC" and accompanied by the tagline "DEPEND UPON THAT NAME." The USPTO assigned it design search codes 240103, 240501, and 260128 — codes corresponding to monogram letter arrangements and oval geometric framing elements. The draw code 3000 designates it as a stylized design mark, meaning the protection extends to the specific design as drawn, not to the letter forms or the phrase as standalone text.
+
+This last point was made explicit in the disclaimer filed with the registration: *"No claim is made to the word 'Chicago' or the word 'Pneumatic' or the phrase 'Depend Upon That Name' apart from the mark shown by the drawing."* The disclaimer is legally significant — it signals that Chicago Pneumatic could not assert exclusive rights to either its geographic or descriptive name, nor to its slogan, in isolation. Only the combined design carried trademark protection. This is consistent with USPTO practice for composite marks whose constituent words are either geographically descriptive, functionally descriptive, or otherwise common.
+
+The tagline "DEPEND UPON THAT NAME" is characteristic of early twentieth-century industrial brand rhetoric. It makes a reliability claim — the name is the guarantee — while simultaneously asserting that the name is worth depending upon: a circular argument typical of the period's brand advertising, which sought to convert familiarity into assurance. Chicago Pneumatic used variants of this phrase across its advertising through the 1920s and 1930s, and the 1930 filing represents its formalization as a registered trademark element.
+
+## Products and Industrial Context
+
+The goods-and-services description filed with this trademark is an unusually detailed inventory of Chicago Pneumatic's product line as of 1930. It covers:
+
+**Percussive pneumatic tools**: riveting hammers, chipping hammers, calking hammers, stone hammers; yoke, jam, and shell riveters; drift-bolt drivers, rivet busters, stoper drills, sinker drills, and rock drills. These are the workhorses of shipbuilding, bridge construction, and heavy structural ironwork — industries operating at scale in 1930 despite the economic contraction that began in 1929.
+
+**Rotary pneumatic tools**: air drills, wood-boring machines, pistol drills, rotary drills, corner drills, spindle drills, track drills, coal drills, hand drills. The rotary category reflects the expansion of pneumatic tools from construction into manufacturing environments where drilling rather than impact work predominated.
+
+**Accessories and tooling**: chucks, reamers, flue cutters, angle gears, twist drills, augers, flue expanders, hose-clamp tools, pliers, drilling stands, drill tripods, mining columns.
+
+**Prime movers and auxiliary equipment**: steam and power-driven air compressors, gas and gasoline-driven air compressors, portable air compressors, fuel-oil engines, gas engines. The inclusion of compressors alongside tools reflects vertical integration — a customer who bought a Chicago Pneumatic compressor was a captive market for Chicago Pneumatic tools.
+
+**Material handling and support equipment**: mine hoists, sand pumps, cranes, elevators, portable winches, bolt drivers, spike drivers, hammer drills, sand rammers, stone dressers.
+
+**Conditioning apparatus**: air injectors, air motors, air jacks, automatic oiling devices, circuit breakers, and air-conditioning apparatus for pneumatic tools — specifically, after coolers, reheaters, and intercoolers. This last category reflects the thermodynamic reality of compressed-air systems, in which multi-stage compression generates heat that must be managed to prevent tool damage and maintain efficiency.
+
+The breadth of this list — running from portable hand tools through prime movers to industrial-scale hoists — positions Chicago Pneumatic as a comprehensive supplier for the mining, construction, and manufacturing industries. Filed in April 1930, seven months after the stock market crash of October 1929, the registration represents a company still operating at full industrial scale and investing in brand protection even as the Depression was deepening. The pneumatic tool sector was relatively insulated from the initial shock because infrastructure contracts and mining operations continued on multi-year cycles, but demand would contract sharply by 1932–1933.
+
+## Note on the Image
+
+The image reproduced here was fetched from the USPTO Trademark Status and Document Retrieval (TSDR) system and represents the design drawing as submitted with the April 1930 filing. The enhanced version was processed at 4× resolution using high-quality Lanczos resampling from the raw TSDR source image (15,311 bytes, 1200×583 pixels). The source image is a scanned reproduction of the original pen-and-ink drawing submitted to the USPTO and reflects the mark as it existed in 1930 — no later revisions are incorporated.

@@ -323,8 +323,16 @@ def build_all(out_dir: Path | None = None, base_url: str | None = None,
             y_path, y_summary, _ = r.render_review_year(year, site_root, proj.name, base_url=base_url)
             review_summaries.append(y_summary)
             pages.append(y_path)
+            # Index the year landing + each month in site-wide search (was missing —
+            # review content showed a search box but produced 0 search records).
+            combined_search.append(_build_search_record(
+                f"{year} Design-Mark Review", "review",
+                f"{proj.name}/{year}/index.html", None))
             for mm in range(1, 13):
                 pages.append(site_root / proj.name / str(year) / f"{mm:02d}.html")
+                combined_search.append(_build_search_record(
+                    f"{year}-{mm:02d} design marks", "review",
+                    f"{proj.name}/{year}/{mm:02d}.html", None))
             print(f"  review {year}      → {proj.name}/{year}/ (12 months, {y_summary['count']} marks)")
 
     pages.insert(0, r.render_portal(site_root, portal_projects, portal_matches,

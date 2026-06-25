@@ -173,6 +173,16 @@ def test_portal_lists_review(site):
     assert str(repo.review_year) in portal
 
 
+def test_review_pages_indexed_in_search(site):
+    repo, root = site
+    import json
+    records = json.loads((root / "search.json").read_text())
+    titles = [r["title"] for r in records]
+    # The year landing + 12 months of the annual review are searchable.
+    assert f"{repo.review_year} Design-Mark Review" in titles
+    assert sum(1 for t in titles if f"{repo.review_year}-" in t) == 12
+
+
 # ---------------------------------------------------------------------------
 # check_site — no broken internal links
 # ---------------------------------------------------------------------------
