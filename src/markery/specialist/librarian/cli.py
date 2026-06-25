@@ -690,6 +690,39 @@ def cmd_media_list(args: argparse.Namespace) -> None:
         print(f"{m['id']:42} {m.get('kind',''):8} {(m.get('license') or ''):10} {m.get('title','')}")
 
 
+def cmd_leads(args: argparse.Namespace) -> None:
+    """List discovery leads (filterable by project/status/source)."""
+    from markery.specialist.librarian import leads as leads_mod
+    rows = leads_mod.read_leads()
+    if args.project:
+        rows = [r for r in rows if r.get("project") == args.project]
+    if args.status:
+        rows = [r for r in rows if r.get("status") == args.status]
+    if args.source:
+        rows = [r for r in rows if r.get("source") == args.source]
+    if not rows:
+        print("No leads.")
+        return
+    print(f"{'STATUS':<9} {'REL':<4} {'SOURCE':<9} {'PROJECT':<18} TITLE")
+    print("-" * 90)
+    for r in rows:
+        rel = r.get("relevance")
+        print(f"{r.get('status',''):<9} {str(rel if rel is not None else '-'):<4} "
+              f"{r.get('source',''):<9} {(r.get('project') or '-'):<18} {r.get('title','')[:45]}")
+    print(f"\n{len(rows)} lead(s).")
+
+
+def cmd_leads_add(args: argparse.Namespace) -> None:
+    """Append a discovery lead (used by the loop or manually). Idempotent."""
+    from markery.specialist.librarian import leads as leads_mod
+    added = leads_mod.add_lead(
+        args.source, args.id, title=args.title or "", url=args.url or "",
+        kind=args.kind or "", project=args.project or "",
+        relevance=args.relevance, status=args.status, note=args.note or "",
+    )
+    print(("Logged" if added else "Already logged") + f": {args.source}:{args.id}")
+
+
 def cmd_use(args: argparse.Namespace) -> None:
     """Reference a global library item from a project (references/library.jsonl)."""
     from markery.common.project import Project
@@ -892,6 +925,23 @@ def librarian_main() -> None:
     p_use.add_argument("id", help="Catalog item id (slug)")
     p_use.add_argument("--project", required=True, help="Project that will reference the item")
 
+    p_leads = sub.add_parser("leads", help="List discovery leads (the discovery log)")
+    p_leads.add_argument("--project", default=None)
+    p_leads.add_argument("--status", default=None,
+                         choices=["logged", "scored", "acquired", "queued", "dropped"])
+    p_leads.add_argument("--source", default=None)
+
+    p_ladd = sub.add_parser("leads-add", help="Append a discovery lead (loop/manual)")
+    p_ladd.add_argument("--source", required=True)
+    p_ladd.add_argument("--id", required=True, help="source_id")
+    p_ladd.add_argument("--title", default=None)
+    p_ladd.add_argument("--url", default=None)
+    p_ladd.add_argument("--kind", default=None)
+    p_ladd.add_argument("--project", default=None)
+    p_ladd.add_argument("--relevance", type=int, default=None)
+    p_ladd.add_argument("--status", default="logged")
+    p_ladd.add_argument("--note", default=None)
+
     args = parser.parse_args()
 
     dispatch = {
@@ -901,6 +951,8 @@ def librarian_main() -> None:
         "media-list":     cmd_media_list,
         "catalog":        cmd_catalog,
         "use":            cmd_use,
+        "leads":          cmd_leads,
+        "leads-add":      cmd_leads_add,
         "discover":       cmd_discover,
         "wants":          cmd_wants,
         "wants-update":   cmd_wants_update,

@@ -84,6 +84,27 @@ def test_librarian_use_rejects_unknown_item(repo, monkeypatch, capsys):
     assert rc == 1
 
 
+def test_librarian_leads_add_and_list(repo, monkeypatch, capsys):
+    assert _run(monkeypatch, ["librarian", "leads-add", "--source", "loc",
+                              "--id", "p1", "--title", "Steel Plow",
+                              "--project", repo.project, "--relevance", "4"]) == 0
+    assert "Logged" in capsys.readouterr().out
+    assert _run(monkeypatch, ["librarian", "leads"]) == 0
+    out = capsys.readouterr().out
+    assert "Steel Plow" in out and "loc" in out
+
+
+def test_historian_relevance_json(repo, monkeypatch, capsys):
+    monkeypatch.setattr("markery.common.llm.call",
+                        lambda *a, **k: ("SCORE: 4\nREASONING: about Synthex.", 0, 0, 0, 0))
+    rc = _run(monkeypatch, ["historian", "relevance", repo.project,
+                            "--title", "Synthex Gauges", "--json"])
+    assert rc == 0
+    import json as _json
+    out = capsys.readouterr().out.strip().splitlines()[-1]
+    assert _json.loads(out)["score"] == 4
+
+
 def test_librarian_catalog_lists_items(repo, monkeypatch, capsys):
     assert _run(monkeypatch, ["librarian", "catalog"]) == 0
     assert "library catalog" in capsys.readouterr().out

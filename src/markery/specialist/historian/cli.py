@@ -931,6 +931,19 @@ def cmd_validate(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def cmd_relevance(args: argparse.Namespace) -> None:
+    """Score a discovered item's relevance to a project (1-5)."""
+    import json as _json
+    from markery.specialist.historian.relevance import score_relevance
+    model = getattr(args, "model", None) or os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
+    result = score_relevance(args.project, args.title, args.text, model=model)
+    if getattr(args, "json", False):
+        print(_json.dumps(result))
+    else:
+        print(f"relevance: {result['score']}/5")
+        print(f"  {result['reasoning']}")
+
+
 def historian_main() -> None:
     parser = argparse.ArgumentParser(
         prog="markery historian",
@@ -1004,6 +1017,15 @@ def historian_main() -> None:
     iq_p.add_argument("--model", default=None, metavar="MODEL",
                       help="Override MARKERY_MODEL for this batch")
 
+    rel_p = sub.add_parser("relevance",
+                           help="Score a discovered item's relevance to a project (1-5, free model)")
+    rel_p.add_argument("project", help="Project name")
+    rel_p.add_argument("--title", required=True, help="Candidate source title")
+    rel_p.add_argument("--text", default="", help="Optional snippet/abstract")
+    rel_p.add_argument("--model", default=None, metavar="MODEL")
+    rel_p.add_argument("--json", action="store_true", dest="json",
+                       help="Emit a single JSON object {score, reasoning} (loop contract)")
+
     args = parser.parse_args()
 
     if args.action == "prepare":
@@ -1021,3 +1043,5 @@ def historian_main() -> None:
         cmd_validate(args)
     elif args.action == "infer-queue":
         cmd_infer_queue(args)
+    elif args.action == "relevance":
+        cmd_relevance(args)
