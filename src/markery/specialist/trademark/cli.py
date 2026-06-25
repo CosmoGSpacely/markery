@@ -80,6 +80,51 @@ def cmd_enrich_project(args: argparse.Namespace) -> None:
     print(f"\n{result['images']} image(s) stored, {result['status']} status record(s) stored.")
 
 
+def _design_serials_missing_image(conn, year: int, limit: int) -> list[str]:
+    """Figurative serials (mark_draw_cd '3%') filed in `year` lacking a mark image."""
+    rows = conn.execute(
+        "SELECT CAST(cf.serial_no AS VARCHAR) FROM case_file cf "
+        "LEFT JOIN mark_images mi ON CAST(cf.serial_no AS VARCHAR) = mi.serial_no "
+        "WHERE cf.mark_draw_cd LIKE '3%' "
+        "  AND EXTRACT(year FROM cf.filing_dt) = ? "
+        "  AND mi.file IS NULL "
+        "ORDER BY cf.serial_no LIMIT ?",
+        [year, limit],
+    ).fetchall()
+    return [r[0] for r in rows]
+
+
+def cmd_enrich_year(args: argparse.Namespace) -> None:
+    """Backfill design-mark images for a review year (D075).
+
+    Fetches TSDR drawings for figurative marks (mark_draw_cd '3%') filed in the
+    given year that lack an image, up to --limit. Rate-limited; run deliberately."""
+    from markery.specialist.trademark.build import open_db
+    from markery.specialist.trademark.enrich import store_mark_image
+    from markery.specialist.trademark.tsdr_client import TSDRClient
+    from markery.common.auth import load_tsdr_key
+
+    conn = open_db()
+    serials = _design_serials_missing_image(conn, args.year, args.limit)
+    if not serials:
+        print(f"No figurative marks filed in {args.year} are missing an image.")
+        conn.close()
+        return
+    print(f"Backfilling design-mark images for {args.year}: "
+          f"{len(serials)} candidate(s) (limit {args.limit}) ...")
+    client = TSDRClient(load_tsdr_key())
+    stored = 0
+    for sn in serials:
+        try:
+            if store_mark_image(sn, client, conn, force=args.force):
+                stored += 1
+                print(f"  {sn}: image stored")
+        except Exception as exc:
+            print(f"  {sn}: error — {exc}", file=sys.stderr)
+    conn.close()
+    print(f"\n{stored}/{len(serials)} image(s) stored for {args.year}.")
+
+
 def cmd_load_events(args: argparse.Namespace) -> None:
     from markery.specialist.trademark.build import open_db, load_events
     conn = open_db()
@@ -421,6 +466,14 @@ def main() -> None:
     p_ep.add_argument("--force", action="store_true",
                       help="Re-fetch even if already stored")
 
+    # enrich-year (D075 — design-mark image backfill for a review year)
+    p_ey = sub.add_parser("enrich-year",
+                          help="Backfill design-mark images (TSDR) for figurative marks filed in a year")
+    p_ey.add_argument("year", type=int, help="Filing year (e.g. 1928)")
+    p_ey.add_argument("--limit", type=int, default=25, metavar="N",
+                      help="Max images to fetch this run (default: 25; rate-limited)")
+    p_ey.add_argument("--force", action="store_true", help="Re-fetch even if stored")
+
     # load-events
     p_lev = sub.add_parser("load-events",
                             help="Load event.csv into the events table")
@@ -512,6 +565,7 @@ def main() -> None:
         "build":               cmd_build,
         "enrich":              cmd_enrich,
         "enrich-project":      cmd_enrich_project,
+        "enrich-year":         cmd_enrich_year,
         "load-events":         cmd_load_events,
         "load-foreign":        cmd_load_foreign,
         "fetch":               cmd_fetch,
