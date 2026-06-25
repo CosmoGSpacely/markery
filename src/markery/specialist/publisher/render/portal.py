@@ -77,7 +77,9 @@ def render_portal(
             f'in monthly galleries.</p>'
             f'<div class="portal-stats">'
             f'<span class="chip-sm">{r.get("count", 0)} design marks</span>'
-            f'<span class="chip-sm">{r.get("with_images", 0)} with images</span>'
+            + (f'<span class="chip-sm chip-tech">{r.get("tech_count", 0)} technology</span>'
+               if r.get("tech_count") else "")
+            + f'<span class="chip-sm">{r.get("with_images", 0)} with images</span>'
             f'</div>'
             f'<a class="portal-enter" href="{r["url"]}">Explore →</a>'
             f'</div>'

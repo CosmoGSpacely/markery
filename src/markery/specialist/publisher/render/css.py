@@ -612,6 +612,15 @@ blockquote p { margin: 0; }
 .review-yearnav { font-size: .9em; margin-bottom: 16px; }
 .review-yearnav a { margin: 0 6px; text-decoration: none; }
 .review-year-current { margin: 0 6px; font-weight: bold; }
+/* Technology design marks (Phase 31): class-gate highlight + counts. */
+.tech-badge {
+  display: inline-block; margin-left: 6px; padding: 1px 6px;
+  font-size: .68em; font-weight: 600; vertical-align: middle;
+  color: #ffffe3; background: #6d8196; border-radius: 3px; white-space: nowrap;
+}
+.card.tech-mark { box-shadow: inset 3px 0 0 #6d8196; }
+.review-month-count .tech-count { color: #6d8196; font-weight: 600; }
+.chip-tech { background: #6d8196; color: #ffffe3; }
 
 /* ── Per-record detail page (one trademark / one patent) ── */
 .detail-layout {

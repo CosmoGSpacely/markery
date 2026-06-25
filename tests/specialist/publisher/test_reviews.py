@@ -17,9 +17,11 @@ def stub_marks(monkeypatch):
         # Two marks per month; one with an image, one without.
         return [
             {"serial": f"7{year}{month:02d}1", "mark": "EAGLE", "filing": date(year, month, 4),
-             "owner": "Acme Co.", "state": "NY", "goods": "boots and shoes", "has_img": True},
+             "owner": "Acme Co.", "state": "NY", "goods": "boots and shoes", "has_img": True,
+             "is_tech": True},
             {"serial": f"7{year}{month:02d}2", "mark": "", "filing": date(year, month, 9),
-             "owner": "Beta Inc.", "state": "IL", "goods": "", "has_img": False},
+             "owner": "Beta Inc.", "state": "IL", "goods": "", "has_img": False,
+             "is_tech": False},
         ]
     monkeypatch.setattr(reviews, "design_marks", fake_design_marks)
     monkeypatch.setattr(q, "get_mark_image_bytes", lambda sn: b"\x89PNG fake")
@@ -52,11 +54,25 @@ def test_year_landing_has_sibling_year_nav(tmp_path, stub_marks):
     assert '<span class="review-year-current">1929</span>' in html  # current, not linked
 
 
+def test_technology_marks_counted_highlighted_and_sampled(tmp_path, stub_marks):
+    # One tech mark (with image) per month → 12 for the year.
+    _, summary, _ = reviews.render_review_year(1930, tmp_path, "annual-design-review")
+    assert summary["tech_count"] == 12
+    # Year thumbnail prefers a technology-mark sample.
+    assert summary["thumb_src"] is not None
+    landing = (tmp_path / "annual-design-review" / "1930" / "index.html").read_text()
+    assert "12 technology" in landing                    # year subtitle
+    assert 'class="tech-count">1 tech' in landing        # per-month strip count
+    july = (tmp_path / "annual-design-review" / "1930" / "07.html").read_text()
+    assert "tech-badge" in july and "card tech-mark" in july   # highlight on the card
+    assert "1 technology" in july                          # month subtitle
+
+
 def test_review_month_page_depth_and_back_link(tmp_path, stub_marks):
     reviews.render_review_year(1930, tmp_path, "annual-design-review")
     july = (tmp_path / "annual-design-review" / "1930" / "07.html").read_text()
     assert "<h1>July 1930</h1>" in july
-    assert july.count('class="card"') == 2
+    assert july.count('id="sn-') == 2          # two design-mark cards (one tech, one not)
     assert 'src="img/' in july                     # image relative to month dir
     # month navigation: link back to the year landing + prev/next month
     assert 'href="index.html">1930 review' in july

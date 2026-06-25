@@ -122,6 +122,7 @@ def _build_trademarks(path: Path) -> None:
         "(serial_no BIGINT, statement_type_cd VARCHAR, statement_text VARCHAR)"
     )
     conn.execute("CREATE TABLE intl_class (serial_no BIGINT, intl_class VARCHAR)")
+    conn.execute("CREATE TABLE us_class (us_class_cd VARCHAR, class_id BIGINT, serial_no BIGINT)")
     conn.execute(
         "CREATE TABLE owner "
         "(own_id BIGINT, serial_no BIGINT, own_name VARCHAR, own_type_cd VARCHAR, "
@@ -172,6 +173,8 @@ def _build_trademarks(path: Path) -> None:
     )
     conn.execute("INSERT INTO design_search VALUES (?, '260101')", [REVIEW_SERIAL])
     conn.execute("INSERT INTO design_search VALUES (?, '260102')", [CAND_SERIAL])
+    # US class 026 (measuring/scientific) = a technology mark by the class gate.
+    conn.execute("INSERT INTO us_class VALUES ('026', 1, ?)", [REVIEW_SERIAL])
     conn.execute(
         "INSERT INTO statement VALUES (?, 'GS0', ?)",
         [REVIEW_SERIAL, "Decorative emblems and ornamental designs for packaging."],

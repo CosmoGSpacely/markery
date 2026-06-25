@@ -19,6 +19,12 @@ from markery.specialist.publisher.render.components import _esc, _page, _page_ti
 _MONTHS = ["", "January", "February", "March", "April", "May", "June",
            "July", "August", "September", "October", "November", "December"]
 
+# Technology design marks by the old US class schedule (PUBLISHER_REVIEW §5):
+# apparatus auto-pass classes + the borderline hardware/filter/belting classes.
+# Pre-Nice marks carry US classes (zero-padded 3-digit). This is the deterministic
+# class gate; Phase 32's free-model goods judgment refines it for patent matching.
+_TECH_US_CLASSES = {"013", "019", "021", "023", "026", "031", "034", "035", "044"}
+
 
 def design_marks(year: int, month: int) -> list[dict]:
     """Design marks (mark_draw_cd LIKE '3%') filed in the given year/month."""
@@ -28,7 +34,8 @@ def design_marks(year: int, month: int) -> list[dict]:
         SELECT cf.serial_no, cf.mark_id_char, cf.filing_dt,
                o.own_name, o.own_addr_state_cd,
                gs.goods,
-               CASE WHEN mi.file IS NOT NULL THEN 1 ELSE 0 END AS has_img
+               CASE WHEN mi.file IS NOT NULL THEN 1 ELSE 0 END AS has_img,
+               uc.us_classes
         FROM case_file cf
         LEFT JOIN (
             SELECT serial_no, own_name, own_addr_state_cd FROM owner
@@ -39,18 +46,26 @@ def design_marks(year: int, month: int) -> list[dict]:
             FROM statement WHERE statement_type_cd LIKE 'GS%' GROUP BY serial_no
         ) gs ON cf.serial_no = gs.serial_no
         LEFT JOIN mark_images mi ON cf.serial_no = mi.serial_no
+        LEFT JOIN (
+            SELECT serial_no, string_agg(DISTINCT us_class_cd, ',') AS us_classes
+            FROM us_class GROUP BY serial_no
+        ) uc ON cf.serial_no = uc.serial_no
         WHERE cf.mark_draw_cd LIKE '3%'
           AND cf.filing_dt BETWEEN DATE '{year}-{month:02d}-01'
                                AND DATE '{year}-{month:02d}-{last:02d}'
         ORDER BY cf.filing_dt, cf.serial_no
     """).fetchall()
     conn.close()
-    return [
-        {"serial": str(r[0]), "mark": r[1] or "", "filing": r[2],
-         "owner": r[3] or "", "state": r[4] or "", "goods": r[5] or "",
-         "has_img": bool(r[6])}
-        for r in rows
-    ]
+    out = []
+    for r in rows:
+        classes = set((r[7] or "").split(",")) if r[7] else set()
+        out.append({
+            "serial": str(r[0]), "mark": r[1] or "", "filing": r[2],
+            "owner": r[3] or "", "state": r[4] or "", "goods": r[5] or "",
+            "has_img": bool(r[6]),
+            "is_tech": bool(classes & _TECH_US_CLASSES),
+        })
+    return out
 
 
 def _card(m: dict, img_rel: str | None) -> str:
@@ -65,10 +80,13 @@ def _card(m: dict, img_rel: str | None) -> str:
     goods = goods_full[:120] + ("…" if len(goods_full) > 120 else "")
     goods_attr = f' title="{_esc(goods_full)}"' if goods_full else ""
     goods_html = f'<div class="card-goods"{goods_attr}>{_esc(goods)}</div>' if goods_full else ""
+    tech = m.get("is_tech")
+    badge = '<span class="tech-badge" title="Technology mark (US apparatus class)">⚙ Technology</span>' if tech else ""
+    card_cls = "card tech-mark" if tech else "card"
     return (
-        f'<div class="card" id="sn-{m["serial"]}">{inner}'
+        f'<div class="{card_cls}" id="sn-{m["serial"]}">{inner}'
         f'<div class="card-body">'
-        f'<div class="card-name">{_esc(m["mark"] or "(design mark)")}</div>'
+        f'<div class="card-name">{_esc(m["mark"] or "(design mark)")}{badge}</div>'
         f'<div class="card-meta">{_esc(owner)}</div>'
         f'<div class="card-meta">Filed {_esc(filing_str)}</div>'
         f'{goods_html}'
@@ -88,6 +106,7 @@ def render_review_month(
     img_dir = year_dir / "img"
     written: list[Path] = []
     thumb: str | None = None
+    tech_thumb: str | None = None
     cards: list[str] = []
     for m in marks:
         img_rel = None
@@ -101,9 +120,13 @@ def render_review_month(
                 img_rel = f"img/{m['serial']}.png"
                 if thumb is None:
                     thumb = m["serial"]
+                if m.get("is_tech") and tech_thumb is None:
+                    tech_thumb = m["serial"]   # prefer a technology mark as the sample
         cards.append(_card(m, img_rel))
 
+    tech_count = sum(1 for m in marks if m.get("is_tech"))
     name = f"{_MONTHS[month]} {year}"
+    tech_sub = f' · {tech_count} technology' if tech_count else ""
     grid = (f'<div class="card-grid">{"".join(cards)}</div>'
             if cards else '<p class="empty-state">No design marks filed this month.</p>')
     # Month-to-month navigation (prev · year · next).
@@ -117,7 +140,7 @@ def render_review_month(
     )
     body = (
         f'<div class="page-header"><h1>{name}</h1>'
-        f'<div class="subtitle">Design marks · {len(marks)} filed</div></div>'
+        f'<div class="subtitle">Design marks · {len(marks)} filed{tech_sub}</div></div>'
         f'<div class="page-body">{month_nav}{grid}{month_nav}</div>'
     )
     out_path = year_dir / f"{month:02d}.html"
@@ -129,7 +152,9 @@ def render_review_month(
     summary = {
         "month": month, "name": name, "count": len(marks),
         "with_images": sum(1 for m in marks if m["has_img"]),
+        "tech_count": tech_count,
         "href": f"{month:02d}.html", "thumb": thumb,
+        "tech_thumb": tech_thumb or thumb,
     }
     return out_path, summary, written
 
@@ -154,13 +179,18 @@ def render_review_year(
 
     total = sum(s["count"] for s in months)
     total_img = sum(s["with_images"] for s in months)
-    # thumb path relative to the year landing (year_dir/index.html): img/<serial>.png
-    year_thumb = next((f'img/{s["thumb"]}.png' for s in months if s["thumb"]), None)
+    total_tech = sum(s.get("tech_count", 0) for s in months)
+    # thumb path relative to the year landing (year_dir/index.html): img/<serial>.png.
+    # Prefer a technology-mark sample for the year thumbnail.
+    year_thumb = (next((f'img/{s["tech_thumb"]}.png' for s in months if s.get("tech_thumb")), None)
+                  or next((f'img/{s["thumb"]}.png' for s in months if s["thumb"]), None))
 
     rows = "".join(
         f'<a class="review-month" href="{s["href"]}">'
         f'<span class="review-month-name">{_esc(s["name"].split()[0])}</span>'
-        f'<span class="review-month-count">{s["count"]} marks · {s["with_images"]} imgs</span>'
+        f'<span class="review-month-count">{s["count"]} marks'
+        + (f' · <span class="tech-count">{s["tech_count"]} tech</span>' if s.get("tech_count") else "")
+        + '</span>'
         f'</a>'
         for s in months
     )
@@ -177,7 +207,9 @@ def render_review_year(
     body = (
         f'<div class="page-header"><h1>{year} Design-Mark Review</h1>'
         f'<div class="subtitle">USPTO design marks filed in {year} · '
-        f'{total} marks · {total_img} with images</div></div>'
+        f'{total} marks · {total_img} with images'
+        + (f' · {total_tech} technology' if total_tech else "")
+        + '</div></div>'
         f'<div class="page-body">{year_switch}'
         f'<p>Monthly galleries of design marks (drawing code 3·) filed during {year}.</p>'
         f'<div class="review-months">{rows}</div>'
@@ -193,7 +225,7 @@ def render_review_year(
         "year": year,
         "url": f"{project_slug}/{year}/index.html",
         "title": f"{year} Design-Mark Review",
-        "count": total, "with_images": total_img,
+        "count": total, "with_images": total_img, "tech_count": total_tech,
         "thumb_src": f"{project_slug}/{year}/{year_thumb}" if year_thumb else None,
     }
     return out_path, summary, written
