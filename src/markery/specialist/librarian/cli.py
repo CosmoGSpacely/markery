@@ -634,6 +634,7 @@ _MEDIA_SOURCES = {
     "nara":    "markery.specialist.librarian.sources.nara",
     "dpla":    "markery.specialist.librarian.sources.dpla",
     "ia":      "markery.specialist.librarian.sources.ia_media",
+    "chronam": "markery.specialist.librarian.sources.chronam",
 }
 
 
@@ -642,7 +643,11 @@ def cmd_media_search(args: argparse.Namespace) -> None:
     from markery.specialist.librarian.sources.dpla import DPLAKeyMissing
     adapter = importlib.import_module(_MEDIA_SOURCES[args.source])
     try:
-        results = adapter.search(args.query, args.max_results)
+        if args.source == "chronam":
+            results = adapter.search(args.query, args.max_results,
+                                     year_start=args.year_start, year_end=args.year_end)
+        else:
+            results = adapter.search(args.query, args.max_results)
     except DPLAKeyMissing as exc:
         print(f"Skipped dpla: {exc}", file=sys.stderr)
         sys.exit(1)
@@ -861,10 +866,14 @@ def librarian_main() -> None:
 
     # media-search / media-acquire / media-list (Phase 24 P2; Phase 30 P1 PD sources)
     p_msrch = sub.add_parser("media-search",
-                             help="Search a PD media source (commons/loc/nara/dpla/ia) — no download")
+                             help="Search a PD media source (commons/loc/nara/dpla/ia/chronam) — no download")
     p_msrch.add_argument("query", help="Search query")
     p_msrch.add_argument("--source", choices=list(_MEDIA_SOURCES), default="commons")
     p_msrch.add_argument("--max-results", type=int, default=10)
+    p_msrch.add_argument("--year-start", type=int, default=None,
+                         help="chronam only: earliest issue year")
+    p_msrch.add_argument("--year-end", type=int, default=None,
+                         help="chronam only: latest issue year (defaults to PD cutoff)")
 
     p_macq = sub.add_parser("media-acquire",
                             help="Acquire a PD media item into the global library (then `use` it in a project)")

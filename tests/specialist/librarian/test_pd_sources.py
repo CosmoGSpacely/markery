@@ -6,7 +6,7 @@ import pytest
 
 import markery.common.config as cfg
 from markery.specialist.librarian.sources.common import normalize_license, MediaResult
-from markery.specialist.librarian.sources import loc, nara, dpla, ia_media
+from markery.specialist.librarian.sources import loc, nara, dpla, ia_media, chronam
 from markery.specialist.librarian import media, catalog
 
 
@@ -110,6 +110,41 @@ def test_ia_media_fetch_admits_pd_mark(monkeypatch):
     r = ia_media.fetch("factory1")
     assert r is not None and r.license == "PD"
     assert r.url.endswith("factory.jpg")   # prefers the original
+
+
+# ---------------------------------------------------------------------------
+# Chronicling America (newspapers) — date-capped PD clippings
+# ---------------------------------------------------------------------------
+
+def test_chronam_search_builds_year_range(monkeypatch):
+    captured = {}
+
+    def _get(url):
+        captured["url"] = url
+        return {"items": [{"id": "/lccn/sn1/1925-01-01/ed-1/seq-1/"}]}
+
+    monkeypatch.setattr(chronam, "_get", _get)
+    ids = chronam.search("plows", year_start=1920, year_end=1930)
+    assert ids == ["/lccn/sn1/1925-01-01/ed-1/seq-1/"]
+    assert "date1=1920" in captured["url"] and "date2=1930" in captured["url"]
+
+
+def test_chronam_fetch_admits_pd_date(monkeypatch):
+    monkeypatch.setattr(chronam, "_get", lambda url: {
+        "issue": {"date_issued": "1925-03-04"},
+        "title": {"name": "The Daily Planet"}, "sequence": 1,
+    })
+    r = chronam.fetch("/lccn/sn1/1925-03-04/ed-1/seq-1/")
+    assert r is not None and r.license == "PD" and r.kind == "clipping"
+    assert r.url.endswith("seq-1.jpg")
+    assert "Chronicling America" in r.attribution_text and "1925-03-04" in r.attribution_text
+
+
+def test_chronam_fetch_rejects_in_copyright(monkeypatch):
+    monkeypatch.setattr(chronam, "_get", lambda url: {
+        "issue": {"date_issued": "2010-01-01"}, "title": {"name": "Modern Times"},
+    })
+    assert chronam.fetch("/lccn/sn9/2010-01-01/ed-1/seq-1/") is None
 
 
 # ---------------------------------------------------------------------------

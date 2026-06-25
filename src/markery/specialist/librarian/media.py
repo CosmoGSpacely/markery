@@ -23,12 +23,12 @@ from typing import Optional
 
 from markery.common import config
 from markery.specialist.librarian import catalog
-from markery.specialist.librarian.sources import commons, loc, nara, dpla, ia_media
+from markery.specialist.librarian.sources import commons, loc, nara, dpla, ia_media, chronam
 
 _ADMITTED = {"PD", "PD-US-expired", "PD-USGov", "CC0", "CC-BY", "CC-BY-SA"}
 
 # MediaResult-returning PD source adapters (commons has its own CommonsResult path).
-_ADAPTERS = {"loc": loc, "nara": nara, "dpla": dpla, "ia": ia_media}
+_ADAPTERS = {"loc": loc, "nara": nara, "dpla": dpla, "ia": ia_media, "chronam": chronam}
 
 
 def media_dir() -> Path:
