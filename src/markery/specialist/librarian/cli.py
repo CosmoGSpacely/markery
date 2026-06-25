@@ -690,6 +690,47 @@ def cmd_media_list(args: argparse.Namespace) -> None:
         print(f"{m['id']:42} {m.get('kind',''):8} {(m.get('license') or ''):10} {m.get('title','')}")
 
 
+def cmd_books(args: argparse.Namespace) -> None:
+    """Discover books (Open Library) and route each: digitized → acquire, else ILL."""
+    from markery.specialist.librarian import books
+    from markery.specialist.librarian.sources.common import make_slug
+    from datetime import datetime, timezone
+
+    candidates = books.find_books(args.query, max_results=args.max_results)
+    if not candidates:
+        print("No results.")
+        return
+
+    wants = _read_wants() if args.queue else None
+    queued = 0
+    for c in candidates:
+        r = books.route(c)
+        yr = c.get("year") or "?"
+        if r["action"] == "acquire":
+            print(f"DIGITIZED  {c['title']} ({yr})")
+            print(f"           → markery librarian acquire {r['ia_id']} --source ia")
+        else:
+            print(f"ILL        {c['title']} ({yr})")
+            print(f"           holdings: {r['worldcat_url']}")
+            if args.queue:
+                slug = make_slug(c.get("title", ""), c.get("author", ""))
+                if _find_wants_entry(wants, slug) == -1:
+                    wants.append({
+                        "slug": slug, "title": c.get("title", ""),
+                        "author": c.get("author", ""), "year": c.get("year"),
+                        "isbn": c.get("isbn"), "source_article": None,
+                        "added_at": datetime.now(timezone.utc).isoformat(),
+                        "status": "wanted",
+                        "note": "Discovery loop: not digitized; ILL needed.",
+                        "ill_request": r["ill_request"],
+                    })
+                    queued += 1
+
+    if args.queue:
+        _write_wants(wants)
+        print(f"\nQueued {queued} item(s) to library/wants.jsonl for ILL.")
+
+
 def cmd_leads(args: argparse.Namespace) -> None:
     """List discovery leads (filterable by project/status/source)."""
     from markery.specialist.librarian import leads as leads_mod
@@ -925,6 +966,13 @@ def librarian_main() -> None:
     p_use.add_argument("id", help="Catalog item id (slug)")
     p_use.add_argument("--project", required=True, help="Project that will reference the item")
 
+    p_books = sub.add_parser("books",
+                             help="Discover books (Open Library) → acquire-digitized / ILL-route")
+    p_books.add_argument("query", help="Search query")
+    p_books.add_argument("--max-results", type=int, default=10)
+    p_books.add_argument("--queue", action="store_true",
+                         help="Queue non-digitized results to wants.jsonl with a prepared ILL request")
+
     p_leads = sub.add_parser("leads", help="List discovery leads (the discovery log)")
     p_leads.add_argument("--project", default=None)
     p_leads.add_argument("--status", default=None,
@@ -953,6 +1001,7 @@ def librarian_main() -> None:
         "use":            cmd_use,
         "leads":          cmd_leads,
         "leads-add":      cmd_leads_add,
+        "books":          cmd_books,
         "discover":       cmd_discover,
         "wants":          cmd_wants,
         "wants-update":   cmd_wants_update,

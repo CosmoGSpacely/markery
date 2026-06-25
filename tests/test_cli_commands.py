@@ -84,6 +84,21 @@ def test_librarian_use_rejects_unknown_item(repo, monkeypatch, capsys):
     assert rc == 1
 
 
+def test_librarian_books_routes_digitized_and_ill(repo, monkeypatch, capsys):
+    from markery.specialist.librarian.sources import openlibrary
+    monkeypatch.setattr(openlibrary, "_get", lambda url: {"docs": [
+        {"title": "Big Business and Radio", "author_name": ["Archer"],
+         "first_publish_year": 1939, "ia": ["bigbiz00arch"], "key": "/works/OL1W"},
+        {"title": "Obscure Monograph", "author_name": ["Nobody"],
+         "first_publish_year": 1928, "key": "/works/OL2W"},
+    ]})
+    rc = _run(monkeypatch, ["librarian", "books", "radio"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "DIGITIZED" in out and "librarian acquire bigbiz00arch" in out
+    assert "ILL" in out and "search.worldcat.org" in out
+
+
 def test_librarian_leads_add_and_list(repo, monkeypatch, capsys):
     assert _run(monkeypatch, ["librarian", "leads-add", "--source", "loc",
                               "--id", "p1", "--title", "Steel Plow",
