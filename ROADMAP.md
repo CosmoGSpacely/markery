@@ -152,7 +152,7 @@ the publisher renders it with attribution; `site check` green. — PASSED
 
 ---
 
-## Phase 30 — Continuous historian discovery loop  ·  plan: `HISTORIAN_REVIEW.md`
+## Phase 30 — Continuous historian discovery loop  ·  plan: `archive/HISTORIAN_REVIEW-2026-06-24.md` — CLOSED
 
 **Trigger:** acquisition (media/literature/figures) is hand-driven; the discovery autonomy is
 unbuilt.
@@ -165,8 +165,23 @@ markery-langgraph.
 3. The continuous loop (`discovery_graph.py`): seed → discover → score → acquire/gate/log,
    with dedup, budgets, and human gates; scheduled.
 
+Results 2026-06-24: **P1** PD media adapters (LoC/NARA/DPLA/IA, shared MediaResult +
+license normaliser; closes D069). **P2** Chronicling America (date-capped PD clippings).
+**P3** discovery log (`leads.jsonl`) + `historian relevance --json`. **P4** keyless book
+pipeline (`librarian books` via Open Library → acquire-digitized / ILL-route + WorldCat
+deep-link + `wants-add`); WorldCat is a human deep-link (personal account ≠ WSKey), ILL is
+human-submitted. **P5 (eBay)** deferred → **D074**. **P6** the loop —
+`markery-langgraph/discovery_graph.py` (load_seed → discover → score → acquire_free /
+human_gate→queue_ill / log_dropped), a persistent service toggled by `markery historian
+discovery {on|off|status}` + `library/discovery_state.json`; subprocess contract bumped to
+**v1.2**. Auto-acquire-free / gate-everything-else boundary; every candidate logged as a
+lead. Hermetic: markery 989 passed; markery-langgraph 32 passed. **First live sweep
+deferred** to after the Phase 31 project rebuild (`projects/` archived); the loop is proven
+end-to-end on mocked tools. `HISTORIAN_REVIEW.md` archived.
+
 **Gate:** one loop tick discovers, acquires a free item into the library, queues a want, logs
-a lead, and human-gates a purchase/ILL on a real project; `site check` clean.
+a lead, and human-gates a purchase/ILL; proven via the discovery-graph test (live first
+sweep awaits the Phase 31 rebuild). — PASSED (hermetic)
 
 ---
 

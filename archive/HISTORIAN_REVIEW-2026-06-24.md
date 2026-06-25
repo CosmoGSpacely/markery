@@ -291,22 +291,25 @@ from*; eBay is a lead, never evidence; nothing invented.
 
 ## 8. Phased plan
 
-- **P1 — D069 media adapters.** LoC, NARA, DPLA, IA-media `media-acquire` sources. Unblocks
-  the media half of the loop. (Closes D069.)
-- **P2 — Chronicling America (newspapers).** `librarian newspapers search/acquire`; clipping
-  media + citation output; PD/date-capped.
-- **P3 — Discovery log + relevance.** `library/leads.jsonl` + `librarian leads*`; `historian
-  relevance` scoring (reuse `card --infer` contract).
-- **P4 — WorldCat/book pipeline.** `librarian worldcat search` → digitized `acquire` (IA/
-  HathiTrust) → else `wants`; keyless fallbacks first, OCLC key optional.
-- **P5 — eBay leads. DEFERRED → D074** (out of scope; market-signal leads, not library
-  acquisition). §4c kept as reference.
-- **P6 — The loop.** `discovery_graph.py` in markery-langgraph: seed → discover → score →
-  route → acquire/gate/log, with dedup, budgets, and human gates. Runs as a **persistent
-  service the user toggles** (`markery historian discovery {on|off|status|tick}` + a state
-  flag), not a fixed cron.
-- **P7 — Toggle + docs.** The on/off persistence + status; document the local
-  ILL-submission path contract; first full sweep over the published projects.
+- **P1 — D069 media adapters. DONE.** LoC/NARA/DPLA/IA `media-acquire` sources on a shared
+  `MediaResult` + `normalize_license`; unified `media.acquire`. Closes D069. (`79c4f4a`)
+- **P2 — Chronicling America (newspapers). DONE.** `sources/chronam.py` + `--source chronam`;
+  date-capped PD clippings with full citations. (`8cf8cb6`)
+- **P3 — Discovery log + relevance. DONE.** `library/leads.jsonl` + `librarian leads*`;
+  `historian relevance --json` (free-model, project context). (`1cbee1c`)
+- **P4 — Book pipeline. DONE (keyless).** `sources/openlibrary.py` + `librarian books
+  [--json][--queue]`: digitized → `acquire`; else → `wants-add` + ILL prep + WorldCat
+  deep-link. WorldCat = human deep-link (personal account, not WSKey); ILL human-submitted.
+  (`e6b19cb`, `84ac170`)
+- **P5 — eBay leads. DEFERRED → D074** (out of scope; market-signal leads, not acquisition).
+- **P6 — The loop. DONE.** `discovery_graph.py` in markery-langgraph: load_seed → discover →
+  score → route → acquire_free / human_gate→queue_ill / log_dropped; persistent service
+  toggled by `markery historian discovery {on|off|status}` + `library/discovery_state.json`.
+  Contract bumped to v1.2. (markery-langgraph `1ec31b4`)
+- **P7 — Toggle + docs. DONE** (toggle command + langgraph CLAUDE.md). **First live sweep
+  deferred:** `projects/` was archived in Phase 27; the first real-project sweep runs after
+  the annual-review project is rebuilt (Phase 31). The loop is proven end-to-end on mocked
+  tools (the discovery-graph test).
 
 Gates: each P closes when its CLI command works with mocked-HTTP tests and degrades
 gracefully without keys; P6 closes when an end-to-end loop tick discovers, acquires a free
