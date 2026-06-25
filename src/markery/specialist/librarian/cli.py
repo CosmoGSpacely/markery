@@ -697,6 +697,22 @@ def cmd_books(args: argparse.Namespace) -> None:
     from datetime import datetime, timezone
 
     candidates = books.find_books(args.query, max_results=args.max_results)
+
+    # JSON mode: a single machine-parseable array (the discovery loop's contract).
+    if getattr(args, "json", False):
+        import json as _json
+        out = []
+        for c in candidates:
+            r = books.route(c)
+            out.append({
+                "title": c.get("title", ""), "author": c.get("author", ""),
+                "year": c.get("year"), "isbn": c.get("isbn"),
+                "action": r["action"], "ia_id": r["ia_id"],
+                "worldcat_url": r["worldcat_url"], "ill_request": r["ill_request"],
+            })
+        print(_json.dumps(out))
+        return
+
     if not candidates:
         print("No results.")
         return
@@ -972,6 +988,8 @@ def librarian_main() -> None:
     p_books.add_argument("--max-results", type=int, default=10)
     p_books.add_argument("--queue", action="store_true",
                          help="Queue non-digitized results to wants.jsonl with a prepared ILL request")
+    p_books.add_argument("--json", action="store_true", dest="json",
+                         help="Emit a JSON array of candidates+routes (discovery-loop contract)")
 
     p_leads = sub.add_parser("leads", help="List discovery leads (the discovery log)")
     p_leads.add_argument("--project", default=None)

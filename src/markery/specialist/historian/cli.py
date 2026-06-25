@@ -931,6 +931,31 @@ def cmd_validate(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def cmd_discovery(args: argparse.Namespace) -> None:
+    """Toggle / inspect the persistent discovery loop (on|off|status)."""
+    import json as _json
+    from markery.specialist.historian import discovery
+    if args.toggle == "status":
+        state = discovery.read_state()
+        if getattr(args, "json", False):
+            print(_json.dumps(state))
+            return
+        print(f"discovery: {'ON' if state['enabled'] else 'off'}")
+        print(f"  scope:     {', '.join(state['projects']) or '(all match-review projects)'}")
+        print(f"  sources:   {', '.join(state['sources'])}")
+        print(f"  floor:     relevance ≥ {state['relevance_floor']}")
+        print(f"  last tick: {state['last_tick'] or 'never'}")
+        return
+    enabled = args.toggle == "on"
+    state = discovery.set_enabled(
+        enabled,
+        projects=args.projects, sources=args.sources, relevance_floor=args.floor,
+    )
+    print(f"discovery loop {'enabled' if enabled else 'disabled'}.")
+    if enabled:
+        print("  the markery-langgraph discovery runner will act while enabled.")
+
+
 def cmd_relevance(args: argparse.Namespace) -> None:
     """Score a discovered item's relevance to a project (1-5)."""
     import json as _json
@@ -1026,6 +1051,18 @@ def historian_main() -> None:
     rel_p.add_argument("--json", action="store_true", dest="json",
                        help="Emit a single JSON object {score, reasoning} (loop contract)")
 
+    disc_p = sub.add_parser("discovery",
+                            help="Toggle the persistent discovery loop (on|off|status)")
+    disc_p.add_argument("toggle", choices=["on", "off", "status"])
+    disc_p.add_argument("--projects", nargs="*", default=None,
+                        help="Limit discovery scope to these projects (default: all)")
+    disc_p.add_argument("--sources", nargs="*", default=None,
+                        help="Media sources to search (e.g. loc chronam)")
+    disc_p.add_argument("--floor", type=int, default=None, dest="floor",
+                        help="Relevance floor (1-5) at/above which to act")
+    disc_p.add_argument("--json", action="store_true", dest="json",
+                        help="status: emit the state as JSON (loop reads this)")
+
     args = parser.parse_args()
 
     if args.action == "prepare":
@@ -1045,3 +1082,5 @@ def historian_main() -> None:
         cmd_infer_queue(args)
     elif args.action == "relevance":
         cmd_relevance(args)
+    elif args.action == "discovery":
+        cmd_discovery(args)

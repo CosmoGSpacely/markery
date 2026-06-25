@@ -1,15 +1,25 @@
 {
-  "contract_version": "1.1",
+  "contract_version": "1.2",
   "markery_version": "0.3.2",
   "subprocess_commands": [
     "markery historian card <project> <slug> [--infer] [--json] [--out PATH] [--model MODEL]",
     "markery historian digest <project> [--infer] [--json]",
     "markery historian draft <project> <slug> [--model MODEL]",
-    "markery matchmaker confirm <project> <slug> [--note TEXT]"
+    "markery historian relevance <project> --title TEXT [--text TEXT] [--json] [--model MODEL]",
+    "markery historian discovery <on|off|status> [--projects ...] [--sources ...] [--floor N] [--json]",
+    "markery matchmaker confirm <project> <slug> [--note TEXT]",
+    "markery librarian books <query> [--max-results N] [--queue] [--json]",
+    "markery librarian media-acquire <id> --source <commons|loc|nara|dpla|ia|chronam> [--kind KIND]",
+    "markery librarian acquire <identifier> [--source ia|gutenberg]",
+    "markery librarian use <id> --project <name>",
+    "markery librarian leads-add --source S --id ID [--title ...] [--project ...] [--relevance N] [--status S] [--note ...]"
   ],
   "json_contracts": {
     "historian card --json": "single JSON object {recommendation: confirm|reject|defer, score: 1-5, reasoning: str, card_text: str}",
-    "historian digest --json": "single JSON object {ranking: str, digest: str}"
+    "historian digest --json": "single JSON object {ranking: str, digest: str}",
+    "historian relevance --json": "single JSON object {score: 0-5, reasoning: str}",
+    "historian discovery status --json": "single JSON object {enabled: bool, projects: [str], sources: [str], relevance_floor: int, last_tick: str|null}",
+    "librarian books --json": "JSON array of {title, author, year, isbn, action: acquire|ill, ia_id: str|null, worldcat_url: str, ill_request: str}"
   },
-  "description": "Markery CLI subprocess interface contract. Companion repos must call check_contract() against MARKERY_ROOT before invoking these commands. Bump contract_version when any command signature or output format changes. v1.1: added --json structured output on historian card/digest --infer for robust subprocess parsing (replaces stdout regex scraping)."
+  "description": "Markery CLI subprocess interface contract. Companion repos must call check_contract() against MARKERY_ROOT before invoking these commands. Bump contract_version when any command signature or output format changes. v1.1: --json on historian card/digest. v1.2: discovery-loop surface — historian relevance/discovery, librarian books/media-acquire/use/leads-add (Phase 30)."
 }

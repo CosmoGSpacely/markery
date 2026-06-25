@@ -51,6 +51,8 @@ library/works/*/candidates.md
 library/index.duckdb
 # Context cards — regenerable via markery librarian card <query>
 library/cards/
+# Discovery-loop runtime flag (Phase 30) — local on/off state, not versioned
+library/discovery_state.json
 # Media binaries (Phase 29) — gitignored + re-acquirable; only metadata.json and
 # the global catalog.jsonl are committed. Durability: sha256 in the catalog +
 # periodic library/media snapshot (until object-storage hosting, D070).

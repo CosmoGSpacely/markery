@@ -109,6 +109,30 @@ def test_librarian_leads_add_and_list(repo, monkeypatch, capsys):
     assert "Steel Plow" in out and "loc" in out
 
 
+def test_historian_discovery_toggle_and_status(repo, monkeypatch, capsys):
+    assert _run(monkeypatch, ["historian", "discovery", "on",
+                              "--sources", "chronam", "--floor", "4"]) == 0
+    assert "enabled" in capsys.readouterr().out
+    import json as _json
+    assert _run(monkeypatch, ["historian", "discovery", "status", "--json"]) == 0
+    st = _json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert st["enabled"] is True and st["sources"] == ["chronam"] and st["relevance_floor"] == 4
+    assert _run(monkeypatch, ["historian", "discovery", "off"]) == 0
+    assert "disabled" in capsys.readouterr().out
+
+
+def test_librarian_books_json_contract(repo, monkeypatch, capsys):
+    from markery.specialist.librarian.sources import openlibrary
+    monkeypatch.setattr(openlibrary, "_get", lambda url: {"docs": [
+        {"title": "Radio", "author_name": ["A"], "first_publish_year": 1939,
+         "ia": ["radio00a"], "key": "/works/OL1W"},
+    ]})
+    import json as _json
+    assert _run(monkeypatch, ["librarian", "books", "radio", "--json"]) == 0
+    arr = _json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert arr[0]["action"] == "acquire" and arr[0]["ia_id"] == "radio00a"
+
+
 def test_historian_relevance_json(repo, monkeypatch, capsys):
     monkeypatch.setattr("markery.common.llm.call",
                         lambda *a, **k: ("SCORE: 4\nREASONING: about Synthex.", 0, 0, 0, 0))
