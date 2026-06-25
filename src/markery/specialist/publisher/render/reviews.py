@@ -106,12 +106,19 @@ def render_review_month(
     name = f"{_MONTHS[month]} {year}"
     grid = (f'<div class="card-grid">{"".join(cards)}</div>'
             if cards else '<p class="empty-state">No design marks filed this month.</p>')
+    # Month-to-month navigation (prev · year · next).
+    prev_link = (f'<a href="{month-1:02d}.html">← {_MONTHS[month-1]}</a>'
+                 if month > 1 else '<span class="nav-disabled">←</span>')
+    next_link = (f'<a href="{month+1:02d}.html">{_MONTHS[month+1]} →</a>'
+                 if month < 12 else '<span class="nav-disabled">→</span>')
+    month_nav = (
+        f'<nav class="review-monthnav">{prev_link}'
+        f'<a href="index.html">{year} review</a>{next_link}</nav>'
+    )
     body = (
         f'<div class="page-header"><h1>{name}</h1>'
         f'<div class="subtitle">Design marks · {len(marks)} filed</div></div>'
-        f'<div class="page-body">'
-        f'<p class="breadcrumb-inline"><a href="index.html">← {year} review</a></p>'
-        f'{grid}</div>'
+        f'<div class="page-body">{month_nav}{grid}{month_nav}</div>'
     )
     out_path = year_dir / f"{month:02d}.html"
     out_path.write_text(
@@ -129,6 +136,7 @@ def render_review_month(
 
 def render_review_year(
     year: int, site_root: Path, project_slug: str, base_url: str | None = None,
+    sibling_years: list[int] | None = None,
 ) -> tuple[Path, dict, list[Path]]:
     """Render a year's review (12 monthly galleries + landing) under the annual-review
     project's site dir: site/<project_slug>/<year>/.
@@ -156,11 +164,21 @@ def render_review_year(
         f'</a>'
         for s in months
     )
+    # Cross-year switcher (sibling review years).
+    year_switch = ""
+    siblings = sorted(sibling_years or [year])
+    if len(siblings) > 1:
+        links = "".join(
+            (f'<span class="review-year-current">{y}</span>' if y == year
+             else f'<a href="../{y}/index.html">{y}</a>')
+            for y in siblings
+        )
+        year_switch = f'<nav class="review-yearnav">Years: {links}</nav>'
     body = (
         f'<div class="page-header"><h1>{year} Design-Mark Review</h1>'
         f'<div class="subtitle">USPTO design marks filed in {year} · '
         f'{total} marks · {total_img} with images</div></div>'
-        f'<div class="page-body">'
+        f'<div class="page-body">{year_switch}'
         f'<p>Monthly galleries of design marks (drawing code 3·) filed during {year}.</p>'
         f'<div class="review-months">{rows}</div>'
         f'</div>'

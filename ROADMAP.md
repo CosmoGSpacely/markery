@@ -185,7 +185,7 @@ sweep awaits the Phase 31 rebuild). — PASSED (hermetic)
 
 ---
 
-## Phase 31 — Site design pass + rebuild annual-review project/site  ·  plan: TBD (stub)
+## Phase 31 — Site design pass + rebuild annual-review project/site  ·  plan: `archive/SITE-REVIEW-2026-06-24.md` — CLOSED
 
 **Trigger:** `projects/` and `site/` were archived 2026-06-24 (see
 `archive/PROJECTS-ARCHIVED-2026-06-24.md`); the first real rebuild is also the moment
@@ -194,11 +194,21 @@ spawned projects publish into the refreshed design rather than the old one.
 
 Brief: do another **site design pass** (chrome, cards, timeline, typography — carry
 forward the open items from the archived `SITE-REVIEW`), **then rebuild the
-annual-review project and its site** on the improved database/library. Write the full
-plan to a `SITE-REVIEW.md` when this phase opens.
+annual-review project and its site** on the improved database/library.
+
+Results 2026-06-24: restored `annual-design-review` from git history and rebuilt on
+the post-28/29 stack — **mark images resolve from the externalized `data/assets/`**,
+`site check` clean (validates Phase 28/29 in the real render path). Fixed a real bug
+(review pages weren't in site search → now indexed). Added **1928** (one config line
++ rebuild) and recorded the friction; built `markery trademark enrich-year` and ran
+the **1928 image backfill live (266/266 stored)** → closes **D075** for 1928 (D075
+stays open for 1929/1930). Design pass: review month prev/next nav + cross-year
+switcher; portal overview count + empty-projects state. Carry-forward open items are
+People (#6/#8/#16 → **D072**, deferred). Hermetic lane 996 passed.
+`SITE-REVIEW.md` archived.
 
 **Gate:** the annual-review project rebuilds against the new data/library; the refreshed
-design renders; `site check` clean.
+design renders; `site check` clean. — PASSED
 
 ---
 

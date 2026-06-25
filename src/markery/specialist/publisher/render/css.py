@@ -601,6 +601,17 @@ blockquote p { margin: 0; }
 .review-month-name { font-weight: bold; }
 .review-month-count { font-size: .8em; color: #666; }
 .breadcrumb-inline { font-size: .85em; margin-bottom: 16px; }
+/* Review navigation (Phase 31): month prev/next + cross-year switcher. */
+.review-monthnav {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; margin: 16px 0; font-size: .9em;
+  padding-bottom: 8px; border-bottom: 1px solid #cbcbcb;
+}
+.review-monthnav a { text-decoration: none; }
+.review-monthnav .nav-disabled { color: #bbb; }
+.review-yearnav { font-size: .9em; margin-bottom: 16px; }
+.review-yearnav a { margin: 0 6px; text-decoration: none; }
+.review-year-current { margin: 0 6px; font-weight: bold; }
 
 /* ── Per-record detail page (one trademark / one patent) ── */
 .detail-layout {

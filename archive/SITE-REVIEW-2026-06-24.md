@@ -67,7 +67,18 @@ So the structural/visual base is solid. Remaining design-pass work is
 discretionary refinement (typography scale, review-page density, landing
 hierarchy) — pending the user's priorities (§5).
 
-## 5. Open — design-pass priorities (for the user)
+## 5. Design pass — DONE (user picked: backfill, review polish, portal)
 
-The rebuild + search fix are done. What visual refresh, if any, to prioritize is a
-taste call — see the proposed options.
+- **Image backfill (D075).** New `markery trademark enrich-year <year> [--limit]`
+  fetches TSDR drawings for figurative marks (`mark_draw_cd '3%'`) filed in a year
+  that lack an image. Ran the full **1928** sweep live: **266/266 images stored** →
+  1928 went from 7 to fully imaged. (1929/1930 can be backfilled the same way.)
+- **Review-page polish.** Month pages gained prev · year · next **month navigation**
+  (top and bottom); year landings gained a **cross-year switcher** (1928 · 1929 ·
+  1930). CSS added; `site check` clean.
+- **Portal refresh.** Header now shows an **overview count** (N projects · N
+  reviews); the Projects section renders a proper **empty-state** instead of a bare
+  grid when no projects exist (the current archived state).
+
+All covered by hermetic tests (996 passing); the live annual-review site rebuilds
+clean (39 pages, 0 broken/orphans).

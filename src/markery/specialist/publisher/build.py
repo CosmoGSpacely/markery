@@ -320,7 +320,9 @@ def build_all(out_dir: Path | None = None, base_url: str | None = None,
     review_summaries: list[dict] = []
     for proj in discover_annual_reviews():
         for year in proj.review_years:
-            y_path, y_summary, _ = r.render_review_year(year, site_root, proj.name, base_url=base_url)
+            y_path, y_summary, _ = r.render_review_year(
+                year, site_root, proj.name, base_url=base_url,
+                sibling_years=proj.review_years)
             review_summaries.append(y_summary)
             pages.append(y_path)
             # Index the year landing + each month in site-wide search (was missing —

@@ -42,13 +42,26 @@ def test_render_review_year_creates_landing_and_months(tmp_path, stub_marks):
     assert len(written) == 12  # one image written per month
 
 
+def test_year_landing_has_sibling_year_nav(tmp_path, stub_marks):
+    reviews.render_review_year(1929, tmp_path, "annual-design-review",
+                              sibling_years=[1928, 1929, 1930])
+    html = (tmp_path / "annual-design-review" / "1929" / "index.html").read_text()
+    assert "review-yearnav" in html
+    assert 'href="../1928/index.html">1928' in html      # sibling link
+    assert 'href="../1930/index.html">1930' in html
+    assert '<span class="review-year-current">1929</span>' in html  # current, not linked
+
+
 def test_review_month_page_depth_and_back_link(tmp_path, stub_marks):
     reviews.render_review_year(1930, tmp_path, "annual-design-review")
     july = (tmp_path / "annual-design-review" / "1930" / "07.html").read_text()
     assert "<h1>July 1930</h1>" in july
     assert july.count('class="card"') == 2
     assert 'src="img/' in july                     # image relative to month dir
-    assert 'href="index.html">← 1930 review' in july
+    # month navigation: link back to the year landing + prev/next month
+    assert 'href="index.html">1930 review' in july
+    assert 'review-monthnav' in july
+    assert 'href="06.html">← June' in july and 'href="08.html">August →' in july
     # filing date and goods/services on the design-mark cards
     assert "Filed July 04, 1930" in july
     assert "boots and shoes" in july

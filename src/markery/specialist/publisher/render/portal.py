@@ -83,14 +83,30 @@ def render_portal(
             f'</div>'
         )
 
+    # Header overview: orient the visitor with what's here.
+    overview_bits = []
+    if projects:
+        overview_bits.append(f'{len(projects)} project{"s" if len(projects) != 1 else ""}')
+    if review_cards:
+        overview_bits.append(
+            f'{len(review_cards)} design-mark review{"s" if len(review_cards) != 1 else ""}')
+    overview = (" · " + " · ".join(overview_bits)) if overview_bits else ""
+
+    projects_section = (
+        f'<div class="portal-grid">{"".join(cards)}</div>' if cards
+        else '<p class="empty-state">No research projects yet — see the design-mark '
+             'reviews below; projects are added as research is published.</p>'
+    )
+
     body = (
         '<div class="page-header">'
         '<h1>Markery Research</h1>'
-        '<div class="subtitle">A cross-reference of U.S. trademarks and patents · 1900–1939</div>'
+        '<div class="subtitle">A cross-reference of U.S. trademarks and patents · '
+        f'1900–1939{overview}</div>'
         '</div>'
         '<div class="page-body">'
         '<p class="section-title">Projects</p>'
-        f'<div class="portal-grid">{"".join(cards)}</div>'
+        f'{projects_section}'
         + ('<p class="section-title">Design-Mark Reviews</p>'
            f'<div class="portal-grid">{"".join(review_cards)}</div>' if review_cards else '')
         + ('<p class="section-title">Confirmed Pairs — All Projects</p>'

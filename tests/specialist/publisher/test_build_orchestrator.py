@@ -173,6 +173,18 @@ def test_portal_lists_review(site):
     assert str(repo.review_year) in portal
 
 
+def test_portal_overview_and_empty_projects_state(tmp_path):
+    # Direct render_portal: no projects, one review → empty-state + overview count.
+    from markery.specialist.publisher.render.portal import render_portal
+    out = render_portal(tmp_path, projects=[], matches=[], reviews=[
+        {"url": "r/1929/index.html", "title": "1929 Design-Mark Review",
+         "year": 1929, "count": 254, "with_images": 100, "thumb_src": None},
+    ])
+    html = out.read_text(encoding="utf-8")
+    assert "No research projects yet" in html          # empty-state, not a bare grid
+    assert "1 design-mark review" in html              # header overview count
+
+
 def test_review_pages_indexed_in_search(site):
     repo, root = site
     import json
