@@ -628,27 +628,47 @@ def cmd_card(args: argparse.Namespace) -> None:
 # Media (Phase 24 P2): public-domain / free-licensed image, map, drawing, video
 # ---------------------------------------------------------------------------
 
+_MEDIA_SOURCES = {
+    "commons": "markery.specialist.librarian.sources.commons",
+    "loc":     "markery.specialist.librarian.sources.loc",
+    "nara":    "markery.specialist.librarian.sources.nara",
+    "dpla":    "markery.specialist.librarian.sources.dpla",
+    "ia":      "markery.specialist.librarian.sources.ia_media",
+}
+
+
 def cmd_media_search(args: argparse.Namespace) -> None:
-    from markery.specialist.librarian.sources import commons
-    titles = commons.search(args.query, args.max_results)
-    if not titles:
+    import importlib
+    from markery.specialist.librarian.sources.dpla import DPLAKeyMissing
+    adapter = importlib.import_module(_MEDIA_SOURCES[args.source])
+    try:
+        results = adapter.search(args.query, args.max_results)
+    except DPLAKeyMissing as exc:
+        print(f"Skipped dpla: {exc}", file=sys.stderr)
+        sys.exit(1)
+    if not results:
         print("No results.")
         return
-    for t in titles:
-        print(t)
+    for r in results:
+        print(r)
 
 
 def cmd_media_acquire(args: argparse.Namespace) -> None:
     from markery.specialist.librarian import media
-    meta = media.acquire_commons(args.title, kind=args.kind)
+    from markery.specialist.librarian.sources.dpla import DPLAKeyMissing
+    try:
+        meta = media.acquire(args.source, args.title, kind=args.kind)
+    except DPLAKeyMissing as exc:
+        print(f"Skipped dpla: {exc}", file=sys.stderr)
+        sys.exit(1)
     if meta is None:
         print(
-            f"Rejected: '{args.title}' — license not admitted (PD/CC0/CC-BY/CC-BY-SA "
-            "only) or carries usage restrictions.",
+            f"Rejected: '{args.title}' [{args.source}] — license not admitted "
+            "(PD/CC0/CC-BY/CC-BY-SA only), carries restrictions, or not found.",
             file=sys.stderr,
         )
         sys.exit(1)
-    print(f"Acquired: {meta['slug']}  [{meta['license']}]")
+    print(f"Acquired: {meta['slug']}  [{meta['license']}]  ({meta['source']})")
     print(f"  attribution: {meta.get('attribution_text', '')}")
     print(f"  → {media.media_dir() / meta['slug']}")
     print("  reference it in a project: markery librarian use "
@@ -839,15 +859,17 @@ def librarian_main() -> None:
     p_card.add_argument("--tokens", action="store_true",
                         help="Print estimated token count to stderr")
 
-    # media-search / media-acquire / media-list (Phase 24 P2)
+    # media-search / media-acquire / media-list (Phase 24 P2; Phase 30 P1 PD sources)
     p_msrch = sub.add_parser("media-search",
-                             help="Search Wikimedia Commons for media (no download)")
+                             help="Search a PD media source (commons/loc/nara/dpla/ia) — no download")
     p_msrch.add_argument("query", help="Search query")
+    p_msrch.add_argument("--source", choices=list(_MEDIA_SOURCES), default="commons")
     p_msrch.add_argument("--max-results", type=int, default=10)
 
     p_macq = sub.add_parser("media-acquire",
-                            help="Acquire a Commons file into the global library (then `use` it in a project)")
-    p_macq.add_argument("title", help="Commons File: title (e.g. 'File:Foo.jpg')")
+                            help="Acquire a PD media item into the global library (then `use` it in a project)")
+    p_macq.add_argument("title", help="Source id/title (Commons File: title, LoC item id, naId, DPLA/IA id)")
+    p_macq.add_argument("--source", choices=list(_MEDIA_SOURCES), default="commons")
     p_macq.add_argument("--kind", default="photo",
                         choices=["photo", "map", "drawing", "video"])
 

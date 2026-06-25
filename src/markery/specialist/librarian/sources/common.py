@@ -6,6 +6,81 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
+# Admitted normalized license codes (Phase 24 P2 / Phase 30 policy): public domain
+# and the permissive CC tiers only. NC / ND / in-copyright / unresolved are rejected.
+ADMITTED_LICENSES = {"PD", "PD-US-expired", "PD-USGov", "CC0", "CC-BY", "CC-BY-SA"}
+
+
+_UA = "markery/1.0 (https://github.com/CosmoGSpacely/markery)"
+
+
+def download(url: str, dest, ua: str = _UA):
+    """Download a URL to dest (creating parents). Shared by media adapters."""
+    import urllib.request
+    from pathlib import Path
+    dest = Path(dest)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    req = urllib.request.Request(url, headers={"User-Agent": ua})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        dest.write_bytes(r.read())
+    return dest
+
+
+@dataclass
+class MediaResult:
+    """A resolved, admissible media item from any PD/free source adapter.
+
+    Adapters return None instead of a MediaResult when the item's rights do not
+    resolve to an ADMITTED_LICENSES code (rejected)."""
+    source: str            # 'loc' | 'nara' | 'dpla' | 'ia' | 'commons' | 'chronam'
+    source_id: str         # stable id within the source
+    title: str
+    url: str               # direct downloadable media URL
+    license: str           # normalized admitted code
+    creator: str
+    license_url: str
+    rights_statement: str
+    attribution_text: str
+    source_url: str        # human-facing landing page
+    date: Optional[int] = None
+    kind: str = "photo"
+
+
+def normalize_license(raw: str, url: str = "") -> Optional[str]:
+    """Map a free-text rights string / rights URI to an admitted code, or None.
+
+    Handles the encodings used across LoC, NARA, DPLA (rightsstatements.org),
+    Internet Archive, and Commons. Rejects NC / ND / in-copyright / unknown.
+    """
+    text = f"{raw or ''} {url or ''}".lower()
+    if not text.strip():
+        return None
+    # Hard rejects first.
+    if any(t in text for t in ("noncommercial", "no-nc", "/nc", "-nc", "noderiv",
+                               "no-nd", "/nd", "-nd")):
+        return None
+    if "rightsstatements.org" in text:
+        # Admit only the "no copyright" family; reject InC* (in copyright).
+        if "/noc" in text or "/nkc" in text:   # NoC-US, NKC
+            return "PD"
+        if "/inc" in text:
+            return None
+    if "cc0" in text or "publicdomain/zero" in text:
+        return "CC0"
+    if "by-sa" in text or "by_sa" in text:
+        return "CC-BY-SA"
+    if "creativecommons.org/licenses/by" in text or re.search(r"\bcc[ -]by\b", text):
+        return "CC-BY"
+    if any(t in text for t in (
+        "public domain", "publicdomain", "no known restrictions",
+        "no known copyright", "unaware of any copyright", "not in copyright",
+        "no copyright", "pd-",
+    )):
+        return "PD"
+    if "u.s. government" in text or "usgov" in text or "us government work" in text:
+        return "PD-USGov"
+    return None
+
 
 @dataclass
 class IAResult:

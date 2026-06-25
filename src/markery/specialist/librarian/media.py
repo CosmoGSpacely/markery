@@ -23,9 +23,12 @@ from typing import Optional
 
 from markery.common import config
 from markery.specialist.librarian import catalog
-from markery.specialist.librarian.sources import commons
+from markery.specialist.librarian.sources import commons, loc, nara, dpla, ia_media
 
 _ADMITTED = {"PD", "PD-US-expired", "PD-USGov", "CC0", "CC-BY", "CC-BY-SA"}
+
+# MediaResult-returning PD source adapters (commons has its own CommonsResult path).
+_ADAPTERS = {"loc": loc, "nara": nara, "dpla": dpla, "ia": ia_media}
 
 
 def media_dir() -> Path:
@@ -96,3 +99,62 @@ def acquire_commons(file_title: str, kind: str = "photo") -> Optional[dict]:
 
     catalog.upsert(catalog.media_item(meta))
     return meta
+
+
+def _store_media_result(result, kind: str | None = None) -> dict:
+    """Download a resolved MediaResult into the global library + catalog. Deduped."""
+    existing = catalog.find_by_source_url(result.source_url)
+    if existing is not None:
+        return existing
+
+    slug = _slugify(f"{result.source}-{result.title or result.source_id}")
+    ext = _ext_from_url(result.url)
+    item_dir = media_dir() / slug
+    file_path = item_dir / f"{slug}.{ext}"
+    _download_adapter = _ADAPTERS[result.source]
+    _download_adapter.download(result.url, file_path)
+    data = file_path.read_bytes()
+
+    meta = {
+        "slug": slug,
+        "kind": kind or result.kind,
+        "source": result.source,
+        "source_id": result.source_id,
+        "source_url": result.source_url,
+        "file_url": result.url,
+        "file": file_path.name,
+        "title": result.title,
+        "creator": result.creator,
+        "license": result.license,
+        "license_url": result.license_url,
+        "rights_statement": result.rights_statement,
+        "attribution_text": result.attribution_text,
+        "date": result.date,
+        "acquired_at": date.today().isoformat(),
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "format": ext,
+        "bytes": len(data),
+    }
+    (item_dir / "metadata.json").write_text(
+        json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    catalog.upsert(catalog.media_item(meta))
+    return meta
+
+
+def acquire(source: str, identifier: str, kind: str | None = None) -> Optional[dict]:
+    """Acquire one item from any PD source into the global library.
+
+    source ∈ {commons, loc, nara, dpla, ia}. Returns the stored metadata dict
+    (existing row if already acquired — dedup by source_url), or None if the item
+    is rejected (license not admitted) or not found. Adapters that need a missing
+    key (e.g. DPLA) raise; the caller decides whether to skip."""
+    if source == "commons":
+        return acquire_commons(identifier, kind=kind or "photo")
+    adapter = _ADAPTERS.get(source)
+    if adapter is None:
+        raise ValueError(f"Unknown media source '{source}'. "
+                         f"Choose from: commons, {', '.join(_ADAPTERS)}")
+    result = adapter.fetch(identifier)
+    if result is None or result.license not in _ADMITTED:
+        return None
+    return _store_media_result(result, kind=kind)
