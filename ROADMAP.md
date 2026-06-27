@@ -229,6 +229,20 @@ publishes into the refreshed design (31), and rides the hermetic suite (27). Mos
 **Gate:** one end-to-end tick takes a technological design mark through to a human-gated
 project spawn and a clean portal build.
 
+Progress 2026-06-25 (P1, richness signal): built `markery matchmaker richness <year>`
+(`--years` for a distribution, `--json` for the pipeline) in
+`src/markery/specialist/matchmaker/richness.py`. Counts patents whose normalised
+`assignee_name` matches each design mark's owner — an *independent* richness signal
+(the `[CC]` country tag is stripped before `normalise_name`, fixing the
+`EASTMAN KODAK CO [US]` split). Exact normalised equality is the primary tier; a guarded
+token-Jaccard fuzzy tier (floor 0.8, tokens ≥3 chars, owner needs ≥2 long tokens) is the
+review tier. It is complementary to the US-class tech gate: across 1921–1930 only ~5–7% of
+design-mark owners hold any patent, and the two signals overlap little — the richness signal
+recovers class-gate false negatives (Eagle Pencil, Alcoa, American Tobacco, Phoenix Hosiery)
+and demotes class-tech logos whose owner never patented. 6 hermetic tests
+(`tests/specialist/matchmaker/test_richness.py`). Still to do: wire into seed-match (P2),
+the spawn loop (P4), and surface richness on the review cards.
+
 ---
 
 ## Notes

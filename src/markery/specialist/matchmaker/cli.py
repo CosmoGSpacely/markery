@@ -1138,6 +1138,63 @@ def cmd_status(args: argparse.Namespace) -> None:
     print(f"  entity_name_variant  {n_variants:>6,}")
 
 
+def cmd_richness(args: argparse.Namespace) -> None:
+    from markery.specialist.matchmaker import richness as rich
+    import duckdb
+    import json as _json
+
+    pc = duckdb.connect(str(DB["patents"]), read_only=True)
+    counts = rich.assignee_counts(pc)
+    pc.close()
+
+    years = args.years if args.years else [args.year]
+    all_rows: list[dict] = []
+    summaries: list[tuple[int, dict]] = []
+    for y in years:
+        rows = rich.compute_richness(y, fuzzy_floor=args.fuzzy_floor, counts=counts)
+        for r in rows:
+            r["year"] = y
+        all_rows.extend(rows)
+        summaries.append((y, rich.summarise(rows, args.fuzzy_floor)))
+
+    if args.json:
+        keep = [r for r in all_rows
+                if r["patents_exact"] > 0 or r["fuzzy_score"] >= args.fuzzy_floor] \
+               if not args.all_rows else all_rows
+        print(_json.dumps(keep, ensure_ascii=False, indent=2))
+        return
+
+    print(f"=== assignee-overlap richness (fuzzy floor {args.fuzzy_floor}) ===")
+    print(f"{'year':>4}  {'marks':>5}  {'tech':>4}  {'exact':>5}  "
+          f"{'fuzzy':>5}  {'any':>4}  {'tech∩':>5}  {'recov':>5}")
+    for y, s in summaries:
+        print(f"{y:>4}  {s['marks']:>5}  {s['tech']:>4}  {s['exact']:>5}  "
+              f"{s['fuzzy']:>5}  {s['any_match']:>4}  {s['tech_match']:>5}  "
+              f"{s['recovered']:>5}")
+
+    if len(years) == 1 and not args.quiet:
+        rows = all_rows
+        top = sorted((r for r in rows if r["patents_exact"]),
+                     key=lambda r: -r["patents_exact"])[:args.top]
+        if top:
+            print("\n  top exact matches (owner → #patents):")
+            for r in top:
+                tag = " [tech]" if r["is_tech"] else ""
+                print(f"    {r['patents_exact']:>4}  {r['owner'][:44]:44}{tag}")
+        recovered = sorted(
+            (r for r in rows if not r["is_tech"]
+             and (r["patents_exact"] or r["fuzzy_score"] >= args.fuzzy_floor)),
+            key=lambda r: -(r["patents_exact"] or r["patents_fuzzy"]))[:args.top]
+        if recovered:
+            print("\n  recovered (not tech-by-class, has patent match):")
+            for r in recovered:
+                if r["patents_exact"]:
+                    print(f"    exact {r['patents_exact']:>4}  {r['owner'][:40]:40}  ({r['mark']})")
+                else:
+                    print(f"    fuzzy {r['fuzzy_score']:.2f} ({r['patents_fuzzy']:>3}p "
+                          f"~{r['fuzzy_assignee'][:20]})  {r['owner'][:26]:26}  ({r['mark']})")
+
+
 def matchmaker_main() -> None:
     """Entry point for `markery matchmaker`."""
     ap = argparse.ArgumentParser(
@@ -1202,7 +1259,26 @@ def matchmaker_main() -> None:
     p_rp.add_argument("--confirm", action="store_true",
                       help="Write to entities.duckdb (default: dry-run preview)")
 
+    p_rich = sub.add_parser("richness",
+                            help="Count patents whose assignee matches each design mark's owner (Phase 32 richness)")
+    p_rich.add_argument("year", type=int, nargs="?",
+                        help="Filing year (e.g. 1930); omit with --years")
+    p_rich.add_argument("--years", type=int, nargs="+", metavar="Y",
+                        help="Multiple filing years for a distribution table")
+    p_rich.add_argument("--fuzzy-floor", type=float, default=0.8, metavar="F",
+                        help="Token-Jaccard floor for the fuzzy tier (default: 0.8)")
+    p_rich.add_argument("--top", type=int, default=20, metavar="N",
+                        help="Rows in the per-year detail lists (default: 20)")
+    p_rich.add_argument("--json", action="store_true",
+                        help="Emit per-mark records as JSON (matched rows only)")
+    p_rich.add_argument("--all-rows", action="store_true",
+                        help="With --json, include marks with no patent match")
+    p_rich.add_argument("--quiet", action="store_true",
+                        help="Summary table only; suppress per-year detail lists")
+
     args = ap.parse_args()
+    if args.cmd == "richness" and args.year is None and not args.years:
+        ap.error("richness: provide a year or --years")
     {
         "build":              cmd_build,
         "clear":              cmd_clear,
@@ -1214,4 +1290,5 @@ def matchmaker_main() -> None:
         "validate-variants":  cmd_validate_variants,
         "register":           cmd_register,
         "register-people":    cmd_register_people,
+        "richness":           cmd_richness,
     }[args.cmd](args)

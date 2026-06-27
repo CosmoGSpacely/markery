@@ -79,6 +79,8 @@ def render_portal(
             f'<span class="chip-sm">{r.get("count", 0)} design marks</span>'
             + (f'<span class="chip-sm chip-tech">{r.get("tech_count", 0)} technology</span>'
                if r.get("tech_count") else "")
+            + (f'<span class="chip-sm chip-pat">{r.get("rich_count", 0)} patent-holders</span>'
+               if r.get("rich_count") else "")
             + f'<span class="chip-sm">{r.get("with_images", 0)} with images</span>'
             f'</div>'
             f'<a class="portal-enter" href="{r["url"]}">Explore →</a>'

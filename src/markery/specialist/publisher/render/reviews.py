@@ -82,11 +82,24 @@ def _card(m: dict, img_rel: str | None) -> str:
     goods_html = f'<div class="card-goods"{goods_attr}>{_esc(goods)}</div>' if goods_full else ""
     tech = m.get("is_tech")
     badge = '<span class="tech-badge" title="Technology mark (US apparatus class)">⚙ Technology</span>' if tech else ""
-    card_cls = "card tech-mark" if tech else "card"
+    pat = m.get("patents")
+    if pat:
+        n = pat["n"]
+        if pat.get("exact"):
+            pat_badge = (f'<span class="pat-badge" title="Owner holds {n} patent(s) '
+                         f'(brand-level; not yet a confirmed mark↔patent match)">'
+                         f'◆ {n} owner patents</span>')
+        else:
+            pat_badge = (f'<span class="pat-badge pat-badge--fuzzy" title="Owner name '
+                         f'approximately matches a patent assignee with {n} patent(s)">'
+                         f'◆ ~{n} owner patents</span>')
+    else:
+        pat_badge = ""
+    classes = "card" + (" tech-mark" if tech else "") + (" patent-mark" if pat else "")
     return (
-        f'<div class="{card_cls}" id="sn-{m["serial"]}">{inner}'
+        f'<div class="{classes}" id="sn-{m["serial"]}">{inner}'
         f'<div class="card-body">'
-        f'<div class="card-name">{_esc(m["mark"] or "(design mark)")}{badge}</div>'
+        f'<div class="card-name">{_esc(m["mark"] or "(design mark)")}{badge}{pat_badge}</div>'
         f'<div class="card-meta">{_esc(owner)}</div>'
         f'<div class="card-meta">Filed {_esc(filing_str)}</div>'
         f'{goods_html}'
@@ -97,16 +110,22 @@ def _card(m: dict, img_rel: str | None) -> str:
 
 def render_review_month(
     year: int, month: int, year_dir: Path, base_url: str | None = None,
+    richness: dict[str, dict] | None = None,
 ) -> tuple[Path, dict, list[Path]]:
     """Render one month's design-mark gallery → reviews/<year>/<mm>.html.
 
+    `richness`: serial → {n, exact} for marks whose owner holds patents (Phase 32 P1).
     Returns (path, summary, written_image_paths).
     """
     marks = design_marks(year, month)
+    richness = richness or {}
+    for m in marks:
+        m["patents"] = richness.get(m["serial"])
     img_dir = year_dir / "img"
     written: list[Path] = []
     thumb: str | None = None
     tech_thumb: str | None = None
+    rich_thumb: str | None = None
     cards: list[str] = []
     for m in marks:
         img_rel = None
@@ -122,11 +141,15 @@ def render_review_month(
                     thumb = m["serial"]
                 if m.get("is_tech") and tech_thumb is None:
                     tech_thumb = m["serial"]   # prefer a technology mark as the sample
+                if m.get("patents") and rich_thumb is None:
+                    rich_thumb = m["serial"]   # prefer a patent-holder mark as the sample
         cards.append(_card(m, img_rel))
 
     tech_count = sum(1 for m in marks if m.get("is_tech"))
+    rich_count = sum(1 for m in marks if m.get("patents"))
     name = f"{_MONTHS[month]} {year}"
-    tech_sub = f' · {tech_count} technology' if tech_count else ""
+    tech_sub = (f' · {tech_count} technology' if tech_count else "") \
+             + (f' · {rich_count} with owner patents' if rich_count else "")
     grid = (f'<div class="card-grid">{"".join(cards)}</div>'
             if cards else '<p class="empty-state">No design marks filed this month.</p>')
     # Month-to-month navigation (prev · year · next).
@@ -152,20 +175,22 @@ def render_review_month(
     summary = {
         "month": month, "name": name, "count": len(marks),
         "with_images": sum(1 for m in marks if m["has_img"]),
-        "tech_count": tech_count,
+        "tech_count": tech_count, "rich_count": rich_count,
         "href": f"{month:02d}.html", "thumb": thumb,
         "tech_thumb": tech_thumb or thumb,
+        "rich_thumb": rich_thumb,
     }
     return out_path, summary, written
 
 
 def render_review_year(
     year: int, site_root: Path, project_slug: str, base_url: str | None = None,
-    sibling_years: list[int] | None = None,
+    sibling_years: list[int] | None = None, richness: dict[str, dict] | None = None,
 ) -> tuple[Path, dict, list[Path]]:
     """Render a year's review (12 monthly galleries + landing) under the annual-review
     project's site dir: site/<project_slug>/<year>/.
 
+    `richness`: serial → {n, exact} for marks whose owner holds patents (Phase 32 P1).
     Returns (year_index_path, portal_summary, all_written_paths).
     """
     year_dir = site_root / project_slug / str(year)
@@ -173,16 +198,18 @@ def render_review_year(
     written: list[Path] = []
     months: list[dict] = []
     for month in range(1, 13):
-        _, summary, w = render_review_month(year, month, year_dir, base_url)
+        _, summary, w = render_review_month(year, month, year_dir, base_url, richness=richness)
         months.append(summary)
         written += w
 
     total = sum(s["count"] for s in months)
     total_img = sum(s["with_images"] for s in months)
     total_tech = sum(s.get("tech_count", 0) for s in months)
+    total_rich = sum(s.get("rich_count", 0) for s in months)
     # thumb path relative to the year landing (year_dir/index.html): img/<serial>.png.
-    # Prefer a technology-mark sample for the year thumbnail.
-    year_thumb = (next((f'img/{s["tech_thumb"]}.png' for s in months if s.get("tech_thumb")), None)
+    # Prefer a patent-holder sample, then a technology mark, then any imaged mark.
+    year_thumb = (next((f'img/{s["rich_thumb"]}.png' for s in months if s.get("rich_thumb")), None)
+                  or next((f'img/{s["tech_thumb"]}.png' for s in months if s.get("tech_thumb")), None)
                   or next((f'img/{s["thumb"]}.png' for s in months if s["thumb"]), None))
 
     rows = "".join(
@@ -190,6 +217,7 @@ def render_review_year(
         f'<span class="review-month-name">{_esc(s["name"].split()[0])}</span>'
         f'<span class="review-month-count">{s["count"]} marks'
         + (f' · <span class="tech-count">{s["tech_count"]} tech</span>' if s.get("tech_count") else "")
+        + (f' · <span class="pat-count">{s["rich_count"]} pat</span>' if s.get("rich_count") else "")
         + '</span>'
         f'</a>'
         for s in months
@@ -209,6 +237,7 @@ def render_review_year(
         f'<div class="subtitle">USPTO design marks filed in {year} · '
         f'{total} marks · {total_img} with images'
         + (f' · {total_tech} technology' if total_tech else "")
+        + (f' · {total_rich} with owner patents' if total_rich else "")
         + '</div></div>'
         f'<div class="page-body">{year_switch}'
         f'<p>Monthly galleries of design marks (drawing code 3·) filed during {year}.</p>'
@@ -226,6 +255,7 @@ def render_review_year(
         "url": f"{project_slug}/{year}/index.html",
         "title": f"{year} Design-Mark Review",
         "count": total, "with_images": total_img, "tech_count": total_tech,
+        "rich_count": total_rich,
         "thumb_src": f"{project_slug}/{year}/{year_thumb}" if year_thumb else None,
     }
     return out_path, summary, written

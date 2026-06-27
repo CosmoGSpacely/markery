@@ -103,6 +103,26 @@ def _display_title(project: str) -> str:
     return project.replace("-", " ").title()
 
 
+def _richness_map(year: int, assignee_counts: dict[str, int]) -> dict[str, dict]:
+    """serial → {n, exact} for design marks whose owner matches a patent assignee.
+
+    Phase 32 P1 richness signal surfaced on review cards. Brand-level (owner holds
+    N patents), not yet a confirmed mark↔patent match. Only matched marks appear.
+    """
+    from markery.specialist.matchmaker import richness as _rich
+    out: dict[str, dict] = {}
+    try:
+        rows = _rich.compute_richness(year, counts=assignee_counts)
+    except Exception:
+        return out
+    for r in rows:
+        if r["patents_exact"] > 0:
+            out[r["serial"]] = {"n": r["patents_exact"], "exact": True}
+        elif r["fuzzy_score"] >= _rich.DEFAULT_FUZZY_FLOOR:
+            out[r["serial"]] = {"n": r["patents_fuzzy"], "exact": False}
+    return out
+
+
 def discover_projects() -> list[str]:
     """Return slugs of all match-review-essay projects under projects/, sorted."""
     base = config.ROOT / "projects"
@@ -318,11 +338,21 @@ def build_all(out_dir: Path | None = None, base_url: str | None = None,
     # built under site/<project>/<year>/ and surfaced as portal cards.
     pages: list[Path] = []
     review_summaries: list[dict] = []
+    # Phase 32 P1: precompute the assignee map once; reuse across every review year.
+    from markery.specialist.matchmaker import richness as _rich
+    import duckdb as _ddb
+    try:
+        _pc = _ddb.connect(str(config.DB["patents"]), read_only=True)
+        _assignee_counts = _rich.assignee_counts(_pc)
+        _pc.close()
+    except Exception:
+        _assignee_counts = {}
     for proj in discover_annual_reviews():
         for year in proj.review_years:
+            review_richness = _richness_map(year, _assignee_counts)
             y_path, y_summary, _ = r.render_review_year(
                 year, site_root, proj.name, base_url=base_url,
-                sibling_years=proj.review_years)
+                sibling_years=proj.review_years, richness=review_richness)
             review_summaries.append(y_summary)
             pages.append(y_path)
             # Index the year landing + each month in site-wide search (was missing —

@@ -68,6 +68,28 @@ def test_technology_marks_counted_highlighted_and_sampled(tmp_path, stub_marks):
     assert "1 technology" in july                          # month subtitle
 
 
+def test_owner_patents_badge_count_and_sample(tmp_path, stub_marks):
+    # Mark the imaged (first) mark of each month as an owner-patent holder.
+    rich = {f"7{1930}{m:02d}1": {"n": 5, "exact": True} for m in range(1, 13)}
+    _, summary, _ = reviews.render_review_year(
+        1930, tmp_path, "annual-design-review", richness=rich)
+    assert summary["rich_count"] == 12
+    landing = (tmp_path / "annual-design-review" / "1930" / "index.html").read_text()
+    assert "12 with owner patents" in landing          # year subtitle
+    assert 'class="pat-count">1 pat' in landing         # per-month strip count
+    july = (tmp_path / "annual-design-review" / "1930" / "07.html").read_text()
+    assert "pat-badge" in july and "5 owner patents" in july   # card badge
+    assert 'class="card tech-mark patent-mark"' in july         # both accents
+    assert "1 with owner patents" in july               # month subtitle
+
+
+def test_owner_patents_fuzzy_badge(tmp_path, stub_marks):
+    rich = {f"7{1930}{m:02d}1": {"n": 3, "exact": False} for m in range(1, 13)}
+    reviews.render_review_year(1930, tmp_path, "annual-design-review", richness=rich)
+    july = (tmp_path / "annual-design-review" / "1930" / "07.html").read_text()
+    assert "pat-badge--fuzzy" in july and "~3 owner patents" in july
+
+
 def test_review_month_page_depth_and_back_link(tmp_path, stub_marks):
     reviews.render_review_year(1930, tmp_path, "annual-design-review")
     july = (tmp_path / "annual-design-review" / "1930" / "07.html").read_text()

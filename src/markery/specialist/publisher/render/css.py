@@ -621,6 +621,17 @@ blockquote p { margin: 0; }
 .card.tech-mark { box-shadow: inset 3px 0 0 #6d8196; }
 .review-month-count .tech-count { color: #6d8196; font-weight: 600; }
 .chip-tech { background: #6d8196; color: #ffffe3; }
+/* Owner-patent richness (Phase 32 P1): assignee-overlap highlight + counts. */
+.pat-badge {
+  display: inline-block; margin-left: 6px; padding: 1px 6px;
+  font-size: .68em; font-weight: 600; vertical-align: middle;
+  color: #ffffe3; background: #8a5a2b; border-radius: 3px; white-space: nowrap;
+}
+.pat-badge--fuzzy { background: #b08a5a; }
+.card.patent-mark { box-shadow: inset 3px 0 0 #8a5a2b; }
+.card.tech-mark.patent-mark { box-shadow: inset 3px 0 0 #6d8196, inset 6px 0 0 #8a5a2b; }
+.review-month-count .pat-count { color: #8a5a2b; font-weight: 600; }
+.chip-pat { background: #8a5a2b; color: #ffffe3; }
 
 /* ── Per-record detail page (one trademark / one patent) ── */
 .detail-layout {
