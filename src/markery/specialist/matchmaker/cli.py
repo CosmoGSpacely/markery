@@ -1195,6 +1195,53 @@ def cmd_richness(args: argparse.Namespace) -> None:
                           f"~{r['fuzzy_assignee'][:20]})  {r['owner'][:26]:26}  ({r['mark']})")
 
 
+def cmd_seed_pairs(args: argparse.Namespace) -> None:
+    from markery.specialist.matchmaker import seed as sd
+    import duckdb
+    import json as _json
+
+    pc = duckdb.connect(str(DB["patents"]), read_only=True)
+    patents = sd.assignee_patents(pc)
+    pc.close()
+
+    years = args.years if args.years else [args.year]
+    all_pairs: list[dict] = []
+    summaries: list[tuple[int, dict]] = []
+    for y in years:
+        pairs = sd.seed_pairs(y, window=args.window, fuzzy_floor=args.fuzzy_floor,
+                              min_score=args.min_score, patents=patents)
+        for p in pairs:
+            p["year"] = y
+        all_pairs.extend(pairs)
+        summaries.append((y, sd.summarise(pairs)))
+
+    if args.json:
+        print(_json.dumps(all_pairs, ensure_ascii=False, indent=2))
+        return
+
+    print(f"=== seed pairs (window ±{args.window}y, fuzzy floor {args.fuzzy_floor}, "
+          f"min-score {args.min_score}) ===")
+    print(f"{'year':>4}  {'pairs':>5}  {'marks':>5}  {'tech':>4}  {'exact':>5}  {'fuzzy':>5}")
+    for y, s in summaries:
+        print(f"{y:>4}  {s['pairs']:>5}  {s['marks']:>5}  {s['tech_marks']:>4}  "
+              f"{s['exact']:>5}  {s['fuzzy']:>5}")
+
+    if len(years) == 1 and not args.quiet:
+        s = summaries[0][1]
+        # top seed pairs
+        print("\n  top seed pairs (score · mark → patent · owner):")
+        for p in all_pairs[:args.top]:
+            tag = " [tech]" if p["is_tech"] else ""
+            cpc = ",".join(p["cpc"][:3])
+            print(f"    {p['score']:.2f}  {(p['mark'] or '(design)')[:24]:24} → "
+                  f"{p['patent_no']:11} {p['applicant'][:28]:28}{tag}  [{cpc}]")
+        # productive CPC subclasses (drives any future P2b expansion)
+        if s["cpc_subclasses"]:
+            top = list(s["cpc_subclasses"].items())[:12]
+            print("\n  productive CPC subclasses: "
+                  + ", ".join(f"{c}({n})" for c, n in top))
+
+
 def matchmaker_main() -> None:
     """Entry point for `markery matchmaker`."""
     ap = argparse.ArgumentParser(
@@ -1276,9 +1323,30 @@ def matchmaker_main() -> None:
     p_rich.add_argument("--quiet", action="store_true",
                         help="Summary table only; suppress per-year detail lists")
 
+    p_seed = sub.add_parser("seed-pairs",
+                            help="Emit scored local mark↔patent seed pairs (Phase 32 P2a; offline, no model)")
+    p_seed.add_argument("year", type=int, nargs="?",
+                        help="Filing year (e.g. 1921); omit with --years")
+    p_seed.add_argument("--years", type=int, nargs="+", metavar="Y",
+                        help="Multiple filing years for a distribution table")
+    p_seed.add_argument("--window", type=int, default=12, metavar="N",
+                        help="Keep pairs with patent grant within ±N years of filing (default: 12)")
+    p_seed.add_argument("--fuzzy-floor", type=float, default=0.8, metavar="F",
+                        help="Token-Jaccard floor for fuzzy owner matches (default: 0.8)")
+    p_seed.add_argument("--min-score", type=float, default=0.0, metavar="S",
+                        help="Drop pairs scoring below S (default: 0.0)")
+    p_seed.add_argument("--top", type=int, default=25, metavar="N",
+                        help="Rows in the per-year detail list (default: 25)")
+    p_seed.add_argument("--json", action="store_true",
+                        help="Emit scored pair records as JSON for the spawn pipeline")
+    p_seed.add_argument("--quiet", action="store_true",
+                        help="Summary table only; suppress per-year detail")
+
     args = ap.parse_args()
     if args.cmd == "richness" and args.year is None and not args.years:
         ap.error("richness: provide a year or --years")
+    if args.cmd == "seed-pairs" and args.year is None and not args.years:
+        ap.error("seed-pairs: provide a year or --years")
     {
         "build":              cmd_build,
         "clear":              cmd_clear,
@@ -1291,4 +1359,5 @@ def matchmaker_main() -> None:
         "register":           cmd_register,
         "register-people":    cmd_register_people,
         "richness":           cmd_richness,
+        "seed-pairs":         cmd_seed_pairs,
     }[args.cmd](args)

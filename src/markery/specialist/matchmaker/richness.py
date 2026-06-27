@@ -75,7 +75,7 @@ def design_mark_owners(conn: duckdb.DuckDBPyConnection, year: int) -> list[dict]
     matches (Brown Shoe → not "Brown Group") and drops spurious successor matches.
     """
     rows = conn.execute(f"""
-        SELECT cf.serial_no, cf.mark_id_char, o.own_name, uc.us_classes
+        SELECT cf.serial_no, cf.mark_id_char, o.own_name, uc.us_classes, cf.filing_dt
         FROM case_file cf
         LEFT JOIN (
             SELECT serial_no, own_name FROM (
@@ -94,10 +94,10 @@ def design_mark_owners(conn: duckdb.DuckDBPyConnection, year: int) -> list[dict]
         ORDER BY cf.serial_no
     """).fetchall()
     out = []
-    for serial, mark, owner, classes in rows:
+    for serial, mark, owner, classes, filing in rows:
         out.append({
             "serial": str(serial), "mark": mark or "", "owner": owner or "",
-            "us_classes": classes or "",
+            "us_classes": classes or "", "filing": filing,
         })
     return out
 

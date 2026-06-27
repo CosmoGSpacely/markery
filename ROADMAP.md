@@ -260,6 +260,18 @@ is genuinely ~12–25 marks/year and roughly accurate as-is, concentrated in a f
 industrials (Westinghouse, Singer, Koehring). P2 should therefore favour the cheap local seed
 pass; treat EPO CPC expansion (P2b) as low-yield for richness and gate it tightly.
 
+Progress 2026-06-26 (P2a, local seed pass): built `markery matchmaker seed-pairs <year>`
+(`--years`, `--window`, `--min-score`, `--json`) in
+`src/markery/specialist/matchmaker/seed.py`. Deterministic, model-free, offline — for each
+design mark it finds the original applicant's patents (richness signal) and emits scored
+mark↔patent seed pairs for the spawn pipeline. Score = owner_conf × (0.5 + `score.date_score`)
+in [0,1] (exact owner = 1.0, fuzzy = Jaccard); a good seed keeps patents granted within ±window
+years of filing. `--json` emits pipeline-ready records (serial, mark, applicant, patent_no,
+app_dt/grant_dt, cpc[], delta_years, match, score). The summary also reports the productive CPC
+subclasses (the only input P2b would need). 6 hermetic tests
+(`tests/specialist/matchmaker/test_seed.py`). Still to do: spawn loop (P4) consuming the JSON;
+P2b (EPO expansion) gated/optional given the pilot's low-yield finding.
+
 ---
 
 ## Notes
