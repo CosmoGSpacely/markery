@@ -65,13 +65,25 @@ def assignee_counts(conn: duckdb.DuckDBPyConnection) -> dict[str, int]:
 
 
 def design_mark_owners(conn: duckdb.DuckDBPyConnection, year: int) -> list[dict]:
-    """Design marks (mark_draw_cd LIKE '3%') filed in `year`, with first owner + US classes."""
+    """Design marks (mark_draw_cd LIKE '3%') filed in `year`, with original applicant + US classes.
+
+    Uses the *original applicant* (lowest ``own_type_cd`` — code 30 is the original
+    registrant; 40+ are assignment-chain successors), not the current owner. The
+    ``owner`` rows are ordered newest-first, so ``MIN(own_id)`` would pick a modern
+    successor name (e.g. KENNAMETAL on a 1921 mark) and never match a 1921-era
+    patent assignee. Matching on the original applicant both recovers genuine
+    matches (Brown Shoe → not "Brown Group") and drops spurious successor matches.
+    """
     rows = conn.execute(f"""
         SELECT cf.serial_no, cf.mark_id_char, o.own_name, uc.us_classes
         FROM case_file cf
         LEFT JOIN (
-            SELECT serial_no, own_name FROM owner
-            WHERE own_id IN (SELECT MIN(own_id) FROM owner GROUP BY serial_no)
+            SELECT serial_no, own_name FROM (
+                SELECT serial_no, own_name,
+                       ROW_NUMBER() OVER (PARTITION BY serial_no
+                           ORDER BY TRY_CAST(own_type_cd AS INTEGER) NULLS LAST, own_id) AS rn
+                FROM owner
+            ) WHERE rn = 1
         ) o ON cf.serial_no = o.serial_no
         LEFT JOIN (
             SELECT serial_no, string_agg(DISTINCT us_class_cd, ',') AS us_classes

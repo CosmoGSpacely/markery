@@ -73,6 +73,26 @@ def test_design_mark_owners_reads_review_year(tmp_path):
     assert "026" in m["us_classes"]          # tech US class present in fixture
 
 
+def test_design_mark_owners_picks_original_applicant():
+    """With an assignment chain, the original applicant (low own_type_cd) is used,
+    not the current successor (MIN own_id, which the data orders newest-first)."""
+    conn = duckdb.connect(":memory:")
+    conn.execute("CREATE TABLE case_file (serial_no BIGINT, mark_id_char VARCHAR, "
+                 "filing_dt DATE, mark_draw_cd VARCHAR)")
+    conn.execute("CREATE TABLE owner (own_id BIGINT, serial_no BIGINT, own_name VARCHAR, "
+                 "own_type_cd VARCHAR)")
+    conn.execute("CREATE TABLE us_class (us_class_cd VARCHAR, x INT, serial_no BIGINT)")
+    conn.execute("INSERT INTO case_file VALUES (100, 'BROWNBILT', DATE '1921-05-01', '3')")
+    # newest-first ordering: low own_id = current successor, high own_id = original
+    conn.execute("INSERT INTO owner VALUES (10, 100, 'Brown Group, Inc.', '40')")
+    conn.execute("INSERT INTO owner VALUES (11, 100, 'Brown Shoe Company', '30')")
+    conn.execute("INSERT INTO us_class VALUES ('039', 1, 100)")
+    marks = rich.design_mark_owners(conn, 1921)
+    conn.close()
+    assert len(marks) == 1
+    assert marks[0]["owner"] == "Brown Shoe Company"      # original, not "Brown Group"
+
+
 def test_assignee_counts_normalises(tmp_path):
     repo = build_synthetic_repo(tmp_path)
     conn = duckdb.connect(str(repo.db_pat), read_only=True)

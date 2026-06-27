@@ -239,9 +239,26 @@ token-Jaccard fuzzy tier (floor 0.8, tokens ≥3 chars, owner needs ≥2 long to
 review tier. It is complementary to the US-class tech gate: across 1921–1930 only ~5–7% of
 design-mark owners hold any patent, and the two signals overlap little — the richness signal
 recovers class-gate false negatives (Eagle Pencil, Alcoa, American Tobacco, Phoenix Hosiery)
-and demotes class-tech logos whose owner never patented. 6 hermetic tests
-(`tests/specialist/matchmaker/test_richness.py`). Still to do: wire into seed-match (P2),
-the spawn loop (P4), and surface richness on the review cards.
+and demotes class-tech logos whose owner never patented. 7 hermetic tests
+(`tests/specialist/matchmaker/test_richness.py`).
+
+Refinement 2026-06-26 (original applicant): richness now matches the *original applicant*
+(lowest `own_type_cd` — code 30 is the original registrant; 40+ are assignment-chain
+successors), not the current owner. The `owner` rows are ordered newest-first, so the prior
+`MIN(own_id)` picked a modern successor name (KENNAMETAL on a 1921 mark) that can never match
+a 1921-era patent assignee. The fix recovers genuine matches (Brown Shoe, not "Brown Group")
+and drops spurious successor matches (Universal Match → original Belgian "Union Allumettière").
+Net effect across 1921–1930: exact matches rose in most years (1922 18→23, 1924 14→21); 1926
+remains anomalous (0 exact — its original applicants don't match the corpus; revisit as data QA).
+
+P2 pilot finding 2026-06-26 (1921, scratchpad only): EPO expansion is **not** the lever to
+grow richness. (a) The productive CPC subclasses are already ~80–100% complete vs EPO
+(H01J 78%, H04B 91%, B42F/G03B/B62D ~100%), so seed-driven subclass expansion adds ~nothing.
+(b) An assignee-side EPO probe of 16 non-matched corporate 1921 owners found patents for only
+2/16. (c) The original-applicant fix recovers ~+2/yr. Conclusion: richness for these cohorts
+is genuinely ~12–25 marks/year and roughly accurate as-is, concentrated in a few big
+industrials (Westinghouse, Singer, Koehring). P2 should therefore favour the cheap local seed
+pass; treat EPO CPC expansion (P2b) as low-yield for richness and gate it tightly.
 
 ---
 
