@@ -30,10 +30,29 @@ ROOT = _find_root()
 # Unified site root: the Markery portal and every project's nested site live here.
 SITE_ROOT = ROOT / "site"
 
-# Single definition site for the default LLM model. The dated ID is pinned for
-# reproducibility. Override per-call with --model or the MARKERY_MODEL env var.
+# The paid model used only when a caller explicitly opts in (--model or
+# MARKERY_MODEL). The dated ID is pinned for reproducibility.
 # Note: Haiku 4.5's cacheable-prefix minimum is 4096 tokens (see common/llm.py).
 DEFAULT_MODEL = "claude-haiku-4-5-20251001"
+
+# Free-by-default model for unattended/agentic steps so the spawn loop and
+# high-volume scoring never silently bill a paid model. Verified responsive
+# (matches openrouter.DEFAULT_TEST_MODEL). Opt into a paid model per-call with
+# --model or per-session with MARKERY_MODEL.
+FREE_MODEL = "openai/gpt-oss-120b:free"
+
+
+def resolve_model(explicit: str | None = None) -> str:
+    """Which LLM to use: explicit arg > MARKERY_MODEL env > FREE_MODEL.
+
+    Free-by-default: any model step that does not receive an explicit model and
+    is not overridden by MARKERY_MODEL runs on the free model. This is the single
+    resolution point — callers route model choice through here rather than
+    falling back to DEFAULT_MODEL directly.
+    """
+    if explicit:
+        return explicit
+    return os.environ.get("MARKERY_MODEL") or FREE_MODEL
 
 # Data directory holding the corpus DBs. Honour MARKERY_DATA_DIR if set (hermetic
 # tests point this at a synthetic-fixture dir); otherwise it is ROOT/data.

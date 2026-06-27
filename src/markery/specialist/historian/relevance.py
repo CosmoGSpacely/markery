@@ -13,7 +13,7 @@ import csv
 import re
 from pathlib import Path
 
-from markery.common.config import DEFAULT_MODEL
+from markery.common.config import resolve_model
 from markery.common.project import Project
 
 _SYSTEM = (
@@ -59,7 +59,7 @@ def score_relevance(project: str, title: str, text: str = "",
 
     score 0 means the model output was unparseable (caller treats as low)."""
     from markery.common.llm import call as llm_call
-    model = model or DEFAULT_MODEL
+    model = resolve_model(model)
     user = (
         f"{_project_context(project)}\n\n"
         f"Candidate source —\nTitle: {title}\n"

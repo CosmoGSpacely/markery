@@ -91,8 +91,8 @@ def count_output_tokens(text: str, model: str | None = None) -> TokenRecord:
     (word_count * 0.75) if the key is absent or the SDK is unavailable.
     """
     if model is None:
-        from markery.common.config import DEFAULT_MODEL
-        model = os.environ.get("MARKERY_MODEL", DEFAULT_MODEL)
+        from markery.common.config import resolve_model
+        model = resolve_model()
     from markery.common.llm import get_client
     client = get_client()
     if client is not None:

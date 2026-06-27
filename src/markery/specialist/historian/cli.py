@@ -10,7 +10,7 @@ import sys
 import time
 from pathlib import Path
 
-from markery.common.config import DB, DEFAULT_MODEL as _DEFAULT_MODEL
+from markery.common.config import DB, resolve_model
 from markery.common.project import Project, require_project
 from markery.common.tokens import TokenRecord, count_output_tokens, emit as emit_tokens
 
@@ -339,7 +339,7 @@ def cmd_card(args: argparse.Namespace) -> None:
     if getattr(args, "infer", False) or json_mode:
         import json as _json
         from markery.common.llm import call as llm_call
-        model = getattr(args, "model", None) or os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
+        model = resolve_model(getattr(args, "model", None))
         user_msg = card_text + "\n\nAssess this candidate pair."
         try:
             resp_text, ptok, ctok, cache_read, cache_create = llm_call(
@@ -492,7 +492,7 @@ def cmd_digest(args: argparse.Namespace) -> None:
     if getattr(args, "infer", False) or json_mode:
         import json as _json
         from markery.common.llm import call as llm_call
-        model = getattr(args, "model", None) or os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
+        model = resolve_model(getattr(args, "model", None))
         user_msg = (
             digest_text
             + "\n\nWhich of the unreviewed candidates listed above are most worth examining "
@@ -677,7 +677,7 @@ def cmd_draft(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     scaffold_text = scaffold_path.read_text(encoding="utf-8")
-    model = getattr(args, "model", None) or os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
+    model = resolve_model(getattr(args, "model", None))
 
     from markery.common.llm import call as llm_call
     print(f"Drafting '{args.slug}' with {model}…", flush=True)
@@ -790,7 +790,7 @@ def cmd_infer_queue(args: argparse.Namespace) -> None:
             continue
         items.append((slug, cp.stdout.strip() + "\n\nAssess this candidate pair."))
 
-    model = getattr(args, "model", None) or os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
+    model = resolve_model(getattr(args, "model", None))
     from markery.common.llm import call_batch
     print(f"Submitting {len(items)} inferences as one batch ({model}, 50% price)…", flush=True)
     t0 = time.monotonic()
@@ -960,7 +960,7 @@ def cmd_relevance(args: argparse.Namespace) -> None:
     """Score a discovered item's relevance to a project (1-5)."""
     import json as _json
     from markery.specialist.historian.relevance import score_relevance
-    model = getattr(args, "model", None) or os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
+    model = resolve_model(getattr(args, "model", None))
     result = score_relevance(args.project, args.title, args.text, model=model)
     if getattr(args, "json", False):
         print(_json.dumps(result))

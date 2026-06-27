@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from markery.common.config import ROOT, DEFAULT_MODEL as _DEFAULT_MODEL
+from markery.common.config import ROOT, resolve_model
 from markery.common.tokens import TokenRecord, emit as emit_tokens
 
 _LIBRARY = ROOT / "library"
@@ -356,7 +356,7 @@ def extract(
         meta = json.loads(meta_path.read_text())
         title = meta.get("title", slug)
 
-    model = os.environ.get("MARKERY_MODEL", _DEFAULT_MODEL)
+    model = resolve_model()
 
     text = raw_text_path.read_text(encoding="utf-8", errors="replace")
     chunks = chunk_text(text)
