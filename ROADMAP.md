@@ -223,11 +223,31 @@ publishes into the refreshed design (31), and rides the hermetic suite (27). Mos
 1. Technological-mark triage (`trademark tech-marks`: US-class gate + free-model goods rule).
 2. Seed match → good-match filter → CPC-subclass expansion + re-match.
 3. Richness branch (technology-area vs small-company) → human-gated project spawn → publish.
-4. The loop (`spawn_graph.py`): seed → … → spawn → publish, with a dedup ledger, EPO budget,
-   and the single human gate at project creation; scheduled.
+4. The loop (`spawn_graph.py`): seed → … → spawn → preview, with a dedup ledger and the
+   single human gate at project creation; scheduled.
 
 **Gate:** one end-to-end tick takes a technological design mark through to a human-gated
-project spawn and a clean portal build.
+project spawn and a clean local preview build.
+
+P4 design — LOCKED 2026-06-28 (build in progress):
+- **One human gate**, at project creation. Everything before it (seed-pairs, dedup, proposal
+  assembly, coverage check) is read-only/free and creates nothing; everything after executes
+  the approved plan.
+- **Tiered batch approval**: the loop assembles ALL proposals up front, each carrying seed
+  evidence + a **coverage flag** (are the entity's CPC classes actually fetched? — per the
+  corpus-bias finding [[project_patent_corpus_cpc_bias]]). Clean candidates (good coverage,
+  high score, no dedup collision) go in a bulk-approve pile; borderline ones are flagged for
+  individual attention. Resume with a {candidate: approve|reject|defer} map.
+- **Local preview only — the loop never publishes.** Its terminal step is a local `site build`
+  (a reviewable draft). "Go live" stays a separate, deliberate human action (D070 hosting).
+- **Auto-draft essays as preview** (free model): the loop produces a complete-but-unpublished
+  project; the human is the editor before go-live.
+- **All-source discovery** for the preview: LIBRARIAN searches books (Open Library), newspapers
+  (chronam), and media/images (commons/loc/nara/dpla/ia), relevance-scored by HISTORIAN
+  (free model), auto-acquiring free/PD + fair-use media, referencing into the project's
+  references/library.jsonl. ILL is queued (wants), not gated inline (keeps the post-gate run
+  non-blocking).
+- Dedup by entity (a ledger), so re-runs skip already-spawned entities.
 
 Progress 2026-06-25 (P1, richness signal): built `markery matchmaker richness <year>`
 (`--years` for a distribution, `--json` for the pipeline) in

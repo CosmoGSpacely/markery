@@ -1242,6 +1242,58 @@ def cmd_seed_pairs(args: argparse.Namespace) -> None:
                   + ", ".join(f"{c}({n})" for c, n in top))
 
 
+def cmd_seed_project(args: argparse.Namespace) -> None:
+    """Scaffold a match-review-essay project's entity files from a seed entity.
+
+    Writes entities.csv / variants.csv / entities.txt (corpus variants resolved via
+    propose_company). The spawn loop (Phase 32 P4) calls this after `project init
+    --type match-review-essay`. Picks a collision-free entity_id (>= 9001)."""
+    import csv
+    import duckdb
+    import json as _json
+    from markery.common import config
+    from markery.specialist.matchmaker import autoregister as ar
+    from markery.specialist.matchmaker.entities import open_db as ent_open_db
+
+    root = config.ROOT / "projects" / args.project
+    if not (root / "project.json").exists():
+        print(f"No project at {root}. Run 'markery project init {args.project} "
+              f"--type match-review-essay' first.", file=sys.stderr)
+        sys.exit(1)
+
+    # collision-free entity_id: above both first-gen ids and any existing.
+    conn_ent = ent_open_db()
+    max_id = conn_ent.execute("SELECT COALESCE(MAX(entity_id), 0) FROM company_entity").fetchone()[0]
+    conn_ent.close()
+    eid = max(int(max_id), 9000) + 1
+
+    conn_pat = duckdb.connect(str(DB["patents"]), read_only=True)
+    conn_tm = duckdb.connect(str(DB["trademarks"]), read_only=True)
+    prop = ar.propose_company(conn_pat, conn_tm, args.entity,
+                              min_score=args.min_score, top=args.top)
+    conn_pat.close(); conn_tm.close()
+
+    with (root / "entities.csv").open("w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(["entity_id", "canonical_name", "entity_type", "industry"])
+        w.writerow([eid, args.entity, args.entity_type, args.industry or ""])
+    with (root / "variants.csv").open("w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(["entity_id", "variant_name", "source"])
+        for v in prop["variants"]:
+            w.writerow([eid, v["name"], v["source"]])
+    (root / "entities.txt").write_text(f"{eid}\n", encoding="utf-8")
+
+    out = {"project": args.project, "entity_id": eid, "canonical": args.entity,
+           "variants": len(prop["variants"])}
+    if getattr(args, "json", False):
+        print(_json.dumps(out))
+    else:
+        print(f"Seeded '{args.project}': entity {eid} '{args.entity}' "
+              f"with {len(prop['variants'])} variant(s).")
+        print(f"  next: markery matchmaker build --data-dir projects/{args.project}")
+
+
 def matchmaker_main() -> None:
     """Entry point for `markery matchmaker`."""
     ap = argparse.ArgumentParser(
@@ -1342,6 +1394,18 @@ def matchmaker_main() -> None:
     p_seed.add_argument("--quiet", action="store_true",
                         help="Summary table only; suppress per-year detail")
 
+    p_sp = sub.add_parser("seed-project",
+                          help="Scaffold a match-review-essay project's entity files from a seed entity (Phase 32 P4)")
+    p_sp.add_argument("project", help="Project slug (must already exist via project init)")
+    p_sp.add_argument("--entity", required=True, help="Canonical entity name to seed")
+    p_sp.add_argument("--industry", default=None, help="Optional industry label")
+    p_sp.add_argument("--entity-type", default="company", help="Entity type (default: company)")
+    p_sp.add_argument("--min-score", type=float, default=0.3, metavar="S",
+                      help="Minimum token-overlap score for a variant (default: 0.3)")
+    p_sp.add_argument("--top", type=int, default=10, metavar="N",
+                      help="Max variants per source (default: 10)")
+    p_sp.add_argument("--json", action="store_true", help="Emit result as JSON")
+
     args = ap.parse_args()
     if args.cmd == "richness" and args.year is None and not args.years:
         ap.error("richness: provide a year or --years")
@@ -1360,4 +1424,5 @@ def matchmaker_main() -> None:
         "register-people":    cmd_register_people,
         "richness":           cmd_richness,
         "seed-pairs":         cmd_seed_pairs,
+        "seed-project":       cmd_seed_project,
     }[args.cmd](args)

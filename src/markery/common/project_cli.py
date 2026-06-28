@@ -42,7 +42,7 @@ def _prompt_type() -> ProjectType:
     return _TYPE_CHOICES[idx]
 
 
-def cmd_init(name: str | None) -> None:
+def cmd_init(name: str | None, ptype: str | None = None) -> None:
     if not name:
         name = _prompt_name()
 
@@ -56,7 +56,7 @@ def cmd_init(name: str | None) -> None:
         )
         sys.exit(1)
 
-    project_type = _prompt_type()
+    project_type = ProjectType(ptype) if ptype else _prompt_type()
 
     try:
         created = scaffold_project(project_root, project_type)
@@ -339,6 +339,10 @@ def project_main() -> None:
 
     init_p = sub.add_parser("init", help="Scaffold a new project directory")
     init_p.add_argument("name", nargs="?", default=None, help="Project name (prompted if omitted)")
+    init_p.add_argument("--type", dest="ptype", default=None,
+                        choices=[t.value for t in ProjectType],
+                        help="Project type (non-interactive; prompted if omitted). "
+                             "Used by the spawn loop.")
 
     adopt_p = sub.add_parser("adopt", help="Declare the type of an existing project")
     adopt_p.add_argument("name", help="Project name (directory under projects/)")
@@ -349,7 +353,7 @@ def project_main() -> None:
     args = parser.parse_args()
 
     if args.action == "init":
-        cmd_init(args.name)
+        cmd_init(args.name, ptype=args.ptype)
     elif args.action == "adopt":
         cmd_adopt(args.name)
     elif args.action == "onboard":
