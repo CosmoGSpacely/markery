@@ -651,6 +651,20 @@ def cmd_media_search(args: argparse.Namespace) -> None:
     except DPLAKeyMissing as exc:
         print(f"Skipped dpla: {exc}", file=sys.stderr)
         sys.exit(1)
+    def _idof(r) -> str:
+        if isinstance(r, str):
+            return r
+        for attr in ("source_id", "identifier", "page_id", "id"):
+            v = getattr(r, attr, None)
+            if v:
+                return str(v)
+        return str(r)
+
+    if getattr(args, "json", False):
+        import json as _json
+        print(_json.dumps([{"source": args.source, "id": _idof(r)} for r in results],
+                          ensure_ascii=False))
+        return
     if not results:
         print("No results.")
         return
@@ -661,19 +675,32 @@ def cmd_media_search(args: argparse.Namespace) -> None:
 def cmd_media_acquire(args: argparse.Namespace) -> None:
     from markery.specialist.librarian import media
     from markery.specialist.librarian.sources.dpla import DPLAKeyMissing
+    from markery.specialist.librarian.sources.common import FAIR_USE_TAGS as _FAIR_USE_TAGS
+    fair_use = getattr(args, "fair_use", False)
     try:
-        meta = media.acquire(args.source, args.title, kind=args.kind)
+        meta = media.acquire(args.source, args.title, kind=args.kind, fair_use=fair_use)
     except DPLAKeyMissing as exc:
         print(f"Skipped dpla: {exc}", file=sys.stderr)
         sys.exit(1)
     if meta is None:
-        print(
-            f"Rejected: '{args.title}' [{args.source}] — license not admitted "
-            "(PD/CC0/CC-BY/CC-BY-SA only), carries restrictions, or not found.",
-            file=sys.stderr,
-        )
+        if getattr(args, "json", False):
+            import json as _json
+            print(_json.dumps({"acquired": False, "source": args.source, "id": args.title}))
+            return
+        hint = ("not found" if fair_use else
+                "license not admitted (PD/CC0/CC-BY/CC-BY-SA only), "
+                "carries restrictions, or not found — retry with --fair-use")
+        print(f"Rejected: '{args.title}' [{args.source}] — {hint}.", file=sys.stderr)
         sys.exit(1)
-    print(f"Acquired: {meta['slug']}  [{meta['license']}]  ({meta['source']})")
+    if getattr(args, "json", False):
+        import json as _json
+        print(_json.dumps({"acquired": True, "slug": meta["slug"],
+                           "license": meta["license"], "source": meta["source"],
+                           "title": meta.get("title", "")}))
+        return
+    tag = meta['license']
+    note = "  (fair-use tier)" if tag in _FAIR_USE_TAGS else ""
+    print(f"Acquired: {meta['slug']}  [{tag}]{note}  ({meta['source']})")
     print(f"  attribution: {meta.get('attribution_text', '')}")
     print(f"  → {media.media_dir() / meta['slug']}")
     print("  reference it in a project: markery librarian use "
@@ -984,6 +1011,8 @@ def librarian_main() -> None:
                          help="chronam only: earliest issue year")
     p_msrch.add_argument("--year-end", type=int, default=None,
                          help="chronam only: latest issue year (defaults to PD cutoff)")
+    p_msrch.add_argument("--json", action="store_true",
+                         help="Emit results as JSON [{source, id}] for the discovery loop")
 
     p_macq = sub.add_parser("media-acquire",
                             help="Acquire a PD media item into the global library (then `use` it in a project)")
@@ -991,6 +1020,11 @@ def librarian_main() -> None:
     p_macq.add_argument("--source", choices=list(_MEDIA_SOURCES), default="commons")
     p_macq.add_argument("--kind", default="photo",
                         choices=["photo", "map", "drawing", "video"])
+    p_macq.add_argument("--fair-use", action="store_true",
+                        help="Acquire non-PD/CC items too (NC/ND/in-copyright/unknown), "
+                             "tagged honestly — non-commercial fair-use tier")
+    p_macq.add_argument("--json", action="store_true",
+                        help="Emit the acquisition result as JSON for the discovery loop")
 
     p_mlist = sub.add_parser("media-list", help="List media in the global library")
 

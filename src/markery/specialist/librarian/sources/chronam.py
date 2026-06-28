@@ -44,15 +44,21 @@ def search(query: str, max_results: int = 10,
     return [item["id"] for item in data.get("items", [])[:max_results] if item.get("id")]
 
 
-def fetch(page_id: str, max_year: int | None = None) -> Optional[MediaResult]:
-    """Resolve one page to a PD clipping MediaResult, or None if out of PD range."""
+def fetch(page_id: str, max_year: int | None = None,
+          fair_use: bool = False) -> Optional[MediaResult]:
+    """Resolve one page to a clipping MediaResult. None if out of PD range
+    (strict); under fair_use, post-cutoff pages are tagged InC and acquired.
+    A page with no resolvable date is always skipped (no citation possible)."""
     detail = _get(f"{_BASE}{page_id.rstrip('/')}.json")
     issue = detail.get("issue", {}) or {}
     date_issued = issue.get("date_issued", "") or detail.get("date", "")
     year = int(date_issued[:4]) if date_issued[:4].isdigit() else None
     cutoff = max_year if max_year is not None else pd_cutoff_year()
-    if year is None or year > cutoff:
-        return None  # unknown date or still in copyright → not admitted
+    if year is None:
+        return None  # unknown date → cannot cite
+    in_copyright = year > cutoff
+    if in_copyright and not fair_use:
+        return None
 
     title_obj = detail.get("title", {}) or {}
     paper = title_obj.get("name", "") if isinstance(title_obj, dict) else str(title_obj)
@@ -60,11 +66,14 @@ def fetch(page_id: str, max_year: int | None = None) -> Optional[MediaResult]:
     image_url = f"{_BASE}{page_id.rstrip('/')}.jpg"
     citation = (f"{paper}, {date_issued}, p. {seq}. "
                 f"Chronicling America: Historic American Newspapers, Library of Congress.")
+    code = "InC" if in_copyright else "PD"
+    rights_stmt = ("In copyright (non-commercial fair use)" if in_copyright
+                   else "Public domain (Chronicling America, LoC)")
     return MediaResult(
         source="chronam", source_id=page_id.strip("/"),
         title=f"{paper} — {date_issued} p.{seq}".strip(" —"),
-        url=image_url, license="PD", creator=paper or "Chronicling America",
-        license_url="", rights_statement="Public domain (Chronicling America, LoC)",
+        url=image_url, license=code, creator=paper or "Chronicling America",
+        license_url="", rights_statement=rights_stmt,
         attribution_text=citation, source_url=f"{_BASE}{page_id}",
         date=year, kind="clipping",
     )

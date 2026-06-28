@@ -65,7 +65,7 @@ def project_root(tmp_path, monkeypatch):
 
 
 def test_acquire_commons_stores_metadata_and_catalog(project_root, monkeypatch):
-    monkeypatch.setattr(commons, "fetch", lambda title: commons.CommonsResult(
+    monkeypatch.setattr(commons, "fetch", lambda title, **kw: commons.CommonsResult(
         title=title, url="https://upload.wikimedia.org/x/Deere.jpg", license="PD",
         creator="Unknown", license_url="", rights_statement="Public domain",
         attribution_text="Public domain",
@@ -90,6 +90,6 @@ def test_acquire_commons_stores_metadata_and_catalog(project_root, monkeypatch):
 
 
 def test_acquire_commons_rejects_unadmitted(project_root, monkeypatch):
-    monkeypatch.setattr(commons, "fetch", lambda title: None)  # resolve_license rejected
+    monkeypatch.setattr(commons, "fetch", lambda title, **kw: None)  # resolve_license rejected
     assert media.acquire_commons("File:Copyrighted.jpg") is None
     assert media.list_media() == []

@@ -51,11 +51,13 @@ def list_media() -> list[dict]:
     return [it for it in catalog.load().values() if it.get("kind") not in catalog.WORK_KINDS]
 
 
-def acquire_commons(file_title: str, kind: str = "photo") -> Optional[dict]:
+def acquire_commons(file_title: str, kind: str = "photo",
+                    fair_use: bool = False) -> Optional[dict]:
     """Acquire one Wikimedia Commons file into the global library.
 
     Returns the stored metadata dict (the existing catalog row if already acquired
-    — dedup by source_url), or None if the file's license is not admitted.
+    — dedup by source_url), or None if the file's license is not admitted. Under
+    fair_use, non-admitted files are acquired with an honest rights tag.
     """
     source_url = f"https://commons.wikimedia.org/wiki/{file_title.replace(' ', '_')}"
 
@@ -63,8 +65,8 @@ def acquire_commons(file_title: str, kind: str = "photo") -> Optional[dict]:
     if existing is not None:
         return existing
 
-    result = commons.fetch(file_title)
-    if result is None or result.license not in _ADMITTED:
+    result = commons.fetch(file_title, fair_use=fair_use)
+    if result is None or (not fair_use and result.license not in _ADMITTED):
         return None
 
     slug = _slugify(file_title)
@@ -141,20 +143,22 @@ def _store_media_result(result, kind: str | None = None) -> dict:
     return meta
 
 
-def acquire(source: str, identifier: str, kind: str | None = None) -> Optional[dict]:
+def acquire(source: str, identifier: str, kind: str | None = None,
+            fair_use: bool = False) -> Optional[dict]:
     """Acquire one item from any PD source into the global library.
 
     source ∈ {commons, loc, nara, dpla, ia}. Returns the stored metadata dict
     (existing row if already acquired — dedup by source_url), or None if the item
-    is rejected (license not admitted) or not found. Adapters that need a missing
-    key (e.g. DPLA) raise; the caller decides whether to skip."""
+    is rejected (license not admitted) or not found. Under fair_use, non-admitted
+    items are acquired with an honest rights tag (non-commercial fair use).
+    Adapters that need a missing key (e.g. DPLA) raise; the caller decides."""
     if source == "commons":
-        return acquire_commons(identifier, kind=kind or "photo")
+        return acquire_commons(identifier, kind=kind or "photo", fair_use=fair_use)
     adapter = _ADAPTERS.get(source)
     if adapter is None:
         raise ValueError(f"Unknown media source '{source}'. "
                          f"Choose from: commons, {', '.join(_ADAPTERS)}")
-    result = adapter.fetch(identifier)
-    if result is None or result.license not in _ADMITTED:
+    result = adapter.fetch(identifier, fair_use=fair_use)
+    if result is None or (not fair_use and result.license not in _ADMITTED):
         return None
     return _store_media_result(result, kind=kind)

@@ -56,15 +56,16 @@ def _rights_of(doc: dict) -> str:
     return rights
 
 
-def fetch(item_id: str) -> Optional[MediaResult]:
-    """Fetch one DPLA item; admit if its rights resolve to a PD/permissive code."""
+def fetch(item_id: str, fair_use: bool = False) -> Optional[MediaResult]:
+    """Fetch one DPLA item; admit if its rights resolve to a PD/permissive code
+    (strict); under fair_use, non-admitted items carry an honest rights tag."""
     data = _api_get(f"/items/{item_id}", {})
     docs = data.get("docs", [])
     if not docs:
         return None
     doc = docs[0]
     rights = _rights_of(doc)
-    code = normalize_license(rights)
+    code = normalize_license(rights, fair_use=fair_use)
     if code is None:
         return None
     url = doc.get("object") or ""   # DPLA "object" is the media/thumbnail URL

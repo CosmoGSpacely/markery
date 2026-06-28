@@ -7,8 +7,37 @@ from dataclasses import dataclass
 from typing import Optional
 
 # Admitted normalized license codes (Phase 24 P2 / Phase 30 policy): public domain
-# and the permissive CC tiers only. NC / ND / in-copyright / unresolved are rejected.
+# and the permissive CC tiers only. In strict mode, NC / ND / in-copyright /
+# unresolved are rejected; the fair-use tier (see normalize_license fair_use)
+# instead tags them honestly and acquires them under non-commercial fair use.
 ADMITTED_LICENSES = {"PD", "PD-US-expired", "PD-USGov", "CC0", "CC-BY", "CC-BY-SA"}
+
+# Honest non-admitted tags applied in the fair-use tier. Kept distinct from
+# ADMITTED_LICENSES so PD/CC items remain identifiable and the site can show
+# accurate rights/attribution (transparency strengthens the fair-use posture).
+FAIR_USE_TAGS = {"CC-BY-NC", "CC-BY-ND", "CC-BY-NC-ND", "InC", "rights-restricted",
+                 "rights-unknown"}
+
+
+def _fair_use_tag(text: str) -> str:
+    """Honest rights tag for an item that does not resolve to an admitted code.
+
+    `text` is the already-lowercased rights string. We are non-commercial, so
+    NC/ND are usable; the tag records the real status rather than mislabelling.
+    """
+    if not text.strip():
+        return "rights-unknown"
+    nc = any(x in text for x in ("noncommercial", "no-nc", "/nc", "-nc", "by-nc"))
+    nd = any(x in text for x in ("noderiv", "no-nd", "/nd", "-nd", "by-nd"))
+    if nc and nd:
+        return "CC-BY-NC-ND"
+    if nc:
+        return "CC-BY-NC"
+    if nd:
+        return "CC-BY-ND"
+    if "/inc" in text or "in copyright" in text or "in-copyright" in text:
+        return "InC"
+    return "rights-unknown"
 
 
 _UA = "markery/1.0 (https://github.com/CosmoGSpacely/markery)"
@@ -46,25 +75,29 @@ class MediaResult:
     kind: str = "photo"
 
 
-def normalize_license(raw: str, url: str = "") -> Optional[str]:
-    """Map a free-text rights string / rights URI to an admitted code, or None.
+def normalize_license(raw: str, url: str = "", fair_use: bool = False) -> Optional[str]:
+    """Map a free-text rights string / rights URI to a license code.
 
     Handles the encodings used across LoC, NARA, DPLA (rightsstatements.org),
-    Internet Archive, and Commons. Rejects NC / ND / in-copyright / unknown.
+    Internet Archive, and Commons. In strict mode (default) returns an admitted
+    code or None (rejecting NC / ND / in-copyright / unknown). In the fair-use
+    tier (``fair_use=True``) it never returns None for the rights decision —
+    non-admitted items get an honest FAIR_USE_TAGS code so they are acquired
+    under non-commercial fair use while staying distinguishable from PD/CC.
     """
     text = f"{raw or ''} {url or ''}".lower()
     if not text.strip():
-        return None
+        return _fair_use_tag(text) if fair_use else None
     # Hard rejects first.
     if any(t in text for t in ("noncommercial", "no-nc", "/nc", "-nc", "noderiv",
                                "no-nd", "/nd", "-nd")):
-        return None
+        return _fair_use_tag(text) if fair_use else None
     if "rightsstatements.org" in text:
         # Admit only the "no copyright" family; reject InC* (in copyright).
         if "/noc" in text or "/nkc" in text:   # NoC-US, NKC
             return "PD"
         if "/inc" in text:
-            return None
+            return _fair_use_tag(text) if fair_use else None
     if "cc0" in text or "publicdomain/zero" in text:
         return "CC0"
     if "by-sa" in text or "by_sa" in text:
@@ -79,7 +112,7 @@ def normalize_license(raw: str, url: str = "") -> Optional[str]:
         return "PD"
     if "u.s. government" in text or "usgov" in text or "us government work" in text:
         return "PD-USGov"
-    return None
+    return _fair_use_tag(text) if fair_use else None
 
 
 @dataclass

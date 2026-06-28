@@ -166,7 +166,7 @@ def test_acquire_dispatches_and_stores(library, monkeypatch):
         attribution_text="Steel Plow — Library of Congress (PD)",
         source_url="https://www.loc.gov/item/plow123/",
     )
-    monkeypatch.setattr(loc, "fetch", lambda ident: result)
+    monkeypatch.setattr(loc, "fetch", lambda ident, **kw: result)
     monkeypatch.setattr(loc, "download",
                         lambda url, dest: (dest.parent.mkdir(parents=True, exist_ok=True),
                                            dest.write_bytes(b"\x89PNG loc"))[-1])
@@ -189,7 +189,7 @@ def test_acquire_dedups_by_source_url(library, monkeypatch):
         dest.write_bytes(b"x")
         return dest
 
-    monkeypatch.setattr(loc, "fetch", lambda ident: result)
+    monkeypatch.setattr(loc, "fetch", lambda ident, **kw: result)
     monkeypatch.setattr(loc, "download", _dl)
     media.acquire("loc", "p1")
     media.acquire("loc", "p1")
@@ -197,7 +197,7 @@ def test_acquire_dedups_by_source_url(library, monkeypatch):
 
 
 def test_acquire_rejects_unadmitted(library, monkeypatch):
-    monkeypatch.setattr(nara, "fetch", lambda ident: None)
+    monkeypatch.setattr(nara, "fetch", lambda ident, **kw: None)
     assert media.acquire("nara", "999") is None
 
 

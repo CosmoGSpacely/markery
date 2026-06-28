@@ -119,7 +119,7 @@ def _fake_result():
 def test_acquire_commons_global(library, monkeypatch):
     from markery.specialist.librarian import media as media_mod
     from markery.specialist.librarian.sources import commons
-    monkeypatch.setattr(commons, "fetch", lambda title: _fake_result())
+    monkeypatch.setattr(commons, "fetch", lambda title, **kw: _fake_result())
     monkeypatch.setattr(commons, "download",
                         lambda url, path: (path.parent.mkdir(parents=True, exist_ok=True),
                                            path.write_bytes(b"\x89PNG fake")))
@@ -140,7 +140,7 @@ def test_acquire_commons_dedups_by_source_url(library, monkeypatch):
     from markery.specialist.librarian.sources import commons
     calls = {"n": 0}
 
-    def _fetch(title):
+    def _fetch(title, **kw):
         calls["n"] += 1
         return _fake_result()
 
@@ -159,5 +159,5 @@ def test_acquire_commons_rejects_unadmitted_license(library, monkeypatch):
     from markery.specialist.librarian.sources.commons import CommonsResult
     bad = CommonsResult(title="File:Bad.jpg", url="u", license="CC-BY-NC", creator="",
                         license_url="", rights_statement="", attribution_text="")
-    monkeypatch.setattr(commons, "fetch", lambda title: bad)
+    monkeypatch.setattr(commons, "fetch", lambda title, **kw: bad)
     assert media_mod.acquire_commons("File:Bad.jpg") is None

@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from .common import _fair_use_tag
+
 _API = "https://commons.wikimedia.org/w/api.php"
 _UA = "markery/1.0 (https://github.com/CosmoGSpacely/markery)"
 
@@ -59,20 +61,21 @@ def _ext(extmeta: dict, key: str) -> str:
     return (extmeta.get(key) or {}).get("value", "") or ""
 
 
-def resolve_license(extmeta: dict) -> Optional[dict]:
-    """Map a file's extmetadata to an admitted license, or None to reject.
+def resolve_license(extmeta: dict, fair_use: bool = False) -> Optional[dict]:
+    """Map a file's extmetadata to a license. None to reject (strict).
 
+    Under fair_use, non-admitted files (restrictions / NC / ND / unknown) are not
+    rejected — they get an honest non-PD tag and are acquired under non-commercial
+    fair use. Note `Restrictions` flags non-copyright limits (trademark /
+    personality); fair use is a copyright defence, so these are tagged
+    `rights-restricted` for honest display rather than treated as clean.
     Returns {license, license_url, creator, rights_statement, attribution_text}.
     """
-    if _ext(extmeta, "Restrictions").strip():
-        return None  # trademark / personality / other non-copyright restriction
-
+    restricted = bool(_ext(extmeta, "Restrictions").strip())
     raw = _ext(extmeta, "License").strip().lower()
     short = _ext(extmeta, "LicenseShortName").strip()
     short_l = short.lower()
-
-    if "nc" in raw or "nd" in raw or "noncommercial" in short_l or "noderiv" in short_l:
-        return None
+    nc_nd = ("nc" in raw or "nd" in raw or "noncommercial" in short_l or "noderiv" in short_l)
 
     code = ""
     if "cc0" in raw or "cc0" in short_l:
@@ -84,8 +87,16 @@ def resolve_license(extmeta: dict) -> Optional[dict]:
     elif raw.startswith("cc-by") or short_l.startswith("cc by"):
         code = "CC-BY"
 
-    if code not in _ADMITTED:
-        return None
+    admitted = code in _ADMITTED and not nc_nd and not restricted
+    if not admitted:
+        if not fair_use:
+            return None
+        if restricted:
+            code = "rights-restricted"
+        elif nc_nd:
+            code = _fair_use_tag(f"{raw} {short_l}")
+        else:
+            code = "rights-unknown"
 
     creator = _strip_html(_ext(extmeta, "Artist")) or "Unknown"
     license_url = _ext(extmeta, "LicenseUrl").strip()
@@ -103,8 +114,9 @@ def resolve_license(extmeta: dict) -> Optional[dict]:
     }
 
 
-def fetch(file_title: str) -> Optional[CommonsResult]:
-    """Fetch imageinfo for a File: title and resolve its license. None if rejected."""
+def fetch(file_title: str, fair_use: bool = False) -> Optional[CommonsResult]:
+    """Fetch imageinfo for a File: title and resolve its license. None if rejected
+    (strict); under fair_use, non-admitted files carry an honest rights tag."""
     data = _api_get({
         "action": "query", "prop": "imageinfo",
         "iiprop": "url|extmetadata", "titles": file_title,
@@ -114,7 +126,7 @@ def fetch(file_title: str) -> Optional[CommonsResult]:
         info = (page.get("imageinfo") or [{}])[0]
         if not info:
             return None
-        resolved = resolve_license(info.get("extmetadata", {}))
+        resolved = resolve_license(info.get("extmetadata", {}), fair_use=fair_use)
         if resolved is None:
             return None
         return CommonsResult(

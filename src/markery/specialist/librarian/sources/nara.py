@@ -47,8 +47,9 @@ def _first_object_url(record: dict) -> str:
     return ""
 
 
-def fetch(na_id: str) -> Optional[MediaResult]:
-    """Fetch one NARA record by naId; admit if useRestriction is unrestricted."""
+def fetch(na_id: str, fair_use: bool = False) -> Optional[MediaResult]:
+    """Fetch one NARA record by naId; admit if useRestriction is unrestricted
+    (strict); under fair_use, use-restricted records are tagged and acquired."""
     data = _api_get("/records/search", {"naId": na_id, "limit": 1})
     hits = data.get("body", {}).get("hits", {}).get("hits", [])
     if not hits:
@@ -58,17 +59,23 @@ def fetch(na_id: str) -> Optional[MediaResult]:
     status = (restriction.get("status", {}) or {})
     status_val = status.get("value", status) if isinstance(status, dict) else status
     # Unrestricted federal records → U.S. Government public domain.
-    if str(status_val).strip().lower() not in ("unrestricted", "", "none"):
+    restricted = str(status_val).strip().lower() not in ("unrestricted", "", "none")
+    if restricted and not fair_use:
         return None
     url = _first_object_url(record)
     if not url:
         return None
-    code = "PD-USGov"   # unrestricted federal record → U.S. Government public domain
+    if restricted:
+        code = "rights-restricted"
+        rights_stmt = "Use-restricted U.S. Government record (non-commercial fair use)"
+    else:
+        code = "PD-USGov"   # unrestricted federal record → U.S. Government public domain
+        rights_stmt = "Unrestricted — U.S. Government record (public domain)"
     title = record.get("title", na_id)
     return MediaResult(
         source="nara", source_id=str(na_id), title=title, url=url,
         license=code, creator="U.S. National Archives", license_url="",
-        rights_statement="Unrestricted — U.S. Government record (public domain)",
+        rights_statement=rights_stmt,
         attribution_text=f"{title} — U.S. National Archives ({code})",
         source_url=f"https://catalog.archives.gov/id/{na_id}",
         kind="photo",

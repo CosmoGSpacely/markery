@@ -52,8 +52,9 @@ def _first_image(files: list[dict]) -> str:
     return ""
 
 
-def fetch(identifier: str) -> Optional[MediaResult]:
-    """Fetch IA item metadata; admit if rights resolve to a PD/permissive code."""
+def fetch(identifier: str, fair_use: bool = False) -> Optional[MediaResult]:
+    """Fetch IA item metadata; admit if rights resolve to a PD/permissive code
+    (strict); under fair_use, non-admitted items carry an honest rights tag."""
     data = _get(f"{_META}/{identifier}")
     meta = data.get("metadata", {})
     if not meta:
@@ -61,7 +62,7 @@ def fetch(identifier: str) -> Optional[MediaResult]:
     rights = " ".join(
         str(meta.get(k, "")) for k in ("licenseurl", "possible-copyright-status", "rights")
     )
-    code = normalize_license(rights, url=str(meta.get("licenseurl", "")))
+    code = normalize_license(rights, url=str(meta.get("licenseurl", "")), fair_use=fair_use)
     if code is None:
         return None
     fname = _first_image(data.get("files", []))

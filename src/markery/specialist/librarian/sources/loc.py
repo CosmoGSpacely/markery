@@ -52,8 +52,9 @@ def _first_image_url(item: dict) -> str:
     return ""
 
 
-def fetch(item_id: str) -> Optional[MediaResult]:
-    """Fetch one LoC item by id and resolve its rights. None if not admitted."""
+def fetch(item_id: str, fair_use: bool = False) -> Optional[MediaResult]:
+    """Fetch one LoC item by id and resolve its rights. None if not admitted
+    (strict); under fair_use, non-admitted items carry an honest rights tag."""
     url = f"{_BASE}/item/{item_id}/?fo=json"
     data = _api_get(url)
     item = data.get("item", {})
@@ -62,7 +63,7 @@ def fetch(item_id: str) -> Optional[MediaResult]:
     rights = item.get("rights") or ""
     advisory = item.get("rights_advisory") or ""
     advisory = " ".join(advisory) if isinstance(advisory, list) else advisory
-    code = normalize_license(f"{rights} {advisory}")
+    code = normalize_license(f"{rights} {advisory}", fair_use=fair_use)
     if code is None:
         return None
     image_url = _first_image_url(data) or _first_image_url(item)
