@@ -251,14 +251,24 @@ and drops spurious successor matches (Universal Match → original Belgian "Unio
 Net effect across 1921–1930: exact matches rose in most years (1922 18→23, 1924 14→21); 1926
 remains anomalous (0 exact — its original applicants don't match the corpus; revisit as data QA).
 
-P2 pilot finding 2026-06-26 (1921, scratchpad only): EPO expansion is **not** the lever to
-grow richness. (a) The productive CPC subclasses are already ~80–100% complete vs EPO
-(H01J 78%, H04B 91%, B42F/G03B/B62D ~100%), so seed-driven subclass expansion adds ~nothing.
-(b) An assignee-side EPO probe of 16 non-matched corporate 1921 owners found patents for only
-2/16. (c) The original-applicant fix recovers ~+2/yr. Conclusion: richness for these cohorts
-is genuinely ~12–25 marks/year and roughly accurate as-is, concentrated in a few big
-industrials (Westinghouse, Singer, Koehring). P2 should therefore favour the cheap local seed
-pass; treat EPO CPC expansion (P2b) as low-yield for richness and gate it tightly.
+P2 pilot finding 2026-06-26 (1921, scratchpad only): the seed-driven subclass expansion I
+tested adds ~nothing because the *productive* subclasses are already ~80–100% complete vs EPO
+(H01J 78%, H04B 91%, B42F/G03B/B62D ~100%). At the time I wrongly generalised this to "EPO
+expansion is low-yield" — see the correction below.
+
+CORRECTION 2026-06-28 (corpus CPC-class bias — EPO expansion is HIGH-yield): the 1921 finding
+tested only the subclasses first-gen already fetched (saturated by construction). It never
+asked whether the CPC classes *relevant to a given firm* are in the corpus at all — and for
+power engineering they are not. Westinghouse held 420 H01J (vacuum-tube) patents locally but
+only 2 H01H (circuit-breaker) and 11 H02M (rectifier, all 1934+). Whole-corpus power classes
+were near-empty vs EPO for 1915–1935: H01H 36/11,681 (0.3%), H02M 27/1,008, H01M 3/2,716,
+H02J 1/1,403. So richness has been a **floor distorted by corpus bias**, not a true measure —
+RECTIGON's rectifier patents and De-Ion's breaker patents simply weren't fetched. H01H pilot
+(fetched H01H 1925–1935, +7,135 patents, corpus 80,537→87,672): Westinghouse H01H 2→632;
+De-Ion (serial 71293946, 1929) went from ~2 to **1,237 seed pairs (632 H01H breaker patents)**
+at score 1.00. P2b is therefore the lever after all, but it must fill the **missing CPC classes
+relevant to candidate entities**, not re-expand saturated seed subclasses. See
+[[project_media_acquisition_permissive]]'s sibling finding in memory.
 
 Progress 2026-06-26 (P2a, local seed pass): built `markery matchmaker seed-pairs <year>`
 (`--years`, `--window`, `--min-score`, `--json`) in
@@ -270,7 +280,9 @@ years of filing. `--json` emits pipeline-ready records (serial, mark, applicant,
 app_dt/grant_dt, cpc[], delta_years, match, score). The summary also reports the productive CPC
 subclasses (the only input P2b would need). 6 hermetic tests
 (`tests/specialist/matchmaker/test_seed.py`). Still to do: spawn loop (P4) consuming the JSON;
-P2b (EPO expansion) gated/optional given the pilot's low-yield finding.
+P2b (EPO expansion) — now HIGH priority per the 2026-06-28 correction: fill the CPC classes
+relevant to candidate entities that first-gen never fetched (power/mechanical/chemical), then
+re-run richness/seed-pairs. H01H pilot done; full power-class sweep + other gaps remain.
 
 ---
 
