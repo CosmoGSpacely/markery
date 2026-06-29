@@ -10,6 +10,7 @@ from markery.specialist.publisher.render import (
     render_trademark_detail,
     render_patent_detail,
 )
+from markery.specialist.publisher.render.galleries import render_patent_gallery
 
 
 ENTITIES = [
@@ -36,6 +37,15 @@ MATCHES = [
     {"trademark_serial": 71055630, "patent_no": "US1525813A", "entity_id": 1,
      "slug": "starrett-us1525813a", "essay_path": "/x.md"},
 ]
+
+
+def test_patent_render_tolerates_null_inventors(tmp_path: Path):
+    # EPO-fetched patents can carry null inventor names; rendering must not crash.
+    pat = dict(PAT, inventors=[None, "King Edward P", None])
+    html = render_patent_detail("precision-tools", pat, ENTITIES, [], tmp_path).read_text()
+    assert "King Edward P" in html                          # valid inventor kept
+    g = render_patent_gallery("precision-tools", ENTITIES, [pat], [], {1: "#abc"}, tmp_path)
+    assert "King Edward P" in g.read_text()                 # gallery card too, no crash
 
 
 def test_trademark_detail_path_and_fields(tmp_path: Path):

@@ -148,7 +148,7 @@ def render_patent_detail(
         ("Company", entity_link),
         ("Granted", _esc(_fmt_date(pat.get("grant_dt")))),
         ("Filed", _esc(_fmt_date(pat.get("application_dt")))),
-        ("Inventors", _esc(", ".join(pat.get("inventors") or []))),
+        ("Inventors", _esc(", ".join(i for i in (pat.get("inventors") or []) if i))),
         ("Classification", _esc(" · ".join(pat.get("cpc_classes") or []))),
     ])
 

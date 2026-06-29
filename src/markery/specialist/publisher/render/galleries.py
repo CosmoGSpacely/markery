@@ -161,8 +161,9 @@ def render_patent_gallery(
                       if match_slug else "")
 
         grant = pat["grant_dt"].strftime("%B %d, %Y") if pat["grant_dt"] else ""
-        inventors_full = ", ".join(pat["inventors"])
-        inventors = ", ".join(pat["inventors"][:2]) + ("…" if len(pat["inventors"]) > 2 else "")
+        inv_list = [i for i in (pat["inventors"] or []) if i]   # EPO records may carry null inventors
+        inventors_full = ", ".join(inv_list)
+        inventors = ", ".join(inv_list[:2]) + ("…" if len(inv_list) > 2 else "")
         inv_attr = f' title="{_esc(inventors_full)}"' if inventors_full else ""
         classes = " · ".join(pat["cpc_classes"][:3])
         class_label = "Class" if len(pat["cpc_classes"]) == 1 else "Classes"
