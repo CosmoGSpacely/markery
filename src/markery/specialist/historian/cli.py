@@ -10,7 +10,7 @@ import sys
 import time
 from pathlib import Path
 
-from markery.common.config import DB, resolve_model
+from markery.common.config import DB, resolve_model, model_chain
 from markery.common.project import Project, require_project
 from markery.common.tokens import TokenRecord, count_output_tokens, emit as emit_tokens
 
@@ -677,13 +677,13 @@ def cmd_draft(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     scaffold_text = scaffold_path.read_text(encoding="utf-8")
-    model = resolve_model(getattr(args, "model", None))
+    chain = model_chain(getattr(args, "model", None))   # D077: free chain + opt-in paid
 
-    from markery.common.llm import call as llm_call
-    print(f"Drafting '{args.slug}' with {model}…", flush=True)
+    from markery.common.llm import call_chain
+    print(f"Drafting '{args.slug}' (models: {', '.join(chain)})…", flush=True)
     try:
-        draft_text, ptok, ctok, cache_read, cache_create = llm_call(
-            model, _DRAFT_SYSTEM, scaffold_text, 2048)
+        draft_text, ptok, ctok, cache_read, cache_create, model = call_chain(
+            chain, _DRAFT_SYSTEM, scaffold_text, 2048)
     except RuntimeError as exc:
         print(f"Inference error: {exc}", file=sys.stderr)
         sys.exit(1)
@@ -960,8 +960,10 @@ def cmd_relevance(args: argparse.Namespace) -> None:
     """Score a discovered item's relevance to a project (1-5)."""
     import json as _json
     from markery.specialist.historian.relevance import score_relevance
-    model = resolve_model(getattr(args, "model", None))
-    result = score_relevance(args.project, args.title, args.text, model=model)
+    # Pass the raw --model (or None) so score_relevance can fall back across the
+    # free model chain (D077); pre-resolving here would pin a single model.
+    result = score_relevance(args.project, args.title, args.text,
+                             model=getattr(args, "model", None))
     if getattr(args, "json", False):
         print(_json.dumps(result))
     else:

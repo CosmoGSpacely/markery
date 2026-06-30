@@ -41,18 +41,45 @@ DEFAULT_MODEL = "claude-haiku-4-5-20251001"
 # --model or per-session with MARKERY_MODEL.
 FREE_MODEL = "openai/gpt-oss-120b:free"
 
+# Ordered free models tried in turn (D077): if the first is rate-limited upstream,
+# a different free model/provider often is not — so the agentic loops self-heal
+# while staying free. FREE_MODEL is first (kept in sync).
+FREE_MODELS = [
+    "openai/gpt-oss-120b:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+]
+
 
 def resolve_model(explicit: str | None = None) -> str:
-    """Which LLM to use: explicit arg > MARKERY_MODEL env > FREE_MODEL.
+    """Which single LLM to use: explicit arg > MARKERY_MODEL env > FREE_MODEL.
 
-    Free-by-default: any model step that does not receive an explicit model and
-    is not overridden by MARKERY_MODEL runs on the free model. This is the single
-    resolution point — callers route model choice through here rather than
-    falling back to DEFAULT_MODEL directly.
+    Free-by-default. This is the single resolution point for callers that need
+    exactly one model; agentic loops use model_chain() for rate-limit resilience.
     """
     if explicit:
         return explicit
     return os.environ.get("MARKERY_MODEL") or FREE_MODEL
+
+
+def model_chain(explicit: str | None = None) -> list[str]:
+    """Ordered models to try (D077 rate-limit resilience): explicit > MARKERY_MODEL
+    > free chain (+ an opt-in paid backstop).
+
+    An explicit --model or MARKERY_MODEL is honoured exactly (no surprise fallback).
+    Otherwise the free models are tried in order; a paid backstop is appended only
+    when MARKERY_ALLOW_PAID is set (default off → unattended loops stay free or
+    degrade gracefully, never silently bill). The paid model is MARKERY_PAID_MODEL
+    or DEFAULT_MODEL.
+    """
+    if explicit:
+        return [explicit]
+    env = os.environ.get("MARKERY_MODEL")
+    if env:
+        return [env]
+    chain = list(FREE_MODELS)
+    if os.environ.get("MARKERY_ALLOW_PAID"):
+        chain.append(os.environ.get("MARKERY_PAID_MODEL") or DEFAULT_MODEL)
+    return chain
 
 # Data directory holding the corpus DBs. Honour MARKERY_DATA_DIR if set (hermetic
 # tests point this at a synthetic-fixture dir); otherwise it is ROOT/data.

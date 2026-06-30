@@ -35,7 +35,7 @@ def project(tmp_path, monkeypatch):
 def test_score_relevance_builds_context_and_parses(project, monkeypatch):
     captured = {}
 
-    def _fake_call(model, system, user, max_tokens):
+    def _fake_call(model, system, user, max_tokens, cache_system=True):
         captured["system"] = system
         captured["user"] = user
         return ("SCORE: 5\nREASONING: It is about Synthex gauges.", 0, 0, 0, 0)

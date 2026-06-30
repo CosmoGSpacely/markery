@@ -92,13 +92,15 @@ A sibling to the discovery loop: enqueue applicant-fetch jobs at gate time; a sc
 within daily quota; projects (re)build as their corpus fills. Ship P1–P3 inline first; promote to
 the queue only if batch sweeps exceed daily quota in practice. (Likely a DEFERRED entry, not P4.)
 
-## 6. Relationship to D077 (implement together)
+## 6. Relationship to D077 — CLOSED 2026-06-30
 
 The post-gate fetch (P3) and the discovery/relevance loop share the same **resumable +
 graceful-degradation** spine: bounded external calls, defer-on-limit, mark-partial, re-run to
-complete. D077 (free-model fallback chain + re-score queue) lands in the same implementation push
-so both the **model** and **corpus** dependencies degrade the same way. Closing both leaves the
-loop robust to its two external limits (LLM rate limits, EPO quota).
+complete. **D077 is now closed** (free-model fallback chain `config.model_chain` + `llm.call_chain`,
+free-first with an opt-in paid backstop via `MARKERY_ALLOW_PAID`; relevance/draft routed through it;
+model-outage items logged `unscored` and re-scored on a later discovery tick). P3 reuses the same
+pattern for the **corpus/EPO** limit, so both external dependencies degrade identically — the loop
+is robust to LLM rate limits today and to EPO quota once P1–P3 land.
 
 ## 7. Decisions to confirm before P1
 

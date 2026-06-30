@@ -108,6 +108,33 @@ def call(
     )
 
 
+def call_chain(
+    models: list[str],
+    system: str,
+    user: str,
+    max_tokens: int,
+    cache_system: bool = True,
+) -> tuple[str, int, int, int, int, str]:
+    """Try each model in order (D077); return the first success plus the model used.
+
+    Returns (text, prompt_tokens, completion_tokens, cache_read, cache_creation,
+    model_used). Raises RuntimeError only if every model fails — e.g. all free
+    models rate-limited with no paid backstop enabled — so callers degrade once,
+    not per-model.
+    """
+    if not models:
+        raise RuntimeError("call_chain: empty model chain")
+    last_err: Exception | None = None
+    for m in models:
+        try:
+            text, ptok, ctok, cr, cc = call(m, system, user, max_tokens, cache_system)
+            return text, ptok, ctok, cr, cc, m
+        except Exception as exc:        # provider already retried 429/5xx; move to next model
+            last_err = exc
+            continue
+    raise RuntimeError(f"all {len(models)} model(s) failed; last error: {last_err}")
+
+
 def call_batch(
     model: str,
     system: str,

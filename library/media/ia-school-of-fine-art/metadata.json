@@ -2,9 +2,9 @@
   "slug": "ia-school-of-fine-art",
   "kind": "photo",
   "source": "ia",
-  "source_id": "NewarkSchools2220",
-  "source_url": "https://archive.org/details/NewarkSchools2220",
-  "file_url": "https://archive.org/download/NewarkSchools2220/2220.jpg",
+  "source_id": "NewarkSchools2206",
+  "source_url": "https://archive.org/details/NewarkSchools2206",
+  "file_url": "https://archive.org/download/NewarkSchools2206/2206.jpg",
   "file": "ia-school-of-fine-art.jpg",
   "title": "School of Fine Art",
   "creator": "Newark Board of Education",
@@ -13,8 +13,8 @@
   "rights_statement": "CC-BY-NC",
   "attribution_text": "School of Fine Art — via Internet Archive (CC-BY-NC)",
   "date": null,
-  "acquired_at": "2026-06-29",
-  "sha256": "2aef0ddd944673a47f67f49ca68b4c92cdd104ce52f0e5b7a1a9f79240c68932",
+  "acquired_at": "2026-06-30",
+  "sha256": "aaa246dd041e1027bdfde1c57602a12303bda79443e053921d6e67d0067db892",
   "format": "jpg",
-  "bytes": 1342988
+  "bytes": 1501665
 }

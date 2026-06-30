@@ -13,7 +13,7 @@ import csv
 import re
 from pathlib import Path
 
-from markery.common.config import resolve_model
+from markery.common.config import model_chain
 from markery.common.project import Project
 
 _SYSTEM = (
@@ -57,14 +57,15 @@ def score_relevance(project: str, title: str, text: str = "",
                     model: str | None = None) -> dict:
     """Return {score: 0-5, reasoning} for a candidate item against a project.
 
-    score 0 means the model output was unparseable (caller treats as low)."""
-    from markery.common.llm import call as llm_call
-    model = resolve_model(model)
+    score 0 means the model output was unparseable (caller treats as low).
+    Tries the free model chain (D077) for rate-limit resilience; an explicit
+    `model` is honoured exactly."""
+    from markery.common.llm import call_chain
     user = (
         f"{_project_context(project)}\n\n"
         f"Candidate source —\nTitle: {title}\n"
         + (f"Snippet: {text[:800]}\n" if text else "")
         + "\nHow relevant is this candidate to the project?"
     )
-    resp_text, *_ = llm_call(model, _SYSTEM, user, 200)
+    resp_text, *_ = call_chain(model_chain(model), _SYSTEM, user, 200)
     return parse_score(resp_text)
