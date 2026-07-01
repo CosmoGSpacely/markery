@@ -32,7 +32,7 @@ List all confirmed patent numbers with their key metadata.
 Format:
 ```
 - **[Patent No]** [Title]. [Assignee], [Grant date].
-  CPC: [classes]. USPTO: https://patents.google.com/patent/[number]
+  CPC: [classes]. Google Patents: https://patents.google.com/patent/[US-number-A] (full doc id, e.g. US1389147A)
 ```
 
 ### Section 3: Secondary literature

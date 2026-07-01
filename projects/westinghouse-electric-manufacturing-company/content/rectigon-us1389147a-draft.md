@@ -17,7 +17,7 @@ date_gap: "0.1 years"
 - USPTO Trademark Serial No. 71153780 — [RECTIGON](https://tsdr.uspto.gov/#caseNumber=71153780&caseType=SERIAL_NO&searchType=statusSearch)
   - Filed: 1921-10-05  ·  Registered: 0155866  ·  Owner: WESTINGHOUSE ELECTRIC & MANUFACTURING COMPANY
   - Goods and services: BATTERY CHARGERS
-- US Patent US1389147A — [Automatically-Controlled Vapor-Converter Substation](https://patents.google.com/patent/1389147)
+- US Patent US1389147A — [Automatically-Controlled Vapor-Converter Substation](https://patents.google.com/patent/US1389147A)
   - Applied: 1917-10-03  ·  Granted: 1921-08-30  ·  Assignee: WESTINGHOUSE ELECTRIC & MFG CO
 
 ## The Invention

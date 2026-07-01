@@ -626,7 +626,7 @@ date_gap: "{gap_str}"
 - USPTO Trademark Serial No. {serial_no} — [{pair['trademark'] or '(figurative)'}](https://tsdr.uspto.gov/#caseNumber={serial_no}&caseType=SERIAL_NO&searchType=statusSearch)
   - Filed: {tm_filing}  ·  Registered: {tm_reg}  ·  Owner: {owner_name}
   - Goods and services: {goods_text}
-- US Patent {pat_no} — [{pat_title}](https://patents.google.com/patent/{pat_no.replace('US','').replace('A','')})
+- US Patent {pat_no} — [{pat_title}](https://patents.google.com/patent/{pat_no})
   - Applied: {pat_app_dt}  ·  Granted: {pat_grant}  ·  Assignee: {pat_assignee}
 
 ## The Invention
