@@ -22,22 +22,20 @@ date_gap: "0.1 years"
 
 ## The Invention
 
-<!-- Summarise what the patent describes. Source: abstract below. Do not invent facts. -->
-
-> 
+The patent US1389147A, titled Automatically-Controlled Vapor-Converter Substation and granted to Westinghouse Electric & Mfg Co on 1921-08-30, describes an automatically controlled vapor-converter substation. The filing record provides no further abstract or claim text. The invention therefore remains evidenced only by its title and assignee attribution.
 
 ## The Mark
 
-<!-- Describe the trademark — its goods/services class, what product it named, how it was marketed. -->
+Trademark Serial No. 71153780 for RECTIGON was filed on 1921-10-05 by Westinghouse Electric & Manufacturing Company and registered as 0155866 for battery chargers. The mark is a word mark in standard character form. No specimen or additional marketing details survive in the preserved index record.
 
 ## The Connection
 
-<!-- Explain how this patent underlies the trademarked product. What does the patent enable? -->
+The 1921-08-30 grant of US1389147A precedes the 1921-10-05 trademark filing by roughly one month. The patent’s subject—an automatically controlled vapor-converter substation—supplies the rectification function required for battery charging apparatus. Entity continuity between assignee Westinghouse Electric & Mfg Co and trademark owner Westinghouse Electric & Manufacturing Company supports the inference that the patented substation technology enabled the RECTIGON charger.
 
 ## Historical Context
 
-<!-- Place the patent-trademark pair in the industrial and commercial context of the period. -->
+In the early 1920s Westinghouse pursued commercial applications of mercury-arc and other vapor converters for industrial power conversion. Battery charging equipment formed one such market as electrification expanded to transportation and stationary storage uses. The near-simultaneous patent grant and trademark filing illustrate the company’s practice of protecting both the technical apparatus and its trade designation.
 
 ## Significance
 
-<!-- Why does this pair matter for the research project? What does it illustrate? -->
+The pair supplies a tightly dated example of a single entity linking a specific vapor-converter patent to a named battery-charger product. It demonstrates how USPTO records can document the translation of an invention into a marketed electrical device within the 1920–1929 filing cohort.

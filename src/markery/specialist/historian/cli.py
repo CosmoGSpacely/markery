@@ -722,6 +722,14 @@ def cmd_draft(args: argparse.Namespace) -> None:
         if exc.code and exc.code != 0:
             sys.exit(exc.code)
 
+    # --publish: promote the validated draft to the published essay (content/<slug>.md),
+    # which the site renders. Default keeps <slug>-draft.md for human review (the
+    # scaffold stays published). The spawn loop uses --publish for preview essays.
+    if getattr(args, "publish", False):
+        essay_path = content_dir / f"{args.slug}.md"
+        essay_path.write_text(draft_text, encoding="utf-8")
+        print(f"Published essay → {essay_path}")
+
 
 def _candidate_slug(c: dict) -> str:
     """Derive the canonical slug for a candidate record."""
@@ -1020,6 +1028,9 @@ def historian_main() -> None:
     draft_p.add_argument("slug",    help="Confirmed pair slug, e.g. sterilamp-us2168861a")
     draft_p.add_argument("--model", default=None, metavar="MODEL",
                          help="Override MARKERY_MODEL for this call")
+    draft_p.add_argument("--publish", action="store_true",
+                         help="On validation pass, promote the draft to the published "
+                              "essay (content/<slug>.md) that the site renders")
 
     scaffold_p = sub.add_parser("scaffold", help="Generate essay skeleton for a confirmed pair")
     scaffold_p.add_argument("project", help="Project name")
