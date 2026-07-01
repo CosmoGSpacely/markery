@@ -21,6 +21,15 @@ from markery.common.config import DB
 from markery.common.project import Project, require_project
 
 
+def _scalar(conn, sql: str, params: list | None = None):
+    """First column of a single-row aggregate query (COUNT / COALESCE(MAX ...) etc.).
+
+    The `row or (0,)` guard also satisfies the type checker — such aggregates always
+    return exactly one row, so fetchone() is never None at runtime."""
+    row = conn.execute(sql, params or []).fetchone()
+    return (row or (0,))[0]
+
+
 # ---------------------------------------------------------------------------
 # markery match
 # ---------------------------------------------------------------------------
@@ -1038,13 +1047,11 @@ def cmd_validate_variants(args: argparse.Namespace) -> None:
         for v in actionable:
             vname, source = v["variant_name"], v["source"]
             if source == "patent_assignee":
-                cnt = conn_pat.execute(
-                    "SELECT COUNT(*) FROM patents WHERE assignee_name = ?", [vname]
-                ).fetchone()[0]
+                cnt = _scalar(conn_pat,
+                    "SELECT COUNT(*) FROM patents WHERE assignee_name = ?", [vname])
             else:
-                cnt = conn_tm.execute(
-                    "SELECT COUNT(DISTINCT serial_no) FROM owner WHERE own_name = ?", [vname]
-                ).fetchone()[0]
+                cnt = _scalar(conn_tm,
+                    "SELECT COUNT(DISTINCT serial_no) FROM owner WHERE own_name = ?", [vname])
             flag = "  *** NO MATCH ***" if cnt == 0 else ""
             label = "patent  " if source == "patent_assignee" else "trademark"
             print(f"  {label}  {cnt:>6}×  {vname}{flag}")
@@ -1130,8 +1137,8 @@ def cmd_list(args: argparse.Namespace) -> None:
 def cmd_status(args: argparse.Namespace) -> None:
     from markery.specialist.matchmaker.entities import open_db
     conn = open_db()
-    n_entities = conn.execute("SELECT count(*) FROM company_entity").fetchone()[0]
-    n_variants = conn.execute("SELECT count(*) FROM entity_name_variant").fetchone()[0]
+    n_entities = _scalar(conn, "SELECT count(*) FROM company_entity")
+    n_variants = _scalar(conn, "SELECT count(*) FROM entity_name_variant")
     conn.close()
     print(f"entities.duckdb:")
     print(f"  company_entity       {n_entities:>6,}")
@@ -1263,7 +1270,7 @@ def cmd_seed_project(args: argparse.Namespace) -> None:
 
     # collision-free entity_id: above both first-gen ids and any existing.
     conn_ent = ent_open_db()
-    max_id = conn_ent.execute("SELECT COALESCE(MAX(entity_id), 0) FROM company_entity").fetchone()[0]
+    max_id = _scalar(conn_ent, "SELECT COALESCE(MAX(entity_id), 0) FROM company_entity")
     conn_ent.close()
     eid = max(int(max_id), 9000) + 1
 
