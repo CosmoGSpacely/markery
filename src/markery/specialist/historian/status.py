@@ -6,6 +6,7 @@ from datetime import date
 from pathlib import Path
 
 from markery.common.config import ROOT, DB
+from markery.common.dbutil import scalar as _scalar
 
 try:
     import duckdb
@@ -31,7 +32,7 @@ def db_stats(db_path: Path) -> dict | None:
         tables = {r[0] for r in conn.execute("SHOW TABLES").fetchall()}
         stats = {}
         for table in sorted(tables):
-            stats[table] = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            stats[table] = _scalar(conn, f"SELECT COUNT(*) FROM {table}")
         conn.close()
         return stats
     except Exception as e:

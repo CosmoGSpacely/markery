@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import sys
 
+from markery.common.dbutil import scalar as _scalar
 from markery.common.project import require_project, validate_serial_no
 
 
@@ -203,7 +204,7 @@ def cmd_status(args: argparse.Namespace) -> None:
     ]
     print("trademarks.duckdb:")
     for t in sorted(tables):
-        n = conn.execute(f"SELECT count(*) FROM {t}").fetchone()[0]
+        n = _scalar(conn, f"SELECT count(*) FROM {t}")
         print(f"  {t:<25} {n:>8,}")
     conn.close()
 

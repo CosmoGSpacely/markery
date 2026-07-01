@@ -20,6 +20,7 @@ from pathlib import Path
 import duckdb
 
 from markery.common.config import DB
+from markery.common.dbutil import scalar as _scalar, next_id as _next_id
 
 DDL = """
 CREATE TABLE IF NOT EXISTS company_entity (
@@ -160,12 +161,7 @@ def build(data_dir: str | Path, db_path: str | Path | None = None) -> dict[str, 
             sys.exit(1)
 
     added_variants = 0
-    next_id = (
-        conn.execute(
-            "SELECT COALESCE(MAX(variant_id), 0) FROM entity_name_variant"
-        ).fetchone()[0]
-        + 1
-    )
+    next_id = _next_id(conn, "entity_name_variant", "variant_id")
     for row in variants:
         eid = int(row["entity_id"])
         vname = row["variant_name"]
@@ -210,14 +206,12 @@ def clear(
     conn = open_db(db_path)
     placeholders = ",".join("?" * len(entity_ids))
 
-    n_variants = conn.execute(
+    n_variants = _scalar(conn,
         f"SELECT count(*) FROM entity_name_variant WHERE entity_id IN ({placeholders})",
-        entity_ids,
-    ).fetchone()[0]
-    n_entities = conn.execute(
+        entity_ids)
+    n_entities = _scalar(conn,
         f"SELECT count(*) FROM company_entity WHERE entity_id IN ({placeholders})",
-        entity_ids,
-    ).fetchone()[0]
+        entity_ids)
 
     if not dry_run:
         conn.execute(

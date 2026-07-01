@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 from markery.common.config import ROOT
+from markery.common.dbutil import scalar as _scalar
 from markery.common.project import ProjectType, detect_project_type, load_project, scaffold_project
 
 
@@ -239,14 +240,12 @@ def cmd_onboard(args: argparse.Namespace) -> None:
         for v in ev:
             vname, source = v["variant_name"], v["source"]
             if source == "patent_assignee":
-                cnt = conn_pat.execute(
-                    "SELECT COUNT(*) FROM patents WHERE assignee_name = ?", [vname]
-                ).fetchone()[0]
+                cnt = _scalar(conn_pat,
+                    "SELECT COUNT(*) FROM patents WHERE assignee_name = ?", [vname])
                 label = "patent  "
             else:
-                cnt = conn_tm.execute(
-                    "SELECT COUNT(DISTINCT serial_no) FROM owner WHERE own_name = ?", [vname]
-                ).fetchone()[0]
+                cnt = _scalar(conn_tm,
+                    "SELECT COUNT(DISTINCT serial_no) FROM owner WHERE own_name = ?", [vname])
                 label = "trademark"
             flag = "  *** NO MATCH ***" if cnt == 0 else ""
             print(f"  {entities[eid][:28]:<28}  {label}  {cnt:>6}×  {vname}{flag}")
@@ -271,11 +270,11 @@ def cmd_onboard(args: argparse.Namespace) -> None:
         pv_names = [v["variant_name"] for v in pat_variants if int(v["entity_id"]) == eid]
         tv_names = [v["variant_name"] for v in tm_variants  if int(v["entity_id"]) == eid]
         pat_total = sum(
-            conn_pat.execute("SELECT COUNT(*) FROM patents WHERE assignee_name = ?", [n]).fetchone()[0]
+            _scalar(conn_pat, "SELECT COUNT(*) FROM patents WHERE assignee_name = ?", [n])
             for n in pv_names
         )
         tm_total = sum(
-            conn_tm.execute("SELECT COUNT(DISTINCT serial_no) FROM owner WHERE own_name = ?", [n]).fetchone()[0]
+            _scalar(conn_tm, "SELECT COUNT(DISTINCT serial_no) FROM owner WHERE own_name = ?", [n])
             for n in tv_names
         )
         print(
@@ -299,7 +298,7 @@ def cmd_onboard(args: argparse.Namespace) -> None:
             print(f"  {canonical}: no patent_assignee variants — skipped")
             continue
         total = sum(
-            conn_pat.execute("SELECT COUNT(*) FROM patents WHERE assignee_name = ?", [n]).fetchone()[0]
+            _scalar(conn_pat, "SELECT COUNT(*) FROM patents WHERE assignee_name = ?", [n])
             for n in pv_names
         )
         print(f"  {canonical}: {total} patent(s) in local DB")

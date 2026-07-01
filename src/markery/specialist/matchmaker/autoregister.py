@@ -16,6 +16,8 @@ import re
 
 import duckdb
 
+from markery.common.dbutil import next_id as _next_id
+
 # ---------------------------------------------------------------------------
 # Name normalisation + variant ranking (shared with suggest-variants)
 # ---------------------------------------------------------------------------
@@ -49,16 +51,6 @@ def score_names(query_tokens: set[str], candidate: str) -> float:
 
 def slugify(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
-
-
-def _next_id(conn: duckdb.DuckDBPyConnection, table: str, col: str) -> int:
-    """Next free integer id: MAX(col)+1, or 1 for an empty table.
-
-    `table`/`col` are internal literals (not user input). The `row or (0,)` guard
-    also satisfies the type checker — a COALESCE(MAX(...), 0) aggregate always
-    returns exactly one row, so fetchone() is never None at runtime."""
-    row = conn.execute(f"SELECT COALESCE(MAX({col}), 0) FROM {table}").fetchone()
-    return (row or (0,))[0] + 1
 
 
 # ---------------------------------------------------------------------------

@@ -572,7 +572,7 @@ def cmd_scaffold(args: argparse.Namespace) -> None:
     ).fetchone()
     conn_pat.close()
     pat_title    = pat_row[0] if pat_row else ""
-    pat_abstract = (pat_row[1] or "")[:150]
+    pat_abstract = ((pat_row[1] or "") if pat_row else "")[:150]   # guard: patent may be absent
     pat_grant    = str(pat_row[2])[:10] if pat_row else ""
     pat_assignee = pat_row[3] if pat_row else ""
     pat_app_dt   = str(pat_row[4])[:10] if pat_row else ""

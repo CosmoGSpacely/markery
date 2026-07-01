@@ -18,16 +18,8 @@ import sys
 from pathlib import Path
 
 from markery.common.config import DB
+from markery.common.dbutil import scalar as _scalar
 from markery.common.project import Project, require_project
-
-
-def _scalar(conn, sql: str, params: list | None = None):
-    """First column of a single-row aggregate query (COUNT / COALESCE(MAX ...) etc.).
-
-    The `row or (0,)` guard also satisfies the type checker — such aggregates always
-    return exactly one row, so fetchone() is never None at runtime."""
-    row = conn.execute(sql, params or []).fetchone()
-    return (row or (0,))[0]
 
 
 # ---------------------------------------------------------------------------

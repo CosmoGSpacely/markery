@@ -12,6 +12,8 @@ from datetime import date
 
 import duckdb
 
+from markery.common.dbutil import scalar as _scalar
+
 
 def _columns(conn: duckdb.DuckDBPyConnection, table: str) -> set[str]:
     return {r[1] for r in conn.execute(f"PRAGMA table_info({table})").fetchall()}
@@ -22,7 +24,7 @@ def _freshness(conn: duckdb.DuckDBPyConnection, table: str) -> dict:
 
     Degrades gracefully when the provenance column is absent (a pre-Phase-28 DB
     opened read-only cannot self-migrate): everything counts as unmigrated."""
-    total = conn.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
+    total = _scalar(conn, f"SELECT count(*) FROM {table}")
     if "fetched_dt" not in _columns(conn, table):
         return {"total": total, "with_provenance": 0, "null_provenance": total,
                 "oldest": None, "newest": None, "migrated": False}
@@ -41,7 +43,7 @@ def _freshness(conn: duckdb.DuckDBPyConnection, table: str) -> dict:
 
 def _by_source(conn: duckdb.DuckDBPyConnection, table: str) -> list[tuple[str, int]]:
     if "source" not in _columns(conn, table):
-        total = conn.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
+        total = _scalar(conn, f"SELECT count(*) FROM {table}")
         return [("(unmigrated — rebuild for provenance)", total)]
     rows = conn.execute(
         f"SELECT coalesce(source, '(none)') AS s, count(*) "
@@ -52,9 +54,8 @@ def _by_source(conn: duckdb.DuckDBPyConnection, table: str) -> list[tuple[str, i
 
 def patent_coverage(conn: duckdb.DuckDBPyConnection, fetch_log_windows: int = 0) -> dict:
     fresh = _freshness(conn, "patents")
-    classes = conn.execute(
-        "SELECT count(DISTINCT cpc_class) FROM patent_classes WHERE cpc_class IS NOT NULL"
-    ).fetchone()[0]
+    classes = _scalar(conn,
+        "SELECT count(DISTINCT cpc_class) FROM patent_classes WHERE cpc_class IS NOT NULL")
     grant_lo, grant_hi = conn.execute(
         "SELECT min(grant_dt), max(grant_dt) FROM patents"
     ).fetchone()
@@ -70,9 +71,7 @@ def patent_coverage(conn: duckdb.DuckDBPyConnection, fetch_log_windows: int = 0)
 
 def trademark_coverage(conn: duckdb.DuckDBPyConnection) -> dict:
     fresh = _freshness(conn, "case_file")
-    dead = conn.execute(
-        "SELECT count(*) FROM case_file WHERE cfh_status_cd >= 700"
-    ).fetchone()[0]
+    dead = _scalar(conn, "SELECT count(*) FROM case_file WHERE cfh_status_cd >= 700")
     filing_lo, filing_hi = conn.execute(
         "SELECT min(filing_dt), max(filing_dt) FROM case_file"
     ).fetchone()
@@ -140,12 +139,11 @@ def coverage_query(db_path, cpc_class: str, year_start: int, year_end: int) -> d
     import duckdb
     windows = load_fetch_windows(db_path)
     conn = duckdb.connect(str(db_path), read_only=True)
-    local = conn.execute(
+    local = _scalar(conn,
         "SELECT count(DISTINCT p.patent_no) FROM patents p "
         "JOIN patent_classes pc ON p.patent_no = pc.patent_no "
         "WHERE pc.cpc_class = ? AND EXTRACT(year FROM p.grant_dt) BETWEEN ? AND ?",
-        [cpc_class, year_start, year_end],
-    ).fetchone()[0]
+        [cpc_class, year_start, year_end])
     conn.close()
     return {
         "covered": window_covered(windows, cpc_class, year_start, year_end),

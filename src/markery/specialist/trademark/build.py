@@ -16,6 +16,7 @@ from pathlib import Path
 import duckdb
 
 from markery.common.config import DB, ROOT
+from markery.common.dbutil import scalar as _scalar
 
 # serial_no is BIGINT in bulk tables (as delivered by the USPTO CSV source)
 # and VARCHAR in extended_marks and mark_images (as returned by the TSDR API).
@@ -108,7 +109,7 @@ def load_events(
             JOIN (SELECT serial_no FROM case_file) t USING (serial_no)
         """)
         conn.execute("CREATE INDEX idx_ev_serial ON events(serial_no)")
-        n = conn.execute("SELECT count(*) FROM events").fetchone()[0]
+        n = _scalar(conn, "SELECT count(*) FROM events")
     finally:
         if _own:
             conn.close()
@@ -138,7 +139,7 @@ def load_foreign_app(
             JOIN (SELECT serial_no FROM case_file) t USING (serial_no)
         """)
         conn.execute("CREATE INDEX idx_fa_serial ON foreign_app(serial_no)")
-        n = conn.execute("SELECT count(*) FROM foreign_app").fetchone()[0]
+        n = _scalar(conn, "SELECT count(*) FROM foreign_app")
     finally:
         if _own:
             conn.close()
@@ -200,7 +201,7 @@ def load_assignment(
         conn.execute("CREATE INDEX idx_asgn_assignor ON assignment(assignor_name)")
         conn.execute("CREATE INDEX idx_asgn_assignee ON assignment(assignee_name)")
         conn.execute("CREATE INDEX idx_asgn_date     ON assignment(assignment_date)")
-        n = conn.execute("SELECT count(*) FROM assignment").fetchone()[0]
+        n = _scalar(conn, "SELECT count(*) FROM assignment")
     finally:
         if _own:
             conn.close()
@@ -379,7 +380,7 @@ def build(
     # ── row counts ────────────────────────────────────────────────────────────
     counts: dict[str, int] = {}
     for t in ["case_file"] + _COMPANION_TABLES:
-        counts[t] = conn.execute(f"SELECT count(*) FROM {t}").fetchone()[0]
+        counts[t] = _scalar(conn, f"SELECT count(*) FROM {t}")
         _log(f"  {t:<22} {counts[t]:>8,} rows")
 
     conn.close()
