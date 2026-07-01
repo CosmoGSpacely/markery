@@ -51,6 +51,16 @@ def slugify(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 
 
+def _next_id(conn: duckdb.DuckDBPyConnection, table: str, col: str) -> int:
+    """Next free integer id: MAX(col)+1, or 1 for an empty table.
+
+    `table`/`col` are internal literals (not user input). The `row or (0,)` guard
+    also satisfies the type checker — a COALESCE(MAX(...), 0) aggregate always
+    returns exactly one row, so fetchone() is never None at runtime."""
+    row = conn.execute(f"SELECT COALESCE(MAX({col}), 0) FROM {table}").fetchone()
+    return (row or (0,))[0] + 1
+
+
 # ---------------------------------------------------------------------------
 # Companies
 # ---------------------------------------------------------------------------
@@ -116,18 +126,14 @@ def commit_company(
     if existing:
         eid, created = existing[0], False
     else:
-        eid = (conn_ent.execute(
-            "SELECT COALESCE(MAX(entity_id), 0) FROM company_entity"
-        ).fetchone()[0]) + 1
+        eid = _next_id(conn_ent, "company_entity", "entity_id")
         conn_ent.execute(
             "INSERT INTO company_entity (entity_id, canonical_name, entity_type, industry) "
             "VALUES (?, ?, ?, ?)", [eid, canonical, entity_type, industry],
         )
         created = True
 
-    next_vid = (conn_ent.execute(
-        "SELECT COALESCE(MAX(variant_id), 0) FROM entity_name_variant"
-    ).fetchone()[0]) + 1
+    next_vid = _next_id(conn_ent, "entity_name_variant", "variant_id")
     added = 0
     for v in proposal["variants"]:
         name, source = v["name"], v["source"]
@@ -208,12 +214,8 @@ def propose_people_from_inventors(
 def commit_people(conn_ent: duckdb.DuckDBPyConnection, proposals: list[dict],
                   kind: str = "inventor") -> dict:
     """Write proposed person_entity + person_name_variant rows. Returns counts."""
-    next_pid = (conn_ent.execute(
-        "SELECT COALESCE(MAX(person_id), 0) FROM person_entity"
-    ).fetchone()[0]) + 1
-    next_vid = (conn_ent.execute(
-        "SELECT COALESCE(MAX(variant_id), 0) FROM person_name_variant"
-    ).fetchone()[0]) + 1
+    next_pid = _next_id(conn_ent, "person_entity", "person_id")
+    next_vid = _next_id(conn_ent, "person_name_variant", "variant_id")
     people = variants = 0
     for p in proposals:
         conn_ent.execute(
