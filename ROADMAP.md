@@ -51,23 +51,34 @@ with focus areas); `projects/` holds only `annual-design-review`.
 
 ## Phase 34 — Global registry + focus schema  ·  STRUCTURE_REVIEW §3, P1
 
-1. Decide Decision 1 (canonical registry form — flat files + ephemeral index vs canonical
-   DuckDB; "one database set") and land `registry/` as the single entity + person identity.
-2. Define `focus.json` (`type` + `subject` + optional `selector`); a global-id resolver and
-   the ephemeral match index.
+Decisions 1–3 settled 2026-07-03 (STRUCTURE_REVIEW §7).
+
+1. Land the **canonical registry DuckDB** (entities, variants, `entity_relation` for M&A /
+   succession, `entity_alias` for dedup, persons) as the single identity — plus the
+   **git-tracked deterministic export** that buys back durability/diffability.
+2. Add a **stored, immutable `slug`** to every type (fixes company slugs being derived from
+   the current name); define `focus.json` (`type` + `subject` + `slug` + optional `selector`)
+   and the `[[type:slug]]` cross-link resolver with **alias redirects**; unresolved link = build
+   failure. CPC becomes a browse facet, not a focus.
 3. Migrate the synthetic fixture + hermetic suite to the focus model.
 
-**Gate:** one entity per real-world firm; a focus references ids and declares nothing; suite
-green on the new model.
+**Gate:** one entity per real-world firm; a focus references ids/slugs and declares nothing;
+cross-links resolve through aliases; suite green on the new model.
 
 ---
 
 ## Phase 35 — Dedup entities  ·  STRUCTURE_REVIEW P2
 
-1. Merge duplicate identities (the four Westinghouses, etc.) into single global ids with a
-   mapping report; rewrite references.
+1. Merge duplicate identities (the four Westinghouses, etc.) into single ids via
+   `entity_alias`, with a mapping report; retired slugs redirect.
+2. **Distinguish dedup-merge from succession/M&A** — records that were always the same firm
+   get merged; genuinely distinct firms where one succeeded/absorbed the other (Westinghouse
+   Electric & Mfg Co → Westinghouse Electric Corporation, 1945; Greenfield Tap and Die → TRW →
+   Kennametal) are recorded in `entity_relation`, **never collapsed**. Both may earn their own
+   entity focus.
 
-**Gate:** no duplicate identities; richness/seed resolve one Westinghouse.
+**Gate:** no duplicate identities; no succession wrongly collapsed; richness/seed resolve one
+Westinghouse; old slugs still resolve.
 
 ---
 
