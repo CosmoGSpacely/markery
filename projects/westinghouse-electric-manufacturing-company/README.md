@@ -1,2 +1,0 @@
-# westinghouse-electric-manufacturing-company
-

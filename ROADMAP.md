@@ -36,7 +36,7 @@ and a green hermetic suite (the synthetic fixture migrates to the focus model in
 
 ---
 
-## Phase 33 — DEFERRED pass + archive the demo projects
+## Phase 33 — DEFERRED pass + archive the demo projects — CLOSED
 
 1. Walk **every** `DEFERRED.md` entry against the focus model: subsume / close / keep /
    reframe. (D072→person focus, D079→technology focus, D078→mark/tech triage, D073→Decision 1
@@ -44,8 +44,21 @@ and a green hermetic suite (the synthetic fixture migrates to the focus model in
    set" changes their triggers.)
 2. Archive `rectigon-westinghouse` and `westinghouse-electric-manufacturing-company` (demos).
 
+Results 2026-07-03: DEFERRED went 11 → 9 open. **Closed two:** D075 (1929/30 design-mark image
+backfill — verified complete, 0 missing across 1928/29/30) and D068 (promoted to Phase 37 — the
+focus model dissolves auto-page-per-record, so the 2,026-patent-detail-page bloat has no cause).
+**Annotated the rest** with reorientation status: D070 (deploy target is one site; the loop never
+publishes), D071 (the five focus types map cleanly onto schema.org JSON-LD), D028 (mark-name →
+serial is how a mark focus is created from a name), D074 (leads attach to a focus), D007
+(unchanged; pressure reduced by applicant-fetch). Deviation from plan: rather than moving the
+demos to `archive/`, they were `git rm`-ed per the 88c4a96 precedent (history preserves them);
+their gitignored artifacts and built sites were deleted. Registry entities 9001/9004 cleared;
+entity **9** and orphan **9003** deliberately left as the genuine Westinghouse duplicate pair for
+Phase 35 to merge. Site rebuilt (portal: 0 projects, 10 reviews), `site check` clean, 1035 tests
+passing.
+
 **Gate:** `DEFERRED.md` reflects the reorientation (every open item has a trigger consistent
-with focus areas); `projects/` holds only `annual-design-review`.
+with focus areas) — PASSED; `projects/` holds only `annual-design-review` — PASSED.
 
 ---
 
@@ -95,8 +108,12 @@ Westinghouse; old slugs still resolve.
 
 1. Portal-of-projects → **one site** of foci + indexes, cross-linked (mark↔entity↔patent↔
    person↔technology).
+2. **Resolves D068** (promoted here from DEFERRED, Phase 33): the "2,026 patent detail pages"
+   bloat dissolves — a patent gets a page only when *promoted to a patent focus*; the rest
+   appear in browse indexes/galleries. No auto-page-per-record.
 
-**Gate:** a single site; cross-links resolve; no per-project site subtrees.
+**Gate:** a single site; cross-links resolve; no per-project site subtrees; no auto-generated
+detail page per corpus record.
 
 ---
 
@@ -130,5 +147,8 @@ media + references, published into the one site.
   Research Units", "Why Three Databases") in Phase 34/38; CONTEXT/CLAUDE (project → focus
   lifecycle, tier table, CLI-first) in Phase 36/37; CONTRACT (entities/candidates/confirmed/
   essay schemas) in Phase 34/38 with a `contract_version` bump; README at Phase 37.
-- **Deferred, independent of the reconfiguration:** D070 (hosting), D071 (GEO) — publishing the
-  one site; D007/D028/D068 — corpus/tooling. Revisit their triggers in the Phase 33 pass.
+- **DEFERRED after the Phase 33 pass (9 open):** D070 (hosting) + D071 (GEO) — publishing the one
+  site; D007/D028 — corpus tooling; D074 (eBay leads); D072/D079 subsumed as person/technology
+  focus types; D078 reframed as mark/technology triage; D073 folded into Decision 1.
+  **Closed in the pass:** D075 (1929/30 image backfill — verified 0 missing), D068 (promoted to
+  Phase 37; the focus model dissolves auto-page-per-record).
