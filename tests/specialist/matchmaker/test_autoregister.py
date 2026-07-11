@@ -52,8 +52,10 @@ def test_commit_company_creates_and_is_idempotent(tmp_path):
     prop["canonical"] = "Synthex Works"  # register under a new canonical name
     r1 = ar.commit_company(conn_ent, prop)
     assert r1["created"] is True and r1["variants_added"] >= 1
-    # entity_id is MAX+1 over the fixture's entity 1.
-    assert r1["entity_id"] == 2
+    # Next id reserves retired (aliased) ids too: the fixture seeds
+    # entity_alias(retired_id=9003, ...), so allocation is max(1, 9003)+1 = 9004,
+    # never reusing a retired id (Phase 35).
+    assert r1["entity_id"] == 9004
     r2 = ar.commit_company(conn_ent, prop)
     assert r2["created"] is False and r2["variants_added"] == 0
     conn_pat.close(); conn_tm.close(); conn_ent.close()

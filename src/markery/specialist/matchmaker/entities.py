@@ -326,6 +326,164 @@ def clear(
 
 
 # ---------------------------------------------------------------------------
+# Dedup merge vs. succession/M&A (Phase 35) — kept strictly separate
+# ---------------------------------------------------------------------------
+
+# entity_relation.kind — genuine history between DISTINCT firms. Never a merge.
+VALID_RELATION_KINDS = {
+    "renamed_to", "merged_into", "acquired_by", "succeeded_by", "subsidiary_of",
+}
+
+
+def next_entity_id(conn: duckdb.DuckDBPyConnection) -> int:
+    """Next free company entity id, never reusing a retired (aliased) id.
+
+    A retired id is permanently burned: entity_alias references it for URL redirects,
+    so handing it to a *different* firm would conflate the two. Reserve past every id
+    that has ever existed by taking MAX over live rows and retired aliases.
+    """
+    live = _scalar(conn, "SELECT COALESCE(MAX(entity_id), 0) FROM company_entity")
+    retired = _scalar(conn, "SELECT COALESCE(MAX(retired_id), 0) FROM entity_alias")
+    return max(live, retired) + 1
+
+
+def next_person_id(conn: duckdb.DuckDBPyConnection) -> int:
+    """Next free person id, never reusing a retired (aliased) id. See next_entity_id."""
+    live = _scalar(conn, "SELECT COALESCE(MAX(person_id), 0) FROM person_entity")
+    retired = _scalar(conn, "SELECT COALESCE(MAX(retired_id), 0) FROM person_alias")
+    return max(live, retired) + 1
+
+
+def _entity_row(conn: duckdb.DuckDBPyConnection, eid: int) -> tuple | None:
+    return conn.execute(
+        "SELECT entity_id, canonical_name, slug FROM company_entity WHERE entity_id = ?",
+        [eid],
+    ).fetchone()
+
+
+def merge_entities(
+    conn: duckdb.DuckDBPyConnection,
+    retired_id: int,
+    survivor_id: int,
+    dry_run: bool = False,
+) -> dict:
+    """Dedup-merge retired_id into survivor_id (records that were ALWAYS the same firm).
+
+    Moves the retired entity's variants onto the survivor (skipping duplicates),
+    records an entity_alias (retired_id, retired_slug, survivor_id) so the retired
+    slug keeps resolving, re-points any dangling references, then deletes the retired
+    row. This is NOT a historical event — use add_relation() for succession/M&A.
+
+    Returns a mapping report. On dry_run, computes the report without writing.
+    Raises ValueError on unknown/identical ids.
+    """
+    if retired_id == survivor_id:
+        raise ValueError("retired and survivor entity ids are identical")
+    retired = _entity_row(conn, retired_id)
+    survivor = _entity_row(conn, survivor_id)
+    if retired is None:
+        raise ValueError(f"retired entity_id {retired_id} not found")
+    if survivor is None:
+        raise ValueError(f"survivor entity_id {survivor_id} not found")
+
+    retired_slug = retired[2]
+    existing = {
+        (r[0], r[1]) for r in conn.execute(
+            "SELECT variant_name, source FROM entity_name_variant WHERE entity_id = ?",
+            [survivor_id],
+        ).fetchall()
+    }
+    retired_variants = conn.execute(
+        "SELECT variant_id, variant_name, source FROM entity_name_variant "
+        "WHERE entity_id = ? ORDER BY variant_id", [retired_id],
+    ).fetchall()
+    to_move = [v for v in retired_variants if (v[1], v[2]) not in existing]
+    to_drop = [v for v in retired_variants if (v[1], v[2]) in existing]
+
+    report = {
+        "retired_id": retired_id,
+        "retired_name": retired[1],
+        "retired_slug": retired_slug,
+        "survivor_id": survivor_id,
+        "survivor_name": survivor[1],
+        "variants_moved": len(to_move),
+        "variants_deduped": len(to_drop),
+    }
+    if dry_run:
+        return report
+
+    for vid, _, _ in to_move:
+        conn.execute(
+            "UPDATE entity_name_variant SET entity_id = ? WHERE variant_id = ?",
+            [survivor_id, vid],
+        )
+    for vid, _, _ in to_drop:
+        conn.execute("DELETE FROM entity_name_variant WHERE variant_id = ?", [vid])
+
+    # Re-point references that named the retired id, so nothing dangles on delete.
+    conn.execute(
+        "UPDATE entity_alias SET survivor_id = ? WHERE survivor_id = ?",
+        [survivor_id, retired_id],
+    )
+    conn.execute(
+        "UPDATE entity_relation SET from_entity = ? WHERE from_entity = ?",
+        [survivor_id, retired_id],
+    )
+    conn.execute(
+        "UPDATE entity_relation SET to_entity = ? WHERE to_entity = ?",
+        [survivor_id, retired_id],
+    )
+    conn.execute(
+        "INSERT INTO entity_alias (retired_id, retired_slug, survivor_id) VALUES (?, ?, ?)",
+        [retired_id, retired_slug, survivor_id],
+    )
+    conn.execute("DELETE FROM company_entity WHERE entity_id = ?", [retired_id])
+    conn.commit()
+    export_registry(conn)
+    return report
+
+
+def add_relation(
+    conn: duckdb.DuckDBPyConnection,
+    from_entity: int,
+    to_entity: int,
+    kind: str,
+    effective_date: str | None = None,
+    source: str | None = None,
+) -> dict:
+    """Record a succession / M&A relation between two DISTINCT firms (never a merge).
+
+    Both ids must exist and differ; kind must be in VALID_RELATION_KINDS. Idempotent
+    on (from, to, kind). Returns {created: bool, ...}.
+    """
+    if kind not in VALID_RELATION_KINDS:
+        raise ValueError(
+            f"relation kind {kind!r} not in {sorted(VALID_RELATION_KINDS)}"
+        )
+    if from_entity == to_entity:
+        raise ValueError("a firm cannot have a succession relation to itself")
+    if _entity_row(conn, from_entity) is None:
+        raise ValueError(f"from_entity {from_entity} not found")
+    if _entity_row(conn, to_entity) is None:
+        raise ValueError(f"to_entity {to_entity} not found")
+
+    dup = conn.execute(
+        "SELECT 1 FROM entity_relation WHERE from_entity = ? AND to_entity = ? AND kind = ?",
+        [from_entity, to_entity, kind],
+    ).fetchone()
+    if not dup:
+        conn.execute(
+            "INSERT INTO entity_relation (from_entity, to_entity, kind, effective_date, source) "
+            "VALUES (?, ?, ?, ?, ?)",
+            [from_entity, to_entity, kind, effective_date, source],
+        )
+        conn.commit()
+        export_registry(conn)
+    return {"created": not dup, "from_entity": from_entity, "to_entity": to_entity,
+            "kind": kind, "effective_date": effective_date}
+
+
+# ---------------------------------------------------------------------------
 # Deterministic git-tracked export (Decision 1 durability artifact)
 # ---------------------------------------------------------------------------
 
@@ -366,6 +524,28 @@ _EXPORT_TABLE_NAMES = {
 }
 
 
+def _registry_dir_for(conn: duckdb.DuckDBPyConnection) -> Path:
+    """Where this connection's export belongs — derived from the DB file, not a global.
+
+    Deriving from the connection (rather than the import-time config REGISTRY_DIR)
+    keeps the export co-located with the DB it snapshots: the real registry
+    (``<root>/data/entities.duckdb``) exports to ``<root>/registry``, while a
+    tmp-path test DB exports beside itself — so hermetic tests never write the repo.
+    """
+    db_file = None
+    for row in conn.execute("PRAGMA database_list").fetchall():
+        # (seq, name, file); the attached registry is 'entities' or DuckDB's 'main'.
+        if row[1] in ("entities", "main") and row[2]:
+            db_file = Path(row[2]).resolve()
+            break
+    if db_file is None:                       # in-memory or unnamed → fall back to config
+        from markery.common.config import REGISTRY_DIR
+        return REGISTRY_DIR
+    parent = db_file.parent
+    root = parent.parent if parent.name == "data" else parent
+    return root / "registry"
+
+
 def export_registry(
     conn: duckdb.DuckDBPyConnection,
     out_dir: str | Path | None = None,
@@ -374,11 +554,11 @@ def export_registry(
 
     Regenerated in full on every registry write so the git-tracked export always
     matches the canonical DuckDB. Column and row order are fixed for clean diffs.
+    When out_dir is None the directory is derived from the connection's DB file
+    (see _registry_dir_for) so the export stays co-located and test-isolated.
     Returns the export directory.
     """
-    from markery.common.config import REGISTRY_DIR
-
-    out = Path(out_dir or REGISTRY_DIR)
+    out = Path(out_dir) if out_dir is not None else _registry_dir_for(conn)
     out.mkdir(parents=True, exist_ok=True)
     for fname, cols, order in _EXPORT_TABLES:
         table = _EXPORT_TABLE_NAMES[fname]

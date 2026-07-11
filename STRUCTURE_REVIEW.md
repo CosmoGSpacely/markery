@@ -205,10 +205,12 @@ Scope reducers agreed: **archive `rectigon-westinghouse` and
   export`). Stored `slug` on every type; `focus.json` (§3.3) + the `[[type:slug]]` resolver
   with cycle-safe alias redirects and build-failure on dangling links (`common/focus.py`).
   Fixture migrated. 1056 hermetic tests.
-- **P2 — dedup existing entities.** Merge the duplicate Westinghouses (and others) into
-  single ids via `entity_alias`, with a mapping report. **Must distinguish dedup-merge from
-  succession/M&A** (§3.1) — record real successions in `entity_relation`, never collapse a
-  1945 successor into its predecessor.
+- **P2 — dedup existing entities. DONE (Phase 35, 2026-07-11).** `markery matchmaker merge`
+  (dedup, records `entity_alias` + redirects) and `relate` (succession/M&A → `entity_relation`,
+  both entities kept) — strictly separate operations. Live: merged the Westinghouse Manufacturing
+  Company duplicate (9003 → 9); created the 1945 successor Westinghouse Electric **Corporation**
+  as its own entity (9004) and recorded `9 --renamed_to--> 9004`, never collapsed. Fixed an export
+  test-isolation bug and made id allocation reserve retired ids. 1065 hermetic tests.
 - **P3 — migrate annual-design-review.** Its `essays/*.md` → **mark foci**; year galleries
   → the **browse index** layer. Retire the `annual-review` project type.
 - **P4 — publisher: one site.** Portal-of-projects → one site of foci + indexes,

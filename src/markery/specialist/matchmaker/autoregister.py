@@ -118,7 +118,8 @@ def commit_company(
     if existing:
         eid, created = existing[0], False
     else:
-        eid = _next_id(conn_ent, "company_entity", "entity_id")
+        from markery.specialist.matchmaker.entities import next_entity_id
+        eid = next_entity_id(conn_ent)
         taken = {
             r[0] for r in conn_ent.execute(
                 "SELECT slug FROM company_entity WHERE slug IS NOT NULL AND slug <> ''"
@@ -217,7 +218,8 @@ def propose_people_from_inventors(
 def commit_people(conn_ent: duckdb.DuckDBPyConnection, proposals: list[dict],
                   kind: str = "inventor") -> dict:
     """Write proposed person_entity + person_name_variant rows. Returns counts."""
-    next_pid = _next_id(conn_ent, "person_entity", "person_id")
+    from markery.specialist.matchmaker.entities import next_person_id
+    next_pid = next_person_id(conn_ent)
     next_vid = _next_id(conn_ent, "person_name_variant", "variant_id")
     people = variants = 0
     for p in proposals:

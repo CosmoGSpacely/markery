@@ -1126,6 +1126,55 @@ def cmd_export(args: argparse.Namespace) -> None:
     print(f"registry export → {out}")
 
 
+def cmd_merge(args: argparse.Namespace) -> None:
+    """Dedup-merge one entity id into another (same real firm). Records an alias."""
+    from markery.specialist.matchmaker.entities import open_db, merge_entities
+    conn = open_db()
+    try:
+        report = merge_entities(conn, args.retired_id, args.survivor_id, dry_run=True)
+    except ValueError as exc:
+        conn.close()
+        print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    print("Dedup merge (same real firm — NOT a succession):")
+    print(f"  retired   {report['retired_id']}  {report['retired_name']!r}  "
+          f"(slug: {report['retired_slug']})")
+    print(f"  survivor  {report['survivor_id']}  {report['survivor_name']!r}")
+    print(f"  variants: {report['variants_moved']} moved, "
+          f"{report['variants_deduped']} already on survivor (dropped)")
+
+    if not args.yes:
+        conn.close()
+        print("\nDry run. If these are the SAME firm, re-run with --yes. "
+              "For distinct firms (succession/M&A), use `matchmaker relate` instead.")
+        return
+
+    merge_entities(conn, args.retired_id, args.survivor_id)
+    conn.close()
+    print(f"\nMerged. entity {args.retired_id} → {args.survivor_id}; "
+          f"[[entity:{report['retired_slug']}]] now redirects. Registry export regenerated.")
+
+
+def cmd_relate(args: argparse.Namespace) -> None:
+    """Record a succession / M&A relation between two DISTINCT firms (never a merge)."""
+    from markery.specialist.matchmaker.entities import open_db, add_relation
+    conn = open_db()
+    try:
+        result = add_relation(conn, args.from_id, args.to_id, args.kind,
+                              effective_date=args.date, source=args.source)
+    except ValueError as exc:
+        conn.close()
+        print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(1)
+    conn.close()
+    verb = "recorded" if result["created"] else "already present"
+    when = f" ({result['effective_date']})" if result["effective_date"] else ""
+    print(f"Relation {verb}: entity {result['from_entity']} "
+          f"--{result['kind']}--> {result['to_entity']}{when}. "
+          f"Both remain distinct entities.")
+
+
 def cmd_list(args: argparse.Namespace) -> None:
     from markery.specialist.matchmaker.entities import open_db, list_entities
     conn     = open_db()
@@ -1314,6 +1363,7 @@ def matchmaker_main() -> None:
         description="MATCHMAKER specialist: entity registry management",
     )
     sub = ap.add_subparsers(dest="cmd", required=True)
+    from markery.specialist.matchmaker.entities import VALID_RELATION_KINDS as _RELATION_KINDS
 
     p_build_ent = sub.add_parser("build",  help="Insert entities/variants from CSV (idempotent)")
     p_build_ent.add_argument("--data-dir", metavar="DIR", required=True,
@@ -1321,6 +1371,24 @@ def matchmaker_main() -> None:
     sub.add_parser("list",   help="List all entities with IDs and names")
     sub.add_parser("status", help="Row counts for entity registry tables")
     sub.add_parser("export", help="Regenerate the git-tracked registry CSV export")
+
+    p_merge = sub.add_parser("merge",
+                             help="Dedup-merge one entity id into another (same real firm)")
+    p_merge.add_argument("retired_id", type=int, help="Entity id to retire (aliased away)")
+    p_merge.add_argument("survivor_id", type=int, help="Entity id to keep")
+    p_merge.add_argument("--yes", action="store_true",
+                         help="Perform the merge (default: dry-run preview)")
+
+    p_rel = sub.add_parser("relate",
+                           help="Record a succession/M&A relation between two DISTINCT firms")
+    p_rel.add_argument("from_id", type=int, help="Predecessor entity id")
+    p_rel.add_argument("to_id", type=int, help="Successor entity id")
+    p_rel.add_argument("--kind", required=True,
+                       choices=sorted(_RELATION_KINDS),
+                       help="Relation kind")
+    p_rel.add_argument("--date", default=None, metavar="ISO",
+                       help="Effective date, e.g. 1945-03-01")
+    p_rel.add_argument("--source", default=None, help="Optional provenance note")
 
     p_clr = sub.add_parser("clear",
                            help="Remove a project's entities and variants from entities.duckdb")
@@ -1428,6 +1496,8 @@ def matchmaker_main() -> None:
     {
         "build":              cmd_build,
         "export":             cmd_export,
+        "merge":              cmd_merge,
+        "relate":             cmd_relate,
         "clear":              cmd_clear,
         "confirm":            cmd_confirm,
         "unreject":           cmd_unreject,

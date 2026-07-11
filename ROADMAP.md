@@ -104,7 +104,7 @@ cross-links resolve through aliases — PASSED; suite green on the new model —
 
 ---
 
-## Phase 35 — Dedup entities  ·  STRUCTURE_REVIEW P2
+## Phase 35 — Dedup entities  ·  STRUCTURE_REVIEW P2 — CLOSED
 
 1. Merge duplicate identities (the four Westinghouses, etc.) into single ids via
    `entity_alias`, with a mapping report; retired slugs redirect.
@@ -114,8 +114,32 @@ cross-links resolve through aliases — PASSED; suite green on the new model —
    Kennametal) are recorded in `entity_relation`, **never collapsed**. Both may earn their own
    entity focus.
 
-**Gate:** no duplicate identities; no succession wrongly collapsed; richness/seed resolve one
-Westinghouse; old slugs still resolve.
+Results 2026-07-11: Two strictly separate operations, both `entities.py` pure functions +
+`markery matchmaker` commands. **`merge <retired> <survivor>`** (dry-run by default, `--yes` to
+apply) moves the retired entity's variants onto the survivor (de-duping), records
+`entity_alias(retired_id, retired_slug, survivor_id)`, re-points any dangling alias/relation
+references, deletes the retired row, and regenerates the export — the printed report + the alias
+CSV are the mapping record. **`relate <from> <to> --kind <k> [--date] [--source]`** records an
+`entity_relation` (kind ∈ the five succession/M&A kinds), leaving **both** entities intact.
+Live registry: merged **9003 → 9** (the Westinghouse Manufacturing Company duplicate; 17 variants
+moved, 3 de-duped; `[[entity:westinghouse-electric-manufacturing-company]]` now redirects). The
+1945 succession was made concrete rather than left vacuous: a `register --min-score 1.0` created
+the successor **Westinghouse Electric *Corporation*** as its own entity (9004, its two
+`CORPORATION` owner strings only), then `relate 9 9004 --kind renamed_to --date 1945-03-01`
+recorded the renaming — predecessor and successor distinct, never merged. The register dry-run at
+0.6 concretely demonstrated the hazard (it would have folded the 1497× `& MFG CO` assignee into
+the successor), justifying the 1.0 floor. **Two bugs fixed en route:** (a) `export_registry`
+default-wrote the real repo-root `registry/`, so any hermetic test calling a write function
+clobbered it — now the export dir is derived from the *connection's* DB file, keeping tmp-path
+tests isolated (restored from git; verified the suite leaves `registry/` clean); (b) after a
+merge, `next_entity_id`/`next_person_id` now reserve past every **retired** id (via
+`MAX(retired_id)`) so a freed id is never handed to a different firm — the first re-register had
+collided on 9003. +9 tests (`test_merge.py`); 1065 hermetic tests passing.
+
+**Gate:** no duplicate identities — PASSED (9003 merged into 9); no succession wrongly collapsed —
+PASSED (Corporation is a distinct entity 9004, `renamed_to` not merged); richness/seed resolve one
+Westinghouse Manufacturing Company — PASSED (single id 9); old slugs still resolve — PASSED (alias
+redirect, tested).
 
 ---
 
