@@ -47,6 +47,11 @@ SCAF_SLUG = "measurex-us1999003a"
 ENTITY_ID = 1
 ENTITY_CANON = "Synthex Manufacturing Company"
 ENTITY_VARIANT = "SYNTHEX MFG CO"
+ENTITY_SLUG = "synthex-manufacturing-company"
+
+# Focus model (Phase 34): the entity above plus one mark focus, cross-linked. These
+# coexist with the project scaffolding below, which Phases 36–37 retire.
+MARK_FOCUS_SLUG = f"synthex-{CAND_SERIAL}"
 
 # Annual-review fixture: a design mark filed in REVIEW_YEAR, plus a second project
 # of type annual-review covering that year.
@@ -80,6 +85,8 @@ class SyntheticRepo:
     review_project: str = REVIEW_PROJECT
     review_year: int = REVIEW_YEAR
     media_id: str = MEDIA_ID
+    entity_slug: str = ENTITY_SLUG
+    mark_focus_slug: str = MARK_FOCUS_SLUG
 
     @property
     def env(self) -> dict[str, str]:
@@ -243,23 +250,18 @@ def _build_patents(path: Path) -> None:
 
 
 def _build_entities(path: Path) -> None:
-    # Schema mirrors matchmaker/entities.py DDL (PK + FK) so entities.open_db()
-    # works against the fixture.
-    conn = duckdb.connect(str(path))
+    # Build the canonical Phase-34 registry via entities.open_db() so the fixture
+    # reflects the real DDL (slug/founded/dissolved, entity_relation, entity_alias,
+    # person_alias) rather than a hand-rolled subset.
+    from markery.specialist.matchmaker.entities import open_db
+
+    conn = open_db(path)
+    # Stored, immutable slug (Phase 34) — the entity focus's identity.
     conn.execute(
-        "CREATE TABLE company_entity "
-        "(entity_id INTEGER PRIMARY KEY, canonical_name VARCHAR NOT NULL, "
-        "entity_type VARCHAR, industry VARCHAR)"
-    )
-    conn.execute(
-        "CREATE TABLE entity_name_variant "
-        "(variant_id INTEGER PRIMARY KEY, entity_id INTEGER NOT NULL "
-        "REFERENCES company_entity(entity_id), variant_name VARCHAR NOT NULL, "
-        "source VARCHAR NOT NULL)"
-    )
-    conn.execute(
-        "INSERT INTO company_entity VALUES (?, ?, 'company', 'Precision instruments')",
-        [ENTITY_ID, ENTITY_CANON],
+        "INSERT INTO company_entity "
+        "(entity_id, canonical_name, entity_type, industry, slug) "
+        "VALUES (?, ?, 'company', 'Precision instruments', ?)",
+        [ENTITY_ID, ENTITY_CANON, ENTITY_SLUG],
     )
     # The publisher joins marks via 'trademark_owner' and patents via 'patent_assignee'.
     conn.execute(
@@ -270,6 +272,13 @@ def _build_entities(path: Path) -> None:
         "INSERT INTO entity_name_variant VALUES (2, ?, ?, 'patent_assignee')",
         [ENTITY_ID, ENTITY_VARIANT],
     )
+    # A retired duplicate id aliased to ENTITY_ID (exercises alias-redirect resolution).
+    conn.execute(
+        "INSERT INTO entity_alias (retired_id, retired_slug, survivor_id) "
+        "VALUES (?, ?, ?)",
+        [9003, "synthex-manufacturing", ENTITY_ID],
+    )
+    conn.commit()
     conn.close()
 
 
@@ -402,6 +411,14 @@ def build_synthetic_repo(tmp_path: Path) -> SyntheticRepo:
     )
 
     (proj / "content" / f"{CONF_SLUG}.md").write_text(CONF_ESSAY)
+
+    # Focus model (Phase 34): an entity focus + a mark focus, cross-linked. Coexists
+    # with the project scaffolding above (Phases 36–37 fold the projects into foci).
+    from markery.common.focus import Focus
+    Focus(type="entity", subject=str(ENTITY_ID), slug=ENTITY_SLUG,
+          title=ENTITY_CANON).write(root)
+    Focus(type="mark", subject=str(CAND_SERIAL), slug=MARK_FOCUS_SLUG,
+          title="SYNTHEX").write(root)
 
     # A second project of type annual-review, covering REVIEW_YEAR.
     review = root / "projects" / REVIEW_PROJECT

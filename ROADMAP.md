@@ -62,7 +62,7 @@ with focus areas) — PASSED; `projects/` holds only `annual-design-review` — 
 
 ---
 
-## Phase 34 — Global registry + focus schema  ·  STRUCTURE_REVIEW §3, P1
+## Phase 34 — Global registry + focus schema  ·  STRUCTURE_REVIEW §3, P1 — CLOSED
 
 Decisions 1–3 settled 2026-07-03 (STRUCTURE_REVIEW §7).
 
@@ -75,8 +75,32 @@ Decisions 1–3 settled 2026-07-03 (STRUCTURE_REVIEW §7).
    failure. CPC becomes a browse facet, not a focus.
 3. Migrate the synthetic fixture + hermetic suite to the focus model.
 
-**Gate:** one entity per real-world firm; a focus references ids/slugs and declares nothing;
-cross-links resolve through aliases; suite green on the new model.
+Results 2026-07-10: **Schema** — `matchmaker/entities.py` DDL grew `slug`/`founded`/`dissolved`
+on `company_entity` plus new tables `entity_relation` (kind ∈ renamed_to|merged_into|
+acquired_by|succeeded_by|subsidiary_of), `entity_alias` (retired_id, **retired_slug**,
+survivor_id) and `person_alias`; an idempotent `_migrate_add_registry_columns` upgrades legacy
+DBs in place and backfills unique slugs. Deviation from the §3.1 sketch: alias tables carry a
+`retired_slug` so a merged slug redirects even after the retired row is deleted — Phase 35 no
+longer has to keep duplicate rows alive for URL stability. **Slugs are stored on insert** —
+`build`, `commit_company`, and the backfill all assign collision-free slugs; the publisher's
+render-time slugify of the *current* name is retired in Phase 37/38. **Export** — a deterministic
+`COPY ... TO` CSV snapshot (fixed column + row order) regenerated on every registry write
+(`build`/`clear`/`register`/`register-people`) and on demand via new `markery matchmaker export`;
+lands at git-tracked repo-root `registry/` (the real registry exported: 33 entities). **Focus
+model** — new `common/focus.py`: the one `focus.json` schema for all five types (selector gated to
+technology foci), `focus/<type>/<slug>/` layout, and a layout-agnostic `LinkResolver` for
+`[[type:slug]]` that follows alias chains (cycle-safe), leaves foreign namespaces (media/figure)
+untouched, and raises `UnresolvedLink` on any owned dangling link — the build-failure discipline.
+`registry_link_maps(conn)` derives entity/person targets + alias redirects straight from the DB.
+**Fixture** — `_build_entities` now builds the canonical schema via `open_db`, stores a real slug,
+and seeds an `entity_alias`; `build_synthetic_repo` writes an entity + mark focus. No companion-
+facing CLI signature changed, so `contract_version` stays 1.4 (the substantive contract/DESIGN
+"one database set" edits ride Phase 38). +21 tests (`test_focus.py`, `test_focus_fixture.py`,
+updated `test_entities.py`); 1056 hermetic tests passing.
+
+**Gate:** one entity per real-world firm (deferred to Phase 35's dedup; schema + alias redirects
+now support it) — PARTIAL; a focus references ids/slugs and declares nothing — PASSED;
+cross-links resolve through aliases — PASSED; suite green on the new model — PASSED.
 
 ---
 

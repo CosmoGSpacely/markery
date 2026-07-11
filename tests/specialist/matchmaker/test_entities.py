@@ -93,9 +93,14 @@ def test_list_entities_has_expected_fields(tmp_path):
     conn.close()
 
     first = entities[0]
-    assert set(first.keys()) == {"entity_id", "canonical_name", "entity_type", "industry"}
+    assert set(first.keys()) == {
+        "entity_id", "canonical_name", "entity_type", "industry",
+        "slug", "founded", "dissolved",
+    }
     assert first["canonical_name"] == "Remington Rand"
     assert first["industry"] == "office-systems"
+    # Slug is stored on insert (Phase 34), derived once from the canonical name.
+    assert first["slug"] == "remington-rand"
 
 
 # ---------------------------------------------------------------------------

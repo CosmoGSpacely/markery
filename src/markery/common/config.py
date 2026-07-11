@@ -95,6 +95,12 @@ DB = {
     "entities":   _DATA_DIR / "entities.duckdb",
 }
 
+# The canonical registry (data/entities.duckdb) is gitignored like the corpus DBs,
+# but — unlike the rebuildable corpus — it holds irreplaceable curation. Its
+# durability/diff artifact is a deterministic, git-tracked CSV export regenerated
+# on every registry write (Phase 34, Decision 1). Lives at repo root, always tracked.
+REGISTRY_DIR = ROOT / "registry"
+
 # Record-image assets (mark drawings, patent figures) live as files alongside the
 # DBs (Phase 28 P3 — externalized from BLOBs). The DB rows reference paths relative
 # to this directory.

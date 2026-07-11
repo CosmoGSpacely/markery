@@ -879,8 +879,10 @@ def cmd_register(args: argparse.Namespace) -> None:
         print("\nDry run. Re-run with --confirm to write to entities.duckdb.")
         return
 
+    from markery.specialist.matchmaker.entities import export_registry
     conn_ent = open_db()
     result = ar.commit_company(conn_ent, proposal, industry=args.industry)
+    export_registry(conn_ent)
     conn_ent.close()
     verb = "created" if result["created"] else "updated"
     print(f"\nentity_id {result['entity_id']} {verb}  ·  "
@@ -914,7 +916,9 @@ def cmd_register_people(args: argparse.Namespace) -> None:
         print("\nDry run. Re-run with --confirm to write to entities.duckdb.")
         return
 
+    from markery.specialist.matchmaker.entities import export_registry
     result = ar.commit_people(conn_ent, proposals, kind="inventor")
+    export_registry(conn_ent)
     conn_ent.close()
     print(f"\n{result['people_added']} person(s), "
           f"{result['variants_added']} variant(s) written.")
@@ -1114,6 +1118,14 @@ def cmd_build(args: argparse.Namespace) -> None:
     print(f"  {counts['variants']} variant(s) added")
 
 
+def cmd_export(args: argparse.Namespace) -> None:
+    from markery.specialist.matchmaker.entities import open_db, export_registry
+    conn = open_db()
+    out = export_registry(conn)
+    conn.close()
+    print(f"registry export → {out}")
+
+
 def cmd_list(args: argparse.Namespace) -> None:
     from markery.specialist.matchmaker.entities import open_db, list_entities
     conn     = open_db()
@@ -1129,12 +1141,14 @@ def cmd_list(args: argparse.Namespace) -> None:
 def cmd_status(args: argparse.Namespace) -> None:
     from markery.specialist.matchmaker.entities import open_db
     conn = open_db()
-    n_entities = _scalar(conn, "SELECT count(*) FROM company_entity")
-    n_variants = _scalar(conn, "SELECT count(*) FROM entity_name_variant")
+    counts = {t: _scalar(conn, f"SELECT count(*) FROM {t}") for t in (
+        "company_entity", "entity_name_variant", "entity_relation", "entity_alias",
+        "person_entity", "person_name_variant", "person_alias",
+    )}
     conn.close()
-    print(f"entities.duckdb:")
-    print(f"  company_entity       {n_entities:>6,}")
-    print(f"  entity_name_variant  {n_variants:>6,}")
+    print("entities.duckdb:")
+    for t, n in counts.items():
+        print(f"  {t:<20} {n:>6,}")
 
 
 def cmd_richness(args: argparse.Namespace) -> None:
@@ -1306,6 +1320,7 @@ def matchmaker_main() -> None:
                              help="Directory containing entities.csv and variants.csv")
     sub.add_parser("list",   help="List all entities with IDs and names")
     sub.add_parser("status", help="Row counts for entity registry tables")
+    sub.add_parser("export", help="Regenerate the git-tracked registry CSV export")
 
     p_clr = sub.add_parser("clear",
                            help="Remove a project's entities and variants from entities.duckdb")
@@ -1412,6 +1427,7 @@ def matchmaker_main() -> None:
         ap.error("seed-pairs: provide a year or --years")
     {
         "build":              cmd_build,
+        "export":             cmd_export,
         "clear":              cmd_clear,
         "confirm":            cmd_confirm,
         "unreject":           cmd_unreject,

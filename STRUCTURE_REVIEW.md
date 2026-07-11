@@ -198,10 +198,13 @@ Scope reducers agreed: **archive `rectigon-westinghouse` and
 `westinghouse-electric-manufacturing-company`** (demos); migrate only
 **`annual-design-review`**.
 
-- **P1 — registry + focus schema.** Land the **canonical registry DuckDB** (§3.1 schema:
-  entities, variants, `entity_relation`, `entity_alias`, persons) as the single identity;
-  add the **git-tracked deterministic export** for durability/diff. Add stored `slug` to
-  every type; define `focus.json` (§3.3) and the `[[type:slug]]` resolver + alias redirects.
+- **P1 — registry + focus schema. DONE (Phase 34, 2026-07-10).** Landed the **canonical
+  registry DuckDB** (§3.1 schema: entities, variants, `entity_relation`, `entity_alias` +
+  `retired_slug`, persons, `person_alias`) as the single identity; added the **git-tracked
+  deterministic export** (`registry/` CSVs, regenerated on every write; `markery matchmaker
+  export`). Stored `slug` on every type; `focus.json` (§3.3) + the `[[type:slug]]` resolver
+  with cycle-safe alias redirects and build-failure on dangling links (`common/focus.py`).
+  Fixture migrated. 1056 hermetic tests.
 - **P2 — dedup existing entities.** Merge the duplicate Westinghouses (and others) into
   single ids via `entity_alias`, with a mapping report. **Must distinguish dedup-merge from
   succession/M&A** (§3.1) — record real successions in `entity_relation`, never collapse a

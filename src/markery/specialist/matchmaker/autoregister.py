@@ -119,9 +119,20 @@ def commit_company(
         eid, created = existing[0], False
     else:
         eid = _next_id(conn_ent, "company_entity", "entity_id")
+        taken = {
+            r[0] for r in conn_ent.execute(
+                "SELECT slug FROM company_entity WHERE slug IS NOT NULL AND slug <> ''"
+            ).fetchall()
+        }
+        base = slugify(canonical) or f"entity-{eid}"
+        slug, i = base, 2
+        while slug in taken:
+            slug = f"{base}-{i}"
+            i += 1
         conn_ent.execute(
-            "INSERT INTO company_entity (entity_id, canonical_name, entity_type, industry) "
-            "VALUES (?, ?, ?, ?)", [eid, canonical, entity_type, industry],
+            "INSERT INTO company_entity "
+            "(entity_id, canonical_name, entity_type, industry, slug) "
+            "VALUES (?, ?, ?, ?, ?)", [eid, canonical, entity_type, industry, slug],
         )
         created = True
 
